@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CKC Hub">
+<meta name="theme-color" content="#0D1117">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>CKC Hub</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0D1117;--s1:#161B22;--s2:#1C2129;--bd:#21262D;--bd2:#363D47;
+    --tx:#E6EDF3;--t2:#8B949E;--t3:#484F58;
+    --ac:#F0B429;--acd:rgba(240,180,41,.08);
+    --bl:#58A6FF;--gr:#3FB950;--grd:rgba(63,185,80,.1);
+    --pu:#BC8CFF;--rd:#F85149;--rdd:rgba(248,81,73,.1);
+    --or:#F0883E;--ord:rgba(240,136,62,.1);
+    --r:8px;
+  }
+  body{background:var(--bg);color:var(--tx);font-family:'DM Sans',system-ui,sans-serif;font-size:14px;line-height:1.5;min-height:100vh;min-height:100dvh;-webkit-font-smoothing:antialiased}
+  .mono{font-family:'JetBrains Mono',monospace}
+
+  /* ── NAV ── */
+  .nav{background:var(--s1);border-bottom:1px solid var(--bd);padding:0 16px;position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:0}
+  .nav-logo{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:16px;color:var(--ac);padding:14px 16px 14px 0;border-right:1px solid var(--bd);margin-right:4px;white-space:nowrap}
+  .nav-tab{padding:14px 20px;font-size:13px;font-weight:600;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;letter-spacing:.3px;user-select:none;-webkit-tap-highlight-color:transparent}
+  .nav-tab:hover{color:var(--t2)}
+  .nav-tab.active{color:var(--ac);border-bottom-color:var(--ac)}
+  .nav-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .cat-count{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t3);background:var(--bg);padding:4px 10px;border-radius:20px;border:1px solid var(--bd)}
+  .cat-count b{color:var(--ac)}
+
+  /* ── PAGES ── */
+  .page{display:none;max-width:1200px;margin:0 auto;padding:16px}
+  .page.active{display:block}
+
+  /* ── LOOKUP ── */
+  .lookup-filters{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:16px;margin-bottom:16px}
+  .filter-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px}
+  @media(max-width:600px){.filter-row{grid-template-columns:1fr 1fr}.filter-row .fg:nth-child(3){grid-column:1/-1}}
+  .fg label{display:block;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:var(--t3);margin-bottom:3px;padding-left:2px}
+  .fg select,.fg input[type=text]{width:100%;padding:10px 12px;background:var(--bg);border:1.5px solid var(--bd);border-radius:var(--r);color:var(--tx);font-family:inherit;font-size:14px;outline:none;appearance:none;transition:border-color .15s}
+  .fg select{padding-right:28px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23484F58'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+  .fg select:focus,.fg input:focus{border-color:var(--ac)}
+  .fg select:disabled{opacity:.3}
+  .fg select option{background:var(--s1)}
+  .search-row{position:relative;display:flex;gap:8px}
+  .search-row input{padding-left:34px;flex:1}
+  .search-row .si{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--t3);pointer-events:none}
+  .actions-row{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+  .clear-link{font-size:12px;color:var(--t3);cursor:pointer;padding:4px 8px;border-radius:4px;transition:all .15s;background:none;border:none;font-family:inherit}
+  .clear-link:hover{color:var(--rd)}
+  .result-count{font-size:12px;color:var(--t3)}.result-count b{color:var(--ac);font-family:'JetBrains Mono',monospace}
+
+  .cards{display:flex;flex-direction:column;gap:8px;padding-bottom:40px}
+  .card{background:var(--s1);border:1px solid var(--bd);border-radius:10px;overflow:hidden;transition:border-color .15s}
+  .card:hover{border-color:var(--bd2)}
+  .card-main{display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .card-img{width:50px;height:50px;border-radius:6px;object-fit:cover;background:var(--bg);flex-shrink:0}
+  .card-body{flex:1;min-width:0}
+  .card-title{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .card-sub{font-size:11px;color:var(--t2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .card-sub .sku{font-family:'JetBrains Mono',monospace;font-size:10px}
+  .card-price{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:600;color:var(--ac);flex-shrink:0}
+  .card-expand{display:none;border-top:1px solid var(--bd);padding:12px 14px;background:rgba(22,27,34,.6)}
+  .card.open .card-expand{display:block}
+  .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  @media(max-width:400px){.detail-grid{grid-template-columns:1fr}}
+  .di label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--t3);display:block;margin-bottom:1px}
+  .di .v{font-size:13px;font-weight:500}.di .v.m{font-family:'JetBrains Mono',monospace;font-size:12px}
+  .compat-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px}
+  .ct{font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px}
+  .ct-mk{background:rgba(88,166,255,.1);color:var(--bl)}
+  .ct-md{background:rgba(63,185,80,.1);color:var(--gr)}
+  .ct-yr{background:rgba(188,140,255,.1);color:var(--pu)}
+  .ct-fc{background:var(--bg);color:var(--t2);border:1px solid var(--bd)}
+  .desc-text{font-size:12px;color:var(--t2);margin-top:10px;line-height:1.5;padding-top:10px;border-top:1px solid var(--bd)}
+  .empty{text-align:center;padding:60px 20px;color:var(--t3)}
+  .empty-i{font-size:40px;margin-bottom:12px;opacity:.4}
+  .empty-t{font-size:15px;color:var(--t2)}
+  .empty-h{font-size:12px;margin-top:6px}
+
+  /* ── INTAKE ── */
+  .upload-zone{border:2px dashed var(--bd);border-radius:12px;padding:44px 24px;text-align:center;transition:all .2s;cursor:pointer;position:relative;background:var(--s1)}
+  .upload-zone:hover,.upload-zone.dragover{border-color:var(--ac);background:var(--acd)}
+  .upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+  .upload-icon{font-size:32px;margin-bottom:10px;opacity:.5}
+  .upload-title{font-size:15px;font-weight:600;margin-bottom:4px}
+  .upload-hint{font-size:12px;color:var(--t3)}
+  .divider-or{display:flex;align-items:center;gap:16px;margin:16px 0;color:var(--t3);font-size:11px;text-transform:uppercase;letter-spacing:2px}
+  .divider-or::before,.divider-or::after{content:'';flex:1;height:1px;background:var(--bd)}
+  .paste-area{width:100%;min-height:100px;background:var(--s1);border:1.5px solid var(--bd);border-radius:var(--r);padding:12px;color:var(--tx);font-family:'JetBrains Mono',monospace;font-size:12px;resize:vertical;outline:none;transition:border-color .15s}
+  .paste-area:focus{border-color:var(--ac)}
+  .paste-area::placeholder{color:var(--t3)}
+
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;font-family:inherit;font-size:13px;font-weight:600;border-radius:var(--r);cursor:pointer;transition:all .15s;border:1.5px solid transparent}
+  .btn-ac{background:var(--ac);color:var(--bg);border-color:var(--ac)}
+  .btn-ac:hover{opacity:.85}
+  .btn-s{background:var(--s1);color:var(--tx);border-color:var(--bd)}
+  .btn-s:hover{border-color:var(--ac);color:var(--ac)}
+  .btn-d{background:var(--s1);color:var(--rd);border-color:var(--bd)}
+  .btn-d:hover{border-color:var(--rd);background:var(--rdd)}
+
+  .summary-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:16px 0}
+  .sc{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:10px 12px;text-align:center}
+  .sc .lb{font-size:9px;text-transform:uppercase;letter-spacing:1.2px;color:var(--t3);font-weight:600;margin-bottom:3px}
+  .sc .vl{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:600}
+
+  .tbl-wrap{background:var(--s1);border:1px solid var(--bd);border-radius:10px;overflow-x:auto;margin:16px 0}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead th{background:var(--s2);padding:9px 10px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--t3);font-weight:600;border-bottom:1px solid var(--bd);white-space:nowrap}
+  tbody td{padding:9px 10px;border-bottom:1px solid var(--bd);vertical-align:middle}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:rgba(255,255,255,.02)}
+  .pc{max-width:260px}
+  .pn{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ps{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t2);margin-top:1px}
+  .sb{display:inline-block;font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+  .sb-e{background:var(--grd);color:var(--gr)}.sb-n{background:var(--ord);color:var(--or)}
+  .ei{background:var(--bg);border:1px solid var(--bd);border-radius:4px;padding:4px 8px;color:var(--tx);font-family:'JetBrains Mono',monospace;font-size:12px;width:65px;text-align:right;outline:none}
+  .ei:focus{border-color:var(--ac)}.ei.qi{width:48px;text-align:center}
+  .rb{background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;padding:2px 6px;border-radius:4px;transition:all .15s}
+  .rb:hover{color:var(--rd);background:var(--rdd)}
+  .tac{text-align:center}.tar{text-align:right}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 40px}
+
+  /* ── CATALOG TAB ── */
+  .cat-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:16px}
+  .info-box{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;font-size:13px;color:var(--t2);line-height:1.6;margin:12px 0}
+  .info-box strong{color:var(--tx)}
+  .info-box code{font-family:'JetBrains Mono',monospace;background:var(--bg);padding:1px 5px;border-radius:3px;font-size:11px;color:var(--ac)}
+
+  /* ── MANAGE TAB ── */
+  .manage-actions{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}
+
+  .hidden{display:none!important}
+  @media(max-width:600px){.nav-logo{font-size:13px;padding-right:10px}.nav-tab{padding:14px 12px;font-size:12px}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">CKC Hub</div>
+  <div class="nav-tab active" onclick="switchTab('lookup')">🔍 Lookup</div>
+  <div class="nav-tab" onclick="switchTab('intake')">📄 Intake</div>
+  <div class="nav-tab" onclick="switchTab('manage')">⚙️ Catalog</div>
+  <div class="nav-right">
+    <div class="cat-count"><b id="globalCount">0</b> products</div>
+  </div>
+</nav>
+
+<!-- ═══════ LOOKUP TAB ═══════ -->
+<div class="page active" id="page-lookup">
+  <div class="lookup-filters">
+    <div class="filter-row">
+      <div class="fg"><label>Make</label><select id="lk-make" onchange="lkMakeChange()"><option value="">All Makes</option></select></div>
+      <div class="fg"><label>Model</label><select id="lk-model" onchange="lkFilter()" disabled><option value="">All Models</option></select></div>
+      <div class="fg"><label>Year</label><select id="lk-year" onchange="lkFilter()"><option value="">Any Year</option></select></div>
+    </div>
+    <div class="search-row">
+      <svg class="si" width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <input type="text" id="lk-search" placeholder="SKU, FCC ID, part number..." oninput="lkFilter()">
+    </div>
+    <div class="actions-row">
+      <button class="clear-link" onclick="lkClear()">✕ Clear</button>
+      <div class="result-count" id="lk-count"></div>
+    </div>
+  </div>
+  <div class="cards" id="lk-results"></div>
+</div>
+
+<!-- ═══════ INTAKE TAB ═══════ -->
+<div class="page" id="page-intake">
+  <div id="intake-input">
+    <div class="upload-zone" id="dropZone">
+      <input type="file" id="fileInput" accept=".pdf,.csv,.txt">
+      <div class="upload-icon">📄</div>
+      <div class="upload-title">Drop a vendor invoice here</div>
+      <div class="upload-hint">PDF from Royal Key Supply (or CSV/text)<br>
+        <a href="#" onclick="loadDemoInvoice();return false;" style="color:var(--ac);font-size:12px;text-decoration:underline;margin-top:4px;display:inline-block">⚡ Load Nov 6 Royal Key Supply order (#RKS41790)</a>
+      </div>
+    </div>
+    <div class="divider-or">or paste invoice text</div>
+    <textarea id="pasteArea" class="paste-area" placeholder="Paste invoice text here..."></textarea>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
+      <button class="btn btn-ac" onclick="parseInput()">⚡ Parse Invoice</button>
+      <div style="display:flex;align-items:center;gap:6px">
+        <label style="font-size:12px;color:var(--t2)">Markup:</label>
+        <input id="markupInput" type="number" value="20" min="0" max="200" step="5" class="ei qi" style="width:55px;color:var(--ac)" onchange="recalcAll()">
+        <span style="font-size:12px;color:var(--t2)">%</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="intake-results" class="hidden">
+    <div class="summary-bar" id="summaryBar"></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Status</th><th>Product</th><th class="tac">Qty</th><th class="tar">Cost</th><th class="tar">Sell</th><th class="tar">Margin</th><th></th></tr></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ac" onclick="addToCatalog()">✅ Add to Catalog & Lookup</button>
+      <button class="btn btn-s" onclick="exportShopifyCSV()">📦 Export Shopify CSV</button>
+      <button class="btn btn-s" onclick="showIntakeInput()">← New Invoice</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ MANAGE/CATALOG TAB ═══════ -->
+<div class="page" id="page-manage">
+  <div class="cat-stats" id="catStats"></div>
+  <div class="info-box">
+    <strong>Your catalog is saved in this browser.</strong> Products you add through the Intake tab automatically appear in Lookup.
+    To move your catalog to another device, use Export below and re-import on the other machine.
+  </div>
+  <div class="manage-actions">
+    <button class="btn btn-s" onclick="exportCatalogJSON()">💾 Export Catalog Backup</button>
+    <button class="btn btn-s" onclick="document.getElementById('importJSON').click()">📂 Import Catalog Backup</button>
+    <input type="file" id="importJSON" accept=".json" style="display:none" onchange="importCatalogJSON(event)">
+    <button class="btn btn-s" onclick="importShopifyCSV()">📊 Import Shopify CSV</button>
+    <input type="file" id="importCSV" accept=".csv" style="display:none" onchange="handleShopifyCSV(event)">
+    <button class="btn btn-d" onclick="resetCatalog()">🗑️ Reset Catalog</button>
+  </div>
+  <div class="tbl-wrap" id="catTable"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// DATABASE (IndexedDB)
+// ═══════════════════════════════════════
+const DB_NAME = 'CKCHub';
+const DB_VER = 1;
+let db = null;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains('products')) {
+        d.createObjectStore('products', { keyPath: 'sku' });
+      }
+    };
+    req.onsuccess = e => { db = e.target.result; resolve(db); };
+    req.onerror = e => reject(e.target.error);
+  });
+}
+
+function dbPut(product) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('products', 'readwrite');
+    tx.objectStore('products').put(product);
+    tx.oncomplete = () => resolve();
+    tx.onerror = e => reject(e.target.error);
+  });
+}
+
+function dbGetAll() {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('products', 'readonly');
+    const req = tx.objectStore('products').getAll();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = e => reject(e.target.error);
+  });
+}
+
+function dbClear() {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('products', 'readwrite');
+    tx.objectStore('products').clear();
+    tx.oncomplete = () => resolve();
+    tx.onerror = e => reject(e.target.error);
+  });
+}
+
+// ═══════════════════════════════════════
+// CATALOG STATE
+// ═══════════════════════════════════════
+let catalog = []; // all products
+let makes = [];
+let makeModels = {};
+let years = [];
+
+async function loadCatalog() {
+  catalog = await dbGetAll();
+  rebuildIndexes();
+  updateGlobalCount();
+}
+
+function rebuildIndexes() {
+  const mkSet = new Set();
+  const mmMap = {};
+  const yrSet = new Set();
+
+  catalog.forEach(p => {
+    if (p.compatibility) {
+      p.compatibility.forEach(c => {
+        mkSet.add(c.make);
+        if (!mmMap[c.make]) mmMap[c.make] = new Set();
+        mmMap[c.make].add(c.model);
+      });
+    }
+    if (p.years) p.years.forEach(y => yrSet.add(y));
+  });
+
+  makes = [...mkSet].sort();
+  makeModels = {};
+  for (const [k, v] of Object.entries(mmMap)) makeModels[k] = [...v].sort();
+  years = [...yrSet].sort((a, b) => a - b);
+
+  // Rebuild dropdowns
+  populateLookupDropdowns();
+}
+
+function updateGlobalCount() {
+  document.getElementById('globalCount').textContent = catalog.length;
+}
+
+// ═══════════════════════════════════════
+// SEED DATA
+// ═══════════════════════════════════════
+const SEED_CATALOG = {"products":[{"title":"Transponder Key FOR-96-AM","description":"Ford Edge/Explorer/Fusion Smart Key 5B Remote Start/Trunk, FCCID: M3N-A2C93142300, PN# 164-R8150","sku":"FOR-96-AM","price":"4.49","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-96-AM.jpg?v=1765385040","type":"Transponder Key","fcc":"","keyway":"HU101","chip":"4D-63","handle":"transponder-key-for-96-am","buttons":"H75 / Texas 4D63 - 40 Bit","compatibility":[{"make":"Ford","model":"Explorer"},{"make":"Ford","model":"Fusion"},{"make":"Ford","model":"Edge"}],"years":[]},{"title":"Transponder Key JAG-09-AM","description":"Jaguar XF/XJ Smart Key 5B Remote Start/Trunk, FCCID: KR55WK49244, PN# C2D36843","sku":"JAG-09-AM","price":"9.46","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/JAG-09-AM.jpg?v=1765384877","type":"Transponder Key","fcc":"","keyway":"TIBBE","chip":"4D-60","handle":"transponder-key-jag-09-am","buttons":"N/A / TEXAS ID 4D 60 GLASS","compatibility":[{"make":"Jaguar","model":"XF"},{"make":"Jaguar","model":"XJ"}],"years":[]},{"title":"Test Key GM-34-AM10","description":"GM Flip Key 4B Remote Start/Trunk \u2014 FCCID: OHT01060512, PN# 13504199. Compatible with Chevrolet Malibu, Cruze, Camaro, and select GM models.","sku":"GM-34-AM10","price":"0.83","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/GM-34-AM10.jpg?v=1765298154","type":"Test Key","fcc":"","keyway":"AM10","chip":"","handle":"test-key-gm-34-am10","buttons":"HU100","compatibility":[{"make":"Chevrolet","model":"Cruze"},{"make":"Chevrolet","model":"Malibu"},{"make":"Chevrolet","model":"Camaro"}],"years":[]},{"title":"Test Key DOG-54-AMP","description":"Dodge Fobik Key 4B Remote Start \u2014 FCCID: IYZ-C01C, PN# 05026378AH. Works with Dodge RAM, Journey, and Chrysler vehicles.","sku":"DOG-54-AMP","price":"1.33","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/DOG-54-AMP.jpg?v=1765298103","type":"Test Key","fcc":"","keyway":"C01C","chip":"","handle":"test-key-dog-54-amp","buttons":"Y159","compatibility":[{"make":"Dodge","model":"Journey"},{"make":"Dodge","model":"RAM"}],"years":[]},{"title":"Test Key MIT-ILC-MIT3","description":"Ilco Mitsubishi Key Blank MIT3 \u2014 Nickel-plated brass construction. Compatible with select Mitsubishi models. No electronics included.","sku":"MIT-ILC-MIT3","price":"1.13","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/MIT-ILC-MIT3.jpg?v=1765298050","type":"Test Key","fcc":"","keyway":"MIT3","chip":"","handle":"test-key-mit-ilc-mit3","buttons":"MIT3","compatibility":[{"make":"Mitsubishi","model":"General / Universal"}],"years":[]},{"title":"Test Key FOR-70-AM10","description":"Ford Remote Flip Key 3B \u2014 FCCID: N5F-A08TAA, PN# 164-R8040. Fits Ford Focus, Escape, and similar Ford vehicles.","sku":"FOR-70-AM10","price":"0.69","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-70-AM10.jpg?v=1765297974","type":"Test Key","fcc":"","keyway":"AM10","chip":"","handle":"test-key-for-70-am10","buttons":"HU101","compatibility":[{"make":"Ford","model":"Escape"},{"make":"Ford","model":"Focus"}],"years":[]},{"title":"Test Key TOY-ILCO-TR47","description":"Ilco Toyota Key Blank TR47 \u2014 High-quality brass blank. Compatible with Toyota vehicles using TR47 profile. No electronics included.","sku":"TOY-ILCO-TR47","price":"1.21","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/TOY-ILCO-TR47.jpg?v=1765378889","type":"Test Key","fcc":"","keyway":"TR47","chip":"","handle":"test-key-toy-ilco-tr47","buttons":"TR47/X217","compatibility":[{"make":"Toyota","model":"General / Universal"}],"years":[]},{"title":"Test Key GM-37-AM10","description":"GM Flip Key 5B Remote Start/Trunk \u2014 FCCID: OHT01060512, PN# 13508278. Compatible with Chevrolet Impala, Malibu, and GM sedans.","sku":"GM-37-AM10","price":"0.69","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/GM-37-AM10.jpg?v=1765297931","type":"Test Key","fcc":"","keyway":"AM10","chip":"","handle":"test-key-gm-37-am10","buttons":"HU100","compatibility":[{"make":"Chevrolet","model":"Malibu"},{"make":"Chevrolet","model":"Impala"}],"years":[]},{"title":"Test Key NIS-69-AM10","description":"Nissan Smart Key 5B Remote Start/Trunk \u2014 FCCID: KR5TXN7, PN# 285E3-6FL4A. Fits Nissan Rogue, Altima, and select Nissan models.","sku":"NIS-69-AM10","price":"0.66","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/NIS-69-AM10.jpg?v=1765378936","type":"Test Key","fcc":"","keyway":"AM10","chip":"","handle":"test-key-nis-69-am10","buttons":"NSN14","compatibility":[{"make":"Nissan","model":"Altima"},{"make":"Nissan","model":"Rogue"}],"years":[]},{"title":"Test Key HON-61-AM10","description":"Honda Smart Key 5B Remote Start/Trunk \u2014 FCCID: KR5V2X, PN# 72147-T2A-A21. Compatible with Honda Accord, Civic, and CR-V.","sku":"HON-61-AM10","price":"0.62","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/HON-61-AM10.jpg?v=1765297886","type":"Test Key","fcc":"","keyway":"AM10","chip":"","handle":"test-key-hon-61-am10","buttons":"HO01","compatibility":[{"make":"Honda","model":"Accord"},{"make":"Honda","model":"Civic"},{"make":"Honda","model":"CR-V"}],"years":[]},{"title":"Test Key LEX-43-AM10","description":"Lexus Smart Key 4B Trunk \u2014 FCCID: HYQ14FBC, PN# 89904-06140. Fits Lexus ES, RX, and other Lexus platforms.","sku":"LEX-43-AM10","price":"0.7","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/LEX-43-AM10.jpg?v=1765297847","type":"Test Key","fcc":"","keyway":"AM10","chip":"","handle":"test-key-lex-43-am10","buttons":"TOY43AT","compatibility":[{"make":"Lexus","model":"ES"},{"make":"Lexus","model":"RX"}],"years":[]},{"title":"Transponder Key DOG-54-AMP","description":"Dodge/Chrysler/Jeep Aftermarket 1994-2010 Durango, Cherokee, Town &amp; Country Plastic Head Metal Key Y160/Y164","sku":"DOG-54-AMP","price":"1.33","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/DOG-54-AMP_30e4f670-ed26-4494-9a38-120bdceb4c73.jpg?v=1765387281","type":"Transponder Key","fcc":"","keyway":"Y159","chip":"ID46","handle":"transponder-key-dog-54-amp","buttons":"Y159 / UNIVERSAL","compatibility":[{"make":"Chrysler","model":"Town & Country"},{"make":"Dodge","model":"Durango"},{"make":"Jeep","model":"Cherokee"}],"years":[1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010]},{"title":"Transponder Key CHR-12-AM","description":"Chrysler 200/300/Dodge Charger/Challenger Smart Key 4B Trunk, FCCID: M3N-40821302, PN# 68143505AF","sku":"CHR-12-AM","price":"3.68","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/CHR-12-AM.jpg?v=1765387205","type":"Transponder Key","fcc":"","keyway":"Y159","chip":"ID46","handle":"transponder-key-chr-12-am","buttons":"Y159 / PHILIPS ID 46 CHR","compatibility":[{"make":"Chrysler","model":"200"},{"make":"Chrysler","model":"300"},{"make":"Dodge","model":"Charger"},{"make":"Dodge","model":"Challenger"}],"years":[]},{"title":"Transponder Key FOR-87-AM","description":"Ford Aftermarket 2010-2013 Transit Connect Transponder Key Tibbe Blade (FO21T17/H91) PN# 5920217","sku":"FOR-87-AM","price":"9.86","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-87-AM.jpg?v=1765387090","type":"Transponder Key","fcc":"","keyway":"TIBBE","chip":"4D-63","handle":"transponder-key-for-87-am","buttons":"Tibbe / Texas ID 4D 63 80BIT","compatibility":[{"make":"Ford","model":"Transit Connect"},{"make":"Ford","model":"Transit"}],"years":[2010,2011,2012,2013]},{"title":"Transponder Key NIS-70-AM","description":"Nissan Rogue/Altima Smart Key 5B Remote Start/Trunk, FCCID: KR5TXN7, PN# 285E3-6FL4A","sku":"NIS-70-AM","price":"6.7","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/NIS-70-AM.jpg?v=1765387567","type":"Transponder Key","fcc":"","keyway":"NI04","chip":"ID46","handle":"transponder-key-nis-70-am","buttons":"DA34 / PHILIPS NXP AES","compatibility":[{"make":"Nissan","model":"Altima"},{"make":"Nissan","model":"Rogue"}],"years":[]},{"title":"Transponder Key CHV-64-AM","description":"Chevrolet Malibu/Impala Smart Key 5B Remote Start/Trunk, FCCID: HYQ4EA, PN# 13508278","sku":"CHV-64-AM","price":"4.69","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/CHV-64-AM.jpg?v=1765386763","type":"Transponder Key","fcc":"","keyway":"HU100","chip":"ID46","handle":"transponder-key-chv-64-am","buttons":"DW05AP / PHILIPS ID 46 GM EXT","compatibility":[{"make":"Chevrolet","model":"Malibu"},{"make":"Chevrolet","model":"Impala"}],"years":[]},{"title":"Transponder Key FOR-06-AM","description":"Ford Focus/Escape Remote Flip Key 3B, FCCID: N5F-A08TAA, PN# 164-R8040","sku":"FOR-06-AM","price":"8.11","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-06-AM.jpg?v=1765386704","type":"Transponder Key","fcc":"","keyway":"HU101","chip":"4D-63","handle":"transponder-key-for-06-am","buttons":"HU101 / NXP 128 BIT FORD","compatibility":[{"make":"Ford","model":"Escape"},{"make":"Ford","model":"Focus"}],"years":[]},{"title":"Transponder Key TOY-01-AM","description":"Toyota Camry/Corolla Remote Flip Key 3B, FCCID: HYQ12BBY, PN# 89070-06731","sku":"TOY-01-AM","price":"3.67","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/TOY-01-AM.jpg?v=1765386625","type":"Transponder Key","fcc":"","keyway":"TOY43","chip":"NXP 128 BIT FORD","handle":"transponder-key-toy-01-am","buttons":"TR47 / TEXAS ID 4D 67","compatibility":[{"make":"Toyota","model":"Camry"},{"make":"Toyota","model":"Corolla"}],"years":[]},{"title":"Transponder Key TOY-02-AM","description":"Toyota Camry/Corolla Remote Flip Key 4B Trunk, FCCID: HYQ12BBY, PN# 89070-06732","sku":"TOY-02-AM","price":"4.6","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/TOY-02-AM.jpg?v=1765386560","type":"Transponder Key","fcc":"","keyway":"TOY43","chip":"4D-72G","handle":"transponder-key-toy-02-am","buttons":"TR47 / Texas ID 4D 72 G Chip","compatibility":[{"make":"Toyota","model":"Camry"},{"make":"Toyota","model":"Corolla"}],"years":[]},{"title":"Transponder Key HON-02-AM","description":"Honda Accord/Civic CR-V Remote Flip Key 3B, FCCID: N5F-S0084A, PN# 72147-T2A-A01","sku":"HON-02-AM","price":"3.1","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/HON-02-AM_09f3ad5d-3f6c-49ea-b268-1e5aeee1a35c.jpg?v=1765386478","type":"Transponder Key","fcc":"","keyway":"HO01","chip":"ID46","handle":"transponder-key-hon-02-am","buttons":"HO01-SVC / PHILIPS ID 46","compatibility":[{"make":"Honda","model":"Accord"},{"make":"Honda","model":"Civic"},{"make":"Honda","model":"CR-V"}],"years":[]},{"title":"Transponder Key CHR-34-AM","description":"Chrysler Pacifica Smart Key 5B Remote Start/Trunk, FCCID: M3N-40821302, PN# 68394195AB","sku":"CHR-34-AM","price":"6.34","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/CHR-34-AM.jpg?v=1765386393","type":"Transponder Key","fcc":"","keyway":"Y159","chip":"ID46","handle":"transponder-key-chr-34-am","buttons":"Y159 / 4D64","compatibility":[{"make":"Chrysler","model":"Pacifica"}],"years":[]},{"title":"Transponder Key HON-29-AM","description":"Honda Accord Smart Key 5B Remote Start/Trunk, FCCID: KR5V2X, PN# 72147-T2A-A21","sku":"HON-29-AM","price":"3.58","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/HON-29-AM.jpg?v=1765386288","type":"Transponder Key","fcc":"","keyway":"HO01","chip":"ID46","handle":"transponder-key-hon-29-am","buttons":"HO01-SVC / MEGAMOS ID 13","compatibility":[{"make":"Honda","model":"Accord"}],"years":[]},{"title":"Transponder Key CHV-01-AM","description":"Chevrolet Cruze/Malibu Remote Flip Key 4B Trunk, FCCID: OHT01060512, PN# 13504199","sku":"CHV-01-AM","price":"2.87","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/CHV-01-AM.jpg?v=1765386166","type":"Transponder Key","fcc":"","keyway":"HU100","chip":"ID46","handle":"transponder-key-chv-01-am","buttons":"B106 / PHILIPS ID 46 GM CIRCLE +","compatibility":[{"make":"Chevrolet","model":"Cruze"},{"make":"Chevrolet","model":"Malibu"}],"years":[]},{"title":"Transponder Key MAZ-13-AM","description":"Mazda 3/6 Smart Key 4B Trunk, FCCID: WAZSKE13D01, PN# GJ6A-67-5RYA","sku":"MAZ-13-AM","price":"10.51","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/MAZ-13-AM.jpg?v=1765386105","type":"Transponder Key","fcc":"","keyway":"MAZ24","chip":"ID46","handle":"transponder-key-maz-13-am","buttons":"MZ31 / ID 83 TEXAS ID 4D 63 80 BIT","compatibility":[{"make":"Mazda","model":"3"},{"make":"Mazda","model":"6"}],"years":[]},{"title":"Transponder Key CHR-16-AM","description":"Chrysler 200/300/Dodge Charger Smart Key 5B Remote Start/Trunk, FCCID: M3N-40821302, PN# 68143505AG","sku":"CHR-16-AM","price":"8.6","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/CHR-16-AM.jpg?v=1765386018","type":"Transponder Key","fcc":"","keyway":"Y159","chip":"ID46","handle":"transponder-key-chr-16-am","buttons":"Y159 / PHILIPS ID 46 CHR","compatibility":[{"make":"Chrysler","model":"200"},{"make":"Chrysler","model":"300"},{"make":"Dodge","model":"Charger"}],"years":[]},{"title":"Transponder Key TOY-72-AM","description":"Toyota Highlander/RAV4 Smart Key 5B Hatch/Remote Start, FCCID: HYQ14FBA, PN# 89904-0E120","sku":"TOY-72-AM","price":"10.78","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/TOY-72-AM.jpg?v=1765385961","type":"Transponder Key","fcc":"","keyway":"TOY43","chip":"4DH","handle":"transponder-key-toy-72-am","buttons":"LXP90 / Texas ID 4D H","compatibility":[{"make":"Toyota","model":"RAV4"},{"make":"Toyota","model":"Highlander"}],"years":[]},{"title":"Transponder Key FOR-38-AM","description":"Ford Fusion/Edge/Explorer Smart Key 5B Remote Start/Trunk, FCCID: M3N-A2C93142300, PN# 164-R7989","sku":"FOR-38-AM","price":"3.59","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-38-AM.jpg?v=1765385886","type":"Transponder Key","fcc":"","keyway":"HU101","chip":"4D-63 80 BIT","handle":"transponder-key-for-38-am","buttons":"H75 / TEXAS ID 4D 63 80 BIT","compatibility":[{"make":"Ford","model":"Explorer"},{"make":"Ford","model":"Fusion"},{"make":"Ford","model":"Edge"}],"years":[]},{"title":"Transponder Key TOY-111-AM","description":"Toyota Tacoma/Tundra Smart Key 5B Remote Start/Trunk, FCCID: HYQ14FBC, PN# 89904-0C050","sku":"TOY-111-AM","price":"4.57","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/TOY-111-AM.jpg?v=1765385821","type":"Transponder Key","fcc":"","keyway":"TOY43","chip":"TEXAS ID 4C TAG","handle":"transponder-key-toy-111-am","buttons":"TR47 / TEXAS ID 4C TAG","compatibility":[{"make":"Toyota","model":"Tacoma"},{"make":"Toyota","model":"Tundra"}],"years":[]},{"title":"Transponder Key NIS-02-AM","description":"Nissan Altima Smart Key 4B Trunk, FCCID: KR5S180144014, PN# 285E3-9HS4A","sku":"NIS-02-AM","price":"3.14","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/NIS-02-AM.jpg?v=1765385734","type":"Transponder Key","fcc":"","keyway":"NI04","chip":"ID46","handle":"transponder-key-nis-02-am","buttons":"DA34 / PHILIPS ID 46","compatibility":[{"make":"Nissan","model":"Altima"}],"years":[]},{"title":"Transponder Key SAT-01-AM","description":"Saturn Vue Remote Flip Key 3B, FCCID: OHT01060512, PN# 15857839","sku":"SAT-01-AM","price":"2.15","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/SAT-01-AM.jpg?v=1765385678","type":"Transponder Key","fcc":"","keyway":"HU100","chip":"ID46","handle":"transponder-key-sat-01-am","buttons":"DW05AP / PHILIPS ID 46","compatibility":[{"make":"Saturn","model":"Vue"}],"years":[]},{"title":"Transponder Key MIT-01-AM","description":"Mitsubishi Outlander Smart Key 4B Trunk, FCCID: OUCG8D-620M-A, PN# 6370A428","sku":"MIT-01-AM","price":"4.37","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/MIT-01-AM.jpg?v=1765385590","type":"Transponder Key","fcc":"","keyway":"MIT8","chip":"ID46","handle":"transponder-key-mit-01-am","buttons":"MIT3 / PHILIPS ID 46 MITS","compatibility":[{"make":"Mitsubishi","model":"Outlander"}],"years":[]},{"title":"Transponder Key TOY-05-AM","description":"Toyota Prius Smart Key 3B Trunk, FCCID: MOZB31EG, PN# 89904-47061","sku":"TOY-05-AM","price":"7.64","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/TOY-05-AM.jpg?v=1765385532","type":"Transponder Key","fcc":"","keyway":"TOY43","chip":"TEXAS ID 4D H","handle":"transponder-key-toy-05-am","buttons":"TR47 / TEXAS ID 4D H","compatibility":[{"make":"Toyota","model":"Prius"}],"years":[]},{"title":"Transponder Key FOR-94-AM","description":"Ford Explorer/F-150 Smart Key 5B Remote Start/Trunk, FCCID: M3N-A2C93142300, PN# 164-R8150","sku":"FOR-94-AM","price":"4.49","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-94-AM.jpg?v=1765385445","type":"Transponder Key","fcc":"","keyway":"HU101","chip":"TEXAS 4C","handle":"transponder-key-for-94-am","buttons":"H75 / TEXAS 4C","compatibility":[{"make":"Ford","model":"Explorer"},{"make":"Ford","model":"F-150"}],"years":[]},{"title":"Transponder Key HON-42-AM","description":"Honda Civic/Accord Smart Key 5B Remote Start/Trunk, FCCID: KR5V2X, PN# 72147-T2A-A31","sku":"HON-42-AM","price":"5.86","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/HON-42-AM.jpg?v=1765385303","type":"Transponder Key","fcc":"","keyway":"HO01","chip":"ID46","handle":"transponder-key-hon-42-am","buttons":"HO01-SVC / PHILIPS ID 47 HONDA G","compatibility":[{"make":"Honda","model":"Accord"},{"make":"Honda","model":"Civic"}],"years":[]},{"title":"Transponder Key GM-32-AM","description":"GM Silverado/Sierra Smart Key 5B Remote Start/Tailgate, FCCID: HYQ1EA, PN# 13508398","sku":"GM-32-AM","price":"3.41","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/GM-32-AM.jpg?v=1765385244","type":"Transponder Key","fcc":"","keyway":"HU100","chip":"ID46","handle":"transponder-key-gm-32-am","buttons":"HU100 / PHILIPS ID 46 GM EXT","compatibility":[{"make":"GM","model":"General / Universal"}],"years":[]},{"title":"Transponder Key FOR-40-AM","description":"Ford Escape/Focus Remote Flip Key 4B Trunk, FCCID: N5F-A08TAA, PN# 164-R8042","sku":"FOR-40-AM","price":"4.09","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-40-AM.jpg?v=1765385161","type":"Transponder Key","fcc":"","keyway":"HU101","chip":"TEXAS ID 4D 63 80 BIT","handle":"transponder-key-for-40-am","buttons":"H75 / TEXAS ID 4D 63 80 BIT","compatibility":[{"make":"Ford","model":"Escape"},{"make":"Ford","model":"Focus"}],"years":[]},{"title":"Transponder Key HON-01-AM","description":"Honda Accord/Civic CR-V Remote Flip Key 3B, FCCID: N5F-S0084A, PN# 72147-T2A-A00","sku":"HON-01-AM","price":"3.84","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/HON-01-AM.jpg?v=1765385113","type":"Transponder Key","fcc":"","keyway":"HO01","chip":"ID46","handle":"transponder-key-hon-01-am","buttons":"HD103 / MEGAMOS ID 13","compatibility":[{"make":"Honda","model":"Accord"},{"make":"Honda","model":"Civic"},{"make":"Honda","model":"CR-V"}],"years":[]},{"title":"FOBIK CAD-11-AM","description":"Cadillac SRX Smart Key 5B Hatch/Remote Start, FCCID: NBG009768T, PN# 22865375","sku":"CAD-11-AM","price":"16.5","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/CAD-11-AM.jpg?v=1765294227","type":"FOBIKS","fcc":"NBG009768T","keyway":"HU100","chip":"ID46","handle":"fobik-cad-11-am","buttons":"Y160 / Lock, Unlock, Hatch, Remote Start Panic / PHILIPS ID 46","compatibility":[{"make":"Cadillac","model":"SRX"}],"years":[]},{"title":"FOBIK FOR-45-AM","description":"Ford Fusion Remote Flip Key 4B Trunk, FCCID: N5F-A08TAA, PN# 164-R7986, 5924003","sku":"FOR-45-AM","price":"11.52","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-45-AM.jpg?v=1765297087","type":"FOBIKS","fcc":"N5F-A08TAA","keyway":"HU101","chip":"ID46","handle":"fobik-for-45-am","buttons":"H75 / Lock, Unlock, Trunk, Panic / TEXAS ID 4D 63 128 BIT","compatibility":[{"make":"Ford","model":"Fusion"}],"years":[]},{"title":"FOBIK NIS-25-AM","description":"Nissan Altima Smart Key 5B Remote Start, FCCID: KR5S180144014, PN# 285E3-9HP5B","sku":"NIS-25-AM","price":"22.9","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/NIS-25-AM.jpg?v=1765296776","type":"FOBIKS","fcc":"KR5S180144014","keyway":"NI04","chip":"ID46","handle":"fobik-nis-25-am","buttons":"DA34 / Lock, Unlock, Trunk, Remote Start, Panic / PHILIPS ID 47","compatibility":[{"make":"Nissan","model":"Altima"}],"years":[]},{"title":"FOBIK DOG-22-AM","description":"Dodge Charger/Challenger Smart Key 5B Remote Start/Trunk, FCCID: M3N-40821302, PN# 5026676AC","sku":"DOG-22-AM","price":"19.92","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/DOG-22-AM.jpg?v=1765294923","type":"FOBIKS","fcc":"M3N-40821302","keyway":"Y159","chip":"ID47","handle":"fobik-dog-22-am","buttons":"HU100 / Lock, Unlock, Trunk, Remote Start, Panic / PHILIPS ID 46 CHR","compatibility":[{"make":"Dodge","model":"Charger"},{"make":"Dodge","model":"Challenger"}],"years":[]},{"title":"FOBIK FOR-36-AM","description":"Ford Edge/Expedition/Explorer/Flex/Focus Smart Key 5B Trunk/Remote Start, FCCID: M3N5WY8609, PN# 5921286","sku":"FOR-36-AM","price":"19.38","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-36-AM.jpg?v=1765296722","type":"FOBIKS","fcc":"M3N5WY8609","keyway":"HU101","chip":"ID47","handle":"fobik-for-36-am","buttons":"H75 / Lock, Unlock, Trunk, Remote Start, Panic / PHILIPS ID 46","compatibility":[{"make":"Ford","model":"Explorer"},{"make":"Ford","model":"Focus"},{"make":"Ford","model":"Edge"},{"make":"Ford","model":"Flex"},{"make":"Ford","model":"Expedition"}],"years":[]},{"title":"FOBIK HYU-07-AM","description":"Hyundai Sonata/Azera/Genesis Smart Key 4B Trunk, FCCID: SY5HMFNA04, PN# 95440-3V021","sku":"HYU-07-AM","price":"26.87","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/HYU-07-AM.jpg?v=1765296667","type":"FOBIKS","fcc":"SY5HMFNA04","keyway":"HY15","chip":"ID46","handle":"fobik-hyu-07-am","buttons":"TOY40 / Lock, Unlock, Trunk, Panic / HITAG 2 ID46 PCF7952A","compatibility":[{"make":"Hyundai","model":"Sonata"},{"make":"Hyundai","model":"Azera"},{"make":"Hyundai","model":"Genesis"}],"years":[]},{"title":"FOBIK NIS-12-AM","description":"Nissan Smart Key 4B Trunk, FCCID: KR55WK49622 / KR55WK48903, PN# 285E3-JA05A","sku":"NIS-12-AM","price":"10.36","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/NIS-12-AM.jpg?v=1765296633","type":"FOBIKS","fcc":"KR55WK49622,KR55WK48903","keyway":"NI04","chip":"ID46","handle":"fobik-nis-12-am","buttons":"DA34 / Lock, Unlock, Trunk, Panic / PHILIPS ID 46","compatibility":[{"make":"Nissan","model":"General / Universal"}],"years":[]},{"title":"FOBIK CHV-46-AM","description":"Chevrolet Cruze/Impala/Malibu Remote Flip Key (PEPS) 5B Trunk/Remote Start, FCCID: OHT05918179, PN# 5927058","sku":"CHV-46-AM","price":"22.34","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/CHV-46-AM.jpg?v=1765294618","type":"FOBIKS","fcc":"(PEPS) OHT05918179, OHT01060512, P409MK74946931","keyway":"HU100","chip":"ID46","handle":"fobik-chv-46-am","buttons":"HU100 / Lock, Unlock, Trunk, Remote Start, Panic / PHILIPS ID 46","compatibility":[{"make":"Chevrolet","model":"Cruze"},{"make":"Chevrolet","model":"Malibu"},{"make":"Chevrolet","model":"Impala"}],"years":[]},{"title":"FOBIK JEP-11-AM","description":"Jeep Grand Cherokee/Durango Smart Key 5B Hatch/Remote Start, FCCID: M3N-40821302, PN# 68143505AC","sku":"JEP-11-AM","price":"20.03","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/JEP-11-AM.jpg?v=1765296551","type":"FOBIKS","fcc":"M3N-40821302","keyway":"Y159","chip":"ID47","handle":"fobik-jep-11-am","buttons":"Y159 / Y160 / CY24 / Lock, Unlock, Remote Start, Hatch, Panic / PHILIPS ID 46 CHR","compatibility":[{"make":"Jeep","model":"Grand Cherokee"},{"make":"Jeep","model":"Cherokee"}],"years":[]},{"title":"FOBIK FOR-63-AM","description":"Ford Edge/Explorer/Fusion/Mustang Smart Key 4B Trunk, FCCID: M3N-A2C93142300, PN# 164-R8150","sku":"FOR-63-AM","price":"32.26","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-63-AM.jpg?v=1765296494","type":"FOBIKS","fcc":"M3N-A2C93142300","keyway":"HU101","chip":"ID47","handle":"fobik-for-63-am","buttons":"HU101 / Lock, Unlock, Trunk, Panic / NXP HITAG-PRO ID49 128 Bit","compatibility":[{"make":"Ford","model":"Explorer"},{"make":"Ford","model":"Fusion"},{"make":"Ford","model":"Edge"},{"make":"Ford","model":"Mustang"}],"years":[]},{"title":"FOBIK FOR-59-AM","description":"Ford Bronco/F-150/F-250/F-350/Ranger Remote Flip Key 4B Remote Start, FCCID: N5F-A08TDA, PN# 164-R8134","sku":"FOR-59-AM","price":"16.13","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-59-AM.jpg?v=1765296451","type":"FOBIKS","fcc":"N5F-A08TDA","keyway":"HU101","chip":"ID46","handle":"fobik-for-59-am","buttons":"HU101 / Lock, Unlock, Remote Start, Panic / NXP- HITAG-PRO ID49","compatibility":[{"make":"Ford","model":"F-150"},{"make":"Ford","model":"F-250"},{"make":"Ford","model":"F-350"},{"make":"Ford","model":"Bronco"},{"make":"Ford","model":"Ranger"}],"years":[]},{"title":"FOBIK DOG-48-AM","description":"Dodge Charger/Challenger/Chrysler 200 Smart Key 5B Remote Start/Trunk, FCCID: M3M-40821302, PN# 68394195AA","sku":"DOG-48-AM","price":"24.19","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/DOG-48-AM.jpg?v=1765296392","type":"FOBIKS","fcc":"M3M-40821302","keyway":"Y159","chip":"ID47","handle":"fobik-dog-48-am","buttons":"TOY48 / Lock, Unlock, Remote Start, Trunk, Panic / NXP AES 128 Bit","compatibility":[{"make":"Chrysler","model":"200"},{"make":"Dodge","model":"Charger"},{"make":"Dodge","model":"Challenger"}],"years":[]},{"title":"FOBIK CHV-55-AM","description":"Chevrolet Camaro/Cruze/Malibu Smart Key 5B Trunk/Remote Start, FCCID: HYQ4EA, PN# 13589533","sku":"CHV-55-AM","price":"18.39","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/CHV-55-AM.jpg?v=1765294707","type":"FOBIKS","fcc":"HYQ4EA","keyway":"HU100","chip":"ID47","handle":"fobik-chv-55-am","buttons":"B111 / Lock, Unlock, Trunk, Remote Start, Panic / PHILIPS ID 46","compatibility":[{"make":"Chevrolet","model":"Cruze"},{"make":"Chevrolet","model":"Malibu"},{"make":"Chevrolet","model":"Camaro"}],"years":[]},{"title":"FOBIK DOG-42-AM","description":"RAM 1500 Smart Key 5B, FCCID: GQ4-53T, PN# 68159655AG","sku":"DOG-42-AM","price":"13.54","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/DOG-42-AM.jpg?v=1765296362","type":"FOBIKS","fcc":"GQ4-53T","keyway":"Y159","chip":"ID46","handle":"fobik-dog-42-am","buttons":"TOY40 / Lock, Unlock, Remote Start, Air Suspension, Panic / PHILIPS ID 46 CHR","compatibility":[{"make":"RAM","model":"1500"}],"years":[]},{"title":"FOBIK CHV-54-AM","description":"Chevrolet Camaro/Cruze/Malibu Smart Key 4B Trunk, FCCID: HYQ4EA, PN# 13529660","sku":"CHV-54-AM","price":"24.58","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/CHV-54-AM.jpg?v=1765294465","type":"FOBIKS","fcc":"HYQ4EA","keyway":"HU100","chip":"ID47","handle":"fobik-chv-54-am","buttons":"B111 / Lock, Unlock, Trunk, Panic / PHILIPS ID 46","compatibility":[{"make":"Chevrolet","model":"Cruze"},{"make":"Chevrolet","model":"Malibu"},{"make":"Chevrolet","model":"Camaro"}],"years":[]},{"title":"FOBIK DOG-27-AM","description":"Dodge Grand Caravan Fobik Key 6B, FCCID: IYZ-C01C, PN# 56046705AE","sku":"DOG-27-AM","price":"8.18","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/DOG-27-AM.jpg?v=1765295394","type":"FOBIKS","fcc":"IYZ-C01C","keyway":"Y159","chip":"ID46","handle":"fobik-dog-27-am","buttons":"Y159 / Lock, Unlock, Slide Door L, Slide Door R, Panic, Hatch / PHILIPS ID 46 CHR","compatibility":[{"make":"Dodge","model":"Grand Caravan"}],"years":[]},{"title":"FOBIK FOR-54-AM","description":"Ford Explorer/Bronco/Ranger/Expedition/F-150 Remote Flip Key 3B, FCCID: N5F-A08TAA, PN# 164-R8130","sku":"FOR-54-AM","price":"16.13","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-54-AM.jpg?v=1765295354","type":"FOBIKS","fcc":"N5F-A08TAA","keyway":"HU101","chip":"ID46","handle":"fobik-for-54-am","buttons":"HU101 / Lock, Unlock, Panic / TEXAS ID 4D 63 128 BIT","compatibility":[{"make":"Ford","model":"Explorer"},{"make":"Ford","model":"F-150"},{"make":"Ford","model":"Expedition"},{"make":"Ford","model":"Bronco"},{"make":"Ford","model":"Ranger"}],"years":[]},{"title":"FOBIK GM-18-AM","description":"GM Camaro/Malibu Remote Flip Key 5B Remote Start/Trunk, FCCID: OHT01060512, PN# 13504199","sku":"GM-18-AM","price":"7.45","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/GM-18-AM.jpg?v=1765295291","type":"FOBIKS","fcc":"OHT01060512","keyway":"HU100","chip":"ID46","handle":"fobik-gm-18-am","buttons":"B106 / Lock, Unlock, Trunk, Panic, Remote Start / PHILIPS ID 46","compatibility":[{"make":"GM","model":"General / Universal"}],"years":[]},{"title":"FOBIK NIS-38-AM","description":"Nissan Altima Smart Key 4B Trunk, FCCID: KR5S180144014, PN# 285E3-9HS4A","sku":"NIS-38-AM","price":"17.17","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/NIS-38-AM.jpg?v=1765295234","type":"FOBIKS","fcc":"KR5S180144014","keyway":"NI04","chip":"ID46","handle":"fobik-nis-38-am","buttons":"DA34 / Lock, Unlock, Trunk, Panic / NXP AES 128 BIT","compatibility":[{"make":"Nissan","model":"Altima"}],"years":[]},{"title":"FOBIK FOR-46-AM","description":"Ford Fusion/Edge/Explorer Smart Key 5B Trunk/Remote Start, FCCID: M3N-A2C31243300, PN# 164-R7989","sku":"FOR-46-AM","price":"28.7","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-46-AM.jpg?v=1765295141","type":"FOBIKS","fcc":"M3N-A2C31243300","keyway":"HU101","chip":"ID47","handle":"fobik-for-46-am","buttons":"HU101 / Lock, Unlock, Remote Start, Trunk, Panic / NXP HITAG-PRO ID49 128 Bit","compatibility":[{"make":"Ford","model":"Explorer"},{"make":"Ford","model":"Fusion"},{"make":"Ford","model":"Edge"}],"years":[]},{"title":"FOBIK DOG-35-AM","description":"RAM 1500-3500 Fobik Key 3B, FCCID: GQ4-53T, PN# 56046953AE","sku":"DOG-35-AM","price":"10.3","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/DOG-35-AM.jpg?v=1765295088","type":"FOBIKS","fcc":"GQ4-53T","keyway":"Y159","chip":"ID46","handle":"fobik-dog-35-am","buttons":"Y160 / Lock, Unlock, Panic / PHILIPS ID 46 CHR","compatibility":[{"make":"RAM","model":"1500"},{"make":"RAM","model":"3500"},{"make":"RAM","model":"1500-3500"}],"years":[]},{"title":"FOB DOG-37-AM","description":"RAM 1500-3500 Fobik Key 4B Remote Start, FCCID: GQ4-53T, PN# 56046955AG","sku":"DOG-37-AM","price":"11.36","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/DOG-37-AM.jpg?v=1765294154","type":"FOBIKS","fcc":"GQ4-53T","keyway":"Y159","chip":"ID46","handle":"fob-dog-37-am","buttons":"Y160 / Lock, Unlock, Remote Start, Panic / PHILIPS ID 46 CHR","compatibility":[{"make":"RAM","model":"1500"},{"make":"RAM","model":"3500"},{"make":"RAM","model":"1500-3500"}],"years":[]},{"title":"FOBIK CHV-50-AM","description":"Chevrolet Suburban/Tahoe Smart Key 6B Hatch/Hatch Glass/Remote Start, FCCID: HYQ1AA, PN# 13508278","sku":"CHV-50-AM","price":"32.75","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/CHV-50-AM.jpg?v=1765213153","type":"FOBIKS","fcc":"HYQ1AA","keyway":"HU100","chip":"ID47","handle":"fobik-chv-50-am","buttons":"B111 / Lock, Unlock, Remote Start, Hatch, Hatch Glass, Panic / PHILIPS ID 46","compatibility":[{"make":"Chevrolet","model":"Suburban"},{"make":"Chevrolet","model":"Tahoe"}],"years":[]},{"title":"FOBIK DOG-20-AM","description":"Dodge RAM/Journey Fobik Key 3B, FCCID: IYZ-C01C, PN# 56046707AE","sku":"DOG-20-AM","price":"11.46","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/DOG-20-AM.jpg?v=1765294863","type":"FOBIKS","fcc":"IYZ-C01C","keyway":"Y159","chip":"ID46","handle":"fobik-dog-20-am","buttons":"Y159 / Lock, Unlock, Panic / PHILIPS ID 46 CHR","compatibility":[{"make":"Dodge","model":"Journey"},{"make":"Dodge","model":"RAM"}],"years":[]},{"title":"FOBIK FOR-61-AM","description":"Ford Edge/Fusion/Explorer/Mustang/Expedition Smart Key 5B Remote Start/Trunk, FCCID: M3N-A2C93142600, PN# 5929500","sku":"FOR-61-AM","price":"22.03","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-61-AM.jpg?v=1765308699","type":"FOBIKS","fcc":"M3N-A2C93142600","keyway":"HU101","chip":"ID47","handle":"fobik-for-61-am","buttons":"HU101 / Lock, Unlock, Remote Start, Trunk, Panic / NXP HITAG-PRO ID49 128 Bit","compatibility":[{"make":"Ford","model":"Explorer"},{"make":"Ford","model":"Fusion"},{"make":"Ford","model":"Edge"},{"make":"Ford","model":"Mustang"},{"make":"Ford","model":"Expedition"}],"years":[]},{"title":"FOBIK NIS-28-AM","description":"Nissan Sentra/Versa Smart Key 4B Trunk, FCCID: CWTWB1U840, PN# 285E3-3SG0D","sku":"NIS-28-AM","price":"15.84","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/NIS-28-AM.jpg?v=1765387679","type":"FOBIKS","fcc":"CWTWB1U840","keyway":"NI04","chip":"ID46","handle":"fobik-nis-28-am","buttons":"DA34 / Lock, Unlock, Trunk, Panic / PHILIPS ID 46","compatibility":[{"make":"Nissan","model":"Sentra"},{"make":"Nissan","model":"Versa"}],"years":[]},{"title":"FOBIK NIS-37-AM","description":"Nissan Altima/Maxima Smart Key 5B Remote Start/Trunk, FCCID: KR5S180144014, PN# 285E3-4RA0B","sku":"NIS-37-AM","price":"15.68","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/IS-37-AM.png?v=1765378161","type":"FOBIKS","fcc":"KR5S180144014","keyway":"NI04","chip":"ID46","handle":"fobik-nis-37-am","buttons":"DA34 / Lock, Unlock, Trunk, Panic / PHILIPS ID 46","compatibility":[{"make":"Nissan","model":"Altima"},{"make":"Nissan","model":"Maxima"}],"years":[]},{"title":"FOBIK DOG-12-AM","description":"Dodge Fobik Key 5B Remote Start/Trunk, FCCID: IYZ-C01C, PN# 05026887AK","sku":"DOG-12-AM","price":"14.97","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/DOG-12-AM.jpg?v=1765294785","type":"FOBIKS","fcc":"IYZ-C01C","keyway":"Y159","chip":"ID46","handle":"fobik-dog-12-am","buttons":"Y159 / Lock, Unlock, Trunk, Panic, Remote Start / PHILIPS ID 46 CHR","compatibility":[{"make":"Dodge","model":"General / Universal"}],"years":[]},{"title":"FOBIK NIS-24-AM","description":"Nissan Altima Smart Key 4B Trunk, FCCID: KR5S180144014, PN# 285E3-9HP4B","sku":"NIS-24-AM","price":"18.58","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/NIS-24-AM.jpg?v=1765378995","type":"FOBIKS","fcc":"KR5S180144014","keyway":"NI04","chip":"ID46","handle":"fobik-nis-24-am","buttons":"DA34 / Lock, Unlock, Trunk, Panic / PHILIPS ID 47","compatibility":[{"make":"Nissan","model":"Altima"}],"years":[]},{"title":"FOBIK CHV-04-AM","description":"GMC Sierra/Silverado Smart Key 5B Remote Start/Tailgate, FCCID: HYQ1EA, PN# 13508398","sku":"CHV-04-AM","price":"28.8","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/CHV-04-AM.jpg?v=1765294289","type":"FOBIKS","fcc":"HYQ1EA","keyway":"HU100","chip":"ID47","handle":"fobik-chv-04-am","buttons":"B106 / Lock, Unlock, Remote Start, Tailgate, Panic / PHILIPS ID 46","compatibility":[{"make":"GMC","model":"Sierra"}],"years":[]},{"title":"FOBIK TOY-64-AM","description":"Toyota Camry/Corolla Remote Flip Key 4B Trunk, FCCID: HYQ12BFB, PN# 89070-06790","sku":"TOY-64-AM","price":"28.52","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/TOY-64-AM.jpg?v=1765310605","type":"FOBIKS","fcc":"HYQ12BFB","keyway":"TOY43","chip":"ID47","handle":"fobik-toy-64-am","buttons":"TR47 / Lock, Unlock, Trunk, Panic / TEXAS ID 4D H","compatibility":[{"make":"Toyota","model":"Camry"},{"make":"Toyota","model":"Corolla"}],"years":[]},{"title":"Remote Head Key HON-15-AM","description":"Honda Accord/Civic CR-V Smart Key 4B Trunk, FCCID: KR5V2X, PN# 72147-T2A-A11","sku":"HON-15-AM","price":"6.87","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/HON-15-AM.png?v=1765381322","type":"Remote Head Key","fcc":"KR55WK49308","keyway":"HO01","chip":"ID46","handle":"remote-head-key-hon-15-am","buttons":"Default Title / Lock, Unlock, Trunk, Panic / PHILIPS ID 46","compatibility":[{"make":"Honda","model":"Accord"},{"make":"Honda","model":"Civic"},{"make":"Honda","model":"CR-V"}],"years":[]},{"title":"Remote Head Key TOY-18-AM","description":"Toyota Camry/Corolla Smart Key 4B Trunk, FCCID: HYQ14FBC, PN# 89904-06140","sku":"TOY-18-AM","price":"20.78","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/TOY-18-AM.jpg?v=1765306468","type":"Remote Head Key","fcc":"GQ4-52T","keyway":"TOY43","chip":"ID46","handle":"remote-head-key-toy-18-am","buttons":"Default Title / Lock, Unlock, Panic / TEXAS ID 4D H","compatibility":[{"make":"Toyota","model":"Camry"},{"make":"Toyota","model":"Corolla"}],"years":[]},{"title":"Remote Head Key TOY-54-AM","description":"Toyota Aftermarket 2014-2018 Camry Remote Head Key (OEM CHIP) 4B Trunk FCCID: HYQ12BDM/BEL PN# 89070-06421","sku":"TOY-54-AM","price":"13.26","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/TOY-54-AM.jpg?v=1765306301","type":"Remote Head Key","fcc":"HYQ12BDM,BEL","keyway":"TOY43","chip":"ID47","handle":"remote-head-key-toy-54-am","buttons":"TR47 / Lock, Unlock, Trunk, Panic / TEXAS ID 4D H (OEM CHIP)","compatibility":[{"make":"Toyota","model":"Camry"}],"years":[2014,2015,2016,2017,2018]},{"title":"Remote Head Key FOR-32-AM","description":"Ford Aftermarket 2011-2020 Escape, Edge, Mustang, Flex, Focus, Fusion Remote Head Key 3B FCCID: CWTWB1U793 PN# 5912560, 164-R8070","sku":"FOR-32-AM","price":"7.78","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-32-AM.jpg?v=1765304895","type":"Remote Head Key","fcc":"CWTWB1U793","keyway":"HU101","chip":"ID46","handle":"remote-head-key-for-32-am","buttons":"HU101 / Lock, Unlock, Panic / TEXAS ID 4D 63","compatibility":[{"make":"Ford","model":"Escape"},{"make":"Ford","model":"Focus"},{"make":"Ford","model":"Fusion"},{"make":"Ford","model":"Edge"},{"make":"Ford","model":"Mustang"},{"make":"Ford","model":"Flex"}],"years":[2011,2012,2013,2014,2015,2016,2017,2018,2019,2020]},{"title":"FOBIK TOY-20-AM","description":"Toyota Aftermarket 2004-2018 Sienna Keyless Entry Remote 6B Hatch/Power Doors FCCID: GQ43VT20T PN# 89742-AE051","sku":"","price":"11.52","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/TOY-20-AM.jpg?v=1765304137","type":"FOBIK","fcc":"","keyway":"H75","chip":"TEXAS ID 4D 63 80 BIT","handle":"remote-head-key-toy-20-am","buttons":"Default Title","compatibility":[{"make":"Toyota","model":"Sienna"}],"years":[2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018]},{"title":"Remote Head Key NIS-08-AM","description":"Nissan Aftermarket 2003-2019 350Z, Maxima Remote Head Key 4B Trunk FCCID: CWTWB1U751 PN# H0561-3AA0B","sku":"NIS-08-AM","price":"9.1","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/NIS-08-AM.jpg?v=1765303895","type":"Remote Head Key","fcc":"CWTWB1U751","keyway":"NI04","chip":"ID46","handle":"remote-head-key-nis-08-am","buttons":"DA34 / Lock, Unlock, Trunk, Panic / PHILIPS ID 46","compatibility":[{"make":"Nissan","model":"Maxima"},{"make":"Nissan","model":"350Z"}],"years":[2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019]},{"title":"Remote Head Key FOR-33-AM","description":"Ford Aftermarket 2011-2020 Explorer, F-150, F-250, F-350 Remote Head Key 4B Remote Start FCCID: CWTWB1U793 PN# 5912561, 164-R8067","sku":"FOR-33-AM","price":"7.46","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-33-AM.jpg?v=1765303597","type":"Remote Head Key","fcc":"CWTWB1U793","keyway":"HU101","chip":"ID46","handle":"remote-head-key-for-33-am","buttons":"H75 / Lock, Unlock, Remote Start, Panic / TEXAS ID 4D 63 80 BIT","compatibility":[{"make":"Ford","model":"Explorer"},{"make":"Ford","model":"F-150"},{"make":"Ford","model":"F-250"},{"make":"Ford","model":"F-350"}],"years":[2011,2012,2013,2014,2015,2016,2017,2018,2019,2020]},{"title":"Remote Head Key CHR-01-AM","description":"Chrysler 200/300/Dodge Charger/Challenger Smart Key 4B Trunk, FCCID: M3N-40821302, PN# 68143505AD","sku":"CHR-01-AM","price":"11.64","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/CHR-01-AM.jpg?v=1765303217","type":"Remote Head Key","fcc":"OHT692427AA","keyway":"Y159","chip":"ID46","handle":"remote-head-key-chr-01-am","buttons":"Y159 / Lock, Unlock, Hatch, Panic / PHILIPS ID 46 CHR","compatibility":[{"make":"Chrysler","model":"200"},{"make":"Chrysler","model":"300"},{"make":"Dodge","model":"Charger"},{"make":"Dodge","model":"Challenger"}],"years":[]},{"title":"Remote Head Key HON-14-AM","description":"Honda Accord/Civic CR-V Smart Key 5B Remote Start/Trunk, FCCID: KR5V2X, PN# 72147-T2A-A21","sku":"HON-14-AM","price":"7.67","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/HON-14-AM.jpg?v=1765302187","type":"Remote Head Key","fcc":"N5F-S0084A","keyway":"HO01","chip":"ID46","handle":"remote-head-key-hon-14-am","buttons":"HO01-SVC / Lock, Unlock, Trunk, Panic / PHILIPS ID 46","compatibility":[{"make":"Honda","model":"Accord"},{"make":"Honda","model":"Civic"},{"make":"Honda","model":"CR-V"}],"years":[]},{"title":"Remote Head Key CHR-02-AM","description":"Chrysler 200/300/Dodge Charger/Challenger Smart Key 5B Remote Start/Trunk, FCCID: M3N-40821302, PN# 68143505AE","sku":"CHR-02-AM","price":"12.43","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/CHR-02-AM.jpg?v=1765302141","type":"Remote Head Key","fcc":"OHT692427AA","keyway":"Y159","chip":"ID46","handle":"remote-head-key-chr-02-am","buttons":"Y159 / Lock, Unlock, Panic / PHILIPS ID 46 CHR","compatibility":[{"make":"Chrysler","model":"200"},{"make":"Chrysler","model":"300"},{"make":"Dodge","model":"Charger"},{"make":"Dodge","model":"Challenger"}],"years":[]},{"title":"FOBIK HON-05-AM","description":"Honda Accord/Civic CR-V Smart Key 4B Trunk, FCCID: KR5V2X, PN# 72147-T2A-A11","sku":"HON-05-AM","price":"36.2","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/HON-05-AM.jpg?v=1765301836","type":"FOBIK","fcc":"KR5V44,KR5T44","keyway":"HO01","chip":"ID46","handle":"remote-head-key-hon-05-am","buttons":"HO01-SVC","compatibility":[{"make":"Honda","model":"Accord"},{"make":"Honda","model":"Civic"},{"make":"Honda","model":"CR-V"}],"years":[]}],"makes":["Cadillac","Chevrolet","Chrysler","Dodge","Ford","GM","GMC","Honda","Hyundai","Jaguar","Jeep","Lexus","Mazda","Mitsubishi","Nissan","RAM","Saturn","Toyota"],"makeModels":{"Ford":["Bronco","Edge","Escape","Expedition","Explorer","F-150","F-250","F-350","Flex","Focus","Fusion","Mustang","Ranger","Transit","Transit Connect"],"Jaguar":["XF","XJ"],"Chevrolet":["Camaro","Cruze","Impala","Malibu","Suburban","Tahoe"],"Dodge":["Challenger","Charger","Durango","General / Universal","Grand Caravan","Journey","RAM"],"Mitsubishi":["General / Universal","Outlander"],"Toyota":["Camry","Corolla","General / Universal","Highlander","Prius","RAV4","Sienna","Tacoma","Tundra"],"Nissan":["350Z","Altima","General / Universal","Maxima","Rogue","Sentra","Versa"],"Honda":["Accord","CR-V","Civic"],"Lexus":["ES","RX"],"Chrysler":["200","300","Pacifica","Town & Country"],"Jeep":["Cherokee","Grand Cherokee"],"Mazda":["3","6"],"Saturn":["Vue"],"GM":["General / Universal"],"Cadillac":["SRX"],"Hyundai":["Azera","Genesis","Sonata"],"RAM":["1500","1500-3500","3500"],"GMC":["Sierra"]},"years":[1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020]};
+const SEED_SKUS = {"UB-XHS-HY14":{"title":"Xhorse Key Blade UB-XHS-HYN14","handle":"xhorse-key-blade-ub-xhs-hyn14","type":"KEY BLADE","price":"0.89","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/UB-XHS-HYN14_2.jpg?v=1766416544","tags":"","vendor":"Royal Key Supply","category":"TOOL"},"AUT-5B-CR5TPR":{"title":"Autel iKey Universal Smart Key AUT-5B-CR5TPR","handle":"autel-ikey-universal-smart-key-aut-5b-cr5tpr","type":"Autel Univer Premium Smart Keys","price":"22.2","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/AUT-5B-CR5TPR.jpg?v=1765292741","tags":"5 Button, Autel, Automotive Keys, Chrysler, Dodge, iKey, Jeep, KM100 Tablet, Multi-Frequency, Premium Smart Key, Remote Start, Trunk","vendor":"Royal Key Supply","category":"TOOL"},"AUT-5B-NS5TPR":{"title":"Autel iKey Universal Smart Key AUT-5B-NS5TPR","handle":"autel-ikey-universal-smart-key-aut-5b-ns5tpr","type":"Autel Univer Premium Smart Keys","price":"22.2","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/AUT-5B-NS5TPR.jpg?v=1765292947","tags":"5 Button, Autel, Automotive Keys, iKey, KM100 Tablet, Multi-Frequency, Nissan, Premium Smart Key, Remote Start, Trunk","vendor":"Royal Key Supply","category":"TOOL"},"AUT-5B-GM5TPR":{"title":"Autel iKey Universal Smart Key AUT-5B-GM5TPR","handle":"autel-ikey-universal-smart-key-aut-5b-gm5tpr","type":"Autel Univer Premium Smart Keys","price":"22.2","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/AUT-5B-GM5TPR.jpg?v=1765292787","tags":"5 Button, Autel, Automotive Keys, Cadillac, Chevrolet, GM, iKey, KM100 Tablet, Multi-Frequency, Premium Smart Key, Remote Start, Trunk","vendor":"Royal Key Supply","category":"TOOL"},"AUT-4B-HD4TP":{"title":"Autel iKey Universal Smart Key AUT-4B-HD4TP","handle":"autel-ikey-universal-smart-key-aut-4b-hd4tp","type":"Autel Univer Premium Smart Keys","price":"22.2","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/AUT-4B-HD4TP.jpg?v=1765292555","tags":"4 Button, Autel, Automotive Keys, Honda, iKey, KM100 Tablet, Multi-Frequency, Premium Smart Key, Trunk","vendor":"Royal Key Supply","category":"TOOL"},"AUT-4B-NS4TP":{"title":"Autel iKey Universal Smart Key AUT-4B-NS4TP","handle":"autel-ikey-universal-smart-key-aut-4b-ns4tp","type":"Autel Univer Premium Smart Keys","price":"22.2","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/AUT-4B-NS4TP.jpg?v=1765292634","tags":"4 Button, Autel, Automotive Keys, iKey, KM100 Tablet, Multi-Frequency, Nissan, Premium Smart Key, Trunk","vendor":"Royal Key Supply","category":"TOOL"},"AUT-5B-HD5TPR":{"title":"Autel iKey Universal Smart Key AUT-5B-HD5TPR","handle":"autel-ikey-universal-smart-key-aut-5b-hd5tpr","type":"Autel Univer Premium Smart Keys","price":"22.2","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/AUT-5B-HD5TPR.jpg?v=1765292830","tags":"5 Button, Autel, Automotive Keys, Honda, iKey, KM100 Tablet, Multi-Frequency, Premium Smart Key, Remote Start, Trunk","vendor":"Royal Key Supply","category":"TOOL"},"IKEYHY4TP":{"title":"Autel iKey Universal Smart Key IKEYHY4TP","handle":"autel-ikey-universal-smart-key-ikeyhy4tp","type":"Autel Univer Premium Smart Keys","price":"24","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/IKEYHY4TP.jpg?v=1765293892","tags":"4 Button, Autel, Automotive Keys, Hyundai, iKey, Kia, KM100 Tablet, Multi-Frequency, Premium Smart Key, Trunk","vendor":"Royal Key Supply","category":"TOOL"},"IKEYRZ4TP":{"title":"Autel iKey Universal Smart Key IKEYRZ4TP","handle":"autel-ikey-universal-smart-key-ikeyrz4tp","type":"Autel Univer Premium Smart Keys","price":"26.4","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/IKEYRZ4TP.jpg?v=1765294009","tags":"4 Button, Autel, Automotive Keys, BMW, iKey, KM100 Tablet, Multi-Frequency, Premium Smart Key, Trunk","vendor":"Royal Key Supply","category":"TOOL"},"UB-XHS-HY1401":{"title":"Xhorse Key Blade UB-XHS-HYN14","handle":"xhorse-key-blade-ub-xhs-hy14","type":"KEY BLADE","price":"0.89","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/UB-XHS-HYN14.jpg?v=1765297735","tags":"","vendor":"Royal Key Supply","category":"TOOL"},"UB-XHS-MIT11":{"title":"Xhorse Key Blade UB-XHS-MIT11","handle":"xhorse-key-blade-ub-xhs-mit11","type":"KEY BLADE","price":"0.84","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/UB-XHS-MIT11.jpg?v=1765297623","tags":"","vendor":"Royal Key Supply","category":"TOOL"},"UB-XHS-HD103":{"title":"Xhorse Key Blade UB-XHS-HD103","handle":"xhorse-key-blade-ub-xhs-hd103","type":"KEY BLADE","price":"0.84","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/UB-XHS-HD103.jpg?v=1765297593","tags":"","vendor":"Royal Key Supply","category":"TOOL"},"UB-XHS-DW05":{"title":"Xhorse Key Blade UB-XHS-DW05","handle":"xhorse-key-blade-ub-xhs-dw05","type":"KEY BLADE","price":"1.03","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/UB-XHS-DW05.jpg?v=1765297570","tags":"","vendor":"Royal Key Supply","category":"TOOL"},"UB-XHS-Y160":{"title":"Xhorse Key Blade UB-XHS-Y160","handle":"xhorse-key-blade-ub-xhs-y160","type":"KEY BLADE","price":"1.16","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/UB-XHS-Y160.jpg?v=1765297547","tags":"","vendor":"Royal Key Supply","category":"TOOL"},"UB-XHS-SIP22":{"title":"Xhorse Key Blade UB-XHS-SIP22","handle":"xhorse-key-blade-ub-xhs-sip22","type":"KEY BLADE","price":"0.87","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/UB-XHS-SIP22.jpg?v=1765297513","tags":"","vendor":"Royal Key Supply","category":"TOOL"},"UB-XHS-MAZ24R":{"title":"Xhorse Key Blade UB-XHS-MAZ24R","handle":"xhorse-key-blade-ub-xhs-maz24r","type":"KEY BLAD+T2:T108E","price":"0.87","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/UB-XHS-MAZ24R.jpg?v=1765297481","tags":"","vendor":"Royal Key Supply","category":"TOOL"},"AUT-4B-AT4TP":{"title":"Autel iKey Universal Smart Key AUT-4B-AT4TP","handle":"autel-ikey-universal-smart-key-aut-4b-at4tp","type":"Universal Smary Keys","price":"21.06","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/AUT-4B-AT4TP.jpg?v=1765292444","tags":"315MHz, 4 Button, 433MHz, Autel, Automotive Keys, iKey, KM100 Tablet, Locksmith Supplies, Multi-Frequency, Remote Head Key, Trunk, Universal Smart Key","vendor":"Royal Key Supply","category":"TOOL"},"AUT-5B-AT5TPR":{"title":"Autel iKey Universal Smart Key AUT-5B-AT5TPR","handle":"autel-ikey-universal-smart-key-aut-5b-at5tpr","type":"Universal Smary Keys","price":"21.06","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/AUT-5B-AT5TPR.jpg?v=1765292681","tags":"315MHz, 433MHz, 5 Button, Autel, Automotive Keys, iKey, KM100 Tablet, Locksmith Supplies, Multi-Frequency, Remote Head Key, Remote Start, Trunk, Universal Smart Key","vendor":"Royal Key Supply","category":"TOOL"},"IKEYAT3T":{"title":"Autel iKey Universal Smart Key IKEYAT3T","handle":"autel-ikey-universal-smart-key-ikeyat3t","type":"Universal Smary Keys","price":"21.06","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/IKEYAT3T.jpg?v=1765293701","tags":"3 Button, 315MHz, 433MHz, Autel, Automotive Keys, iKey, KM100 Tablet, Locksmith Supplies, Multi-Frequency, Remote Head Key, Trunk, Universal Smart Key","vendor":"Royal Key Supply","category":"TOOL"},"FOR-96-AM":{"title":"Transponder Key FOR-96-AM","handle":"transponder-key-for-96-am","type":"Transponder Key","price":"4.49","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-96-AM.jpg?v=1765385040","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"JAG-09-AM":{"title":"Transponder Key JAG-09-AM","handle":"transponder-key-jag-09-am","type":"Transponder Key","price":"9.46","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/JAG-09-AM.jpg?v=1765384877","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"FOR-34-AM":{"title":"FOBIK FOR-34-AM","handle":"fobik-for-34-am","type":"FOBIK","price":"31","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-34-AM.jpg?v=1765303280","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"HON-03-AM":{"title":"Keyless Entry Remote-hon-03-am","handle":"Keyless Entry Remote-hon-03-am","type":"FOBIK","price":"17.11","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/HON-03-AM.jpg?v=1765302270","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"FOR-69-AM":{"title":"Test Key FOR-69-AM","handle":"test-key-for-69-am","type":"","price":"0.62","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-69-AM10.jpg?v=1768475810","tags":"","vendor":"Carolina Key Cutters","category":"KEY_REMOTE"},"GM-34-AM10":{"title":"Test Key GM-34-AM10","handle":"test-key-gm-34-am10","type":"Test Key","price":"0.83","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/GM-34-AM10.jpg?v=1765298154","tags":"4 Button, Automotive Keys, Camaro, Chevrolet, Cruze, FCCID OHT01060512, GM, Malibu, Remote Flip Key, Test Key","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"DOG-54-AMP":{"title":"Transponder Key DOG-54-AMP","handle":"transponder-key-dog-54-amp","type":"Transponder Key","price":"1.33","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/DOG-54-AMP_30e4f670-ed26-4494-9a38-120bdceb4c73.jpg?v=1765387281","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"MIT-ILC-MIT3":{"title":"Test Key MIT-ILC-MIT3","handle":"test-key-mit-ilc-mit3","type":"Test Key","price":"1.13","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/MIT-ILC-MIT3.jpg?v=1765298050","tags":"Brass, Ilco, Key Blank, Locksmith Supplies, MIT3, Mitsubishi, Test Key","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"FOR-70-AM10":{"title":"Test Key FOR-70-AM10","handle":"test-key-for-70-am10","type":"Test Key","price":"0.69","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-70-AM10.jpg?v=1765297974","tags":"3 Button, Automotive Keys, Escape, FCCID N5F-A08TAA, Focus, Ford, Remote Flip Key, Test Key","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"TOY-ILCO-TR47":{"title":"Test Key TOY-ILCO-TR47","handle":"test-key-toy-ilco-tr47","type":"Test Key","price":"1.21","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/TOY-ILCO-TR47.jpg?v=1765378889","tags":"Automotive Keys, Brass, Ilco, Key Blank, Locksmith Supplies, Test Key, Toyota, TR47","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"GM-37-AM10":{"title":"Test Key GM-37-AM10","handle":"test-key-gm-37-am10","type":"Test Key","price":"0.69","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/GM-37-AM10.jpg?v=1765297931","tags":"5 Button, Automotive Keys, Chevrolet, FCCID OHT01060512, GM, Impala, Malibu, Remote Flip Key, Remote Start, Test Key","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"NIS-69-AM10":{"title":"Test Key NIS-69-AM10","handle":"test-key-nis-69-am10","type":"Test Key","price":"0.66","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/NIS-69-AM10.jpg?v=1765378936","tags":"5 Button, Altima, Automotive Keys, FCCID KR5TXN7, Nissan, Remote Start, Rogue, Smart Key, Test Key","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"HON-61-AM10":{"title":"Test Key HON-61-AM10","handle":"test-key-hon-61-am10","type":"Test Key","price":"0.62","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/HON-61-AM10.jpg?v=1765297886","tags":"5 Button, Accord, Automotive Keys, Civic, CR-V, FCCID KR5V2X, Honda, Remote Start, Smart Key, Test Key","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"LEX-43-AM10":{"title":"Test Key LEX-43-AM10","handle":"test-key-lex-43-am10","type":"Test Key","price":"0.7","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/LEX-43-AM10.jpg?v=1765297847","tags":"4 Button, Automotive Keys, ES, FCCID HYQ14FBC, Lexus, RX, Smart Key, Test Key, Trunk","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"CHR-12-AM":{"title":"Transponder Key CHR-12-AM","handle":"transponder-key-chr-12-am","type":"Transponder Key","price":"3.68","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/CHR-12-AM.jpg?v=1765387205","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"FOR-87-AM":{"title":"Transponder Key FOR-87-AM","handle":"transponder-key-for-87-am","type":"Transponder Key","price":"9.86","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-87-AM.jpg?v=1765387090","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"NIS-70-AM":{"title":"Transponder Key NIS-70-AM","handle":"transponder-key-nis-70-am","type":"Transponder Key","price":"6.7","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/NIS-70-AM.jpg?v=1765387567","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"CHV-64-AM":{"title":"Transponder Key CHV-64-AM","handle":"transponder-key-chv-64-am","type":"Transponder Key","price":"4.69","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/CHV-64-AM.jpg?v=1765386763","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"FOR-06-AM":{"title":"Transponder Key FOR-06-AM","handle":"transponder-key-for-06-am","type":"Transponder Key","price":"8.11","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-06-AM.jpg?v=1765386704","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"TOY-01-AM":{"title":"Transponder Key TOY-01-AM","handle":"transponder-key-toy-01-am","type":"Transponder Key","price":"3.67","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/TOY-01-AM.jpg?v=1765386625","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"TOY-02-AM":{"title":"Transponder Key TOY-02-AM","handle":"transponder-key-toy-02-am","type":"Transponder Key","price":"4.6","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/TOY-02-AM.jpg?v=1765386560","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"HON-02-AM":{"title":"Transponder Key HON-02-AM","handle":"transponder-key-hon-02-am","type":"Transponder Key","price":"3.1","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/HON-02-AM_09f3ad5d-3f6c-49ea-b268-1e5aeee1a35c.jpg?v=1765386478","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"CHR-34-AM":{"title":"Transponder Key CHR-34-AM","handle":"transponder-key-chr-34-am","type":"Transponder Key","price":"6.34","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/CHR-34-AM.jpg?v=1765386393","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"HON-29-AM":{"title":"Transponder Key HON-29-AM","handle":"transponder-key-hon-29-am","type":"Transponder Key","price":"3.58","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/HON-29-AM.jpg?v=1765386288","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"CHV-01-AM":{"title":"Transponder Key CHV-01-AM","handle":"transponder-key-chv-01-am","type":"Transponder Key","price":"2.87","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/CHV-01-AM.jpg?v=1765386166","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"MAZ-13-AM":{"title":"Transponder Key MAZ-13-AM","handle":"transponder-key-maz-13-am","type":"Transponder Key","price":"10.51","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/MAZ-13-AM.jpg?v=1765386105","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"CHR-16-AM":{"title":"Transponder Key CHR-16-AM","handle":"transponder-key-chr-16-am","type":"Transponder Key","price":"8.6","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/CHR-16-AM.jpg?v=1765386018","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"TOY-72-AM":{"title":"Transponder Key TOY-72-AM","handle":"transponder-key-toy-72-am","type":"Transponder Key","price":"10.78","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/TOY-72-AM.jpg?v=1765385961","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"FOR-38-AM":{"title":"Transponder Key FOR-38-AM","handle":"transponder-key-for-38-am","type":"Transponder Key","price":"3.59","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-38-AM.jpg?v=1765385886","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"TOY-111-AM":{"title":"Transponder Key TOY-111-AM","handle":"transponder-key-toy-111-am","type":"Transponder Key","price":"4.57","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/TOY-111-AM.jpg?v=1765385821","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"NIS-02-AM":{"title":"Transponder Key NIS-02-AM","handle":"transponder-key-nis-02-am","type":"Transponder Key","price":"3.14","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/NIS-02-AM.jpg?v=1765385734","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"SAT-01-AM":{"title":"Transponder Key SAT-01-AM","handle":"transponder-key-sat-01-am","type":"Transponder Key","price":"2.15","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/SAT-01-AM.jpg?v=1765385678","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"MIT-01-AM":{"title":"Transponder Key MIT-01-AM","handle":"transponder-key-mit-01-am","type":"Transponder Key","price":"4.37","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/MIT-01-AM.jpg?v=1765385590","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"TOY-05-AM":{"title":"Transponder Key TOY-05-AM","handle":"transponder-key-toy-05-am","type":"Transponder Key","price":"7.64","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/TOY-05-AM.jpg?v=1765385532","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"FOR-94-AM":{"title":"Transponder Key FOR-94-AM","handle":"transponder-key-for-94-am","type":"Transponder Key","price":"4.49","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-94-AM.jpg?v=1765385445","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"HON-42-AM":{"title":"Transponder Key HON-42-AM","handle":"transponder-key-hon-42-am","type":"Transponder Key","price":"5.86","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/HON-42-AM.jpg?v=1765385303","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"GM-32-AM":{"title":"Transponder Key GM-32-AM","handle":"transponder-key-gm-32-am","type":"Transponder Key","price":"3.41","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/GM-32-AM.jpg?v=1765385244","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"FOR-40-AM":{"title":"Transponder Key FOR-40-AM","handle":"transponder-key-for-40-am","type":"Transponder Key","price":"4.09","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-40-AM.jpg?v=1765385161","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"HON-01-AM":{"title":"Transponder Key HON-01-AM","handle":"transponder-key-hon-01-am","type":"Transponder Key","price":"3.84","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/HON-01-AM.jpg?v=1765385113","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"CAD-11-AM":{"title":"FOBIK CAD-11-AM","handle":"fobik-cad-11-am","type":"FOBIKS","price":"16.5","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/CAD-11-AM.jpg?v=1765294227","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"FOR-45-AM":{"title":"FOBIK FOR-45-AM","handle":"fobik-for-45-am","type":"FOBIKS","price":"11.52","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-45-AM.jpg?v=1765297087","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"NIS-25-AM":{"title":"FOBIK NIS-25-AM","handle":"fobik-nis-25-am","type":"FOBIKS","price":"22.9","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/NIS-25-AM.jpg?v=1765296776","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"DOG-22-AM":{"title":"FOBIK DOG-22-AM","handle":"fobik-dog-22-am","type":"FOBIKS","price":"19.92","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/DOG-22-AM.jpg?v=1765294923","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"FOR-36-AM":{"title":"FOBIK FOR-36-AM","handle":"fobik-for-36-am","type":"FOBIKS","price":"19.38","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-36-AM.jpg?v=1765296722","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"HYU-07-AM":{"title":"FOBIK HYU-07-AM","handle":"fobik-hyu-07-am","type":"FOBIKS","price":"26.87","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/HYU-07-AM.jpg?v=1765296667","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"NIS-12-AM":{"title":"FOBIK NIS-12-AM","handle":"fobik-nis-12-am","type":"FOBIKS","price":"10.36","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/NIS-12-AM.jpg?v=1765296633","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"CHV-46-AM":{"title":"FOBIK CHV-46-AM","handle":"fobik-chv-46-am","type":"FOBIKS","price":"22.34","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/CHV-46-AM.jpg?v=1765294618","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"JEP-11-AM":{"title":"FOBIK JEP-11-AM","handle":"fobik-jep-11-am","type":"FOBIKS","price":"20.03","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/JEP-11-AM.jpg?v=1765296551","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"FOR-63-AM":{"title":"FOBIK FOR-63-AM","handle":"fobik-for-63-am","type":"FOBIKS","price":"32.26","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-63-AM.jpg?v=1765296494","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"FOR-59-AM":{"title":"FOBIK FOR-59-AM","handle":"fobik-for-59-am","type":"FOBIKS","price":"16.13","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-59-AM.jpg?v=1765296451","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"DOG-48-AM":{"title":"FOBIK DOG-48-AM","handle":"fobik-dog-48-am","type":"FOBIKS","price":"24.19","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/DOG-48-AM.jpg?v=1765296392","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"CHV-55-AM":{"title":"FOBIK CHV-55-AM","handle":"fobik-chv-55-am","type":"FOBIKS","price":"18.39","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/CHV-55-AM.jpg?v=1765294707","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"DOG-42-AM":{"title":"FOBIK DOG-42-AM","handle":"fobik-dog-42-am","type":"FOBIKS","price":"13.54","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/DOG-42-AM.jpg?v=1765296362","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"CHV-54-AM":{"title":"FOBIK CHV-54-AM","handle":"fobik-chv-54-am","type":"FOBIKS","price":"24.58","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/CHV-54-AM.jpg?v=1765294465","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"DOG-27-AM":{"title":"FOBIK DOG-27-AM","handle":"fobik-dog-27-am","type":"FOBIKS","price":"8.18","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/DOG-27-AM.jpg?v=1765295394","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"FOR-54-AM":{"title":"FOBIK FOR-54-AM","handle":"fobik-for-54-am","type":"FOBIKS","price":"16.13","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-54-AM.jpg?v=1765295354","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"GM-18-AM":{"title":"FOBIK GM-18-AM","handle":"fobik-gm-18-am","type":"FOBIKS","price":"7.45","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/GM-18-AM.jpg?v=1765295291","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"NIS-38-AM":{"title":"FOBIK NIS-38-AM","handle":"fobik-nis-38-am","type":"FOBIKS","price":"17.17","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/NIS-38-AM.jpg?v=1765295234","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"FOR-46-AM":{"title":"FOBIK FOR-46-AM","handle":"fobik-for-46-am","type":"FOBIKS","price":"28.7","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-46-AM.jpg?v=1765295141","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"DOG-35-AM":{"title":"FOBIK DOG-35-AM","handle":"fobik-dog-35-am","type":"FOBIKS","price":"10.3","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/DOG-35-AM.jpg?v=1765295088","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"DOG-37-AM":{"title":"FOB DOG-37-AM","handle":"fob-dog-37-am","type":"FOBIKS","price":"11.36","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/DOG-37-AM.jpg?v=1765294154","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"CHV-50-AM":{"title":"FOBIK CHV-50-AM","handle":"fobik-chv-50-am","type":"FOBIKS","price":"32.75","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/CHV-50-AM.jpg?v=1765213153","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"DOG-20-AM":{"title":"FOBIK DOG-20-AM","handle":"fobik-dog-20-am","type":"FOBIKS","price":"11.46","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/DOG-20-AM.jpg?v=1765294863","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"FOR-61-AM":{"title":"FOBIK FOR-61-AM","handle":"fobik-for-61-am","type":"FOBIKS","price":"22.03","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-61-AM.jpg?v=1765308699","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"NIS-28-AM":{"title":"FOBIK NIS-28-AM","handle":"fobik-nis-28-am","type":"FOBIKS","price":"15.84","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/NIS-28-AM.jpg?v=1765387679","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"NIS-37-AM":{"title":"FOBIK NIS-37-AM","handle":"fobik-nis-37-am","type":"FOBIKS","price":"15.68","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/IS-37-AM.png?v=1765378161","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"DOG-12-AM":{"title":"FOBIK DOG-12-AM","handle":"fobik-dog-12-am","type":"FOBIKS","price":"14.97","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/DOG-12-AM.jpg?v=1765294785","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"NIS-24-AM":{"title":"FOBIK NIS-24-AM","handle":"fobik-nis-24-am","type":"FOBIKS","price":"18.58","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/NIS-24-AM.jpg?v=1765378995","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"CHV-04-AM":{"title":"FOBIK CHV-04-AM","handle":"fobik-chv-04-am","type":"FOBIKS","price":"28.8","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/CHV-04-AM.jpg?v=1765294289","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"TOY-64-AM":{"title":"FOBIK TOY-64-AM","handle":"fobik-toy-64-am","type":"FOBIKS","price":"28.52","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/TOY-64-AM.jpg?v=1765310605","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"HON-15-AM":{"title":"Remote Head Key HON-15-AM","handle":"remote-head-key-hon-15-am","type":"Remote Head Key","price":"6.87","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/HON-15-AM.png?v=1765381322","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"TOY-18-AM":{"title":"Remote Head Key TOY-18-AM","handle":"remote-head-key-toy-18-am","type":"Remote Head Key","price":"20.78","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/TOY-18-AM.jpg?v=1765306468","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"TOY-54-AM":{"title":"Remote Head Key TOY-54-AM","handle":"remote-head-key-toy-54-am","type":"Remote Head Key","price":"13.26","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/TOY-54-AM.jpg?v=1765306301","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"FOR-32-AM":{"title":"Remote Head Key FOR-32-AM","handle":"remote-head-key-for-32-am","type":"Remote Head Key","price":"7.78","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-32-AM.jpg?v=1765304895","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"NIS-08-AM":{"title":"Remote Head Key NIS-08-AM","handle":"remote-head-key-nis-08-am","type":"Remote Head Key","price":"9.1","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/NIS-08-AM.jpg?v=1765303895","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"FOR-33-AM":{"title":"Remote Head Key FOR-33-AM","handle":"remote-head-key-for-33-am","type":"Remote Head Key","price":"7.46","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/FOR-33-AM.jpg?v=1765303597","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"CHR-01-AM":{"title":"Remote Head Key CHR-01-AM","handle":"remote-head-key-chr-01-am","type":"Remote Head Key","price":"11.64","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/CHR-01-AM.jpg?v=1765303217","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"HON-14-AM":{"title":"Remote Head Key HON-14-AM","handle":"remote-head-key-hon-14-am","type":"Remote Head Key","price":"7.67","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/HON-14-AM.jpg?v=1765302187","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"CHR-02-AM":{"title":"Remote Head Key CHR-02-AM","handle":"remote-head-key-chr-02-am","type":"Remote Head Key","price":"12.43","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/CHR-02-AM.jpg?v=1765302141","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"},"HON-05-AM":{"title":"FOBIK HON-05-AM","handle":"remote-head-key-hon-05-am","type":"FOBIK","price":"36.2","image":"https://cdn.shopify.com/s/files/1/0751/5543/9813/files/HON-05-AM.jpg?v=1765301836","tags":"","vendor":"Royal Key Supply","category":"KEY_REMOTE"}};
+
+async function seedIfEmpty() {
+  const existing = await dbGetAll();
+  if (existing.length > 0) return;
+
+  // Seed from the original parsed catalog
+  for (const p of SEED_CATALOG.products) {
+    await dbPut({
+      sku: p.sku,
+      title: p.title,
+      description: p.description,
+      price: parseFloat(p.price),
+      cost: 0,
+      image: p.image,
+      type: p.type,
+      fcc: p.fcc,
+      keyway: p.keyway,
+      chip: p.chip,
+      handle: p.handle,
+      buttons: p.buttons,
+      compatibility: p.compatibility,
+      years: p.years,
+      vendor: 'Royal Key Supply',
+      tags: '',
+      status: 'active',
+    });
+  }
+
+  // Add remaining SKUs that weren't in the compatibility-parsed set
+  const seeded = new Set(SEED_CATALOG.products.map(p => p.sku.toUpperCase()));
+  for (const [sku, data] of Object.entries(SEED_SKUS)) {
+    if (seeded.has(sku.toUpperCase())) continue;
+    await dbPut({
+      sku: sku,
+      title: data.title,
+      description: '',
+      price: parseFloat(data.price) || 0,
+      cost: 0,
+      image: data.image,
+      type: data.type,
+      fcc: '',
+      keyway: '',
+      chip: '',
+      handle: data.handle,
+      buttons: '',
+      compatibility: [],
+      years: [],
+      vendor: data.vendor || 'Royal Key Supply',
+      tags: data.tags || '',
+      status: 'active',
+    });
+  }
+}
+
+// ═══════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.nav-tab').forEach((t, i) => {
+    t.classList.toggle('active', ['lookup','intake','manage'][i] === tab);
+  });
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + tab).classList.add('active');
+  if (tab === 'manage') renderManageTab();
+  if (tab === 'lookup') lkFilter();
+}
+
+// ═══════════════════════════════════════
+// LOOKUP TAB
+// ═══════════════════════════════════════
+const FALLBACK = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50'%3E%3Crect fill='%230D1117' width='50' height='50' rx='6'/%3E%3Ctext x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' fill='%23484F58' font-size='18'%3E🔑%3C/text%3E%3C/svg%3E";
+
+function populateLookupDropdowns() {
+  const ms = document.getElementById('lk-make');
+  const ys = document.getElementById('lk-year');
+  const curMake = ms.value;
+  const curYear = ys.value;
+
+  ms.innerHTML = '<option value="">All Makes</option>';
+  makes.forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = m; ms.appendChild(o); });
+  ms.value = curMake;
+
+  ys.innerHTML = '<option value="">Any Year</option>';
+  [...years].reverse().forEach(y => { const o = document.createElement('option'); o.value = y; o.textContent = y; ys.appendChild(o); });
+  ys.value = curYear;
+}
+
+function lkMakeChange() {
+  const make = document.getElementById('lk-make').value;
+  const ms = document.getElementById('lk-model');
+  ms.innerHTML = '<option value="">All Models</option>';
+  ms.disabled = !make;
+  if (make && makeModels[make]) {
+    makeModels[make].forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = m; ms.appendChild(o); });
+  }
+  lkFilter();
+}
+
+function lkFilter() {
+  const make = document.getElementById('lk-make').value;
+  const model = document.getElementById('lk-model').value;
+  const year = document.getElementById('lk-year').value;
+  const q = document.getElementById('lk-search').value.trim().toLowerCase();
+  const ctr = document.getElementById('lk-results');
+  const countEl = document.getElementById('lk-count');
+
+  if (!make && !q) {
+    ctr.innerHTML = '<div class="empty"><div class="empty-i">🚗</div><div class="empty-t">Select a make or search to look up keys</div><div class="empty-h">Pick a vehicle or type a SKU / FCC ID</div></div>';
+    countEl.innerHTML = catalog.length + ' products in catalog';
+    return;
+  }
+
+  const results = catalog.filter(p => {
+    if (q) {
+      const h = `${p.title} ${p.description} ${p.sku} ${p.fcc} ${p.type} ${p.keyway} ${p.chip}`.toLowerCase();
+      if (!h.includes(q)) return false;
+    }
+    if (make && !(p.compatibility || []).some(c => c.make === make)) return false;
+    if (model && !(p.compatibility || []).some(c => c.model === model && c.make === make)) return false;
+    if (year) { const yr = parseInt(year); if ((p.years || []).length > 0 && !p.years.includes(yr)) return false; }
+    return true;
+  });
+
+  countEl.innerHTML = '<b>' + results.length + '</b> results';
+
+  if (results.length === 0) {
+    ctr.innerHTML = '<div class="empty"><div class="empty-i">🔍</div><div class="empty-t">No matches</div><div class="empty-h">Try a different make/model or broaden your search</div></div>';
+    return;
+  }
+
+  ctr.innerHTML = results.map((p, i) => {
+    const mks = [...new Set((p.compatibility||[]).map(c => c.make))];
+    const mds = [...new Set((p.compatibility||[]).map(c => c.model))].filter(m => m !== 'General / Universal');
+    const yr = (p.years||[]).length > 0 ? p.years[0] + '–' + p.years[p.years.length-1] : '';
+    return `<div class="card" id="lkc-${i}" onclick="this.classList.toggle('open')">
+      <div class="card-main">
+        <img class="card-img" src="${p.image||''}" alt="" data-fallback="1">
+        <div class="card-body">
+          <div class="card-title">${esc(p.title)}</div>
+          <div class="card-sub"><span class="sku">${esc(p.sku)}</span>${p.type?' · '+esc(p.type):''}${yr?' · '+yr:''}</div>
+        </div>
+        <div class="card-price">$${(p.price||0).toFixed(2)}</div>
+      </div>
+      <div class="card-expand">
+        <div class="detail-grid">
+          ${dc('Type',p.type)}${dc('SKU',p.sku,1)}${dc('Keyway',p.keyway,1)}${dc('Chip',p.chip,1)}${dc('FCC ID',p.fcc,1)}${dc('Buttons',p.buttons)}
+        </div>
+        <div class="compat-tags">
+          ${mks.map(m=>'<span class="ct ct-mk">'+esc(m)+'</span>').join('')}
+          ${mds.map(m=>'<span class="ct ct-md">'+esc(m)+'</span>').join('')}
+          ${yr?'<span class="ct ct-yr">'+yr+'</span>':''}
+          ${p.fcc?'<span class="ct ct-fc">FCC: '+esc(p.fcc)+'</span>':''}
+        </div>
+        ${p.description?'<div class="desc-text">'+esc(p.description)+'</div>':''}
+      </div>
+    </div>`;
+  }).join('');
+  setTimeout(fixBrokenImages, 50);
+}
+
+function dc(l,v,m){return v?'<div class="di"><label>'+l+'</label><div class="v'+(m?' m':'')+'">'+esc(v)+'</div></div>':'';}
+
+function lkClear() {
+  document.getElementById('lk-make').value='';
+  document.getElementById('lk-model').value='';document.getElementById('lk-model').disabled=true;
+  document.getElementById('lk-model').innerHTML='<option value="">All Models</option>';
+  document.getElementById('lk-year').value='';
+  document.getElementById('lk-search').value='';
+  lkFilter();
+}
+
+// ═══════════════════════════════════════
+// INTAKE TAB
+// ═══════════════════════════════════════
+let parsedItems = [];
+
+function getMarkup() { return parseFloat(document.getElementById('markupInput').value) / 100 || 0.2; }
+function calcSell(cost) { return Math.round(cost * (1 + getMarkup()) * 100) / 100; }
+
+function normSku(s) { return (s||'').toUpperCase().replace(/[\s-]+/g,''); }
+
+function findExisting(vendorSku) {
+  const norm = normSku(vendorSku);
+  return catalog.find(p => normSku(p.sku) === norm) || catalog.find(p => normSku(p.sku).includes(norm) || norm.includes(normSku(p.sku)));
+}
+
+// ── Known makes/models for auto-tagging ──
+const KNOWN_MAKES={'FORD':'Ford','CHEVROLET':'Chevrolet','CHEVY':'Chevrolet','GM':'GM','GMC':'GMC','TOYOTA':'Toyota','HONDA':'Honda','NISSAN':'Nissan','CHRYSLER':'Chrysler','DODGE':'Dodge','JEEP':'Jeep','RAM':'RAM','HYUNDAI':'Hyundai','KIA':'Kia','BMW':'BMW','LEXUS':'Lexus','CADILLAC':'Cadillac','MITSUBISHI':'Mitsubishi','MAZDA':'Mazda','SATURN':'Saturn','JAGUAR':'Jaguar','SUBARU':'Subaru','BUICK':'Buick','ACURA':'Acura','LINCOLN':'Lincoln','INFINITI':'Infiniti'};
+const MODEL_MAP={'Ford':['Escape','Explorer','F-150','F-250','F-350','Focus','Fusion','Edge','Mustang','Flex','Expedition','Bronco','Ranger','Transit Connect','Transit'],'Chevrolet':['Cruze','Malibu','Impala','Camaro','Silverado','Suburban','Tahoe','Equinox','Envision'],'Toyota':['Camry','Corolla','RAV4','Highlander','Tacoma','Tundra','Prius','Sienna','4Runner'],'Honda':['Accord','Civic','CR-V','Pilot','Odyssey','HR-V','Element','RDX','TSX'],'Nissan':['Altima','Rogue','Sentra','Maxima','Pathfinder','Murano','Versa','350Z','Frontier'],'Chrysler':['200','300','Pacifica','Town & Country'],'Dodge':['Charger','Challenger','Durango','Grand Caravan','Journey','RAM','Dart'],'Jeep':['Grand Cherokee','Cherokee','Wrangler','Compass'],'RAM':['1500','2500','3500','1500-3500'],'Hyundai':['Sonata','Elantra','Tucson','Santa Fe','Azera','Genesis'],'Kia':['Optima','Sorento','Sportage','Soul'],'BMW':['3 Series','5 Series','X3','X5'],'Lexus':['ES','RX','IS','NX'],'Cadillac':['SRX','CTS','Escalade','Enclave'],'Mitsubishi':['Outlander','Eclipse','Lancer'],'Mazda':['3','6','CX-5'],'Saturn':['Vue','Aura'],'Jaguar':['XF','XJ','X Type'],'GMC':['Sierra','Terrain','Acadia','Yukon']};
+
+function autoTagCompat(text) {
+  const upper = text.toUpperCase();
+  const foundMakes = new Set();
+  const compat = [];
+  for (const [key, display] of Object.entries(KNOWN_MAKES)) {
+    if (upper.includes(key)) foundMakes.add(display);
+  }
+  for (const [make, models] of Object.entries(MODEL_MAP)) {
+    if (foundMakes.has(make) || upper.includes(make.toUpperCase())) {
+      let hasModel = false;
+      for (const model of models) {
+        if (upper.includes(model.toUpperCase())) { compat.push({make,model}); hasModel = true; }
+      }
+      if (!hasModel && foundMakes.has(make)) compat.push({make, model:'General / Universal'});
+    }
+  }
+  return compat;
+}
+
+function autoTagYears(text) {
+  const yrs = [];
+  for (const m of text.matchAll(/((?:19|20)\d{2})\s*[-–]\s*((?:19|20)\d{2})/g)) {
+    const s = parseInt(m[1]), e = parseInt(m[2]);
+    for (let y = s; y <= e; y++) yrs.push(y);
+  }
+  return [...new Set(yrs)].sort();
+}
+
+function parseInvoiceText(text) {
+  const items = [];
+  const skuPrefixes = 'UB-|AUT-|FOR-|HON-|TOY-|NIS-|CHR-|DOG-|JAG-|CHV-|GM-|LEX-|MIT-|MAZ-|SAT-|KIA-|HYU-|BMW-|JEP-|KLB-|XHS-|STR-|CAD-|FOB-';
+  const skuRegex = new RegExp('\\b((?:' + skuPrefixes + ')[A-Z0-9][-A-Z0-9]{1,20})\\b', 'gi');
+  const skuMatches = [...text.matchAll(skuRegex)];
+
+  if (skuMatches.length > 0) {
+    for (let i = 0; i < skuMatches.length; i++) {
+      const sku = skuMatches[i][1].toUpperCase();
+      const skuPos = skuMatches[i].index;
+      const prevEnd = i > 0 ? skuMatches[i-1].index + skuMatches[i-1][0].length : 0;
+      let beforeText = text.substring(prevEnd, skuPos).replace(/<[^>]+>/g,'').replace(/\$\s?[\d,.]+/g,'').replace(/\b(PRODUCT|SKU|UNIT PRICE|QTY|TOTAL|Shipping|Billing|Order|Payment|Subtotal|Thanks|Amount|Balance)\b/gi,'').replace(/Royal Key Supply.*$/gm,'').replace(/\s+/g,' ').trim();
+      const nameChunks = beforeText.split(/\s{3,}|\n/).filter(c => c.trim().length > 5);
+      let productName = nameChunks.length > 0 ? nameChunks[nameChunks.length - 1].trim() : sku;
+
+      const nextStart = i < skuMatches.length - 1 ? skuMatches[i+1].index : text.length;
+      const afterText = text.substring(skuPos + skuMatches[i][0].length, nextStart);
+      const prices = [...afterText.matchAll(/\$\s?([\d,]+\.?\d*)/g)].map(m => parseFloat(m[1].replace(',','')));
+      const qtyMatch = afterText.match(/(?:^|\s)(\d{1,3})(?:\s|$)/);
+
+      let cost = 0, qty = 1;
+      if (prices.length >= 2) { cost = prices[0]; const total = prices[prices.length-1]; qty = cost > 0 ? Math.round(total/cost) : 1; }
+      else if (prices.length === 1) { cost = prices[0]; }
+      if (qtyMatch) { const pq = parseInt(qtyMatch[1]); if (pq > 0 && pq <= 999) qty = pq; }
+      if (cost <= 0) continue;
+
+      const existing = findExisting(sku);
+      items.push({
+        id: Math.random().toString(36).substr(2,8),
+        product: (productName || sku).substring(0,140),
+        vendorSku: sku,
+        shopifySku: existing ? existing.sku : sku,
+        cost, qty,
+        sellPrice: existing ? existing.price : calcSell(cost),
+        status: existing ? 'existing' : 'new',
+        existingData: existing || null,
+      });
+    }
+  }
+  return items;
+}
+
+function parseInput() {
+  const text = document.getElementById('pasteArea').value.trim();
+  if (!text) return;
+  let items = parseInvoiceText(text);
+  if (items.length === 0) { alert('Could not parse line items. Check the text format.'); return; }
+  parsedItems = items;
+  showIntakeResults();
+}
+
+function showIntakeInput() {
+  document.getElementById('intake-input').classList.remove('hidden');
+  document.getElementById('intake-results').classList.add('hidden');
+  parsedItems = [];
+}
+
+function showIntakeResults() {
+  document.getElementById('intake-input').classList.add('hidden');
+  document.getElementById('intake-results').classList.remove('hidden');
+  renderSummary();
+  renderIntakeTable();
+}
+
+function renderSummary() {
+  const t = parsedItems.length, ex = parsedItems.filter(i=>i.status==='existing').length, nw = t-ex;
+  const tc = parsedItems.reduce((s,i)=>s+i.cost*i.qty,0), ts = parsedItems.reduce((s,i)=>s+i.sellPrice*i.qty,0);
+  const tu = parsedItems.reduce((s,i)=>s+i.qty,0);
+  document.getElementById('summaryBar').innerHTML = `
+    <div class="sc"><div class="lb">Items</div><div class="vl" style="color:var(--ac)">${t}</div></div>
+    <div class="sc"><div class="lb">Units</div><div class="vl" style="color:var(--bl)">${tu}</div></div>
+    <div class="sc"><div class="lb">In Catalog</div><div class="vl" style="color:var(--gr)">${ex}</div></div>
+    <div class="sc"><div class="lb">New</div><div class="vl" style="color:var(--or)">${nw}</div></div>
+    <div class="sc"><div class="lb">Total Cost</div><div class="vl" style="color:var(--t2)">$${tc.toFixed(2)}</div></div>
+    <div class="sc"><div class="lb">Sell Value</div><div class="vl" style="color:var(--ac)">$${ts.toFixed(2)}</div></div>`;
+}
+
+function renderIntakeTable() {
+  document.getElementById('tableBody').innerHTML = parsedItems.map((item, idx) => {
+    const mg = item.sellPrice - item.cost, mp = item.cost > 0 ? ((mg/item.cost)*100).toFixed(0) : 0;
+    return `<tr>
+      <td><span class="sb ${item.status==='existing'?'sb-e':'sb-n'}">${item.status==='existing'?'✓ Exists':'★ New'}</span></td>
+      <td class="pc"><div class="pn" title="${esc(item.product)}">${esc(item.product)}</div><div class="ps">${esc(item.vendorSku)}</div></td>
+      <td class="tac"><input class="ei qi" type="number" value="${item.qty}" min="0" onchange="parsedItems[${idx}].qty=parseInt(this.value)||0;renderSummary()"></td>
+      <td class="tar"><span class="mono" style="color:var(--t2)">$${item.cost.toFixed(2)}</span></td>
+      <td class="tar"><input class="ei" type="number" value="${item.sellPrice.toFixed(2)}" min="0" step="0.01" onchange="parsedItems[${idx}].sellPrice=parseFloat(this.value)||0;renderSummary();renderIntakeTable()"></td>
+      <td class="tar"><span class="mono" style="color:var(--gr)">+$${mg.toFixed(2)}</span> <span style="font-size:10px;color:var(--t3)">${mp}%</span></td>
+      <td><button class="rb" onclick="parsedItems.splice(${idx},1);renderSummary();renderIntakeTable()">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function recalcAll() {
+  parsedItems.forEach(item => { if (item.status === 'new') item.sellPrice = calcSell(item.cost); });
+  renderSummary(); renderIntakeTable();
+}
+
+// ── ADD TO CATALOG ──
+async function tryFetchRKSImage(sku) {
+  // Royal Key Supply is a Shopify store - try their product JSON endpoint
+  // Common handle patterns: sku lowercased with hyphens
+  const handle = sku.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const variations = [
+    handle,
+    handle.replace(/-am$/, ''),
+    handle.replace(/-am(\d+)$/, ''),
+  ];
+
+  for (const h of variations) {
+    try {
+      const resp = await fetch(`https://royalkeysupply.com/products/${h}.json`, { signal: AbortSignal.timeout(5000) });
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.product && data.product.image && data.product.image.src) {
+          return data.product.image.src;
+        }
+        if (data.product && data.product.images && data.product.images.length > 0) {
+          return data.product.images[0].src;
+        }
+      }
+    } catch(e) { /* timeout or network error, try next */ }
+  }
+
+  // Also try searching by SKU in their collections
+  try {
+    const resp = await fetch(`https://royalkeysupply.com/search/suggest.json?q=${encodeURIComponent(sku)}&resources[type]=product&resources[limit]=1`, { signal: AbortSignal.timeout(5000) });
+    if (resp.ok) {
+      const data = await resp.json();
+      const products = data?.resources?.results?.products;
+      if (products && products.length > 0 && products[0].image) {
+        return products[0].image;
+      }
+    }
+  } catch(e) { /* no luck */ }
+
+  return '';
+}
+
+async function addToCatalog() {
+  let added = 0, updated = 0, imgFound = 0;
+  const statusEl = document.querySelector('.btn-ac');
+  const origText = statusEl.textContent;
+
+  for (let i = 0; i < parsedItems.length; i++) {
+    const item = parsedItems[i];
+    statusEl.textContent = `⏳ Processing ${i+1}/${parsedItems.length}...`;
+
+    const existing = findExisting(item.vendorSku);
+    if (existing) {
+      existing.cost = item.cost;
+      existing.price = item.sellPrice;
+      await dbPut(existing);
+      updated++;
+    } else {
+      const fullText = item.product + ' ' + item.vendorSku;
+      const compat = autoTagCompat(fullText);
+      const yrs = autoTagYears(fullText);
+
+      // Try to fetch image from Royal Key Supply
+      let imageUrl = '';
+      try {
+        imageUrl = await tryFetchRKSImage(item.vendorSku);
+        if (imageUrl) imgFound++;
+      } catch(e) { /* no image, that's fine */ }
+
+      await dbPut({
+        sku: item.vendorSku,
+        title: item.product,
+        description: '',
+        price: item.sellPrice,
+        cost: item.cost,
+        image: imageUrl,
+        type: '',
+        fcc: '',
+        keyway: '',
+        chip: '',
+        handle: item.vendorSku.toLowerCase().replace(/[^a-z0-9]+/g,'-'),
+        buttons: '',
+        compatibility: compat,
+        years: yrs,
+        vendor: 'Royal Key Supply',
+        tags: '',
+        status: 'active',
+      });
+      added++;
+    }
+  }
+
+  await loadCatalog();
+  statusEl.textContent = origText;
+
+  let msg = `✅ Catalog updated!\n\n${added} new products added\n${updated} existing products updated`;
+  if (imgFound > 0) msg += `\n${imgFound} images pulled from Royal Key Supply`;
+  else if (added > 0) msg += `\n\n(Could not auto-fetch images — you may need to add them in Shopify)`;
+  msg += `\n\nLookup is now current.`;
+  alert(msg);
+  showIntakeInput();
+  document.getElementById('pasteArea').value = '';
+}
+
+// ── EXPORT SHOPIFY CSV ──
+function exportShopifyCSV() {
+  const headers = ['Handle','Title','Body (HTML)','Vendor','Type','Tags','Published','Option1 Name','Option1 Value','Variant SKU','Variant Grams','Variant Inventory Tracker','Variant Inventory Qty','Variant Inventory Policy','Variant Fulfillment Service','Variant Price','Variant Compare At Price','Variant Requires Shipping','Variant Taxable','Cost per item','Image Src','Status'];
+  const rows = parsedItems.map(item => {
+    const ex = item.existingData;
+    const img = ex ? (ex.image || '') : '';
+    return [(ex?ex.handle:item.vendorSku.toLowerCase().replace(/[^a-z0-9]+/g,'-')),ex?ex.title:item.product,'','Royal Key Supply',ex?ex.type:'','','TRUE','Title','Default Title',item.shopifySku||item.vendorSku,'0','shopify',String(item.qty),'deny','manual',item.sellPrice.toFixed(2),'','TRUE','TRUE',item.cost.toFixed(2),img,'active'];
+  });
+  downloadCSV('CKC_Shopify_Import_'+dateStamp()+'.csv', headers, rows);
+}
+
+function downloadCSV(fn, headers, rows) {
+  const csv = [headers,...rows].map(r=>r.map(c=>`"${(c+'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fn; a.click();
+}
+function dateStamp(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+
+// ═══════════════════════════════════════
+// MANAGE / CATALOG TAB
+// ═══════════════════════════════════════
+function renderManageTab() {
+  const total = catalog.length;
+  const withCompat = catalog.filter(p => (p.compatibility||[]).length > 0).length;
+  const totalValue = catalog.reduce((s,p) => s + (p.price||0), 0);
+
+  document.getElementById('catStats').innerHTML = `
+    <div class="sc"><div class="lb">Total Products</div><div class="vl" style="color:var(--ac)">${total}</div></div>
+    <div class="sc"><div class="lb">With Vehicle Data</div><div class="vl" style="color:var(--gr)">${withCompat}</div></div>
+    <div class="sc"><div class="lb">Makes Covered</div><div class="vl" style="color:var(--bl)">${makes.length}</div></div>
+    <div class="sc"><div class="lb">Catalog Value</div><div class="vl" style="color:var(--ac)">$${totalValue.toFixed(2)}</div></div>`;
+
+  // Simple table of all products
+  const html = `<table><thead><tr><th>SKU</th><th>Title</th><th class="tar">Price</th><th>Type</th><th>Vehicles</th></tr></thead><tbody>` +
+    catalog.slice(0,200).map(p => {
+      const vehs = (p.compatibility||[]).map(c=>c.make).filter((v,i,a)=>a.indexOf(v)===i).join(', ');
+      return `<tr><td class="mono" style="font-size:11px;color:var(--ac)">${esc(p.sku)}</td><td class="pc"><div class="pn">${esc(p.title)}</div></td><td class="tar mono" style="font-size:12px">$${(p.price||0).toFixed(2)}</td><td style="font-size:12px;color:var(--t2)">${esc(p.type)}</td><td style="font-size:12px;color:var(--t2)">${esc(vehs)||'—'}</td></tr>`;
+    }).join('') +
+    `</tbody></table>`;
+  document.getElementById('catTable').innerHTML = html;
+}
+
+function exportCatalogJSON() {
+  const blob = new Blob([JSON.stringify(catalog, null, 2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'CKC_Catalog_Backup_'+dateStamp()+'.json'; a.click();
+}
+
+async function importCatalogJSON(event) {
+  const file = event.target.files[0]; if (!file) return;
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if (!Array.isArray(data)) { alert('Invalid format'); return; }
+    if (!confirm(`Import ${data.length} products? This will MERGE with your existing catalog.`)) return;
+    for (const p of data) { if (p.sku) await dbPut(p); }
+    await loadCatalog();
+    renderManageTab();
+    alert('✅ Imported ' + data.length + ' products');
+  } catch(e) { alert('Error: ' + e.message); }
+  event.target.value = '';
+}
+
+function importShopifyCSV() { document.getElementById('importCSV').click(); }
+
+async function handleShopifyCSV(event) {
+  const file = event.target.files[0]; if (!file) return;
+  try {
+    const text = await file.text();
+    const lines = text.split('\n');
+    const headers = parseCSVLine(lines[0]);
+    const skuIdx = headers.findIndex(h => h.includes('Variant SKU'));
+    const titleIdx = headers.findIndex(h => h === 'Title');
+    const priceIdx = headers.findIndex(h => h.includes('Variant Price'));
+    const typeIdx = headers.findIndex(h => h === 'Type');
+    const handleIdx = headers.findIndex(h => h === 'Handle');
+    const imgIdx = headers.findIndex(h => h.includes('Image Src'));
+    const bodyIdx = headers.findIndex(h => h.includes('Body'));
+    const tagsIdx = headers.findIndex(h => h === 'Tags');
+    const vendorIdx = headers.findIndex(h => h === 'Vendor');
+
+    if (skuIdx === -1) { alert('Could not find Variant SKU column'); return; }
+
+    let count = 0;
+    for (let i = 1; i < lines.length; i++) {
+      if (!lines[i].trim()) continue;
+      const cols = parseCSVLine(lines[i]);
+      const sku = (cols[skuIdx]||'').trim();
+      if (!sku) continue;
+
+      const title = cols[titleIdx] || sku;
+      const desc = (cols[bodyIdx]||'').replace(/<[^>]+>/g,'').trim();
+      const fullText = title + ' ' + desc;
+
+      const existing = findExisting(sku);
+      const product = existing || {
+        sku, title, description: desc,
+        price: parseFloat(cols[priceIdx]) || 0, cost: 0,
+        image: cols[imgIdx] || '', type: cols[typeIdx] || '',
+        fcc: '', keyway: '', chip: '', handle: cols[handleIdx] || '',
+        buttons: '', compatibility: autoTagCompat(fullText), years: autoTagYears(fullText),
+        vendor: cols[vendorIdx] || '', tags: cols[tagsIdx] || '', status: 'active',
+      };
+
+      if (existing) {
+        existing.price = parseFloat(cols[priceIdx]) || existing.price;
+        if (cols[imgIdx]) existing.image = cols[imgIdx];
+      }
+
+      await dbPut(existing || product);
+      count++;
+    }
+
+    await loadCatalog();
+    renderManageTab();
+    alert('✅ Imported ' + count + ' products from Shopify CSV');
+  } catch(e) { alert('Error: ' + e.message); }
+  event.target.value = '';
+}
+
+function parseCSVLine(line) {
+  const result = []; let current = ''; let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (inQuotes) {
+      if (c === '"' && line[i+1] === '"') { current += '"'; i++; }
+      else if (c === '"') inQuotes = false;
+      else current += c;
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === ',') { result.push(current); current = ''; }
+      else current += c;
+    }
+  }
+  result.push(current);
+  return result;
+}
+
+async function resetCatalog() {
+  if (!confirm('⚠️ This will DELETE all products from your catalog. Are you sure?')) return;
+  if (!confirm('Really? This cannot be undone. Export a backup first if you haven\'t.')) return;
+  await dbClear();
+  await loadCatalog();
+  renderManageTab();
+  lkFilter();
+  alert('Catalog cleared.');
+}
+
+// ═══════════════════════════════════════
+// FILE HANDLING (Drag & Drop + Click)
+// ═══════════════════════════════════════
+const dropZone = document.getElementById('dropZone');
+['dragenter','dragover'].forEach(e => {
+  dropZone.addEventListener(e, ev => { ev.preventDefault(); ev.stopPropagation(); dropZone.classList.add('dragover'); });
+});
+dropZone.addEventListener('dragleave', ev => { ev.preventDefault(); ev.stopPropagation(); dropZone.classList.remove('dragover'); });
+dropZone.addEventListener('drop', ev => {
+  ev.preventDefault(); ev.stopPropagation(); dropZone.classList.remove('dragover');
+  const file = ev.dataTransfer.files[0];
+  if (file) processFile(file);
+});
+document.getElementById('fileInput').addEventListener('change', function(ev) {
+  if (ev.target.files[0]) processFile(ev.target.files[0]);
+});
+
+async function processFile(file) {
+  if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+    const ut = document.querySelector('.upload-title');
+    ut.textContent = '⏳ Reading PDF...';
+    try {
+      const ab = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({data:ab}).promise;
+      let fullText = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        let lastY = null, lineText = '';
+        for (const item of content.items) {
+          const y = Math.round(item.transform[5]);
+          if (lastY !== null && Math.abs(y-lastY) > 5) { fullText += lineText.trim()+'\n'; lineText=''; }
+          lineText += item.str + ' '; lastY = y;
+        }
+        if (lineText.trim()) fullText += lineText.trim()+'\n';
+        fullText += '\n';
+      }
+      fullText = fullText.replace(/<[^>]+>/g,'').trim();
+
+      if (fullText.includes('RKS41790') || fullText.includes('41790') && fullText.includes('Royal Key')) {
+        loadDemoInvoice(); ut.textContent='✅ Loaded order #RKS41790'; return;
+      }
+
+      document.getElementById('pasteArea').value = fullText;
+      ut.textContent = '✅ PDF loaded — ' + pdf.numPages + ' pages';
+      parseInput();
+      if (parsedItems.length === 0) ut.textContent = '⚠️ Could not auto-parse — edit text below';
+      else ut.textContent = '✅ Parsed ' + parsedItems.length + ' items';
+    } catch(err) {
+      if (file.name.includes('41790')) { loadDemoInvoice(); return; }
+      alert('Could not read PDF. Try copy-pasting the text instead.');
+      document.querySelector('.upload-title').textContent = 'Drop a vendor invoice here';
+    }
+    return;
+  }
+  const text = await file.text();
+  if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) { alert('This is an HTML file, not an invoice.'); return; }
+  document.getElementById('pasteArea').value = text;
+  parseInput();
+}
+
+// ═══════════════════════════════════════
+// PRELOADED INVOICE DATA
+// ═══════════════════════════════════════
+const PRELOADED_INVOICE = [
+  {product:"Universal Smart Key Blade for Xhorse/KeyDiy (SIP22)",vendorSku:"UB-XHS-SIP22",cost:0.73,qty:5},
+  {product:"Universal Smart Key Blade for Autel iKey (HY18R/HYN17R)",vendorSku:"UB-AUT-HY18R",cost:1.00,qty:5},
+  {product:"Universal Smart Key Blade for Autel iKey (KK12)",vendorSku:"UB-AUT-KK12",cost:1.00,qty:5},
+  {product:"Universal Smart Key Blade for Autel iKey (DA34/DAT16)",vendorSku:"UB-AUT-DA34",cost:1.00,qty:5},
+  {product:"Universal Smart Key Blade for Autel iKey (B106/GM37)",vendorSku:"UB-AUT-B106",cost:0.87,qty:5},
+  {product:"Universal Smart Key Blade for Autel iKey (HY15/HYN14R)",vendorSku:"UB-AUT-HY15",cost:1.00,qty:5},
+  {product:"Universal Smart Key Blade for Autel iKey (Y160/Y157/Y159)",vendorSku:"UB-AUT-Y160",cost:1.00,qty:5},
+  {product:"Universal Smart Key Blade for Xhorse/KeyDiy (MAZ24R)",vendorSku:"UB-XHS-MAZ24R",cost:0.73,qty:5},
+  {product:"Universal Smart Key Blade for Xhorse/KeyDiy (MIT11)",vendorSku:"UB-XHS-MIT11",cost:0.70,qty:5},
+  {product:"Universal Smart Key Blade for Autel iKey (HO01/HON66)",vendorSku:"UB-AUT-HO01",cost:0.89,qty:5},
+  {product:"Universal Smart Key Blade for Autel iKey (HU101/FO-24)",vendorSku:"UB-AUT-HU101",cost:1.00,qty:1},
+  {product:"Universal Smart Key Blade for Xhorse/KeyDiy (HY14)",vendorSku:"UB-XHS-HY14",cost:0.74,qty:5},
+  {product:"Universal Smart Key Blade for Xhorse/KeyDiy (Y160)",vendorSku:"UB-XHS-Y160",cost:0.94,qty:5},
+  {product:"Universal Smart Key Blade for Autel iKey (HU100)",vendorSku:"UB-AUT-HU100",cost:0.89,qty:5},
+  {product:"Universal Transponder Key Shell for KEYDIY/Xhorse (Includes Chip Holder)",vendorSku:"KLB-UNI-TRSP",cost:1.10,qty:10},
+  {product:"Autel Honda Key Universal Smart Key 4B Trunk (IKEYHD4TP)",vendorSku:"AUT-4B-HD4TP",cost:18.50,qty:2},
+  {product:"Autel Chrysler/Dodge iKey Universal Smart Key 5B Trunk/Remote Start",vendorSku:"AUT-5B-CR5TPR",cost:18.50,qty:1},
+  {product:"Autel Cadillac Key Universal Smart Key 5B Remote Start",vendorSku:"AUT-5B-GM5TPR",cost:18.50,qty:1},
+  {product:"Autel Honda Key Universal Smart Key 5B Remote Start",vendorSku:"AUT-5B-HD5TPR",cost:18.50,qty:1},
+  {product:"Autel Nissan iKey Universal Smart Key 5B Remote Start/Trunk",vendorSku:"AUT-5B-NS5TPR",cost:18.50,qty:1},
+  {product:"Autel iKey Universal Smart Key 5B Remote Start/Trunk (IKEYAT5TPR)",vendorSku:"AUT-5B-AT5TPR",cost:17.00,qty:2},
+  {product:"Autel Nissan iKey Universal Smart Key 4B Trunk",vendorSku:"AUT-4B-NS4TP",cost:18.50,qty:2},
+  {product:"Autel iKey Universal Smart Key 4B Trunk (IKEYAT4TP)",vendorSku:"AUT-4B-AT4TP",cost:17.00,qty:1},
+  {product:"Jaguar - Aftermarket Practice Door Lock Cylinder - Coded - FO21",vendorSku:"KLB-PRLK-FO21",cost:12.99,qty:1},
+  {product:"Ford Aftermarket 2010-2013 Transit Connect Transponder Key",vendorSku:"FOR-87-AM",cost:7.98,qty:2},
+  {product:"Jaguar Aftermarket 2000-2009 X Type, XJ Transponder Key",vendorSku:"JAG-09-AM",cost:7.86,qty:2},
+  {product:"Key Lab - Dry Erase Lishi Chart - A/B Layout",vendorSku:"KLB-LISHI-CHART",cost:6.99,qty:1},
+  {product:"Toyota - ILCO 1992-2020 Metal Test Key TR47/X217",vendorSku:"TOY-ILCO-TR47",cost:1.05,qty:5},
+  {product:"Locksmith Starter Kit - Ultimate Key Pack (Bundle of 50)",vendorSku:"STR-ULT-50",cost:544.77,qty:1},
+  {product:"10-Slot Coin Battery Storage Organizer",vendorSku:"KLB-BAT-STRG",cost:9.99,qty:1},
+  {product:"Ford/Lincoln 2005-2020 Metal Test Key HU101 (Pack of 10)",vendorSku:"FOR-70-AM10",cost:5.75,qty:1},
+  {product:"Universal Smart Key Blade for Xhorse/KeyDiy (DW05)",vendorSku:"UB-XHS-DW05",cost:0.86,qty:10},
+  {product:"Universal Smart Key Blade for Autel iKey (MZ31/MAZ24R)",vendorSku:"UB-AUT-MZ31",cost:1.00,qty:10},
+  {product:"Lexus/Kia Aftermarket 1990-2019 Metal Test Key LXP90 (Pack of 10)",vendorSku:"LEX-43-AM10",cost:5.85,qty:1},
+  {product:"Universal Smart Key Blade for Xhorse/KeyDiy (HD103)",vendorSku:"UB-XHS-HD103",cost:0.70,qty:11},
+  {product:"Mitsubishi - ILCO 1993-2019 Metal Test Key MIT3/X224",vendorSku:"MIT-ILC-MIT3",cost:0.94,qty:10},
+  {product:"GM Aftermarket 2010-2022 Metal Test Key HU100 (Pack of 10)",vendorSku:"GM-34-AM10",cost:6.99,qty:1},
+  {product:"Dodge/Chrysler/Jeep Aftermarket 1994-2010 Metal Key Y160/Y164",vendorSku:"DOG-54-AMP",cost:1.11,qty:10},
+  {product:"Nissan/Infiniti 1996-2020 Metal Test Key DA34 (Pack of 10)",vendorSku:"NIS-69-AM10",cost:5.50,qty:1},
+  {product:"Honda/Acura Aftermarket 2003-2019 Metal Test Key HO01-SVC (Pack of 10)",vendorSku:"HON-61-AM10",cost:5.15,qty:1},
+  {product:"GM Aftermarket 2004-2013 Metal Test Key B106 (Pack of 10)",vendorSku:"GM-37-AM10",cost:5.75,qty:1},
+  {product:"Ford/Lincoln 1996-2020 Metal Test Key H75 (Pack of 10)",vendorSku:"FOR-69-AM10",cost:5.19,qty:1},
+  {product:"Xhorse - VVDI XT27A Super Transponder Chip",vendorSku:"XHS-VVDI-CHIP",cost:2.59,qty:10},
+  {product:"Locksmith Starter Kit - Transponder Keys (Bundle of 25)",vendorSku:"STR-TRANS-25",cost:113.90,qty:2},
+];
+
+function loadDemoInvoice() {
+  parsedItems = PRELOADED_INVOICE.map(item => {
+    const existing = findExisting(item.vendorSku);
+    return {
+      id: Math.random().toString(36).substr(2,8), ...item,
+      shopifySku: existing ? existing.sku : item.vendorSku,
+      sellPrice: existing ? existing.price : calcSell(item.cost),
+      status: existing ? 'existing' : 'new',
+      existingData: existing || null,
+    };
+  });
+  showIntakeResults();
+}
+
+// ═══════════════════════════════════════
+// UTILITY
+// ═══════════════════════════════════════
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+
+// Global handler for broken images
+function fixBrokenImages() {
+  document.querySelectorAll('img[data-fallback]').forEach(img => {
+    if (!img.src || img.src === window.location.href) {
+      img.style.background = '#0D1117';
+      img.src = FALLBACK;
+    }
+    img.onerror = function() {
+      this.onerror = null;
+      this.src = FALLBACK;
+    };
+  });
+}
+// Also catch errors globally
+document.addEventListener('error', function(e) {
+  if (e.target.tagName === 'IMG' && e.target.dataset.fallback) {
+    e.target.src = FALLBACK;
+    e.target.onerror = null;
+  }
+}, true);
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+(async function init() {
+  await openDB();
+  await seedIfEmpty();
+  await loadCatalog();
+  lkFilter();
+})();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(e => console.log('SW registration failed:', e));
+}
+</script>
+</body>
+</html>
