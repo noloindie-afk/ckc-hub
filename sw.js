@@ -1,10 +1,10 @@
 const CACHE_NAME = 'ckc-hub-v1';
 const ASSETS = [
-  '/hub/',
-  '/hub/index.html',
-  '/hub/manifest.json',
-  '/hub/icon-192.png',
-  '/hub/icon-512.png'
+  '/ckc-hub/',
+  '/ckc-hub/index.html',
+  '/ckc-hub/manifest.json',
+  '/ckc-hub/icon-192.png',
+  '/ckc-hub/icon-512.png'
 ];
 
 self.addEventListener('install', event => {
