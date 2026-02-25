@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CKC Price Updater</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--bg:#0D1117;--s1:#161B22;--bd:#21262D;--tx:#E6EDF3;--t2:#8B949E;--t3:#484F58;--ac:#F0B429;--gr:#3FB950;--rd:#F85149;--r:8px}
+  body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.5;padding:20px;max-width:1100px;margin:0 auto}
+  h1{font-size:22px;color:var(--ac);margin-bottom:4px}
+  .sub{color:var(--t2);font-size:13px;margin-bottom:20px}
+  .tier-box{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:16px;margin-bottom:20px;display:flex;gap:20px;flex-wrap:wrap;align-items:center}
+  .tier{text-align:center}
+  .tier-label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--t3);margin-bottom:4px}
+  .tier-val{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:600;color:var(--ac)}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:20px}
+  .stat{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:12px;text-align:center}
+  .stat-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--t3);margin-bottom:2px}
+  .stat-val{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600}
+  .tbl-wrap{background:var(--s1);border:1px solid var(--bd);border-radius:10px;overflow-x:auto;margin-bottom:20px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead th{background:#1C2129;padding:10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--t3);border-bottom:1px solid var(--bd);white-space:nowrap}
+  tbody td{padding:10px;border-bottom:1px solid var(--bd);vertical-align:middle}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:rgba(255,255,255,.02)}
+  .mono{font-family:'JetBrains Mono',monospace;font-size:12px}
+  .old-price{color:var(--rd);text-decoration:line-through;opacity:.7}
+  .new-price{color:var(--gr);font-weight:600}
+  .same-price{color:var(--t3)}
+  .change{font-size:11px;padding:2px 8px;border-radius:4px;font-weight:600}
+  .change-up{background:rgba(63,185,80,.1);color:var(--gr)}
+  .change-same{background:rgba(72,79,88,.2);color:var(--t3)}
+  .change-down{background:rgba(248,81,73,.1);color:var(--rd)}
+  .sku{color:var(--ac);font-size:11px}
+  .title-cell{max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .type-cell{font-size:12px;color:var(--t2)}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;font-family:inherit;font-size:14px;font-weight:600;border-radius:var(--r);cursor:pointer;border:none;transition:all .15s}
+  .btn-go{background:var(--ac);color:var(--bg)}.btn-go:hover{opacity:.85}
+  .btn-go:disabled{opacity:.4;cursor:not-allowed}
+  .btn-s{background:var(--s1);color:var(--tx);border:1.5px solid var(--bd)}.btn-s:hover{border-color:var(--ac);color:var(--ac)}
+  .btn-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--s1);border:1px solid var(--gr);color:var(--gr);padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none}
+  .toast.show{opacity:1}.toast.error{border-color:var(--rd);color:var(--rd)}
+  .loading{text-align:center;padding:40px;color:var(--t3);font-size:15px}
+  .cb{width:16px;height:16px;accent-color:var(--ac);cursor:pointer}
+  .filter-row{display:flex;gap:12px;margin-bottom:16px;align-items:center;flex-wrap:wrap}
+  .filter-row select{padding:8px 12px;background:var(--bg);border:1px solid var(--bd);border-radius:var(--r);color:var(--tx);font-family:inherit;font-size:13px;appearance:none;cursor:pointer}
+  .filter-row label{font-size:12px;color:var(--t2)}
+</style>
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+
+<h1>⚡ CKC Price Updater</h1>
+<p class="sub">Review and apply tiered markup pricing to your catalog. Only items with a cost value can be repriced.</p>
+
+<div class="tier-box">
+  <div class="tier"><div class="tier-label">Cost under $5</div><div class="tier-val">5× markup</div></div>
+  <div class="tier"><div class="tier-label">Cost $5 – $15</div><div class="tier-val">4× markup</div></div>
+  <div class="tier"><div class="tier-label">Cost over $15</div><div class="tier-val">3× markup</div></div>
+  <div style="margin-left:auto">
+    <button class="btn btn-s" onclick="loadCatalog()">↻ Reload</button>
+  </div>
+</div>
+
+<div id="content"><div class="loading">⏳ Loading catalog from Google Sheet...</div></div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzYwwaoTMuaayUXCMk4B4dLw6NVXMcy3NLF5jYeGEh6OMcq0iQ8AneQWYpGegqVfkdH/exec';
+let catalog = [];
+let selected = new Set();
+
+function toast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => t.className = 'toast', 3500);
+}
+
+function calcNewPrice(cost) {
+  if (cost <= 0) return 0;
+  if (cost < 5) return Math.round(cost * 5 * 100) / 100;
+  if (cost <= 15) return Math.round(cost * 4 * 100) / 100;
+  return Math.round(cost * 3 * 100) / 100;
+}
+
+async function loadCatalog() {
+  document.getElementById('content').innerHTML = '<div class="loading">⏳ Loading catalog...</div>';
+  try {
+    const data = await fetchJSONP();
+    if (data && data.status === 'ok' && data.products) {
+      catalog = data.products.map(p => ({
+        sku: p.SKU || p.sku || '',
+        title: p.Title || p.title || '',
+        price: parseFloat(p.Price || p.price) || 0,
+        cost: parseFloat(p.Cost || p.cost) || 0,
+        type: p.Type || p.type || '',
+        image: p.Image || p.image || '',
+        fcc: p.FCC || p.fcc || '',
+        keyway: p.Keyway || p.keyway || '',
+        chip: p.Chip || p.chip || '',
+        buttons: p.Buttons || p.buttons || '',
+        compatibility: p.Compatibility || p.compatibility || '',
+        years: p.Years || p.years || '',
+        vendor: p.Vendor || p.vendor || '',
+        handle: p.Handle || p.handle || '',
+        description: p.Description || p.description || '',
+        tags: p.Tags || p.tags || '',
+        status: p.Status || p.status || 'active'
+      }));
+      renderAll();
+      toast('✅ Loaded ' + catalog.length + ' products');
+    }
+  } catch (e) {
+    document.getElementById('content').innerHTML = '<div class="loading" style="color:var(--rd)">❌ Failed to load. Check your connection.</div>';
+  }
+}
+
+function fetchJSONP() {
+  return new Promise((resolve, reject) => {
+    const cb = '_ckcPrice_' + Date.now();
+    const timeout = setTimeout(() => { delete window[cb]; reject('Timeout'); }, 12000);
+    window[cb] = function(data) { clearTimeout(timeout); delete window[cb]; resolve(data); };
+    const s = document.createElement('script');
+    s.src = SCRIPT_URL + '?action=read&callback=' + cb;
+    s.onerror = () => { clearTimeout(timeout); delete window[cb]; reject('Failed'); };
+    document.head.appendChild(s);
+    s.onload = () => { try { document.head.removeChild(s); } catch(e){} };
+  });
+}
+
+function renderAll(filter) {
+  // Only show items that have a cost
+  let items = catalog.filter(p => p.cost > 0);
+  if (filter && filter !== 'all') items = items.filter(p => p.type === filter);
+
+  // Calculate stats
+  const needsUpdate = items.filter(p => {
+    const proposed = calcNewPrice(p.cost);
+    return Math.abs(proposed - p.price) > 0.01;
+  });
+  const alreadyCorrect = items.length - needsUpdate.length;
+  const noCost = catalog.filter(p => p.cost <= 0).length;
+
+  // Get unique types
+  const types = [...new Set(catalog.filter(p => p.cost > 0).map(p => p.type).filter(Boolean))].sort();
+
+  let html = `
+    <div class="stats">
+      <div class="stat"><div class="stat-label">Have Cost Data</div><div class="stat-val" style="color:var(--ac)">${items.length}</div></div>
+      <div class="stat"><div class="stat-label">Need Price Update</div><div class="stat-val" style="color:${needsUpdate.length > 0 ? 'var(--rd)' : 'var(--gr)'}">${needsUpdate.length}</div></div>
+      <div class="stat"><div class="stat-label">Already Correct</div><div class="stat-val" style="color:var(--gr)">${alreadyCorrect}</div></div>
+      <div class="stat"><div class="stat-label">No Cost (skipped)</div><div class="stat-val" style="color:var(--t3)">${noCost}</div></div>
+    </div>
+
+    <div class="filter-row">
+      <label>Filter by type:</label>
+      <select onchange="renderAll(this.value)">
+        <option value="all">All Types</option>
+        ${types.map(t => `<option value="${t}" ${t === filter ? 'selected' : ''}>${t}</option>`).join('')}
+      </select>
+      <label style="margin-left:auto"><input type="checkbox" class="cb" id="selectAll" onchange="toggleAll(this.checked)"> Select all that need updating</label>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-go" id="applyBtn" onclick="applySelected()" disabled>✅ Apply Selected Price Changes</button>
+      <button class="btn btn-s" onclick="selectNeedsUpdate()">Select All Needing Update</button>
+    </div>
+
+    <div class="tbl-wrap"><table>
+      <thead><tr>
+        <th></th>
+        <th>SKU</th>
+        <th>Title</th>
+        <th>Type</th>
+        <th style="text-align:right">Cost</th>
+        <th style="text-align:right">Current</th>
+        <th style="text-align:right">Proposed</th>
+        <th style="text-align:center">Change</th>
+      </tr></thead>
+      <tbody>`;
+
+  items.forEach((p, i) => {
+    const proposed = calcNewPrice(p.cost);
+    const diff = proposed - p.price;
+    const pctChange = p.price > 0 ? ((diff / p.price) * 100).toFixed(0) : '∞';
+    const needsChange = Math.abs(diff) > 0.01;
+
+    let changeClass = 'change-same';
+    let changeText = 'OK';
+    if (diff > 0.01) { changeClass = 'change-up'; changeText = '+' + pctChange + '%'; }
+    else if (diff < -0.01) { changeClass = 'change-down'; changeText = pctChange + '%'; }
+
+    const checked = selected.has(p.sku) ? 'checked' : '';
+
+    html += `<tr>
+      <td><input type="checkbox" class="cb" data-sku="${p.sku}" ${checked} onchange="toggleItem('${p.sku}', this.checked)" ${!needsChange ? 'disabled' : ''}></td>
+      <td class="mono sku">${p.sku}</td>
+      <td class="title-cell" title="${p.title}">${p.title}</td>
+      <td class="type-cell">${p.type}</td>
+      <td class="mono" style="text-align:right;color:var(--t2)">$${p.cost.toFixed(2)}</td>
+      <td class="mono ${needsChange ? 'old-price' : 'same-price'}" style="text-align:right">$${p.price.toFixed(2)}</td>
+      <td class="mono new-price" style="text-align:right">$${proposed.toFixed(2)}</td>
+      <td style="text-align:center"><span class="change ${changeClass}">${changeText}</span></td>
+    </tr>`;
+  });
+
+  html += '</tbody></table></div>';
+  document.getElementById('content').innerHTML = html;
+  updateApplyBtn();
+}
+
+function toggleItem(sku, checked) {
+  if (checked) selected.add(sku); else selected.delete(sku);
+  updateApplyBtn();
+}
+
+function toggleAll(checked) {
+  catalog.filter(p => p.cost > 0).forEach(p => {
+    const proposed = calcNewPrice(p.cost);
+    if (Math.abs(proposed - p.price) > 0.01) {
+      if (checked) selected.add(p.sku); else selected.delete(p.sku);
+    }
+  });
+  document.querySelectorAll('.cb[data-sku]').forEach(cb => {
+    if (!cb.disabled) cb.checked = checked;
+  });
+  updateApplyBtn();
+}
+
+function selectNeedsUpdate() {
+  selected.clear();
+  catalog.filter(p => p.cost > 0).forEach(p => {
+    const proposed = calcNewPrice(p.cost);
+    if (Math.abs(proposed - p.price) > 0.01) selected.add(p.sku);
+  });
+  document.querySelectorAll('.cb[data-sku]').forEach(cb => {
+    if (!cb.disabled) cb.checked = selected.has(cb.dataset.sku);
+  });
+  const sa = document.getElementById('selectAll');
+  if (sa) sa.checked = true;
+  updateApplyBtn();
+}
+
+function updateApplyBtn() {
+  const btn = document.getElementById('applyBtn');
+  if (btn) {
+    btn.disabled = selected.size === 0;
+    btn.textContent = selected.size > 0
+      ? `✅ Apply ${selected.size} Price Change${selected.size > 1 ? 's' : ''}`
+      : '✅ Apply Selected Price Changes';
+  }
+}
+
+async function applySelected() {
+  if (selected.size === 0) return;
+  const btn = document.getElementById('applyBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Updating Google Sheet...';
+
+  const updates = [];
+  catalog.forEach(p => {
+    if (!selected.has(p.sku)) return;
+    const newPrice = calcNewPrice(p.cost);
+    updates.push({
+      SKU: p.sku,
+      Title: p.title,
+      Price: newPrice.toFixed(2),
+      Cost: p.cost.toFixed(2),
+      Type: p.type,
+      Image: p.image,
+      FCC: p.fcc,
+      Keyway: p.keyway,
+      Chip: p.chip,
+      Buttons: p.buttons,
+      Compatibility: p.compatibility,
+      Years: p.years,
+      Vendor: p.vendor,
+      Handle: p.handle,
+      Description: p.description,
+      Tags: p.tags,
+      Status: p.status
+    });
+  });
+
+  try {
+    const resp = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'upsert', products: updates })
+    });
+    const result = await resp.json();
+    if (result && result.status === 'ok') {
+      toast(`✅ Updated ${result.updated} prices!`);
+      selected.clear();
+      await loadCatalog();
+    } else {
+      toast('Error updating prices', true);
+      btn.disabled = false;
+      btn.textContent = '✅ Apply Selected Price Changes';
+    }
+  } catch (e) {
+    toast('Error: ' + e.message, true);
+    btn.disabled = false;
+    btn.textContent = '✅ Apply Selected Price Changes';
+  }
+}
+
+// Init
+loadCatalog();
+</script>
+</body>
+</html>
