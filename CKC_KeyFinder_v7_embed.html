@@ -1,0 +1,19 @@
+<!-- CKC Key Finder v7 — Paste this into Shopify Custom HTML block -->
+<!-- Upload CKC_KeyFinder_v7.html to GoDaddy hosting first -->
+<div id="ckc-finder-wrapper" style="width:100%;background:#111;">
+  <iframe
+    id="ckc-finder-frame"
+    src="https://noloindie-afk.github.io/ckc-hub/CKC_KeyFinder_v7.html"
+    style="width:100%;border:none;min-height:600px;display:block;"
+    scrolling="no"
+    title="CKC Key Finder">
+  </iframe>
+</div>
+<script>
+// Auto-resize iframe to fit content
+window.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'ckc-resize') {
+    document.getElementById('ckc-finder-frame').style.height = e.data.height + 'px';
+  }
+});
+</script>
