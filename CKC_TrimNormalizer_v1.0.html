@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CKC Trim Variant Normalizer v1.0</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #c9a227;
+  --gold-light: #e0c458;
+  --bg: #111;
+  --card: #1a1a1a;
+  --text: #f0f0f0;
+  --muted: #9ca3af;
+  --border: #2d2d2d;
+  --success: #4ade80;
+  --warning: #f59e0b;
+  --danger: #f87171;
+  --radius: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  padding: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+h1 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+.subtitle { color: var(--muted); font-size: 1.05rem; margin-bottom: 32px; }
+
+.status-bar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 24px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 24px;
+}
+.status-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--muted);
+  flex-shrink: 0;
+}
+.status-dot.loading { background: var(--warning); animation: pulse 1s infinite; }
+.status-dot.live { background: var(--success); }
+.status-dot.error { background: var(--danger); }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+.status-text { font-size: 0.95rem; color: var(--muted); }
+
+.btn {
+  padding: 14px 32px;
+  border: none; border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1.05rem; font-weight: 600;
+  cursor: pointer; transition: all 0.2s;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.btn-gold { background: var(--gold); color: #111; }
+.btn-gold:hover:not(:disabled) { background: var(--gold-light); box-shadow: 0 4px 12px rgba(201,162,39,0.3); }
+.btn-success { background: var(--success); color: #111; }
+.btn-success:hover:not(:disabled) { box-shadow: 0 4px 12px rgba(74,222,128,0.3); }
+.btn-outline {
+  background: none; border: 1px solid var(--border);
+  color: var(--muted); padding: 10px 20px; font-size: 0.92rem;
+}
+.btn-outline:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); }
+
+.actions { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; align-items: center; }
+
+.stats-row {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px; margin-bottom: 32px;
+}
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+}
+.stat-value {
+  font-family: 'Outfit', sans-serif;
+  font-size: 2rem; font-weight: 800;
+}
+.stat-label { font-size: 0.88rem; color: var(--muted); margin-top: 2px; }
+
+.section-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.4rem; font-weight: 700;
+  margin-bottom: 16px; padding-top: 12px;
+}
+
+/* Group cards */
+.group-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.group-card.safe { border-left: 4px solid var(--success); }
+.group-card.unsafe { border-left: 4px solid var(--danger); }
+.group-card.selected { border-color: var(--gold); }
+
+.group-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 20px 24px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.group-header:hover { background: rgba(255,255,255,0.02); }
+.group-make-model {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.15rem; font-weight: 700;
+}
+.group-meta { font-size: 0.88rem; color: var(--muted); margin-top: 2px; }
+.group-badge {
+  padding: 6px 14px; border-radius: 100px;
+  font-size: 0.82rem; font-weight: 600;
+  white-space: nowrap;
+}
+.group-badge.safe { background: rgba(74,222,128,0.1); color: var(--success); }
+.group-badge.unsafe { background: rgba(248,113,113,0.1); color: var(--danger); }
+
+.group-details { display: none; padding: 0 24px 20px; }
+.group-card.open .group-details { display: block; }
+
+.variant-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 0.9rem; margin-top: 8px;
+}
+.variant-table th {
+  text-align: left; padding: 10px 12px;
+  color: var(--muted); font-weight: 600;
+  text-transform: uppercase; font-size: 0.78rem;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+}
+.variant-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  color: var(--text);
+}
+.variant-table tr:last-child td { border-bottom: none; }
+
+.normalize-to {
+  margin-top: 12px; padding: 12px 16px;
+  background: rgba(201,162,39,0.06);
+  border: 1px solid rgba(201,162,39,0.15);
+  border-radius: 8px;
+  font-size: 0.92rem;
+}
+.normalize-to strong { color: var(--gold); }
+
+.check-row {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 10px;
+}
+.check-row input[type="checkbox"] {
+  width: 20px; height: 20px;
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+.check-row label { cursor: pointer; font-size: 0.95rem; }
+
+/* Results panel */
+.results-panel {
+  background: var(--card);
+  border: 2px solid var(--gold);
+  border-radius: var(--radius);
+  padding: 28px 32px;
+  margin-top: 24px;
+  display: none;
+}
+.results-panel.active { display: block; }
+.results-panel h3 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.3rem; font-weight: 700;
+  color: var(--gold); margin-bottom: 12px;
+}
+
+.log-area {
+  background: #0d0d0d;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--muted);
+  max-height: 400px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  line-height: 1.8;
+}
+.log-area .log-success { color: var(--success); }
+.log-area .log-warn { color: var(--warning); }
+.log-area .log-error { color: var(--danger); }
+
+.empty-state {
+  text-align: center; padding: 60px 32px;
+  color: var(--muted);
+}
+.empty-state h3 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.3rem; font-weight: 700;
+  color: var(--text); margin-bottom: 8px;
+}
+</style>
+</head>
+<body>
+
+<h1>🔧 CKC Trim Variant Normalizer</h1>
+<p class="subtitle">Identifies trim-level model variants (e.g. "Pilot EX-L" → "Pilot") and verifies hardware matches before normalizing.</p>
+
+<div class="status-bar">
+  <div class="status-dot" id="statusDot"></div>
+  <span class="status-text" id="statusText">Ready — click "Pull Catalog" to start</span>
+</div>
+
+<div class="actions">
+  <button class="btn btn-gold" id="pullBtn" onclick="pullCatalog()">Pull Catalog</button>
+  <button class="btn btn-outline" id="selectAllBtn" onclick="selectAllSafe()" disabled>Select All Safe</button>
+  <button class="btn btn-outline" id="deselectBtn" onclick="deselectAll()" disabled>Deselect All</button>
+  <button class="btn btn-success" id="applyBtn" onclick="applyChanges()" disabled>Apply Selected Normalizations</button>
+  <span id="selectedCount" style="font-size:0.9rem; color:var(--muted);"></span>
+</div>
+
+<div class="stats-row" id="statsRow" style="display:none;">
+  <div class="stat-card">
+    <div class="stat-value" id="statTotal">0</div>
+    <div class="stat-label">Total Products</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" style="color:var(--warning);" id="statGroups">0</div>
+    <div class="stat-label">Trim Variant Groups</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" style="color:var(--success);" id="statSafe">0</div>
+    <div class="stat-label">Safe to Normalize</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" style="color:var(--danger);" id="statUnsafe">0</div>
+    <div class="stat-label">Different Hardware (Skip)</div>
+  </div>
+</div>
+
+<div id="groupsContainer"></div>
+
+<div class="results-panel" id="resultsPanel">
+  <h3>📋 Normalization Log</h3>
+  <div class="log-area" id="logArea"></div>
+</div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbziNH6F0k8keGuaE2MhRPmqAjKRWvZxiWxi5YcstLZ40j29tN5VyBat_r_ekDRVy0CX/exec';
+
+let catalog = [];
+let analysisGroups = [];
+
+// ══ PULL CATALOG VIA JSONP ══
+function pullCatalog() {
+  const dot = document.getElementById('statusDot');
+  const text = document.getElementById('statusText');
+  const btn = document.getElementById('pullBtn');
+
+  dot.className = 'status-dot loading';
+  text.textContent = 'Pulling catalog...';
+  btn.disabled = true;
+
+  const cb = '_trimCB_' + Date.now();
+  const timeout = setTimeout(() => {
+    delete window[cb];
+    dot.className = 'status-dot error';
+    text.textContent = 'Timeout — could not reach catalog. Try again.';
+    btn.disabled = false;
+  }, 15000);
+
+  window[cb] = function(data) {
+    clearTimeout(timeout);
+    delete window[cb];
+    if (data && data.status === 'ok' && data.products) {
+      catalog = data.products;
+      dot.className = 'status-dot live';
+      text.textContent = 'Loaded ' + catalog.length + ' products';
+      analyzeTrimVariants();
+    } else {
+      dot.className = 'status-dot error';
+      text.textContent = 'Error — unexpected data format';
+      btn.disabled = false;
+    }
+  };
+
+  const s = document.createElement('script');
+  s.src = SCRIPT_URL + '?action=read&callback=' + cb;
+  s.onerror = function() {
+    clearTimeout(timeout);
+    delete window[cb];
+    dot.className = 'status-dot error';
+    text.textContent = 'Network error — check your connection';
+    btn.disabled = false;
+  };
+  document.head.appendChild(s);
+}
+
+// ══ TRIM VARIANT DETECTION ══
+// Regex pattern: "Model TrimLevel" where trim is common automotive suffixes
+const TRIM_PATTERNS = [
+  // Common trim levels
+  /^(.+?)\s+(Base|S|SE|SEL|SEV|SV|SR|SL|SLE|SLT|SR5|LE|XLE|XSE|Limited|Platinum|Premium|Sport|Touring|Trail|TRD|LX|EX|EX-L|DX|HX|LXS|Hybrid|PHEV|EV|Plus|Pro|Elite|Signature|Denali|AT4|Latitude|Altitude|Trailhawk|Overland|Summit|Sahara|Rubicon|Laredo|SXT|GT|R\/T|SRT|Hellcat|Big Horn|Lone Star|Lariat|King Ranch|Platinum|XL|XLT|STX|Raptor|Tremor|Wildtrak|Titanium|ST|Active|Vignale|Trend|Ambiente)$/i,
+  // Two-word trims
+  /^(.+?)\s+(Grand Touring|Trail Boss|High Country|North Edition|Off Road|All Terrain|Cross Sport|Sport Touring|Night Edition|Black Edition|Dark Edition|Special Edition|TRD Pro|TRD Off-Road|TRD Sport|Type R|Type S|Si Sedan|A-Spec|Advance|Technology|SH-AWD|Sport Hybrid)$/i,
+  // Numbered trims (e.g., "3 Series 330i")
+  /^(.+?)\s+(\d{3}[a-z]?i?[xd]?)$/i,
+  // Drive type suffixes
+  /^(.+?)\s+(2WD|4WD|AWD|FWD|RWD|4x4|4x2)$/i,
+  // Body style suffixes that might split same key
+  /^(.+?)\s+(Sedan|Coupe|Hatchback|Convertible|Wagon|Van|Crew Cab|Double Cab|Regular Cab|Extended Cab|SuperCrew|SuperCab|Access Cab|Mega Cab|Quad Cab|King Cab)$/i,
+];
+
+function extractBaseModel(modelName) {
+  if (!modelName || modelName === 'All Models') return null;
+  for (const pattern of TRIM_PATTERNS) {
+    const match = modelName.match(pattern);
+    if (match) return { base: match[1].trim(), trim: match[2].trim() };
+  }
+  return null;
+}
+
+function parseCompat(val) {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  try { return JSON.parse(val); } catch(e) { return []; }
+}
+
+function analyzeTrimVariants() {
+  // Parse all products and extract vehicle entries with trim variants
+  // Structure: { make, baseModel } → [ { product, originalModel, trim, fcc, keyway, type } ]
+  const variantMap = new Map();
+
+  catalog.forEach(p => {
+    const compat = parseCompat(p.Compatibility || p.compatibility);
+    const fcc = p.FCC || p.fcc || '';
+    const keyway = p.Keyway || p.keyway || '';
+    const type = p.Type || p.type || '';
+    const sku = p.SKU || p.sku || '';
+    const title = p.Title || p.title || '';
+    const years = p.Years || p.years || '';
+
+    if (!compat || compat.length === 0) return;
+
+    compat.forEach(c => {
+      const make = c.make || '';
+      const model = c.model || '';
+      const parsed = extractBaseModel(model);
+      if (!parsed) return; // Not a trim variant
+
+      const key = make.toLowerCase() + '|' + parsed.base.toLowerCase();
+      if (!variantMap.has(key)) variantMap.set(key, { make, baseModel: parsed.base, variants: [] });
+      variantMap.get(key).variants.push({
+        sku, title, type, fcc, keyway,
+        originalModel: model,
+        trim: parsed.trim,
+        years: c.years || years
+      });
+    });
+  });
+
+  // Filter to groups that actually have trim variants (>1 unique trim name)
+  analysisGroups = [];
+  variantMap.forEach((group, key) => {
+    const uniqueTrims = new Set(group.variants.map(v => v.originalModel));
+    if (uniqueTrims.size < 2) {
+      // Also check: is there a product with just the base model name?
+      const hasBase = catalog.some(p => {
+        const compat = parseCompat(p.Compatibility || p.compatibility);
+        return compat.some(c => c.make && c.make.toLowerCase() === group.make.toLowerCase()
+          && c.model && c.model.toLowerCase() === group.baseModel.toLowerCase());
+      });
+      // If only one trim variant and no base model product, still flag it
+      if (!hasBase && uniqueTrims.size === 1) {
+        // Single trim variant with no base — still worth normalizing
+      } else if (uniqueTrims.size < 2 && hasBase) {
+        return; // Base model exists and only one trim variant — less interesting
+      } else {
+        return;
+      }
+    }
+
+    // Check hardware safety: do all variants share same FCCID + Keyway + Type?
+    const hardwareKeys = new Set();
+    let hasMissingData = false;
+    group.variants.forEach(v => {
+      const fccVal = (v.fcc && v.fcc !== 'N/A') ? v.fcc : '';
+      const kwVal = (v.keyway && v.keyway !== 'N/A') ? v.keyway : '';
+      if (!fccVal && !kwVal) hasMissingData = true;
+      hardwareKeys.add(v.type + '|' + fccVal + '|' + kwVal);
+    });
+
+    // Also check if a base-model product exists with different hardware
+    const baseProducts = catalog.filter(p => {
+      const compat = parseCompat(p.Compatibility || p.compatibility);
+      return compat.some(c => c.make && c.make.toLowerCase() === group.make.toLowerCase()
+        && c.model && c.model.toLowerCase() === group.baseModel.toLowerCase());
+    });
+    baseProducts.forEach(p => {
+      const fccVal = (p.FCC || p.fcc || '');
+      const kwVal = (p.Keyway || p.keyway || '');
+      const typeVal = (p.Type || p.type || '');
+      if (fccVal || kwVal) {
+        hardwareKeys.add(typeVal + '|' + (fccVal !== 'N/A' ? fccVal : '') + '|' + (kwVal !== 'N/A' ? kwVal : ''));
+      }
+    });
+
+    const safe = hardwareKeys.size <= 1 && !hasMissingData;
+
+    analysisGroups.push({
+      make: group.make,
+      baseModel: group.baseModel,
+      variants: group.variants,
+      uniqueTrims: Array.from(uniqueTrims),
+      hardwareKeys: Array.from(hardwareKeys),
+      safe,
+      hasMissingData,
+      selected: false,
+      hasBaseProduct: baseProducts.length > 0
+    });
+  });
+
+  // Sort: safe first, then by make/model
+  analysisGroups.sort((a, b) => {
+    if (a.safe && !b.safe) return -1;
+    if (!a.safe && b.safe) return 1;
+    return (a.make + a.baseModel).localeCompare(b.make + b.baseModel);
+  });
+
+  renderAnalysis();
+}
+
+function renderAnalysis() {
+  const container = document.getElementById('groupsContainer');
+  const statsRow = document.getElementById('statsRow');
+  statsRow.style.display = 'grid';
+
+  const safeCount = analysisGroups.filter(g => g.safe).length;
+  const unsafeCount = analysisGroups.filter(g => !g.safe).length;
+
+  document.getElementById('statTotal').textContent = catalog.length;
+  document.getElementById('statGroups').textContent = analysisGroups.length;
+  document.getElementById('statSafe').textContent = safeCount;
+  document.getElementById('statUnsafe').textContent = unsafeCount;
+
+  document.getElementById('selectAllBtn').disabled = false;
+  document.getElementById('deselectBtn').disabled = false;
+
+  if (analysisGroups.length === 0) {
+    container.innerHTML = '<div class="empty-state"><h3>No Trim Variants Found</h3><p>All model names in the catalog appear to be base models already.</p></div>';
+    return;
+  }
+
+  let html = '<div class="section-title" style="color:var(--success);">✅ Safe to Normalize (' + safeCount + ')</div>';
+
+  analysisGroups.forEach((group, idx) => {
+    if (idx === safeCount && safeCount > 0) {
+      html += '<div class="section-title" style="color:var(--danger); margin-top:32px;">⛔ Different Hardware — Do Not Normalize (' + unsafeCount + ')</div>';
+    }
+
+    const safeClass = group.safe ? 'safe' : 'unsafe';
+    const badgeText = group.safe ? '✓ Same Hardware' : '✗ Different Hardware';
+
+    html += '<div class="group-card ' + safeClass + '" id="group-' + idx + '">';
+    html += '<div class="group-header" onclick="toggleGroup(' + idx + ')">';
+    html += '<div>';
+    html += '<div class="group-make-model">' + group.make + ' ' + group.baseModel + '</div>';
+    html += '<div class="group-meta">' + group.uniqueTrims.length + ' trim variants · ' + group.variants.length + ' product entries' + (group.hasBaseProduct ? ' · Base model exists' : ' · No base model product') + '</div>';
+    html += '</div>';
+    html += '<div style="display:flex;align-items:center;gap:12px;">';
+    if (group.safe) {
+      html += '<div class="check-row" onclick="event.stopPropagation()"><input type="checkbox" id="check-' + idx + '" onchange="toggleSelect(' + idx + ')" ' + (group.selected ? 'checked' : '') + '><label for="check-' + idx + '">Normalize</label></div>';
+    }
+    html += '<div class="group-badge ' + safeClass + '">' + badgeText + '</div>';
+    html += '</div></div>';
+
+    // Details
+    html += '<div class="group-details">';
+    html += '<table class="variant-table"><thead><tr><th>Original Model</th><th>SKU</th><th>Type</th><th>FCCID</th><th>Keyway</th><th>Years</th></tr></thead><tbody>';
+    group.variants.forEach(v => {
+      html += '<tr><td>' + v.originalModel + '</td><td>' + v.sku + '</td><td>' + v.type + '</td><td>' + (v.fcc || '—') + '</td><td>' + (v.keyway || '—') + '</td><td>' + (v.years || '—') + '</td></tr>';
+    });
+    html += '</tbody></table>';
+
+    if (group.safe) {
+      html += '<div class="normalize-to">Will normalize to: <strong>' + group.baseModel + '</strong> (all trim suffixes removed from compatibility data)</div>';
+    } else {
+      html += '<div class="normalize-to" style="border-color:rgba(248,113,113,0.2);background:rgba(248,113,113,0.05);">';
+      html += '<strong style="color:var(--danger);">Cannot auto-normalize:</strong> ';
+      if (group.hasMissingData) {
+        html += 'Some products are missing FCCID/Keyway data. Fill in the hardware data first, then re-run.';
+      } else {
+        html += 'Products have different hardware signatures: ' + group.hardwareKeys.join(' vs ') + '. These trims may use genuinely different keys.';
+      }
+      html += '</div>';
+    }
+    html += '</div></div>';
+  });
+
+  container.innerHTML = html;
+  updateSelectedCount();
+}
+
+function toggleGroup(idx) {
+  document.getElementById('group-' + idx).classList.toggle('open');
+}
+
+function toggleSelect(idx) {
+  analysisGroups[idx].selected = document.getElementById('check-' + idx).checked;
+  updateSelectedCount();
+}
+
+function selectAllSafe() {
+  analysisGroups.forEach((g, i) => {
+    if (g.safe) {
+      g.selected = true;
+      const el = document.getElementById('check-' + i);
+      if (el) el.checked = true;
+    }
+  });
+  updateSelectedCount();
+}
+
+function deselectAll() {
+  analysisGroups.forEach((g, i) => {
+    g.selected = false;
+    const el = document.getElementById('check-' + i);
+    if (el) el.checked = false;
+  });
+  updateSelectedCount();
+}
+
+function updateSelectedCount() {
+  const count = analysisGroups.filter(g => g.selected).length;
+  document.getElementById('selectedCount').textContent = count > 0 ? count + ' group(s) selected' : '';
+  document.getElementById('applyBtn').disabled = count === 0;
+}
+
+// ══ APPLY NORMALIZATIONS ══
+// This builds a list of SKU → new model names and sends them to the catalog
+async function applyChanges() {
+  const selected = analysisGroups.filter(g => g.selected);
+  if (selected.length === 0) return;
+
+  const panel = document.getElementById('resultsPanel');
+  const logArea = document.getElementById('logArea');
+  panel.classList.add('active');
+  logArea.innerHTML = '';
+
+  const applyBtn = document.getElementById('applyBtn');
+  applyBtn.disabled = true;
+  applyBtn.textContent = 'Applying...';
+
+  log('Starting normalization for ' + selected.length + ' groups...', 'warn');
+  log('');
+
+  // Build a map of SKU → { originalCompat, newCompat }
+  const changes = [];
+
+  selected.forEach(group => {
+    log('── ' + group.make + ' ' + group.baseModel + ' ──');
+
+    // Find all catalog products that have trim-variant models for this make+base
+    const affectedSKUs = new Set(group.variants.map(v => v.sku));
+
+    affectedSKUs.forEach(sku => {
+      const product = catalog.find(p => (p.SKU || p.sku) === sku);
+      if (!product) return;
+
+      const origCompat = parseCompat(product.Compatibility || product.compatibility);
+      let changed = false;
+      const newCompat = origCompat.map(c => {
+        const parsed = extractBaseModel(c.model || '');
+        if (parsed && parsed.base.toLowerCase() === group.baseModel.toLowerCase()
+            && (c.make || '').toLowerCase() === group.make.toLowerCase()) {
+          changed = true;
+          log('  ' + sku + ': "' + c.model + '" → "' + group.baseModel + '"', 'success');
+          return { ...c, model: group.baseModel };
+        }
+        return c;
+      });
+
+      // Deduplicate: after normalizing, we might have duplicate entries
+      // e.g. "Pilot EX-L 2012-2015" and "Pilot Touring 2012-2015" both become "Pilot 2012-2015"
+      const seen = new Set();
+      const dedupedCompat = newCompat.filter(c => {
+        const key = (c.make || '') + '|' + (c.model || '') + '|' + (c.years || '');
+        if (seen.has(key)) {
+          log('  ' + sku + ': Removed duplicate entry for ' + c.make + ' ' + c.model + ' ' + c.years, 'warn');
+          return false;
+        }
+        seen.add(key);
+        return true;
+      });
+
+      if (changed) {
+        changes.push({ sku, newCompat: JSON.stringify(dedupedCompat) });
+      }
+    });
+    log('');
+  });
+
+  log('Total changes to apply: ' + changes.length, 'warn');
+  log('');
+
+  if (changes.length === 0) {
+    log('No changes needed!', 'success');
+    applyBtn.disabled = false;
+    applyBtn.textContent = 'Apply Selected Normalizations';
+    return;
+  }
+
+  // Send changes to Google Apps Script
+  // We'll send them in batches via JSONP POST workaround
+  log('Sending updates to catalog...', 'warn');
+
+  let successCount = 0;
+  let errorCount = 0;
+
+  for (const change of changes) {
+    try {
+      await updateProductCompat(change.sku, change.newCompat);
+      successCount++;
+      log('  ✓ Updated ' + change.sku, 'success');
+    } catch (e) {
+      errorCount++;
+      log('  ✗ Failed ' + change.sku + ': ' + e.message, 'error');
+    }
+  }
+
+  log('');
+  log('═══ COMPLETE ═══', 'warn');
+  log('Updated: ' + successCount + ' | Failed: ' + errorCount, successCount > 0 ? 'success' : 'error');
+  log('');
+  log('Next steps:', 'warn');
+  log('1. Refresh your Key Finder and test the affected vehicles');
+  log('2. Verify that searches like "2013 Honda Pilot" now show all key options');
+
+  applyBtn.disabled = false;
+  applyBtn.textContent = 'Apply Selected Normalizations';
+}
+
+function updateProductCompat(sku, newCompatJSON) {
+  return new Promise((resolve, reject) => {
+    const cb = '_updateCB_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+    const timeout = setTimeout(() => {
+      delete window[cb];
+      reject(new Error('Timeout'));
+    }, 15000);
+
+    window[cb] = function(data) {
+      clearTimeout(timeout);
+      delete window[cb];
+      if (data && (data.status === 'ok' || data.status === 'success')) {
+        resolve(data);
+      } else {
+        reject(new Error(data?.message || 'Unknown error'));
+      }
+    };
+
+    // Use JSONP GET with update action
+    // The Apps Script needs to support: ?action=updateCompat&sku=XXX&compat=JSON&callback=CB
+    const params = new URLSearchParams({
+      action: 'updateCompat',
+      sku: sku,
+      compat: newCompatJSON,
+      callback: cb
+    });
+
+    const s = document.createElement('script');
+    s.src = SCRIPT_URL + '?' + params.toString();
+    s.onerror = function() {
+      clearTimeout(timeout);
+      delete window[cb];
+      reject(new Error('Network error'));
+    };
+    document.head.appendChild(s);
+  });
+}
+
+function log(msg, type) {
+  const logArea = document.getElementById('logArea');
+  if (type) {
+    logArea.innerHTML += '<span class="log-' + type + '">' + escapeHtml(msg) + '</span>\n';
+  } else {
+    logArea.innerHTML += escapeHtml(msg) + '\n';
+  }
+  logArea.scrollTop = logArea.scrollHeight;
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+</script>
+</body>
+</html>
