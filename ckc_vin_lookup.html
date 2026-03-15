@@ -1,1 +1,374 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CKC VIN Lookup</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c9a227; --gold-light: #e8c547;
+    --dark: #0d0d0d; --card: #181818; --border: #272727;
+    --text: #f0f0f0; --muted: #777;
+    --green: #4ade80; --green-bg: rgba(74,222,128,0.1);
+    --amber: #f59e0b; --amber-bg: rgba(245,158,11,0.1);
+    --red: #f87171; --red-bg: rgba(248,113,113,0.1);
+    --blue: #60a5fa; --blue-bg: rgba(96,165,250,0.1);
+    --purple: #c084fc; --purple-bg: rgba(192,132,252,0.1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--dark); color: var(--text); font-family: 'Barlow', sans-serif; font-size: 15px; line-height: 1.5; min-height: 100vh; }
+  .app-header { background: #111; border-bottom: 2px solid var(--gold); padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
+  .app-header .logo { font-family: 'Barlow Condensed', sans-serif; font-size: 1.5rem; font-weight: 900; color: var(--gold); letter-spacing: 1px; }
+  .app-header .sub { font-family: 'Barlow Condensed', sans-serif; font-size: 0.75rem; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
+  .app-header .phone { font-family: 'Barlow Condensed', sans-serif; font-size: 1.2rem; font-weight: 700; color: var(--gold-light); }
+  .app-body { max-width: 720px; margin: 0 auto; padding: 32px 20px 60px; }
+  .input-section { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 28px 28px 24px; margin-bottom: 20px; }
+  .input-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.7rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .input-row { display: flex; gap: 10px; margin-bottom: 14px; }
+  .vin-field { flex: 1; background: #222; border: 2px solid var(--border); border-radius: 10px; padding: 14px 18px; font-family: 'Barlow Semi Condensed', monospace; font-size: 1.3rem; font-weight: 600; color: var(--text); letter-spacing: 3px; text-transform: uppercase; transition: border-color 0.2s; outline: none; }
+  .vin-field:focus { border-color: var(--gold); }
+  .vin-field::placeholder { color: #444; letter-spacing: 1px; font-size: 1rem; font-weight: 400; }
+  .lookup-btn { padding: 14px 28px; background: var(--gold); color: #111; border: none; border-radius: 10px; font-family: 'Barlow', sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .lookup-btn:hover { background: var(--gold-light); transform: translateY(-1px); }
+  .examples-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .examples-label { font-size: 0.8rem; color: var(--muted); margin-right: 4px; }
+  .ex-btn { background: #222; border: 1px solid var(--border); color: var(--muted); padding: 5px 12px; border-radius: 6px; font-size: 0.8rem; font-family: 'Barlow', sans-serif; cursor: pointer; transition: all 0.15s; }
+  .ex-btn:hover { border-color: var(--gold); color: var(--gold-light); background: #1a1a1a; }
+  .error-bar { background: var(--red-bg); border: 1px solid rgba(248,113,113,0.3); border-radius: 8px; padding: 10px 16px; font-size: 0.88rem; color: var(--red); margin-bottom: 16px; display: none; }
+  .decoded-pill { background: rgba(201,162,39,0.08); border: 1px solid rgba(201,162,39,0.2); border-radius: 8px; padding: 10px 16px; font-size: 0.88rem; color: #b8a060; margin-bottom: 20px; display: none; }
+  .decoded-pill strong { color: var(--gold-light); font-size: 1rem; }
+  .result-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; display: none; }
+  .result-tier-bar { padding: 18px 24px; }
+  .tier-badge { font-family: 'Barlow Condensed', sans-serif; font-size: 0.8rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 4px 12px; border-radius: 6px; white-space: nowrap; display: inline-block; }
+  .t1 { background: var(--green-bg); color: var(--green); }
+  .t2 { background: var(--amber-bg); color: var(--amber); }
+  .t3 { background: var(--red-bg); color: var(--red); }
+  .t4 { background: var(--purple-bg); color: var(--purple); }
+  .tier-vehicle { font-family: 'Barlow Condensed', sans-serif; font-size: 1.2rem; font-weight: 700; color: var(--text); margin-top: 8px; }
+  .tier-keytype { font-size: 0.85rem; color: var(--muted); margin-top: 2px; }
+  .price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .price-box { background: #111; padding: 20px 24px; }
+  .price-box-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.7rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .price-box-value { font-family: 'Barlow Condensed', sans-serif; font-size: 2rem; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+  .price-box.aak .price-box-value { color: var(--green); }
+  .price-box.akl .price-box-value { color: var(--amber); }
+  .price-box-note { font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border-bottom: 1px solid var(--border); }
+  .info-cell { padding: 14px 24px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .info-cell:nth-child(2n) { border-right: none; }
+  .info-cell:nth-last-child(-n+2) { border-bottom: none; }
+  .info-cell-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
+  .info-cell-value { font-size: 0.92rem; color: var(--text); font-weight: 500; }
+  .flags-section { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+  .flag-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; border-radius: 8px; font-size: 0.88rem; line-height: 1.5; }
+  .flag-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; margin-top: 5px; flex-shrink: 0; }
+  .flag-warn    { background: var(--amber-bg); color: var(--amber); }
+  .flag-info    { background: var(--blue-bg);  color: var(--blue); }
+  .flag-danger  { background: var(--red-bg);   color: var(--red); }
+  .flag-success { background: var(--green-bg); color: var(--green); }
+  .script-section { padding: 20px 24px; }
+  .script-section-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.7rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .script-text { font-size: 0.95rem; color: #c8b87a; font-style: italic; line-height: 1.7; padding: 14px 18px; background: rgba(201,162,39,0.06); border-left: 3px solid var(--gold); border-radius: 0 8px 8px 0; }
+  @media (max-width: 500px) {
+    .price-grid, .info-grid { grid-template-columns: 1fr; }
+    .info-cell { border-right: none; border-bottom: 1px solid var(--border); }
+    .input-row { flex-direction: column; }
+    .vin-field { font-size: 1rem; letter-spacing: 1px; }
+  }
+</style>
+</head>
+<body>
+<div class="app-header">
+  <div>
+    <div class="logo">Carolina Key Cutters</div>
+    <div class="sub">VIN Pricing Lookup — James</div>
+  </div>
+  <div class="phone">(336) 510-9816</div>
+</div>
+<div class="app-body">
+  <div class="input-section">
+    <div class="input-label">Enter VIN Number</div>
+    <div class="input-row">
+      <input type="text" class="vin-field" id="vin-input" maxlength="17"
+        placeholder="17-digit VIN"
+        autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"
+        oninput="this.value=this.value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g,'')">
+      <button class="lookup-btn" onclick="lookupVin()">Look Up</button>
+    </div>
+    <div class="examples-row">
+      <span class="examples-label">Try an example:</span>
+      <button class="ex-btn" onclick="setVin('1HGBH41JXMN109186')">Honda Civic</button>
+      <button class="ex-btn" onclick="setVin('1FTFW1ET5DFC10312')">Ford F-150</button>
+      <button class="ex-btn" onclick="setVin('1G1ZT53806F109149')">Chevy Malibu</button>
+      <button class="ex-btn" onclick="setVin('JN1AZ4EH8FM730608')">Nissan 370Z</button>
+      <button class="ex-btn" onclick="setVin('5NPE34AF8FH054070')">Hyundai Sonata</button>
+      <button class="ex-btn" onclick="setVin('1C4RJFBG9FC198252')">Jeep Grand Cherokee</button>
+      <button class="ex-btn" onclick="setVin('WMWSX3C55CT465659')">MINI Cooper</button>
+    </div>
+  </div>
+  <div class="error-bar" id="error-bar"></div>
+  <div class="decoded-pill" id="decoded-pill"></div>
+  <div class="result-card" id="result-card"></div>
+</div>
+<script>
+const WMI_MAP = {
+  '1FA':'FORD','1FB':'FORD','1FC':'FORD','1FD':'FORD','1FE':'FORD','1FF':'FORD',
+  '1FM':'FORD','1FP':'FORD','1FT':'FORD','2FA':'FORD','2FB':'FORD','2FC':'FORD',
+  '2FD':'FORD','2FM':'FORD','2FT':'FORD','3FA':'FORD','3FB':'FORD','3FE':'FORD',
+  '3FM':'FORD','1LN':'LINCOLN','5LM':'LINCOLN',
+  '1G1':'CHEVROLET','1G2':'PONTIAC','1G3':'OLDSMOBILE','1G4':'BUICK','1G6':'CADILLAC',
+  '1GB':'CHEVROLET','1GC':'CHEVROLET','1GD':'GMC','1GE':'CHEVROLET','1GF':'CHEVROLET',
+  '1GK':'GMC','1GN':'CHEVROLET','1GT':'GMC','1GY':'CADILLAC','1GZ':'CADILLAC',
+  '2G1':'CHEVROLET','2G2':'PONTIAC','2G3':'OLDSMOBILE','2G4':'BUICK','2GK':'GMC','2GT':'GMC',
+  '3G1':'CHEVROLET','3G5':'BUICK','3G7':'GMC','3GN':'CHEVROLET',
+  '1B3':'DODGE','1B4':'DODGE','1B6':'DODGE','1B7':'DODGE','1B9':'DODGE',
+  '1C3':'CHRYSLER','1C4':'JEEP','1C6':'RAM','1C8':'CHRYSLER',
+  '1D3':'DODGE','1D4':'DODGE','1D7':'DODGE','1D8':'DODGE',
+  '2B3':'DODGE','2B4':'DODGE','2C3':'CHRYSLER','2C4':'CHRYSLER',
+  '2D3':'DODGE','2D4':'DODGE','3C4':'CHRYSLER','3C6':'RAM','3D4':'DODGE','3D7':'DODGE',
+  '2T1':'TOYOTA','2T2':'LEXUS','2T3':'TOYOTA','4T1':'TOYOTA','4T3':'TOYOTA',
+  '4T4':'TOYOTA','4T5':'TOYOTA','5TD':'TOYOTA','5TF':'TOYOTA','5TG':'TOYOTA',
+  '5TJ':'TOYOTA','5TK':'TOYOTA','5TL':'TOYOTA','5TM':'TOYOTA','5TN':'TOYOTA',
+  '5TP':'TOYOTA','5TR':'TOYOTA','5TT':'TOYOTA','5TU':'TOYOTA','5TV':'TOYOTA',
+  '5TW':'TOYOTA','5TX':'TOYOTA','5TY':'TOYOTA','5TZ':'TOYOTA',
+  'JT2':'TOYOTA','JT3':'TOYOTA','JT4':'TOYOTA','JT6':'TOYOTA','JT7':'TOYOTA',
+  'JT8':'TOYOTA','JTE':'TOYOTA','JTG':'TOYOTA','JTH':'LEXUS','JTJ':'LEXUS',
+  'JTK':'SCION','JTL':'LEXUS','JTM':'TOYOTA','JTN':'TOYOTA',
+  '19U':'ACURA','19X':'HONDA','1HF':'HONDA','1HG':'HONDA','1HH':'HONDA',
+  '1HJ':'HONDA','1HK':'HONDA','2HG':'HONDA','2HH':'HONDA','2HJ':'HONDA',
+  '3HG':'HONDA','5FN':'HONDA','JH4':'ACURA','JHL':'HONDA','JHM':'HONDA',
+  '1N4':'NISSAN','1N6':'NISSAN','3N1':'NISSAN','3N6':'NISSAN','5N1':'NISSAN','5N3':'NISSAN',
+  'JN1':'INFINITI','JN3':'NISSAN','JN6':'NISSAN','JN8':'NISSAN','JNK':'INFINITI',
+  '5NM':'HYUNDAI','5NP':'HYUNDAI','5NY':'HYUNDAI','5XY':'KIA',
+  'KM8':'HYUNDAI','KMH':'HYUNDAI','KNA':'KIA','KND':'KIA','KNJ':'KIA','KNM':'KIA',
+  'KMT':'GENESIS',
+  '4S3':'SUBARU','4S4':'SUBARU','JF1':'SUBARU','JF2':'SUBARU','1F2':'SUBARU',
+  'JM1':'MAZDA','JM3':'MAZDA','JMB':'MITSUBISHI','JMY':'MAZDA','4F2':'MAZDA','4F4':'MAZDA',
+  'WBA':'BMW','WBS':'BMW','WBW':'BMW','WBX':'BMW','WBY':'BMW','WMW':'MINI',
+  'WDB':'MERCEDES-BENZ','WDD':'MERCEDES-BENZ','WDF':'MERCEDES-BENZ',
+  'WDC':'MERCEDES-BENZ','4JG':'MERCEDES-BENZ','55S':'MERCEDES-BENZ',
+  'WAU':'AUDI','WA1':'AUDI','WVW':'VOLKSWAGEN','WV1':'VOLKSWAGEN',
+  'WV2':'VOLKSWAGEN','WV3':'VOLKSWAGEN','1VW':'VOLKSWAGEN','3VW':'VOLKSWAGEN',
+  'YV1':'VOLVO','YV4':'VOLVO'
+};
+
+const YEAR_MAP = {
+  'A':1980,'B':1981,'C':1982,'D':1983,'E':1984,'F':1985,'G':1986,'H':1987,
+  'J':1988,'K':1989,'L':1990,'M':1991,'N':1992,'P':1993,'R':1994,'S':1995,
+  'T':1996,'V':1997,'W':1998,'X':1999,'Y':2000,'1':2001,'2':2002,'3':2003,
+  '4':2004,'5':2005,'6':2006,'7':2007,'8':2008,'9':2009
+};
+const YEAR_MAP2 = {
+  'A':2010,'B':2011,'C':2012,'D':2013,'E':2014,'F':2015,'G':2016,'H':2017,
+  'J':2018,'K':2019,'L':2020,'M':2021,'N':2022,'P':2023,'R':2024,'S':2025,'T':2026
+};
+
+function decodeYear(vin) {
+  const c = vin[9];
+  const wmi3 = vin.slice(0,3);
+  const make = WMI_MAP[wmi3];
+  if (!make) return null;
+  const isEU = ['W','S','V','X','Y','Z','T'].some(p => vin[0] === p);
+  const yr1 = YEAR_MAP[c];
+  const yr2 = YEAR_MAP2[c];
+  if (!yr1 && !yr2) return null;
+  if (yr1 && !yr2) return yr1;
+  if (!yr1 && yr2) return yr2;
+  return yr2;
+}
+
+function decodeVin(vin) {
+  if (!vin || vin.length !== 17) return null;
+  const wmi = vin.slice(0,3);
+  const make = WMI_MAP[wmi];
+  const year = decodeYear(vin);
+  if (!make || !year) return null;
+  return { make, year, wmi, yearChar: vin[9] };
+}
+
+const MATRIX = [
+  { group:'Ford / Lincoln', makes:['FORD','LINCOLN'], rules:[
+    { test:v=>v.year>=2018, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'Autel IM508',
+      flags:['warn:Confirm PATS generation with VIN before quoting AKL','info:BCM access required — not standard OBD'],
+      script:'That\'s a push-start Ford — smart key programming is more involved than a standard key. Add-a-key labor runs $150 to $175, key billed separately. Did you lose all your keys or are you adding one?' },
+    { test:v=>true, tier:1, keyType:'Transponder Key', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+      flags:['success:Standard OBD — strong Autel coverage','info:F-150 / Escape / Explorer / Ranger / Mustang covered'],
+      script:'Good news — that\'s a standard transponder key. The $65 service call covers add-a-key, I come to you, done in under 30 minutes. What area are you in?' }
+  ]},
+  { group:'GM — Chevrolet / GMC / Buick / Cadillac', makes:['CHEVROLET','GMC','BUICK','CADILLAC','PONTIAC','SATURN','OLDSMOBILE'], rules:[
+    { test:v=>v.year>=2014, tier:2, keyType:'Remote Head Key / Smart Key', aak:'$150–$175', akl:'$300–$350', time:'45–60 min AAK / 90 min AKL', tool:'Autel IM508',
+      flags:['warn:Confirm RPO codes for push-start trim with VIN','info:BCM procedure — not standard OBD'],
+      script:'That\'s a newer GM with smart key programming. Add-a-key labor is $150 to $175, key separate. I\'ll need your VIN to confirm whether your trim has push-start — that affects the all-keys-lost price.' },
+    { test:v=>true, tier:1, keyType:'Transponder Key', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+      flags:['success:Standard OBD — PassLock / PassKey III covered','info:Silverado / Sierra / Tahoe / Suburban / Impala / Malibu'],
+      script:'That\'s a standard GM transponder — $65 service call covers add-a-key, I come to your location in 20 to 30 minutes. What part of the Triad are you in?' }
+  ]},
+  { group:'Chrysler / Dodge / Jeep / RAM', makes:['CHRYSLER','DODGE','JEEP','RAM'], rules:[
+    { test:v=>v.year>=2011, tier:2, keyType:'FOBIK / Smart Key', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'Autel IM508',
+      flags:['warn:AKL may require EEPROM on some trims — confirm with VIN before committing','warn:FOBIK procedure — not standard OBD'],
+      script:'That\'s a FOBIK vehicle — programming is different from a standard key and the $65 service call doesn\'t apply. Add-a-key runs $150 to $175 labor. For all keys lost I need your VIN first — the method varies by trim.' },
+    { test:v=>true, tier:1, keyType:'Transponder / Remote Head Key', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+      flags:['success:Standard SKIM procedure — OBD covered'],
+      script:'That\'s a standard transponder — $65 service call covers add-a-key, I come to your location. What part of the Triad are you in?' }
+  ]},
+  { group:'Toyota / Lexus / Scion', makes:['TOYOTA','LEXUS','SCION'], rules:[
+    { test:v=>v.year>=2010, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'Autel IM508',
+      flags:['warn:Smart key generation varies by year — confirm with VIN for AKL','info:BCM / smart key module access required'],
+      script:'That Toyota has push-start — smart key programming is a different procedure. Add-a-key labor runs $150 to $175, key separate. For all keys lost I need the VIN to confirm which procedure applies before I give you a firm price.' },
+    { test:v=>true, tier:1, keyType:'Transponder Key (TOY43/TOY47)', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+      flags:['success:Standard OBD — excellent Autel coverage'],
+      script:'Great news — that\'s a standard Toyota transponder. The $65 service call covers add-a-key, I come to you, done in under 30 minutes. What area are you in?' }
+  ]},
+  { group:'Honda / Acura', makes:['HONDA','ACURA'], rules:[
+    { test:v=>v.year>=2013, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$350–$450', time:'60 min AAK / 90+ min AKL', tool:'Autel IM508 + possible bench',
+      flags:['danger:AKL on 2013+ Honda/Acura smart key typically requires EEPROM — bench work likely','warn:Do not commit to AKL price without confirming first','info:AAK handled via PIN procedure on Autel'],
+      script:'Newer Honda with push-start — add-a-key I can handle on-site for $150 to $175. All keys lost on that one may require bench work — I need your VIN before I can give you a firm price.' },
+    { test:v=>true, tier:1, keyType:'Transponder Key (HO01/HON66)', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+      flags:['success:Standard Honda CMFI — OBD covered'],
+      script:'That\'s a standard Honda transponder — $65 service call, I come to you, done in under 30 minutes. What part of the Triad are you in?' }
+  ]},
+  { group:'Nissan / Infiniti', makes:['NISSAN','INFINITI'], rules:[
+    { test:v=>v.year>=2007, tier:2, keyType:'Smart Key / Proximity (NSN14)', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'Autel IM508',
+      flags:['warn:NATS 5/6 BCM access required — not standard OBD','info:VIN required before committing to AKL price'],
+      script:'That Nissan has push-start smart key — different procedure from a standard key. Add-a-key labor is $150 to $175, key separate. All keys lost I\'ll need your VIN to confirm the exact procedure before I quote.' },
+    { test:v=>true, tier:1, keyType:'Transponder Key (NSN11/NSN14)', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+      flags:['success:Standard NATS OBD — reliable Autel coverage'],
+      script:'Standard Nissan transponder — $65 service call covers add-a-key, I come to you. What area are you in?' }
+  ]},
+  { group:'Hyundai / Kia', makes:['HYUNDAI','KIA'], rules:[
+    { test:v=>v.year>=2012, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$300–$350', time:'45–60 min AAK / 90 min AKL', tool:'Autel IM508',
+      flags:['warn:AKL method depends on immo generation — confirm with VIN','info:PIN or BCM procedure for AAK via Autel'],
+      script:'Newer Hyundai or Kia with push-start — add-a-key labor is $150 to $175. All keys lost varies by the immo version — I need the VIN to confirm the procedure and price before we schedule anything.' },
+    { test:v=>true, tier:1, keyType:'Transponder Key (HY20/HY22)', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+      flags:['success:Standard OBD — strong Autel coverage'],
+      script:'Standard Hyundai or Kia transponder — $65 service call covers add-a-key, I come to you. What area are you in?' }
+  ]},
+  { group:'Genesis', makes:['GENESIS'], rules:[
+    { test:v=>true, tier:3, keyType:'Smart Key / Proximity', aak:'$175–$225', akl:'$350–$450', time:'60–90 min AAK', tool:'Autel IM508',
+      flags:['warn:Genesis BCM more complex than standard Hyundai/Kia','warn:VIN required before AKL — confirm Autel coverage first'],
+      script:'Genesis smart key programming is more involved than a standard Hyundai or Kia. Add-a-key labor runs $175 to $225. For all keys lost I\'ll need your VIN to confirm coverage before I give you a firm price.' }
+  ]},
+  { group:'Subaru', makes:['SUBARU'], rules:[
+    { test:v=>v.year>=2018, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'Autel IM508',
+      flags:['info:Push-start Subaru 2018+ — BCM procedure','warn:Confirm VIN for AKL before quoting'],
+      script:'Newer Subaru with push-start — add-a-key labor is $150 to $175. All keys lost I\'ll want your VIN to confirm the procedure first.' },
+    { test:v=>true, tier:1, keyType:'Transponder Key', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+      flags:['success:Standard OBD — good Autel coverage'],
+      script:'Standard Subaru transponder — $65 service call, done in under 30 minutes. What part of the Triad are you in?' }
+  ]},
+  { group:'Mazda / Mitsubishi', makes:['MAZDA','MITSUBISHI'], rules:[
+    { test:v=>v.year>=2014, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'Autel IM508',
+      flags:['warn:Confirm immo generation with VIN for AKL','info:BCM procedure for push-start models'],
+      script:'That\'s a newer push-start model — smart key labor runs $150 to $175 for add-a-key. I\'ll need the VIN to confirm the all-keys-lost procedure before quoting.' },
+    { test:v=>true, tier:1, keyType:'Transponder Key', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+      flags:['success:Standard OBD covered'],
+      script:'Standard transponder — $65 service call, done in under 30 minutes. What part of the Triad are you in?' }
+  ]},
+  { group:'BMW / MINI', makes:['BMW','MINI'], rules:[
+    { test:v=>true, tier:4, keyType:'Smart Key / CAS Module', aak:'$250–$350', akl:'$450–$600+', time:'90–120 min AAK', tool:'Autel IM508 + KTAG',
+      flags:['danger:BMW/MINI CAS/FEM — EEPROM access required on all procedures','danger:AKL often requires bench work — confirm before dispatch','warn:VIN required before committing to any price'],
+      script:'BMW or MINI smart key requires EEPROM-level access — more involved than most vehicles. Add-a-key labor runs $250 to $350. For all keys lost I need your VIN before I can give you an accurate price.' }
+  ]},
+  { group:'Mercedes-Benz', makes:['MERCEDES-BENZ'], rules:[
+    { test:v=>true, tier:3, keyType:'Smart Key / EIS Module', aak:'$200–$300', akl:'$400–$600+', time:'90–120 min AAK', tool:'Autel IM508 + KTAG',
+      flags:['danger:EIS EEPROM required — not standard OBD','danger:AKL likely requires EIS replacement + bench programming','warn:VIN required — procedure varies by year'],
+      script:'Mercedes smart key programming requires EIS module access — it\'s a more complex job. Add-a-key labor runs $200 to $300. All keys lost on a Mercedes is a significant job — I need the VIN before I can give you a firm price.' }
+  ]},
+  { group:'Volkswagen / Audi', makes:['VOLKSWAGEN','AUDI'], rules:[
+    { test:v=>v.year>=2015, tier:3, keyType:'Smart Key / MQB Platform', aak:'$200–$250', akl:'$350–$500', time:'90+ min AAK', tool:'Autel IM508 + KTAG',
+      flags:['danger:MQB platform — EEPROM read likely for AAK','danger:AKL may require bench work','warn:VIN required before committing to any price'],
+      script:'Newer VW or Audi on the MQB platform — key programming requires EEPROM access. Add-a-key labor is $200 to $250. All keys lost I need the VIN first — bench work may be required.' },
+    { test:v=>true, tier:2, keyType:'Transponder / Remote Head (HU66)', aak:'$150–$200', akl:'$300–$400', time:'60–90 min AAK', tool:'Autel IM508',
+      flags:['warn:PIN required for AAK — confirm immo generation with VIN','info:Immo3/4 handled by Autel OBD'],
+      script:'That VW or Audi requires a PIN for key programming — not a standard OBD job. Add-a-key labor runs $150 to $200. I\'ll need your VIN to confirm the exact procedure before quoting all keys lost.' }
+  ]},
+  { group:'Volvo', makes:['VOLVO'], rules:[
+    { test:v=>true, tier:3, keyType:'Smart Key / CEM Module', aak:'$200–$275', akl:'$350–$500', time:'90 min AAK', tool:'Autel IM508',
+      flags:['warn:CEM module controls immobilizer — VIN required','danger:AKL may require CEM bench work — confirm coverage first'],
+      script:'Volvo smart key works through the CEM module — I need your VIN to confirm whether I can do this on-site or if it requires bench work. Add-a-key is $200 to $275.' }
+  ]}
+];
+
+const TIER_LABELS = ['','Tier 1 — Standard OBD','Tier 2 — Advanced / BCM','Tier 3 — EEPROM / Module','Tier 4 — Quote by VIN'];
+const TIER_CLASS  = ['','t1','t2','t3','t4'];
+
+function setVin(v) { document.getElementById('vin-input').value = v; lookupVin(); }
+function flagClass(t) { return {warn:'flag-warn',info:'flag-info',danger:'flag-danger',success:'flag-success'}[t]||'flag-info'; }
+
+function lookupVin() {
+  const raw = document.getElementById('vin-input').value.trim().toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g,'');
+  const err = document.getElementById('error-bar');
+  err.style.display = 'none';
+  document.getElementById('decoded-pill').style.display = 'none';
+  document.getElementById('result-card').style.display = 'none';
+
+  if (raw.length !== 17) {
+    err.textContent = 'VIN must be exactly 17 characters. Check the number and try again.';
+    err.style.display = 'block'; return;
+  }
+
+  const v = decodeVin(raw);
+  if (!v) {
+    err.textContent = 'Could not identify make or year from that VIN. The WMI code (' + raw.slice(0,3) + ') is not in the current database. You can verify at vpic.nhtsa.dot.gov.';
+    err.style.display = 'block'; return;
+  }
+
+  const pill = document.getElementById('decoded-pill');
+  pill.innerHTML = 'Decoded: <strong>' + v.year + ' ' + v.make + '</strong> &nbsp;&middot;&nbsp; WMI: ' + v.wmi + ' &nbsp;&middot;&nbsp; Year code: ' + v.yearChar;
+  pill.style.display = 'block';
+
+  let matched = null;
+  for (const g of MATRIX) {
+    if (g.makes.includes(v.make)) {
+      for (const r of g.rules) {
+        if (r.test(v)) { matched = { groupName: g.group, rule: r }; break; }
+      }
+      if (matched) break;
+    }
+  }
+
+  if (!matched) {
+    matched = { groupName:'Unknown / Not in matrix', rule:{
+      tier:4, keyType:'Unknown — manual lookup required',
+      aak:'Quote by VIN', akl:'Quote by VIN', time:'VIN required first', tool:'Confirm with Autel vehicle list',
+      flags:['warn:Vehicle not in current matrix — check Autel vehicle list manually','danger:Do not quote without confirming tool coverage first'],
+      script:'I need to look up your exact vehicle in my system before I can give you a price — can you confirm the full VIN so I can verify coverage?'
+    }};
+  }
+
+  const r = matched.rule;
+  const flagsHTML = r.flags.map(f => {
+    const i = f.indexOf(':'); const type = f.slice(0,i); const text = f.slice(i+1);
+    return '<div class="flag-item ' + flagClass(type) + '"><div class="flag-dot"></div><span>' + text + '</span></div>';
+  }).join('');
+
+  const card = document.getElementById('result-card');
+  card.innerHTML =
+    '<div class="result-tier-bar">' +
+      '<span class="tier-badge ' + TIER_CLASS[r.tier] + '">' + TIER_LABELS[r.tier] + '</span>' +
+      '<div class="tier-vehicle">' + v.year + ' ' + v.make + '</div>' +
+      '<div class="tier-keytype">' + r.keyType + ' &nbsp;&middot;&nbsp; ' + matched.groupName + '</div>' +
+    '</div>' +
+    '<div class="price-grid">' +
+      '<div class="price-box aak"><div class="price-box-label">Add-a-Key — Labor</div><div class="price-box-value">' + r.aak + '</div><div class="price-box-note">Key billed separately &nbsp;&middot;&nbsp; ' + r.time.split('/')[0].trim() + '</div></div>' +
+      '<div class="price-box akl"><div class="price-box-label">All Keys Lost — Labor</div><div class="price-box-value">' + r.akl + '</div><div class="price-box-note">Key billed separately &nbsp;&middot;&nbsp; Always confirm with VIN</div></div>' +
+    '</div>' +
+    '<div class="info-grid">' +
+      '<div class="info-cell"><div class="info-cell-label">Tool required</div><div class="info-cell-value">' + r.tool + '</div></div>' +
+      '<div class="info-cell"><div class="info-cell-label">Est. time on-site</div><div class="info-cell-value">' + r.time + '</div></div>' +
+    '</div>' +
+    (flagsHTML ? '<div class="flags-section">' + flagsHTML + '</div>' : '') +
+    '<div class="script-section"><div class="script-section-label">Suggested phone line</div><div class="script-text">"' + r.script + '"</div></div>';
+
+  card.style.display = 'block';
+  card.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+document.getElementById('vin-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') lookupVin();
+});
+</script>
+</body>
+</html>
