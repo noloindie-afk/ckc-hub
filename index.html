@@ -200,12 +200,9 @@
 
 <script>
 // ════════════════════════════════════════
-// CKC KEY FINDER v8.20 — FOBIK DETECTION IN TITLE AND SKU
-// Collapses variant model names (F-150/F150/F Series → F-150) before
-// they reach the dropdown. normModel() is applied in normalizeProduct()
-// when building the vehicles array, and again as a safety net in
-// getModelsForMakeAndYear(). searchKeys() matches canonical names only.
-// To add new variants: add an entry to MODEL_ALIASES below.
+// CKC KEY FINDER v8.22 — PHONE NUMBER ON CALL FOR QUOTE BUTTON
+// eepromRisk cards no longer show $65 service call or total price.
+// Key price only displayed; customer directed to call for custom quote.
 // ════════════════════════════════════════
 
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbziNH6F0k8keGuaE2MhRPmqAjKRWvZxiWxi5YcstLZ40j29tN5VyBat_r_ekDRVy0CX/exec';
@@ -613,7 +610,7 @@ function normalizeProduct(p) {
     'chrysler': 'Chrysler', 'chrsyler': 'Chrysler', 'chrylser': 'Chrysler', 'crysler': 'Chrysler',
     'town': '__SUPPRESS__', 'town & country': '__SUPPRESS__', 'town&country': '__SUPPRESS__',
     'all': '__SUPPRESS__', 'all makes': '__SUPPRESS__', 'general': '__SUPPRESS__', 'universal': '__SUPPRESS__',
-    'dodge': 'Dodge', 'chrysler': 'Chrysler', 'jeep': 'Jeep', 'ram': 'RAM',
+    'dodge': 'Dodge', 'jeep': 'Jeep', 'ram': 'RAM',
     'ford': 'Ford', 'lincoln': 'Lincoln', 'mercury': 'Mercury',
     'toyota': 'Toyota', 'lexus': 'Lexus', 'scion': 'Scion',
     'honda': 'Honda', 'acura': 'Acura',
@@ -633,7 +630,6 @@ function normalizeProduct(p) {
   if (compat.length > 0) {
     compat.forEach(function(c) {
       var vYears = c.years || (years.length > 0 ? Math.min.apply(null, years) + '-' + Math.max.apply(null, years) : '');
-      // Apply normModel here so canonical names are stored in the catalog object
       var canonicalModel = (c.model && c.model !== 'General / Universal') ? normModel(c.model) : 'All Models';
       vehicles.push({ make: normMake(c.make), model: canonicalModel, years: vYears });
     });
@@ -704,8 +700,6 @@ function getModelsForMakeAndYear(make, year) {
       var inRange = false;
       if (v.years) { var parts = v.years.split('-').map(Number); inRange = year >= parts[0] && year <= parts[1]; }
       if (key._years && key._years.includes(year)) inRange = true;
-      // normModel() already ran at normalizeProduct() time, but call again
-      // as a safety net for any data that bypassed normalizeProduct().
       if (inRange && v.model && v.model !== 'All Models') models.add(normModel(v.model));
     });
   });
@@ -801,7 +795,6 @@ function searchKeys() {
     var matched = false;
     key.vehicles.forEach(function(v) {
       if (v.make !== make) return;
-      // Both v.model and model are already canonical — direct comparison is safe
       if (v.model !== model && v.model !== 'All Models') return;
       if (v.years) { var parts = v.years.split('-').map(Number); if (year >= parts[0] && year <= parts[1]) matched = true; }
     });
@@ -851,7 +844,6 @@ function searchKeys() {
       stockHTML = '<div class="ckc-stock-badge ships"><span class="ckc-stock-dot"></span> Available for Order (Allow 2-3 Days)</div>';
     }
 
-    var totalPrice = (displayPrice + PROGRAMMING_FEE).toFixed(2);
     var priceNote, btnHTML;
 
     var eepromRisk = (function() {
@@ -862,10 +854,15 @@ function searchKeys() {
         || titleLower.indexOf('fobik') !== -1 || skuLower.indexOf('fobik') !== -1
         || key.conflictFlag === 'VERIFY_CHIP' || key.conflictFlag === 'CHIP_VARIES_BY_TRIM';
     })();
+
     if (eepromRisk) {
-      priceNote = '<div class="ckc-key-price-note">+ $' + PROGRAMMING_FEE + ' service call = <strong>$' + totalPrice + ' total</strong></div><div style="font-size:0.85rem;color:var(--ckc-text-muted);margin-bottom:4px;">includes mobile key programming & cutting</div><div style="font-size:0.82rem;color:#f59e0b;margin-bottom:8px;">\u26a0 This key type may require advanced programming (EEPROM/module) depending on your vehicle. Call to confirm pricing before ordering.</div>';
-      btnHTML = '<a href="tel:+13365109816" class="ckc-add-btn" style="background:#f59e0b;">\ud83d\udcde Call for Quote</a>';
+      // ── v8.21 FIX: Show key price only — no $65 service call, no total ──
+      // Advanced programming (EEPROM/module) may not apply the standard $65 fee.
+      // Customer must call for a custom quote on these key types.
+      priceNote = '<div class="ckc-key-price-note">Key price only</div><div style="font-size:0.82rem;color:#f59e0b;margin-bottom:8px;">\u26a0 This key type may require advanced programming (EEPROM/module). Call for a custom quote \u2014 service pricing varies by vehicle.</div>';
+      btnHTML = '<a href="tel:+13365109816" class="ckc-add-btn" style="background:#f59e0b;">\ud83d\udcde Call for Quote \u00b7 (336) 510-9816</a>';
     } else {
+      var totalPrice = (displayPrice + PROGRAMMING_FEE).toFixed(2);
       priceNote = '<div class="ckc-key-price-note">+ $' + PROGRAMMING_FEE + ' service call = <strong>$' + totalPrice + ' total</strong></div><div style="font-size:0.85rem;color:var(--ckc-text-muted);margin-bottom:4px;">includes mobile key programming & cutting</div>';
       btnHTML = '<button class="ckc-add-btn" onclick="openCheckout(' + idx + ')">Buy Now</button>';
     }
