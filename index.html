@@ -201,7 +201,7 @@
 
 <script>
 // ════════════════════════════════════════
-// CKC KEY FINDER v8.26 — CALL FOR QUOTE CARD PRICE FIX
+// CKC KEY FINDER v8.27 — EEPROM RISK LOGIC FIX
 // Collapses variant model names (F-150/F150/F Series → F-150) before
 // they reach the dropdown. normModel() is applied in normalizeProduct()
 // when building the vehicles array, and again as a safety net in
@@ -213,7 +213,7 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbziNH6F0k8keGuaE2MhR
 const PROGRAMMING_FEE = 65;
 const SHOPIFY_DOMAIN = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
-const CKC_VERSION = 'v8.26';
+const CKC_VERSION = 'v8.27';
 
 var liveCatalog = [];
 var isLive = false;
@@ -862,8 +862,7 @@ function searchKeys() {
       var titleLower = (key.title || '').toLowerCase();
       var skuLower = (key.sku || '').toLowerCase();
       return t === 'fobik' || t === 'smart key' || t === 'smart key (fobik)' || t === 'premium smart key'
-        || titleLower.indexOf('fobik') !== -1 || skuLower.indexOf('fobik') !== -1
-        || key.conflictFlag === 'VERIFY_CHIP' || key.conflictFlag === 'CHIP_VARIES_BY_TRIM';
+        || titleLower.indexOf('fobik') !== -1 || skuLower.indexOf('fobik') !== -1;
     })();
     if (eepromRisk) {
       priceNote = '<div style="font-size:0.82rem;color:#f59e0b;margin-bottom:8px;">\u26a0 This key type may require advanced programming (EEPROM/module) depending on your vehicle. Call to confirm pricing before ordering.</div>';
