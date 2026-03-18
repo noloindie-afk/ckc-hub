@@ -1,4 +1,3 @@
-
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ═══ CKC KEY FINDER — EMBEDDABLE ═══ */
@@ -201,19 +200,21 @@
 
 <script>
 // ════════════════════════════════════════
-// CKC KEY FINDER v8.27 — EEPROM RISK LOGIC FIX
+// CKC KEY FINDER v8.28 — AM10 BUNDLE EXCLUSION
 // Collapses variant model names (F-150/F150/F Series → F-150) before
 // they reach the dropdown. normModel() is applied in normalizeProduct()
 // when building the vehicles array, and again as a safety net in
 // getModelsForMakeAndYear(). searchKeys() matches canonical names only.
 // To add new variants: add an entry to MODEL_ALIASES below.
+// v8.28: Added AM10 SKU suffix exclusion — bulk/pack items (e.g.
+// CHR-12-AM10, FOR-06-AM10) are filtered out of search results.
 // ════════════════════════════════════════
 
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbziNH6F0k8keGuaE2MhRPmqAjKRWvZxiWxi5YcstLZ40j29tN5VyBat_r_ekDRVy0CX/exec';
 const PROGRAMMING_FEE = 65;
 const SHOPIFY_DOMAIN = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
-const CKC_VERSION = 'v8.27';
+const CKC_VERSION = 'v8.28';
 
 var liveCatalog = [];
 var isLive = false;
@@ -616,7 +617,7 @@ function normalizeProduct(p) {
     'chrysler': 'Chrysler', 'chrsyler': 'Chrysler', 'chrylser': 'Chrysler', 'crysler': 'Chrysler',
     'town': '__SUPPRESS__', 'town & country': '__SUPPRESS__', 'town&country': '__SUPPRESS__',
     'all': '__SUPPRESS__', 'all makes': '__SUPPRESS__', 'general': '__SUPPRESS__', 'universal': '__SUPPRESS__',
-    'dodge': 'Dodge', 'chrysler': 'Chrysler', 'jeep': 'Jeep', 'ram': 'RAM',
+    'dodge': 'Dodge', 'jeep': 'Jeep', 'ram': 'RAM',
     'ford': 'Ford', 'lincoln': 'Lincoln', 'mercury': 'Mercury',
     'toyota': 'Toyota', 'lexus': 'Lexus', 'scion': 'Scion',
     'honda': 'Honda', 'acura': 'Acura',
@@ -794,7 +795,8 @@ function searchKeys() {
       !k.title.toLowerCase().includes('universal') &&
       !k.title.toLowerCase().includes('pack of') &&
       !k.sku.toUpperCase().startsWith('AUT-') &&
-      !k.sku.toUpperCase().startsWith('IKEY');
+      !k.sku.toUpperCase().startsWith('IKEY') &&
+      !k.sku.toUpperCase().endsWith('AM10');
   });
 
   lastSearchParams = { year: year, make: make, model: model };
