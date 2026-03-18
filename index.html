@@ -138,7 +138,22 @@
 .ckc-email-neon-arrow { font-size: 0.95rem; color: var(--ckc-gold-light); font-weight: 600; animation: ckc-arrow-pulse 1.5s ease-in-out infinite; }
 @keyframes ckc-arrow-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-.ckc-conflict-banner { background: linear-gradient(135deg, #2a1a0a, #1f1508); border: 2px solid #f59e0b; border-radius: var(--ckc-radius); padding: 28px 32px; margin-bottom: 28px; display: flex; align-items: center; gap: 20px; animation: ckc-fadeUp 0.3s ease; }
+.ckc-working-key-row { display: flex; align-items: center; gap: 14px; margin-top: 20px; padding: 16px 20px; background: rgba(201,162,39,0.06); border: 1px solid rgba(201,162,39,0.2); border-radius: 10px; cursor: pointer; transition: all 0.2s; }
+.ckc-working-key-row:hover { background: rgba(201,162,39,0.1); border-color: rgba(201,162,39,0.35); }
+.ckc-working-key-checkbox { width: 22px; height: 22px; border: 2px solid var(--ckc-gold); border-radius: 5px; background: transparent; cursor: pointer; flex-shrink: 0; appearance: none; position: relative; transition: all 0.2s; }
+.ckc-working-key-checkbox:checked { background: var(--ckc-gold); }
+.ckc-working-key-checkbox:checked::after { content: ''; position: absolute; left: 5px; top: 2px; width: 7px; height: 11px; border: 2px solid #111; border-top: none; border-left: none; transform: rotate(45deg); }
+.ckc-working-key-label { font-size: 1rem; font-weight: 600; color: var(--ckc-text); cursor: pointer; flex: 1; }
+.ckc-working-key-sublabel { font-size: 0.85rem; color: var(--ckc-text-muted); margin-top: 2px; }
+.ckc-akl-banner { background: linear-gradient(135deg, #1a0f0f, #1f1212); border: 2px solid #f87171; border-radius: var(--ckc-radius); padding: 24px 28px; margin-bottom: 28px; display: flex; align-items: center; gap: 18px; animation: ckc-fadeUp 0.3s ease; }
+@media (max-width: 700px) { .ckc-akl-banner { flex-direction: column; text-align: center; } }
+.ckc-akl-icon { font-size: 2.2rem; flex-shrink: 0; }
+.ckc-akl-info { flex: 1; }
+.ckc-akl-title { font-family: 'Outfit', sans-serif; font-size: 1.2rem; font-weight: 700; color: #f87171; margin-bottom: 4px; }
+.ckc-akl-desc { font-size: 0.95rem; color: #d4a0a0; line-height: 1.5; }
+.ckc-akl-btn { display: inline-flex; align-items: center; gap: 8px; padding: 14px 24px; background: #f87171; color: #111; text-decoration: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 1.05rem; font-weight: 700; white-space: nowrap; transition: all 0.2s; flex-shrink: 0; }
+.ckc-akl-btn:hover { background: #fca5a5; transform: translateY(-1px); }
+.ckc-conflict-banner { border: 2px solid #f59e0b; border-radius: var(--ckc-radius); padding: 28px 32px; margin-bottom: 28px; display: flex; align-items: center; gap: 20px; animation: ckc-fadeUp 0.3s ease; }
 @media (max-width: 700px) { .ckc-conflict-banner { flex-direction: column; text-align: center; } }
 .ckc-conflict-icon { font-size: 2.5rem; flex-shrink: 0; }
 .ckc-conflict-info { flex: 1; }
@@ -189,6 +204,13 @@
       </div>
       <button class="ckc-search-btn" id="ckc-search-btn" disabled onclick="searchKeys()">Find Keys</button>
     </div>
+    <label class="ckc-working-key-row" for="ckc-working-key">
+      <input type="checkbox" class="ckc-working-key-checkbox" id="ckc-working-key">
+      <div>
+        <div class="ckc-working-key-label">✅ I have at least one working key for this vehicle</div>
+        <div class="ckc-working-key-sublabel">Check this box to see add-a-key pricing starting at $65 &middot; Leave unchecked if all keys are lost</div>
+      </div>
+    </label>
   </div>
 
   <div class="ckc-results" id="ckc-results"></div>
@@ -200,7 +222,7 @@
 
 <script>
 // ════════════════════════════════════════
-// CKC KEY FINDER v8.28 — AM10 BUNDLE EXCLUSION
+// CKC KEY FINDER v8.30 — WORKING KEY CHECKBOX
 // Collapses variant model names (F-150/F150/F Series → F-150) before
 // they reach the dropdown. normModel() is applied in normalizeProduct()
 // when building the vehicles array, and again as a safety net in
@@ -214,7 +236,7 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbziNH6F0k8keGuaE2MhR
 const PROGRAMMING_FEE = 65;
 const SHOPIFY_DOMAIN = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
-const CKC_VERSION = 'v8.29';
+const CKC_VERSION = 'v8.30';
 
 var liveCatalog = [];
 var isLive = false;
@@ -789,6 +811,7 @@ function searchKeys() {
   var year = parseInt(document.getElementById('ckc-year').value);
   var make = document.getElementById('ckc-make').value;
   var model = document.getElementById('ckc-model').value;
+  var hasWorkingKey = document.getElementById('ckc-working-key').checked;
   var resultsDiv = document.getElementById('ckc-results');
   var db = getDB().filter(function(k) {
     return k.type !== 'KEY BLADE' &&
@@ -799,7 +822,7 @@ function searchKeys() {
       !k.sku.toUpperCase().endsWith('AM10');
   });
 
-  lastSearchParams = { year: year, make: make, model: model };
+  lastSearchParams = { year: year, make: make, model: model, hasWorkingKey: hasWorkingKey };
 
   var matches = [];
   db.forEach(function(key) {
@@ -834,6 +857,10 @@ function searchKeys() {
 
   html += '<div class="ckc-programming-card"><div class="ckc-programming-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></div><div class="ckc-programming-info"><h3>Mobile Key Programming & Cutting \u2014 as low as $' + PROGRAMMING_FEE + '</h3><p>We come to your location \u00b7 Save $10+ vs competitors \u00b7 Includes key cutting + programming</p><p style="font-size:0.82rem;color:#888;margin-top:6px;">*$' + PROGRAMMING_FEE + ' add-a-key rate \u2014 you must have a working key. All keys lost (AKL), EEPROM, or module work quoted separately \u2014 <a href="tel:+13365109816" style="color:var(--ckc-gold);">call for details</a>.</p></div><div class="ckc-programming-price"><span style="font-size:1rem;font-weight:500;opacity:0.7;">as low as</span><br>$' + PROGRAMMING_FEE + '</div></div>';
 
+  if (!hasWorkingKey) {
+    html += '<div class="ckc-akl-banner"><div class="ckc-akl-icon">\ud83d\udd11</div><div class="ckc-akl-info"><div class="ckc-akl-title">All Keys Lost — Call for a Quote</div><div class="ckc-akl-desc">Since you don\'t have a working key, pricing depends on your specific vehicle. All-keys-lost service may require EEPROM or module programming beyond the standard $' + PROGRAMMING_FEE + ' rate. Call us with your VIN and we\'ll give you an exact quote before anything is ordered.</div></div><a href="tel:+13365109816" class="ckc-akl-btn">\ud83d\udcde Call Us \u00b7 (336) 510-9816</a></div>';
+  }
+
   if (hasConflict) {
     html += '<div class="ckc-conflict-banner"><div class="ckc-conflict-icon">\u26a0\ufe0f</div><div class="ckc-conflict-info"><div class="ckc-conflict-title">\u26a0\ufe0f Trim-Level Conflict Detected</div><div class="ckc-conflict-desc">Our Key Finder has detected a possible trim-level conflict for your ' + year + ' ' + make + ' ' + model + '. This means your vehicle may have been built with different chip types depending on the trim or production date. To make sure you get the exact right key, give us a quick call and have your VIN handy \u2014 it takes 30 seconds and we\'ll confirm the correct key before anything is ordered.</div></div><a href="tel:+13365109816" class="ckc-conflict-btn">\ud83d\udcde Call Us \u00b7 (336) 510-9816</a></div>';
   }
@@ -859,12 +886,12 @@ function searchKeys() {
     var totalPrice = (displayPrice + PROGRAMMING_FEE).toFixed(2);
     var priceNote, btnHTML;
 
+    // If no working key → all cards show Call for Quote
+    // If working key → only true EEPROM-only types (Smart Key/Proximity) show Call for Quote
     var eepromRisk = (function() {
+      if (!hasWorkingKey) return true;
       var t = (key.type || '').toLowerCase();
-      var titleLower = (key.title || '').toLowerCase();
-      var skuLower = (key.sku || '').toLowerCase();
-      return t === 'fobik' || t === 'smart key' || t === 'smart key (fobik)' || t === 'premium smart key'
-        || titleLower.indexOf('fobik') !== -1 || skuLower.indexOf('fobik') !== -1;
+      return t === 'smart key' || t === 'smart key (fobik)' || t === 'premium smart key';
     })();
     if (eepromRisk) {
       priceNote = '<div style="font-size:0.82rem;color:#f59e0b;margin-bottom:8px;">\u26a0 This key type may require advanced programming (EEPROM/module) depending on your vehicle. Call to confirm pricing before ordering.</div>';
