@@ -205,13 +205,6 @@
       </div>
       <button class="ckc-search-btn" id="ckc-search-btn" disabled onclick="searchKeys()">Find Keys</button>
     </div>
-    <label class="ckc-working-key-row" for="ckc-working-key">
-      <input type="checkbox" class="ckc-working-key-checkbox" id="ckc-working-key">
-      <div>
-        <div class="ckc-working-key-label">I have at least one working key for this vehicle</div>
-        <div class="ckc-working-key-sublabel">Check this box to see add-a-key pricing starting at $65 &middot; Leave unchecked if all keys are lost</div>
-      </div>
-    </label>
   </div>
 
   <div class="ckc-results" id="ckc-results"></div>
@@ -223,7 +216,7 @@
 
 <script>
 // ════════════════════════════════════════
-// CKC KEY FINDER v8.30 — WORKING KEY CHECKBOX
+// CKC KEY FINDER v8.31 — PER-CARD CONFLICT WARNING, REMOVE CHECKBOX
 // Collapses variant model names (F-150/F150/F Series → F-150) before
 // they reach the dropdown. normModel() is applied in normalizeProduct()
 // when building the vehicles array, and again as a safety net in
@@ -237,7 +230,7 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbziNH6F0k8keGuaE2MhR
 const PROGRAMMING_FEE = 65;
 const SHOPIFY_DOMAIN = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
-const CKC_VERSION = 'v8.30';
+const CKC_VERSION = 'v8.31';
 
 var liveCatalog = [];
 var isLive = false;
@@ -812,7 +805,6 @@ function searchKeys() {
   var year = parseInt(document.getElementById('ckc-year').value);
   var make = document.getElementById('ckc-make').value;
   var model = document.getElementById('ckc-model').value;
-  var hasWorkingKey = document.getElementById('ckc-working-key').checked;
   var resultsDiv = document.getElementById('ckc-results');
   var db = getDB().filter(function(k) {
     return k.type !== 'KEY BLADE' &&
@@ -823,7 +815,7 @@ function searchKeys() {
       !k.sku.toUpperCase().endsWith('AM10');
   });
 
-  lastSearchParams = { year: year, make: make, model: model, hasWorkingKey: hasWorkingKey };
+  lastSearchParams = { year: year, make: make, model: model };
 
   var matches = [];
   db.forEach(function(key) {
@@ -858,13 +850,7 @@ function searchKeys() {
 
   html += '<div class="ckc-programming-card"><div class="ckc-programming-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></div><div class="ckc-programming-info"><h3>Mobile Key Programming & Cutting \u2014 as low as $' + PROGRAMMING_FEE + '</h3><p>We come to your location \u00b7 Save $10+ vs competitors \u00b7 Includes key cutting + programming</p><p style="font-size:0.82rem;color:#888;margin-top:6px;">*$' + PROGRAMMING_FEE + ' add-a-key rate \u2014 you must have a working key. All keys lost (AKL), EEPROM, or module work quoted separately \u2014 <a href="tel:+13365109816" style="color:var(--ckc-gold);">call for details</a>.</p></div><div class="ckc-programming-price"><span style="font-size:1rem;font-weight:500;opacity:0.7;">as low as</span><br>$' + PROGRAMMING_FEE + '</div></div>';
 
-  if (!hasWorkingKey) {
-    html += '<div class="ckc-akl-banner"><div class="ckc-akl-icon">\ud83d\udd11</div><div class="ckc-akl-info"><div class="ckc-akl-title">All Keys Lost — Call for a Quote</div><div class="ckc-akl-desc">Since you don\'t have a working key, pricing depends on your specific vehicle. All-keys-lost service may require EEPROM or module programming beyond the standard $' + PROGRAMMING_FEE + ' rate. Call us with your VIN and we\'ll give you an exact quote before anything is ordered.</div></div><a href="tel:+13365109816" class="ckc-akl-btn">\ud83d\udcde Call Us \u00b7 (336) 510-9816</a></div>';
-  }
-
-  if (hasConflict) {
-    html += '<div class="ckc-conflict-banner"><div class="ckc-conflict-icon">\u26a0\ufe0f</div><div class="ckc-conflict-info"><div class="ckc-conflict-title">\u26a0\ufe0f Trim-Level Conflict Detected</div><div class="ckc-conflict-desc">Our Key Finder has detected a possible trim-level conflict for your ' + year + ' ' + make + ' ' + model + '. This means your vehicle may have been built with different chip types depending on the trim or production date. To make sure you get the exact right key, give us a quick call and have your VIN handy \u2014 it takes 30 seconds and we\'ll confirm the correct key before anything is ordered.</div></div><a href="tel:+13365109816" class="ckc-conflict-btn">\ud83d\udcde Call Us \u00b7 (336) 510-9816</a></div>';
-  }
+  // no global banners — conflict and smart key warnings handled per card
 
   matches.forEach(function(key, idx) {
     var compatList = key.vehicles.map(function(v) { return v.years + ' ' + v.make + ' ' + v.model; }).join(' \u00b7 ');
@@ -887,27 +873,32 @@ function searchKeys() {
     var totalPrice = (displayPrice + PROGRAMMING_FEE).toFixed(2);
     var priceNote, btnHTML;
 
-    // If no working key → all cards show Call for Quote
-    // If working key → only true EEPROM-only types (Smart Key/Proximity) show Call for Quote
-    var eepromRisk = (function() {
-      if (!hasWorkingKey) return true;
-      var t = (key.type || '').toLowerCase();
-      return t === 'smart key' || t === 'smart key (fobik)' || t === 'premium smart key';
-    })();
-    if (eepromRisk) {
-      priceNote = '<div style="font-size:0.82rem;color:#f59e0b;margin-bottom:8px;">\u26a0 This key type may require advanced programming (EEPROM/module) depending on your vehicle. Call to confirm pricing before ordering.</div>';
+    var t = (key.type || '').toLowerCase();
+    var isSmartKey   = (t === 'smart key' || t === 'smart key (fobik)' || t === 'premium smart key');
+    var itemHasConflict = hasConflict;
+
+    if (isSmartKey) {
+      // Smart Key / Proximity — always Call for Quote
+      priceNote = '<div style="font-size:0.82rem;color:#f59e0b;margin-bottom:8px;">\u26a0 Smart Key programming requires module-level work on most vehicles. Call to confirm pricing before ordering.</div>';
+      btnHTML = '<a href="tel:+13365109816" class="ckc-add-btn" style="background:#f59e0b;">\ud83d\udcde Call for Quote &middot; (336) 510-9816</a>';
+    } else if (itemHasConflict) {
+      // Conflict detected on any key type — warn per card
+      priceNote = '<div style="font-size:0.82rem;color:#f59e0b;margin-bottom:8px;">\u26a0 The results of this search have detected several differences for your vehicle. Call to make sure you purchase the correct item for your car.</div>';
       btnHTML = '<a href="tel:+13365109816" class="ckc-add-btn" style="background:#f59e0b;">\ud83d\udcde Call for Quote &middot; (336) 510-9816</a>';
     } else {
+      // Clean — show Buy Now
       priceNote = '<div class="ckc-key-price-note">+ $' + PROGRAMMING_FEE + ' service call = <strong>$' + totalPrice + ' total</strong></div><div style="font-size:0.85rem;color:var(--ckc-text-muted);margin-bottom:4px;">includes mobile key programming & cutting</div>';
       btnHTML = '<button class="ckc-add-btn" onclick="openCheckout(' + idx + ')">Buy Now</button>';
     }
+
+    var callForQuote = isSmartKey || itemHasConflict;
 
     var detailParts = ['SKU: ' + key.sku];
     if (key.fcc && key.fcc !== 'N/A' && key.fcc !== '') detailParts.push('FCC: ' + key.fcc);
     if (key.keyway && key.keyway !== 'N/A' && key.keyway !== '') detailParts.push('Blade: ' + key.keyway);
 
-    var infoCompat = eepromRisk ? '' : '<div class="ckc-key-compat">' + compatList + '</div>';
-    var pricingCompat = eepromRisk ? '<div class="ckc-key-compat" style="margin-top:12px;text-align:left;font-size:0.88rem;line-height:1.7;">' + compatList + '</div>' : '';
+    var infoCompat = callForQuote ? '' : '<div class="ckc-key-compat">' + compatList + '</div>';
+    var pricingCompat = callForQuote ? '<div class="ckc-key-compat" style="margin-top:12px;text-align:left;font-size:0.88rem;line-height:1.7;">' + compatList + '</div>' : '';
     var detailsUnderImg = '<div style="font-size:0.72rem;color:var(--ckc-text-muted);margin-top:8px;text-align:center;line-height:1.5;word-break:break-word;">' + detailParts.join('<br>') + '</div>';
     html += '<div class="ckc-key-card"><div style="display:flex;flex-direction:column;align-items:center;">' + imgHTML + detailsUnderImg + '</div>' + '<div class="ckc-key-info"><div class="ckc-key-type">' + (key.type || 'Key') + '</div><h3>' + key.title + '</h3>' + infoCompat + '</div><div class="ckc-key-pricing"><div class="ckc-key-price">$' + displayPrice.toFixed(2) + '</div>' + priceNote + stockHTML + btnHTML + pricingCompat + '</div></div>';
   });
