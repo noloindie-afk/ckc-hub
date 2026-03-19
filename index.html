@@ -882,8 +882,8 @@ function searchKeys() {
       priceNote = '<div style="font-size:0.82rem;color:#f59e0b;margin-bottom:8px;">\u26a0 Smart Key programming requires module-level work on most vehicles. Call to confirm pricing before ordering.</div>';
       btnHTML = '<a href="tel:+13365109816" class="ckc-add-btn" style="background:#f59e0b;">\ud83d\udcde Call for Quote &middot; (336) 510-9816</a>';
     } else if (itemHasConflict) {
-      // Conflict detected on any key type — warn per card
-      priceNote = '<div style="font-size:0.82rem;color:#f59e0b;margin-bottom:8px;">\u26a0 The results of this search have detected several differences for your vehicle. Call to make sure you purchase the correct item for your car.</div>';
+      // Conflict detected — show $65 total price AND conflict warning, with Call for Quote
+      priceNote = '<div class="ckc-key-price-note">+ $' + PROGRAMMING_FEE + ' service call = <strong>$' + totalPrice + ' total</strong></div><div style="font-size:0.82rem;color:#f59e0b;margin-top:6px;margin-bottom:8px;">\u26a0 The results of this search have detected multiple trim levels for your vehicle year. Call to make sure you purchase the correct item for your car.</div>';
       btnHTML = '<a href="tel:+13365109816" class="ckc-add-btn" style="background:#f59e0b;">\ud83d\udcde Call for Quote &middot; (336) 510-9816</a>';
     } else {
       // Clean — show Buy Now
