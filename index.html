@@ -216,21 +216,21 @@
 
 <script>
 // ════════════════════════════════════════
-// CKC KEY FINDER v8.31 — PER-CARD CONFLICT WARNING, REMOVE CHECKBOX
-// Collapses variant model names (F-150/F150/F Series → F-150) before
-// they reach the dropdown. normModel() is applied in normalizeProduct()
-// when building the vehicles array, and again as a safety net in
-// getModelsForMakeAndYear(). searchKeys() matches canonical names only.
-// To add new variants: add an entry to MODEL_ALIASES below.
-// v8.28: Added AM10 SKU suffix exclusion — bulk/pack items (e.g.
-// CHR-12-AM10, FOR-06-AM10) are filtered out of search results.
+// CKC KEY FINDER v8.33 — PER-TYPE CONFLICT DETECTION
+// detectConflict() now returns a Set of conflicting types instead of a
+// boolean. itemHasConflict checks only whether the current card's type
+// is in that set — so a transponder key is never penalized by a remote
+// conflict in the same result set.
+// v8.32: Added VIN ready prompt to Smart Key and conflict call messages.
+// v8.31: Per-card conflict warnings, global banner removed, FOBIK fix.
+// v8.28: Added AM10 SKU suffix exclusion — bulk/pack items filtered out.
 // ════════════════════════════════════════
 
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbziNH6F0k8keGuaE2MhRPmqAjKRWvZxiWxi5YcstLZ40j29tN5VyBat_r_ekDRVy0CX/exec';
 const PROGRAMMING_FEE = 65;
 const SHOPIFY_DOMAIN = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
-const CKC_VERSION = 'v8.32';
+const CKC_VERSION = 'v8.33';
 
 var liveCatalog = [];
 var isLive = false;
@@ -653,7 +653,6 @@ function normalizeProduct(p) {
   if (compat.length > 0) {
     compat.forEach(function(c) {
       var vYears = c.years || (years.length > 0 ? Math.min.apply(null, years) + '-' + Math.max.apply(null, years) : '');
-      // Apply normModel here so canonical names are stored in the catalog object
       var canonicalModel = (c.model && c.model !== 'General / Universal') ? normModel(c.model) : 'All Models';
       vehicles.push({ make: normMake(c.make), model: canonicalModel, years: vYears });
     });
@@ -724,8 +723,6 @@ function getModelsForMakeAndYear(make, year) {
       var inRange = false;
       if (v.years) { var parts = v.years.split('-').map(Number); inRange = year >= parts[0] && year <= parts[1]; }
       if (key._years && key._years.includes(year)) inRange = true;
-      // normModel() already ran at normalizeProduct() time, but call again
-      // as a safety net for any data that bypassed normalizeProduct().
       if (inRange && v.model && v.model !== 'All Models') models.add(normModel(v.model));
     });
   });
@@ -774,6 +771,8 @@ document.getElementById('ckc-model').addEventListener('change', function () {
   document.getElementById('ckc-search-btn').disabled = !this.value;
 });
 
+// ── detectConflict: returns a Set of type strings that have conflicts.
+// Each card checks only its own type — no cross-type contamination.
 function detectConflict(matches) {
   var byType = {};
   matches.forEach(function(m) {
@@ -781,24 +780,24 @@ function detectConflict(matches) {
     if (!byType[t]) byType[t] = [];
     byType[t].push(m);
   });
+  var conflictTypes = new Set();
   for (var type in byType) {
     var group = byType[type];
     if (group.length <= 1) continue;
-    var fccSet = new Set(), kwSet = new Set(), chipSet = new Set();
+    var fccSet = new Set(), kwSet = new Set();
     group.forEach(function(k) {
       if (k.fcc    && k.fcc    !== 'N/A' && k.fcc    !== '') fccSet.add(k.fcc);
       if (k.keyway && k.keyway !== 'N/A' && k.keyway !== '') kwSet.add(k.keyway);
-      if (k.chip   && k.chip   !== 'N/A' && k.chip   !== '') chipSet.add(k.chip);
     });
-    if (fccSet.size > 1) return true;  // multiple FCC IDs = different remotes, always a conflict
-    if (kwSet.size > 1) return true;
+    if (fccSet.size > 1) { conflictTypes.add(type); continue; }
+    if (kwSet.size > 1)  { conflictTypes.add(type); continue; }
     var hasKW = group.filter(function(k) { return k.keyway && k.keyway !== 'N/A' && k.keyway !== ''; });
     var noKW  = group.filter(function(k) { return !k.keyway || k.keyway === 'N/A' || k.keyway === ''; });
-    if (hasKW.length > 0 && noKW.length > 0) return true;
+    if (hasKW.length > 0 && noKW.length > 0) { conflictTypes.add(type); continue; }
     var btnSet = new Set(group.map(function(k) { return k.buttonCount; }).filter(function(b) { return b > 0; }));
-    if (btnSet.size > 1) return true;
+    if (btnSet.size > 1) conflictTypes.add(type);
   }
-  return false;
+  return conflictTypes;
 }
 
 function searchKeys() {
@@ -822,7 +821,6 @@ function searchKeys() {
     var matched = false;
     key.vehicles.forEach(function(v) {
       if (v.make !== make) return;
-      // Both v.model and model are already canonical — direct comparison is safe
       if (v.model !== model && v.model !== 'All Models') return;
       if (v.years) { var parts = v.years.split('-').map(Number); if (year >= parts[0] && year <= parts[1]) matched = true; }
     });
@@ -839,7 +837,7 @@ function searchKeys() {
   window._ckcMatches = matches;
   resultsDiv.classList.add('active');
 
-  var hasConflict = detectConflict(matches) || matches.some(function(m) { return m.conflictFlag === 'VERIFY_CHIP' || m.conflictFlag === 'CHIP_VARIES_BY_TRIM'; });
+  var conflictTypes = detectConflict(matches);
 
   if (matches.length === 0) {
     resultsDiv.innerHTML = '<div class="ckc-no-results"><h3>No exact match found</h3><p>We may still have a key for your ' + year + ' ' + make + ' ' + model + '.<br>Give us a call and we\'ll find the right one for you.</p><a href="tel:+13365109816" class="ckc-call-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>Call Carolina Key Cutters</a></div>';
@@ -874,16 +872,16 @@ function searchKeys() {
     var priceNote, btnHTML;
 
     var t = (key.type || '').toLowerCase();
-    var isSmartKey   = (t === 'smart key' || t === 'smart key (fobik)' || t === 'premium smart key' || t === 'fobik');
-    var itemHasConflict = hasConflict;
+    var isSmartKey = (t === 'smart key' || t === 'smart key (fobik)' || t === 'premium smart key' || t === 'fobik');
+    var itemHasConflict = conflictTypes.has(key.type || 'Key');
 
     if (isSmartKey) {
-      // Smart Key / Proximity — always Call for Quote
+      // Smart Key / FOBIK / Proximity — always Call for Quote
       priceNote = '<div style="font-size:0.82rem;color:#f59e0b;margin-bottom:8px;">\u26a0 Smart Key programming requires module-level work on most vehicles. Call to confirm program pricing before ordering. Please have your VIN ready.</div>';
       btnHTML = '<a href="tel:+13365109816" class="ckc-add-btn" style="background:#f59e0b;">\ud83d\udcde Call for Quote &middot; (336) 510-9816</a>';
     } else if (itemHasConflict) {
-      // Conflict detected — show $65 total price AND conflict warning, with Call for Quote
-      priceNote = '<div class="ckc-key-price-note">+ $' + PROGRAMMING_FEE + ' service call = <strong>$' + totalPrice + ' total</strong></div><div style="font-size:0.82rem;color:#f59e0b;margin-top:6px;margin-bottom:8px;">\u26a0 The results of this search have detected multiple trim levels for your vehicle year. Call to make sure you purchase the correct item for your car. Please have your VIN ready. Please have your VIN ready.</div>';
+      // Conflict detected for this key type — show $65 total price AND conflict warning
+      priceNote = '<div class="ckc-key-price-note">+ $' + PROGRAMMING_FEE + ' service call = <strong>$' + totalPrice + ' total</strong></div><div style="font-size:0.82rem;color:#f59e0b;margin-top:6px;margin-bottom:8px;">\u26a0 The results of this search have detected multiple trim levels for your vehicle year. Call to make sure you purchase the correct item for your car. Please have your VIN ready.</div>';
       btnHTML = '<a href="tel:+13365109816" class="ckc-add-btn" style="background:#f59e0b;">\ud83d\udcde Call for Quote &middot; (336) 510-9816</a>';
     } else {
       // Clean — show Buy Now
