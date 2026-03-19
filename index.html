@@ -790,7 +790,7 @@ function detectConflict(matches) {
       if (k.keyway && k.keyway !== 'N/A' && k.keyway !== '') kwSet.add(k.keyway);
       if (k.chip   && k.chip   !== 'N/A' && k.chip   !== '') chipSet.add(k.chip);
     });
-    if (fccSet.size > 1 && (kwSet.size > 1 || chipSet.size > 1)) return true;
+    if (fccSet.size > 1) return true;  // multiple FCC IDs = different remotes, always a conflict
     if (kwSet.size > 1) return true;
     var hasKW = group.filter(function(k) { return k.keyway && k.keyway !== 'N/A' && k.keyway !== ''; });
     var noKW  = group.filter(function(k) { return !k.keyway || k.keyway === 'N/A' || k.keyway === ''; });
