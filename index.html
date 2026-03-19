@@ -58,8 +58,10 @@
 .ckc-results-title { font-family: 'Outfit', sans-serif; font-size: 1.6rem; font-weight: 700; }
 .ckc-results-count { font-size: 1rem; color: var(--ckc-text-muted); }
 
-.ckc-key-card { background: var(--ckc-card); border-radius: var(--ckc-radius); box-shadow: var(--ckc-shadow); border: 1px solid var(--ckc-border); padding: 36px; margin-bottom: 24px; display: grid; grid-template-columns: 180px 1fr auto; gap: 36px; align-items: center; transition: all 0.2s; }
-.ckc-key-card:hover { box-shadow: var(--ckc-shadow-lg); border-color: var(--ckc-gold); transform: translateY(-2px); }
+.ckc-key-card { background: var(--ckc-card); border-radius: var(--ckc-radius); box-shadow: var(--ckc-shadow); border: 1px solid var(--ckc-border); padding: 36px; margin-bottom: 24px; display: grid; grid-template-columns: 180px 1fr auto; gap: 36px; align-items: start; transition: all 0.35s ease; }
+.ckc-key-card:not(.ckc-conflict-card):hover { box-shadow: var(--ckc-shadow-lg); border-color: var(--ckc-gold); transform: translateY(-2px); }
+.ckc-key-card.ckc-resolved { border-color: var(--ckc-success); background: linear-gradient(135deg, #0d1a0d, #111611); }
+.ckc-key-card.ckc-greyed { opacity: 0.28; pointer-events: none; filter: grayscale(0.4); }
 @media (max-width: 700px) { .ckc-key-card { grid-template-columns: 1fr; text-align: center; } }
 
 .ckc-key-img { width: 180px; height: 180px; object-fit: contain; border-radius: 10px; background: #f9fafb; padding: 10px; }
@@ -85,6 +87,11 @@
 
 .ckc-add-btn { display: block; width: 100%; padding: 14px 24px; background: var(--ckc-gold); color: #111; border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 1.08rem; font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration: none; text-align: center; }
 .ckc-add-btn:hover { background: var(--ckc-primary-light); transform: translateY(-1px); }
+.ckc-buy-now-btn { display: block; width: 100%; padding: 14px 24px; background: var(--ckc-success); color: #111; border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 1.08rem; font-weight: 700; cursor: pointer; transition: all 0.2s; text-align: center; animation: ckc-pop-in 0.3s ease; }
+.ckc-buy-now-btn:hover { box-shadow: 0 4px 16px rgba(74,222,128,0.3); transform: translateY(-1px); }
+@keyframes ckc-pop-in { from { transform: scale(0.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.ckc-resolved-confirm { font-size: 0.82rem; color: var(--ckc-success); margin-top: 8px; text-align: right; display: none; }
+.ckc-resolved-confirm.show { display: block; }
 
 .ckc-programming-card { background: linear-gradient(135deg, #1f1a0e, #231e10); border: 2px solid var(--ckc-gold); border-radius: var(--ckc-radius); padding: 36px; margin-bottom: 32px; display: flex; align-items: center; gap: 28px; }
 @media (max-width: 700px) { .ckc-programming-card { flex-direction: column; text-align: center; } }
@@ -139,29 +146,53 @@
 .ckc-email-neon-arrow { font-size: 0.95rem; color: var(--ckc-gold-light); font-weight: 600; animation: ckc-arrow-pulse 1.5s ease-in-out infinite; }
 @keyframes ckc-arrow-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-.ckc-working-key-row { display: flex; align-items: center; gap: 14px; margin-top: 20px; padding: 16px 20px; background: rgba(201,162,39,0.06); border: 1px solid rgba(201,162,39,0.2); border-radius: 10px; cursor: pointer; transition: all 0.2s; }
-.ckc-working-key-row:hover { background: rgba(201,162,39,0.1); border-color: rgba(201,162,39,0.35); }
-.ckc-working-key-checkbox { width: 22px; height: 22px; border: 2px solid var(--ckc-gold); border-radius: 5px; background: transparent; cursor: pointer; flex-shrink: 0; appearance: none; position: relative; transition: all 0.2s; }
-.ckc-working-key-checkbox:checked { background: var(--ckc-gold); }
-.ckc-working-key-checkbox:checked::after { content: ''; position: absolute; left: 5px; top: 2px; width: 7px; height: 11px; border: 2px solid #111; border-top: none; border-left: none; transform: rotate(45deg); }
-.ckc-working-key-label { font-size: 1rem; font-weight: 600; color: var(--ckc-text); cursor: pointer; flex: 1; }
-.ckc-working-key-sublabel { font-size: 0.85rem; color: var(--ckc-text-muted); margin-top: 2px; }
-.ckc-akl-banner { background: linear-gradient(135deg, #1a0f0f, #1f1212); border: 2px solid #f87171; border-radius: var(--ckc-radius); padding: 24px 28px; margin-bottom: 28px; display: flex; align-items: center; gap: 18px; animation: ckc-fadeUp 0.3s ease; }
-@media (max-width: 700px) { .ckc-akl-banner { flex-direction: column; text-align: center; } }
-.ckc-akl-icon { font-size: 2.2rem; flex-shrink: 0; }
-.ckc-akl-info { flex: 1; }
-.ckc-akl-title { font-family: 'Outfit', sans-serif; font-size: 1.2rem; font-weight: 700; color: #f87171; margin-bottom: 4px; }
-.ckc-akl-desc { font-size: 0.95rem; color: #d4a0a0; line-height: 1.5; }
-.ckc-akl-btn { display: inline-flex; align-items: center; gap: 8px; padding: 14px 24px; background: #f87171; color: #111; text-decoration: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 1.05rem; font-weight: 700; white-space: nowrap; transition: all 0.2s; flex-shrink: 0; }
-.ckc-akl-btn:hover { background: #fca5a5; transform: translateY(-1px); }
-.ckc-conflict-banner { border: 2px solid #f59e0b; border-radius: var(--ckc-radius); padding: 28px 32px; margin-bottom: 28px; display: flex; align-items: center; gap: 20px; animation: ckc-fadeUp 0.3s ease; }
-@media (max-width: 700px) { .ckc-conflict-banner { flex-direction: column; text-align: center; } }
-.ckc-conflict-icon { font-size: 2.5rem; flex-shrink: 0; }
-.ckc-conflict-info { flex: 1; }
-.ckc-conflict-title { font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 700; color: #f59e0b; margin-bottom: 6px; }
-.ckc-conflict-desc { font-size: 0.95rem; color: #d4a054; line-height: 1.5; }
-.ckc-conflict-btn { display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; background: #f59e0b; color: #111; text-decoration: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 1.05rem; font-weight: 700; white-space: nowrap; transition: all 0.2s; flex-shrink: 0; }
-.ckc-conflict-btn:hover { background: #fbbf24; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(245,158,11,0.3); }
+/* ═══ CONFLICT RESOLVER STYLES ═══ */
+.ckc-resolver { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--ckc-border); grid-column: 1 / -1; }
+.ckc-resolver-hint { display: flex; align-items: flex-start; gap: 10px; padding: 11px 14px; background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.15); border-radius: 8px; margin-bottom: 14px; }
+.ckc-resolver-hint-text { font-size: 0.85rem; color: #c4964a; line-height: 1.5; }
+.ckc-resolver-hint-text strong { color: #f59e0b; }
+
+/* FCC resolver */
+.ckc-fcc-select { width: 100%; padding: 10px 14px; border: 1px solid var(--ckc-border); border-radius: 8px; background: #222; color: var(--ckc-text); font-family: 'DM Sans', sans-serif; font-size: 0.95rem; margin-bottom: 8px; appearance: none; cursor: pointer; }
+.ckc-fcc-select:focus { outline: none; border-color: var(--ckc-gold); }
+.ckc-fcc-fallback { font-size: 0.78rem; color: var(--ckc-text-muted); margin: 6px 0 5px; }
+.ckc-fcc-input { width: 100%; padding: 10px 14px; border: 1px solid var(--ckc-border); border-radius: 8px; background: #222; color: var(--ckc-text); font-family: monospace, 'DM Sans', sans-serif; font-size: 0.95rem; letter-spacing: 1px; }
+.ckc-fcc-input:focus { outline: none; border-color: var(--ckc-gold); }
+
+/* Button count resolver */
+.ckc-btn-count-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.ckc-btn-count-opt { padding: 9px 14px; border: 1px solid var(--ckc-border); border-radius: 8px; background: #222; color: var(--ckc-text); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; min-width: 60px; text-align: center; }
+.ckc-btn-count-opt:hover { border-color: var(--ckc-gold); }
+.ckc-btn-count-opt.selected { border-color: var(--ckc-gold); background: rgba(201,162,39,0.12); color: var(--ckc-gold); }
+
+/* Blade upload resolver */
+.ckc-upload-area { border: 1.5px dashed rgba(201,162,39,0.3); border-radius: 8px; padding: 20px 16px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; margin-bottom: 10px; }
+.ckc-upload-area:hover { border-color: rgba(201,162,39,0.6); background: rgba(201,162,39,0.03); }
+.ckc-upload-area.dragover { border-color: var(--ckc-gold); background: rgba(201,162,39,0.06); }
+.ckc-upload-file-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.ckc-upload-label { font-size: 0.85rem; color: var(--ckc-text-muted); }
+.ckc-upload-label strong { color: var(--ckc-text); }
+.ckc-upload-sub { font-size: 0.72rem; color: #666; margin-top: 3px; }
+.ckc-blade-preview { display: none; position: relative; margin-bottom: 10px; border-radius: 8px; overflow: hidden; background: #f9fafb; }
+.ckc-blade-preview img { width: 100%; max-height: 150px; object-fit: contain; display: block; padding: 6px; }
+.ckc-blade-reset { position: absolute; top: 5px; right: 5px; width: 24px; height: 24px; border-radius: 50%; background: rgba(0,0,0,0.55); border: none; color: #fff; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.ckc-analyzing { display: none; align-items: center; gap: 9px; padding: 10px 13px; background: rgba(201,162,39,0.07); border: 1px solid rgba(201,162,39,0.18); border-radius: 8px; font-size: 0.83rem; color: var(--ckc-gold); margin-bottom: 9px; }
+.ckc-analyzing.active { display: flex; }
+.ckc-spinner { width: 14px; height: 14px; border: 2px solid rgba(201,162,39,0.25); border-top-color: var(--ckc-gold); border-radius: 50%; animation: ckc-spin 0.8s linear infinite; flex-shrink: 0; }
+@keyframes ckc-spin { to { transform: rotate(360deg); } }
+.ckc-blade-msg { display: none; padding: 10px 13px; border-radius: 8px; font-size: 0.83rem; line-height: 1.5; margin-bottom: 9px; }
+.ckc-blade-msg.success { background: rgba(74,222,128,0.07); border: 1px solid rgba(74,222,128,0.2); color: var(--ckc-success); }
+.ckc-blade-msg.warn { background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.2); color: #f59e0b; }
+.ckc-blade-msg.error { background: rgba(248,113,113,0.07); border: 1px solid rgba(248,113,113,0.2); color: #f87171; }
+
+/* Step indicator for combined resolvers */
+.ckc-step-label { font-size: 0.78rem; font-weight: 600; color: var(--ckc-gold); margin-bottom: 10px; }
+.ckc-step-divider { border: none; border-top: 1px solid var(--ckc-border); margin: 14px 0; }
+
+/* Resolve / analyze button */
+.ckc-resolve-btn { width: 100%; padding: 11px; background: var(--ckc-gold); color: #111; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.92rem; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-top: 4px; }
+.ckc-resolve-btn:hover { background: var(--ckc-primary-light); }
+.ckc-resolve-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
 </style>
 
 <!-- ═══ KEY FINDER WIDGET ═══ -->
@@ -216,315 +247,110 @@
 
 <script>
 // ════════════════════════════════════════
-// CKC KEY FINDER v8.33 — PER-TYPE CONFLICT DETECTION
-// detectConflict() now returns a Set of conflicting types instead of a
-// boolean. itemHasConflict checks only whether the current card's type
-// is in that set — so a transponder key is never penalized by a remote
-// conflict in the same result set.
-// v8.32: Added VIN ready prompt to Smart Key and conflict call messages.
-// v8.31: Per-card conflict warnings, global banner removed, FOBIK fix.
-// v8.28: Added AM10 SKU suffix exclusion — bulk/pack items filtered out.
+// CKC KEY FINDER v8.34 — CONFLICT RESOLVER
+// Conflicted key cards now show an inline resolver instead of Call for Quote.
+// Resolver type is determined per conflict:
+//   FCC conflict (remotes)       → dropdown + free text FCC input
+//   Button count conflict        → button count selector
+//   Blade/keyway conflict        → photo upload → Claude Vision API
+//   Remote Head Key / Flip Key   → FCC first, then blade (two-step)
+//   Remote Keyless Entry         → FCC + button count only (no blade)
+//   Transponder Key              → blade only
+// On match: matched card unlocks Buy Now, others grey out.
+// On failure: retry once, then fall back to Call for Quote with context.
+// Smart Key / FOBIK always routes to Call for Quote (unchanged).
+// v8.33: Per-type conflict detection — no cross-type contamination.
+// v8.32: VIN ready prompt on Smart Key and conflict messages.
+// v8.31: Per-card conflict warnings, global banner removed.
+// v8.28: AM10 bulk SKU exclusion.
 // ════════════════════════════════════════
 
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbziNH6F0k8keGuaE2MhRPmqAjKRWvZxiWxi5YcstLZ40j29tN5VyBat_r_ekDRVy0CX/exec';
 const PROGRAMMING_FEE = 65;
 const SHOPIFY_DOMAIN = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
-const CKC_VERSION = 'v8.33';
+const CKC_VERSION = 'v8.34';
 
 var liveCatalog = [];
 var isLive = false;
 var selectedKey = null;
 var lastSearchParams = {};
 
-function getDisplayPrice(key) {
-  return parseFloat(key.price) || 0;
-}
+// Per-search resolver state — keyed by type string
+var _resolverState = {};
+
+function getDisplayPrice(key) { return parseFloat(key.price) || 0; }
 
 // ════════════════════════════════════════
-// MODEL NORMALIZATION MAP (v8.07)
-// Key = lowercase variant found in catalog data
-// Value = canonical display name shown in dropdown
-// Add new variants here as discovered — do not edit canonical values
-// without also updating Master Catalog compatibility data.
+// MODEL NORMALIZATION MAP
 // ════════════════════════════════════════
 var MODEL_ALIASES = {
-  // ── FORD ──
-  'f150':             'F-150',
-  'f-150':            'F-150',
-  'f 150':            'F-150',
-  'f series':         'F-150',
-  'f-series':         'F-150',
-  'f250':             'F-250',
-  'f-250':            'F-250',
-  'f 250':            'F-250',
-  'f250 super duty':  'F-250 Super Duty',
-  'f-250 super duty': 'F-250 Super Duty',
-  'f350':             'F-350',
-  'f-350':            'F-350',
-  'f 350':            'F-350',
-  'f350 super duty':  'F-350 Super Duty',
-  'f-350 super duty': 'F-350 Super Duty',
-  'f450':             'F-450',
-  'f-450':            'F-450',
-  'f550':             'F-550',
-  'f-550':            'F-550',
-  'mustang gt':       'Mustang',
-  'mustang gt500':    'Mustang',
-  'mustang shelby':   'Mustang',
-  'mustang mach-e':   'Mustang Mach-E',
-  'explorer sport':   'Explorer',
-  'escape hybrid':    'Escape',
-  // ── CHEVROLET / GMC ──
-  'silverado':        'Silverado 1500',
-  'silverado 1500':   'Silverado 1500',
-  'silverado1500':    'Silverado 1500',
-  'silverado 2500':   'Silverado 2500',
-  'silverado 2500hd': 'Silverado 2500HD',
-  'silverado 3500':   'Silverado 3500',
-  'silverado 3500hd': 'Silverado 3500HD',
-  'sierra':           'Sierra 1500',
-  'sierra 1500':      'Sierra 1500',
-  'sierra1500':       'Sierra 1500',
-  'sierra 2500':      'Sierra 2500',
-  'sierra 2500hd':    'Sierra 2500HD',
-  'sierra 3500':      'Sierra 3500',
-  'tahoe z71':        'Tahoe',
-  'suburban 1500':    'Suburban',
-  'suburban1500':     'Suburban',
-  'yukon xl':         'Yukon XL',
-  'yukon xl 1500':    'Yukon XL',
-  'colorado crew':    'Colorado',
-  'canyon crew':      'Canyon',
-  // ── DODGE / RAM / CHRYSLER / JEEP ──
-  'ram 1500':         'Ram 1500',
-  'ram1500':          'Ram 1500',
-  'ram pickup':       'Ram 1500',
-  'ram pickup 1500':  'Ram 1500',
-  'ram 2500':         'Ram 2500',
-  'ram 3500':         'Ram 3500',
-  'durango srt':      'Durango',
-  'grand cherokee l': 'Grand Cherokee',
-  'grand cherokee laredo':  'Grand Cherokee',
-  'grand cherokee limited': 'Grand Cherokee',
-  'wrangler unlimited':     'Wrangler',
-  'wrangler jk':      'Wrangler',
-  'wrangler jl':      'Wrangler',
-  'gladiator jt':     'Gladiator',
-  // ── TOYOTA ──
-  'camry le':         'Camry',
-  'camry se':         'Camry',
-  'camry xse':        'Camry',
-  'corolla le':       'Corolla',
-  'corolla se':       'Corolla',
-  'rav 4':            'RAV4',
-  'rav-4':            'RAV4',
-  'tacoma sr':        'Tacoma',
-  'tacoma sr5':       'Tacoma',
-  'tacoma trd':       'Tacoma',
-  'tundra sr':        'Tundra',
-  'tundra sr5':       'Tundra',
-  'tundra trd':       'Tundra',
-  '4runner sr5':      '4Runner',
-  '4runner trd':      '4Runner',
-  '4runner limited':  '4Runner',
-  'highlander le':    'Highlander',
-  'highlander xle':   'Highlander',
-  'sequoia sr5':      'Sequoia',
-  'sienna le':        'Sienna',
-  'sienna xle':       'Sienna',
-  'land cruiser':     'Land Cruiser',
-  // ── HONDA / ACURA ──
-  'accord lx':        'Accord',
-  'accord ex':        'Accord',
-  'accord sport':     'Accord',
-  'civic lx':         'Civic',
-  'civic ex':         'Civic',
-  'civic sport':      'Civic',
-  'civic si':         'Civic',
-  'civic type r':     'Civic',
-  'crv':              'CR-V',
-  'cr v':             'CR-V',
-  'cr-v lx':          'CR-V',
-  'cr-v ex':          'CR-V',
-  'hrv':              'HR-V',
-  'hr v':             'HR-V',
-  'hr-v':             'HR-V',
-  'pilot ex':         'Pilot',
-  'pilot ex-l':       'Pilot',
-  'odyssey ex':       'Odyssey',
-  'odyssey ex-l':     'Odyssey',
-  'passport awd':     'Passport',
-  'ridgeline rtl':    'Ridgeline',
-  'mdx sh-awd':       'MDX',
-  'rdx sh-awd':       'RDX',
-  // ── NISSAN / INFINITI ──
-  'altima s':         'Altima',
-  'altima sv':        'Altima',
-  'altima sl':        'Altima',
-  'maxima s':         'Maxima',
-  'maxima sv':        'Maxima',
-  'sentra s':         'Sentra',
-  'rogue s':          'Rogue',
-  'rogue sv':         'Rogue',
-  'rogue sl':         'Rogue',
-  'rogue sport':      'Rogue Sport',
-  'pathfinder s':     'Pathfinder',
-  'pathfinder sv':    'Pathfinder',
-  'frontier s':       'Frontier',
-  'frontier sv':      'Frontier',
-  'titan xd':         'Titan',
-  'armada sl':        'Armada',
-  'murano s':         'Murano',
-  'murano sv':        'Murano',
-  'qx80':             'QX80',
-  'qx60':             'QX60',
-  'q50':              'Q50',
-  'q60':              'Q60',
-  // ── HYUNDAI / KIA / GENESIS ──
-  'elantra se':       'Elantra',
-  'elantra sel':      'Elantra',
-  'elantra n':        'Elantra',
-  'sonata se':        'Sonata',
-  'sonata sel':       'Sonata',
-  'sonata hybrid':    'Sonata',
-  'santa fe sport':   'Santa Fe',
-  'santa fe xl':      'Santa Fe',
-  'tucson se':        'Tucson',
-  'tucson sel':       'Tucson',
-  'tucson n line':    'Tucson',
-  'palisade sel':     'Palisade',
-  'palisade limited': 'Palisade',
-  'kona se':          'Kona',
-  'ioniq 5':          'IONIQ 5',
-  'ioniq 6':          'IONIQ 6',
-  'ioniq5':           'IONIQ 5',
-  'ioniq6':           'IONIQ 6',
-  'k5 lx':            'K5',
-  'k5 gt':            'K5',
-  'optima lx':        'Optima',
-  'optima ex':        'Optima',
-  'sorento lx':       'Sorento',
-  'sorento ex':       'Sorento',
-  'sportage lx':      'Sportage',
-  'sportage ex':      'Sportage',
-  'telluride lx':     'Telluride',
-  'telluride ex':     'Telluride',
-  'sedona':           'Sedona',
-  'carnival lx':      'Carnival',
-  'stinger gt':       'Stinger',
-  'g70':              'G70',
-  'g80':              'G80',
-  'g90':              'G90',
-  // ── SUBARU ──
-  'outback premium':  'Outback',
-  'outback limited':  'Outback',
-  'forester premium': 'Forester',
-  'forester limited': 'Forester',
-  'crosstrek premium':'Crosstrek',
-  'crosstrek sport':  'Crosstrek',
-  'impreza premium':  'Impreza',
-  'legacy premium':   'Legacy',
-  'ascent premium':   'Ascent',
-  'wrx sti':          'WRX',
-  'brz limited':      'BRZ',
-  // ── MAZDA ──
-  'mazda3':           'Mazda3',
-  'mazda 3':          'Mazda3',
-  'mazda6':           'Mazda6',
-  'mazda 6':          'Mazda6',
-  'cx5':              'CX-5',
-  'cx 5':             'CX-5',
-  'cx-5 sport':       'CX-5',
-  'cx9':              'CX-9',
-  'cx 9':             'CX-9',
-  'cx-9 sport':       'CX-9',
-  'cx30':             'CX-30',
-  'cx 30':            'CX-30',
-  'cx-30':            'CX-30',
-  'cx50':             'CX-50',
-  'cx 50':            'CX-50',
-  'cx-50':            'CX-50',
-  // ── VOLKSWAGEN / AUDI ──
-  'jetta s':          'Jetta',
-  'jetta se':         'Jetta',
-  'jetta sel':        'Jetta',
-  'passat s':         'Passat',
-  'passat se':        'Passat',
-  'tiguan s':         'Tiguan',
-  'tiguan se':        'Tiguan',
-  'atlas se':         'Atlas',
-  'atlas cross sport':'Atlas Cross Sport',
-  'a4 premium':       'A4',
-  'a4 premium plus':  'A4',
-  'a6 premium':       'A6',
-  'q3 premium':       'Q3',
-  'q5 premium':       'Q5',
-  'q7 premium':       'Q7',
-  'q8 premium':       'Q8',
-  // ── BMW / MERCEDES-BENZ ──
-  '3 series':         '3 Series',
-  '3series':          '3 Series',
-  '5 series':         '5 Series',
-  '5series':          '5 Series',
-  '7 series':         '7 Series',
-  '7series':          '7 Series',
-  'x3 xdrive':        'X3',
-  'x5 xdrive':        'X5',
-  'x7 xdrive':        'X7',
-  'c-class':          'C-Class',
-  'c class':          'C-Class',
-  'e-class':          'E-Class',
-  'e class':          'E-Class',
-  's-class':          'S-Class',
-  's class':          'S-Class',
-  'glc 300':          'GLC',
-  'gle 350':          'GLE',
-  'gls 450':          'GLS',
-  // ── VOLVO ──
-  'xc60 t5':          'XC60',
-  'xc90 t6':          'XC90',
-  's60 t5':           'S60',
-  'v60 t5':           'V60',
-  // ── LEXUS ──
-  'es 350':           'ES 350',
-  'es350':            'ES 350',
-  'es300h':           'ES 300h',
-  'is 300':           'IS 300',
-  'is300':            'IS 300',
-  'is 350':           'IS 350',
-  'is350':            'IS 350',
-  'rx 350':           'RX 350',
-  'rx350':            'RX 350',
-  'rx 450h':          'RX 450h',
-  'gx 460':           'GX 460',
-  'lx 570':           'LX 570',
-  'nx 200t':          'NX 200t',
-  'nx 300':           'NX 300',
-  'ux 200':           'UX 200',
-  // ── CADILLAC ──
-  'escalade esv':     'Escalade ESV',
-  'ct4':              'CT4',
-  'ct5':              'CT5',
-  'xt4':              'XT4',
-  'xt5':              'XT5',
-  'xt6':              'XT6',
-  // ── BUICK ──
-  'enclave premium':  'Enclave',
-  'encore gx':        'Encore GX',
-  'envision premium': 'Envision',
-  'lacrosse premium': 'LaCrosse',
-  // ── LINCOLN ──
-  'navigator l':      'Navigator',
-  'aviator grand touring': 'Aviator',
-  'corsair reserve':  'Corsair',
-  'nautilus reserve': 'Nautilus',
-  'mkz hybrid':       'MKZ',
-  // ── MITSUBISHI ──
-  'outlander sport':  'Outlander Sport',
-  'outlander phev':   'Outlander',
-  'eclipse cross':    'Eclipse Cross',
-  'galant es':        'Galant',
+  'f150':'F-150','f-150':'F-150','f 150':'F-150','f series':'F-150','f-series':'F-150',
+  'f250':'F-250','f-250':'F-250','f 250':'F-250','f250 super duty':'F-250 Super Duty','f-250 super duty':'F-250 Super Duty',
+  'f350':'F-350','f-350':'F-350','f 350':'F-350','f350 super duty':'F-350 Super Duty','f-350 super duty':'F-350 Super Duty',
+  'f450':'F-450','f-450':'F-450','f550':'F-550','f-550':'F-550',
+  'mustang gt':'Mustang','mustang gt500':'Mustang','mustang shelby':'Mustang','mustang mach-e':'Mustang Mach-E',
+  'explorer sport':'Explorer','escape hybrid':'Escape',
+  'silverado':'Silverado 1500','silverado 1500':'Silverado 1500','silverado1500':'Silverado 1500',
+  'silverado 2500':'Silverado 2500','silverado 2500hd':'Silverado 2500HD','silverado 3500':'Silverado 3500','silverado 3500hd':'Silverado 3500HD',
+  'sierra':'Sierra 1500','sierra 1500':'Sierra 1500','sierra1500':'Sierra 1500',
+  'sierra 2500':'Sierra 2500','sierra 2500hd':'Sierra 2500HD','sierra 3500':'Sierra 3500',
+  'tahoe z71':'Tahoe','suburban 1500':'Suburban','suburban1500':'Suburban',
+  'yukon xl':'Yukon XL','yukon xl 1500':'Yukon XL','colorado crew':'Colorado','canyon crew':'Canyon',
+  'ram 1500':'Ram 1500','ram1500':'Ram 1500','ram pickup':'Ram 1500','ram pickup 1500':'Ram 1500',
+  'ram 2500':'Ram 2500','ram 3500':'Ram 3500','durango srt':'Durango',
+  'grand cherokee l':'Grand Cherokee','grand cherokee laredo':'Grand Cherokee','grand cherokee limited':'Grand Cherokee',
+  'wrangler unlimited':'Wrangler','wrangler jk':'Wrangler','wrangler jl':'Wrangler','gladiator jt':'Gladiator',
+  'camry le':'Camry','camry se':'Camry','camry xse':'Camry','corolla le':'Corolla','corolla se':'Corolla',
+  'rav 4':'RAV4','rav-4':'RAV4','tacoma sr':'Tacoma','tacoma sr5':'Tacoma','tacoma trd':'Tacoma',
+  'tundra sr':'Tundra','tundra sr5':'Tundra','tundra trd':'Tundra',
+  '4runner sr5':'4Runner','4runner trd':'4Runner','4runner limited':'4Runner',
+  'highlander le':'Highlander','highlander xle':'Highlander','sequoia sr5':'Sequoia',
+  'sienna le':'Sienna','sienna xle':'Sienna','land cruiser':'Land Cruiser',
+  'accord lx':'Accord','accord ex':'Accord','accord sport':'Accord',
+  'civic lx':'Civic','civic ex':'Civic','civic sport':'Civic','civic si':'Civic','civic type r':'Civic',
+  'crv':'CR-V','cr v':'CR-V','cr-v lx':'CR-V','cr-v ex':'CR-V',
+  'hrv':'HR-V','hr v':'HR-V','hr-v':'HR-V',
+  'pilot ex':'Pilot','pilot ex-l':'Pilot','odyssey ex':'Odyssey','odyssey ex-l':'Odyssey',
+  'passport awd':'Passport','ridgeline rtl':'Ridgeline','mdx sh-awd':'MDX','rdx sh-awd':'RDX',
+  'altima s':'Altima','altima sv':'Altima','altima sl':'Altima',
+  'maxima s':'Maxima','maxima sv':'Maxima','sentra s':'Sentra',
+  'rogue s':'Rogue','rogue sv':'Rogue','rogue sl':'Rogue','rogue sport':'Rogue Sport',
+  'pathfinder s':'Pathfinder','pathfinder sv':'Pathfinder','frontier s':'Frontier','frontier sv':'Frontier',
+  'titan xd':'Titan','armada sl':'Armada','murano s':'Murano','murano sv':'Murano',
+  'qx80':'QX80','qx60':'QX60','q50':'Q50','q60':'Q60',
+  'elantra se':'Elantra','elantra sel':'Elantra','elantra n':'Elantra',
+  'sonata se':'Sonata','sonata sel':'Sonata','sonata hybrid':'Sonata',
+  'santa fe sport':'Santa Fe','santa fe xl':'Santa Fe','tucson se':'Tucson','tucson sel':'Tucson','tucson n line':'Tucson',
+  'palisade sel':'Palisade','palisade limited':'Palisade','kona se':'Kona',
+  'ioniq 5':'IONIQ 5','ioniq 6':'IONIQ 6','ioniq5':'IONIQ 5','ioniq6':'IONIQ 6',
+  'k5 lx':'K5','k5 gt':'K5','optima lx':'Optima','optima ex':'Optima',
+  'sorento lx':'Sorento','sorento ex':'Sorento','sportage lx':'Sportage','sportage ex':'Sportage',
+  'telluride lx':'Telluride','telluride ex':'Telluride','sedona':'Sedona','carnival lx':'Carnival',
+  'stinger gt':'Stinger','g70':'G70','g80':'G80','g90':'G90',
+  'outback premium':'Outback','outback limited':'Outback','forester premium':'Forester','forester limited':'Forester',
+  'crosstrek premium':'Crosstrek','crosstrek sport':'Crosstrek','impreza premium':'Impreza',
+  'legacy premium':'Legacy','ascent premium':'Ascent','wrx sti':'WRX','brz limited':'BRZ',
+  'mazda3':'Mazda3','mazda 3':'Mazda3','mazda6':'Mazda6','mazda 6':'Mazda6',
+  'cx5':'CX-5','cx 5':'CX-5','cx-5 sport':'CX-5','cx9':'CX-9','cx 9':'CX-9','cx-9 sport':'CX-9',
+  'cx30':'CX-30','cx 30':'CX-30','cx-30':'CX-30','cx50':'CX-50','cx 50':'CX-50','cx-50':'CX-50',
+  'jetta s':'Jetta','jetta se':'Jetta','jetta sel':'Jetta','passat s':'Passat','passat se':'Passat',
+  'tiguan s':'Tiguan','tiguan se':'Tiguan','atlas se':'Atlas','atlas cross sport':'Atlas Cross Sport',
+  'a4 premium':'A4','a4 premium plus':'A4','a6 premium':'A6',
+  'q3 premium':'Q3','q5 premium':'Q5','q7 premium':'Q7','q8 premium':'Q8',
+  '3 series':'3 Series','3series':'3 Series','5 series':'5 Series','5series':'5 Series',
+  '7 series':'7 Series','7series':'7 Series','x3 xdrive':'X3','x5 xdrive':'X5','x7 xdrive':'X7',
+  'c-class':'C-Class','c class':'C-Class','e-class':'E-Class','e class':'E-Class',
+  's-class':'S-Class','s class':'S-Class','glc 300':'GLC','gle 350':'GLE','gls 450':'GLS',
+  'xc60 t5':'XC60','xc90 t6':'XC90','s60 t5':'S60','v60 t5':'V60',
+  'es 350':'ES 350','es350':'ES 350','es300h':'ES 300h','is 300':'IS 300','is300':'IS 300',
+  'is 350':'IS 350','is350':'IS 350','rx 350':'RX 350','rx350':'RX 350','rx 450h':'RX 450h',
+  'gx 460':'GX 460','lx 570':'LX 570','nx 200t':'NX 200t','nx 300':'NX 300','ux 200':'UX 200',
+  'escalade esv':'Escalade ESV','ct4':'CT4','ct5':'CT5','xt4':'XT4','xt5':'XT5','xt6':'XT6',
+  'enclave premium':'Enclave','encore gx':'Encore GX','envision premium':'Envision','lacrosse premium':'LaCrosse',
+  'navigator l':'Navigator','aviator grand touring':'Aviator','corsair reserve':'Corsair',
+  'nautilus reserve':'Nautilus','mkz hybrid':'MKZ',
+  'outlander sport':'Outlander Sport','outlander phev':'Outlander','eclipse cross':'Eclipse Cross','galant es':'Galant'
 };
 
 function normModel(m) {
@@ -622,65 +448,55 @@ function normalizeProduct(p) {
   var conflictFlag = p.Conflict_Flag || p.conflict_flag || '';
   var btnMatch = (title || '').match(/\b(\d)\s*[-]?\s*button/i) || (title || '').match(/\b(\d)b\b/i);
   var buttonCount = btnMatch ? parseInt(btnMatch[1]) : 0;
-
   var vehicles = [];
   var MAKE_ALIASES = {
-    'chevy': 'Chevrolet', 'chevrolet': 'Chevrolet', 'chevroley': 'Chevrolet',
-    'cehvrolet': 'Chevrolet', 'chevorlet': 'Chevrolet', 'chrevrolet': 'Chevrolet',
-    'gm': 'GMC', 'gmc': 'GMC',
-    'buick': 'Buick', 'buink': 'Buick',
-    'cadillac': 'Cadillac',
-    'chrysler': 'Chrysler', 'chrsyler': 'Chrysler', 'chrylser': 'Chrysler', 'crysler': 'Chrysler',
-    'town': '__SUPPRESS__', 'town & country': '__SUPPRESS__', 'town&country': '__SUPPRESS__',
-    'all': '__SUPPRESS__', 'all makes': '__SUPPRESS__', 'general': '__SUPPRESS__', 'universal': '__SUPPRESS__',
-    'dodge': 'Dodge', 'jeep': 'Jeep', 'ram': 'RAM',
-    'ford': 'Ford', 'lincoln': 'Lincoln', 'mercury': 'Mercury',
-    'toyota': 'Toyota', 'lexus': 'Lexus', 'scion': 'Scion',
-    'honda': 'Honda', 'acura': 'Acura',
-    'nissan': 'Nissan', 'infiniti': 'Infiniti',
-    'hyundai': 'Hyundai', 'kia': 'Kia', 'genesis': 'Genesis',
-    'subaru': 'Subaru', 'mazda': 'Mazda', 'mitsubishi': 'Mitsubishi',
-    'volkswagen': 'Volkswagen', 'vw': 'Volkswagen', 'audi': 'Audi', 'bmw': 'BMW',
-    'mercedes': 'Mercedes-Benz', 'mercedes-benz': 'Mercedes-Benz',
-    'volvo': 'Volvo', 'jaguar': 'Jaguar', 'land rover': 'Land Rover',
-    'mini': 'MINI', 'fiat': 'Fiat', 'alfa romeo': 'Alfa Romeo',
-    'tesla': 'Tesla', 'rivian': 'Rivian', 'pontiac': 'Pontiac',
-    'saturn': 'Saturn', 'oldsmobile': 'Oldsmobile', 'hummer': 'Hummer',
-    'isuzu': 'Isuzu', 'suzuki': 'Suzuki', 'saab': 'Saab'
+    'chevy':'Chevrolet','chevrolet':'Chevrolet','chevroley':'Chevrolet','cehvrolet':'Chevrolet','chevorlet':'Chevrolet','chrevrolet':'Chevrolet',
+    'gm':'GMC','gmc':'GMC','buick':'Buick','buink':'Buick','cadillac':'Cadillac',
+    'chrysler':'Chrysler','chrsyler':'Chrysler','chrylser':'Chrysler','crysler':'Chrysler',
+    'town':'__SUPPRESS__','town & country':'__SUPPRESS__','town&country':'__SUPPRESS__',
+    'all':'__SUPPRESS__','all makes':'__SUPPRESS__','general':'__SUPPRESS__','universal':'__SUPPRESS__',
+    'dodge':'Dodge','jeep':'Jeep','ram':'RAM','ford':'Ford','lincoln':'Lincoln','mercury':'Mercury',
+    'toyota':'Toyota','lexus':'Lexus','scion':'Scion','honda':'Honda','acura':'Acura',
+    'nissan':'Nissan','infiniti':'Infiniti','hyundai':'Hyundai','kia':'Kia','genesis':'Genesis',
+    'subaru':'Subaru','mazda':'Mazda','mitsubishi':'Mitsubishi',
+    'volkswagen':'Volkswagen','vw':'Volkswagen','audi':'Audi','bmw':'BMW',
+    'mercedes':'Mercedes-Benz','mercedes-benz':'Mercedes-Benz',
+    'volvo':'Volvo','jaguar':'Jaguar','land rover':'Land Rover',
+    'mini':'MINI','fiat':'Fiat','alfa romeo':'Alfa Romeo','tesla':'Tesla','rivian':'Rivian',
+    'pontiac':'Pontiac','saturn':'Saturn','oldsmobile':'Oldsmobile','hummer':'Hummer',
+    'isuzu':'Isuzu','suzuki':'Suzuki','saab':'Saab'
   };
   function normMake(m) { return MAKE_ALIASES[(m || '').toLowerCase().trim()] || m; }
-
   if (compat.length > 0) {
     compat.forEach(function(c) {
-      var vYears = c.years || (years.length > 0 ? Math.min.apply(null, years) + '-' + Math.max.apply(null, years) : '');
+      var vYears = c.years || (years.length > 0 ? Math.min.apply(null,years) + '-' + Math.max.apply(null,years) : '');
       var canonicalModel = (c.model && c.model !== 'General / Universal') ? normModel(c.model) : 'All Models';
       vehicles.push({ make: normMake(c.make), model: canonicalModel, years: vYears });
     });
   }
-
   var inStock = (vendor === 'CKC');
-  return { sku: sku, title: title, type: type, price: price, image: image, handle: handle, status: status, vendor: vendor, inStock: inStock, fcc: fcc, keyway: keyway, chip: chip, conflictFlag: conflictFlag, buttonCount: buttonCount, vehicles: vehicles, _compat: compat, _years: years };
+  return { sku, title, type, price, image, handle, status, vendor, inStock, fcc, keyway, chip, conflictFlag, buttonCount, vehicles, _compat: compat, _years: years };
 }
 
 function parseCompat(val) {
   if (!val) return [];
   if (Array.isArray(val)) return val;
-  try { return JSON.parse(val); } catch (e) { return []; }
+  try { return JSON.parse(val); } catch(e) { return []; }
 }
 
 function parseYears(val) {
   if (!val) return [];
-  if (Array.isArray(val)) return val.map(function(y) { return Math.round(Number(y)); }).filter(function(y) { return y > 1900 && y < 2100; });
+  if (Array.isArray(val)) return val.map(function(y){return Math.round(Number(y));}).filter(function(y){return y>1900&&y<2100;});
   var str = String(val);
   if (str.length > 30 && !str.includes('|')) return [];
-  return str.split(/[|,;\s]+/).map(function(y) { return Math.round(parseFloat(y.trim())); }).filter(function(y) { return y > 1900 && y < 2100; });
+  return str.split(/[|,;\s]+/).map(function(y){return Math.round(parseFloat(y.trim()));}).filter(function(y){return y>1900&&y<2100;});
 }
 
 async function tryFetchRKSImage(handle, sku) {
   var attempts = [];
   if (handle) attempts.push(handle);
-  var skuHandle = sku.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-  attempts.push(skuHandle, skuHandle.replace(/-am$/, ''), skuHandle.replace(/-am\d*$/, ''));
+  var skuHandle = sku.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+  attempts.push(skuHandle, skuHandle.replace(/-am$/,''), skuHandle.replace(/-am\d*$/,''));
   for (var i = 0; i < attempts.length; i++) {
     try {
       var resp = await fetch('https://royalkeysupply.com/products/' + attempts[i] + '.json', { signal: AbortSignal.timeout(4000) });
@@ -689,15 +505,15 @@ async function tryFetchRKSImage(handle, sku) {
         if (data.product && data.product.image && data.product.image.src) return data.product.image.src;
         if (data.product && data.product.images && data.product.images[0] && data.product.images[0].src) return data.product.images[0].src;
       }
-    } catch (e) {}
+    } catch(e) {}
   }
   try {
     var resp2 = await fetch('https://royalkeysupply.com/search/suggest.json?q=' + encodeURIComponent(sku) + '&resources[type]=product&resources[limit]=1', { signal: AbortSignal.timeout(4000) });
     if (resp2.ok) {
       var data2 = await resp2.json();
-      if (data2 && data2.resources && data2.resources.results && data2.resources.results.products && data2.resources.results.products[0] && data2.resources.results.products[0].image) return data2.resources.results.products[0].image;
+      if (data2&&data2.resources&&data2.resources.results&&data2.resources.results.products&&data2.resources.results.products[0]&&data2.resources.results.products[0].image) return data2.resources.results.products[0].image;
     }
-  } catch (e) {}
+  } catch(e) {}
   return '';
 }
 
@@ -739,7 +555,7 @@ function initDropdowns() {
   }
 }
 
-document.getElementById('ckc-year').addEventListener('change', function () {
+document.getElementById('ckc-year').addEventListener('change', function() {
   var year = parseInt(this.value);
   var makeSelect = document.getElementById('ckc-make');
   var modelSelect = document.getElementById('ckc-model');
@@ -754,7 +570,7 @@ document.getElementById('ckc-year').addEventListener('change', function () {
   makeSelect.disabled = false;
 });
 
-document.getElementById('ckc-make').addEventListener('change', function () {
+document.getElementById('ckc-make').addEventListener('change', function() {
   var year = parseInt(document.getElementById('ckc-year').value);
   var make = this.value;
   var modelSelect = document.getElementById('ckc-model');
@@ -767,12 +583,11 @@ document.getElementById('ckc-make').addEventListener('change', function () {
   modelSelect.disabled = false;
 });
 
-document.getElementById('ckc-model').addEventListener('change', function () {
+document.getElementById('ckc-model').addEventListener('change', function() {
   document.getElementById('ckc-search-btn').disabled = !this.value;
 });
 
 // ── detectConflict: returns a Set of type strings that have conflicts.
-// Each card checks only its own type — no cross-type contamination.
 function detectConflict(matches) {
   var byType = {};
   matches.forEach(function(m) {
@@ -786,13 +601,13 @@ function detectConflict(matches) {
     if (group.length <= 1) continue;
     var fccSet = new Set(), kwSet = new Set();
     group.forEach(function(k) {
-      if (k.fcc    && k.fcc    !== 'N/A' && k.fcc    !== '') fccSet.add(k.fcc);
+      if (k.fcc && k.fcc !== 'N/A' && k.fcc !== '') fccSet.add(k.fcc);
       if (k.keyway && k.keyway !== 'N/A' && k.keyway !== '') kwSet.add(k.keyway);
     });
     if (fccSet.size > 1) { conflictTypes.add(type); continue; }
-    if (kwSet.size > 1)  { conflictTypes.add(type); continue; }
+    if (kwSet.size > 1) { conflictTypes.add(type); continue; }
     var hasKW = group.filter(function(k) { return k.keyway && k.keyway !== 'N/A' && k.keyway !== ''; });
-    var noKW  = group.filter(function(k) { return !k.keyway || k.keyway === 'N/A' || k.keyway === ''; });
+    var noKW = group.filter(function(k) { return !k.keyway || k.keyway === 'N/A' || k.keyway === ''; });
     if (hasKW.length > 0 && noKW.length > 0) { conflictTypes.add(type); continue; }
     var btnSet = new Set(group.map(function(k) { return k.buttonCount; }).filter(function(b) { return b > 0; }));
     if (btnSet.size > 1) conflictTypes.add(type);
@@ -800,11 +615,400 @@ function detectConflict(matches) {
   return conflictTypes;
 }
 
+// ── getConflictKinds: for a group of same-type keys, return what kinds of conflict exist
+function getConflictKinds(group) {
+  var kinds = { fcc: false, blade: false, buttons: false };
+  var fccSet = new Set(), kwSet = new Set(), btnSet = new Set();
+  group.forEach(function(k) {
+    if (k.fcc && k.fcc !== 'N/A' && k.fcc !== '') fccSet.add(k.fcc);
+    if (k.keyway && k.keyway !== 'N/A' && k.keyway !== '') kwSet.add(k.keyway);
+    if (k.buttonCount > 0) btnSet.add(k.buttonCount);
+  });
+  if (fccSet.size > 1) kinds.fcc = true;
+  if (kwSet.size > 1) kinds.blade = true;
+  var hasKW = group.filter(function(k) { return k.keyway && k.keyway !== 'N/A' && k.keyway !== ''; });
+  var noKW = group.filter(function(k) { return !k.keyway || k.keyway === 'N/A' || k.keyway === ''; });
+  if (hasKW.length > 0 && noKW.length > 0) kinds.blade = true;
+  if (btnSet.size > 1) kinds.buttons = true;
+  return kinds;
+}
+
+// ── resolverTypeFor: given a key type string and conflict kinds, return resolver mode
+// Modes: 'fcc', 'blade', 'fcc+blade', 'fcc+buttons', 'buttons'
+function resolverTypeFor(keyType, kinds) {
+  var t = (keyType || '').toLowerCase();
+  var isKeyless = (t === 'remote (keyless entry)');
+  var isRemoteHead = (t === 'remote head key' || t === 'remote flip key');
+  var isTransponder = (t === 'transponder key');
+  if (isTransponder) return 'blade';
+  if (isKeyless) {
+    if (kinds.fcc && kinds.buttons) return 'fcc+buttons';
+    if (kinds.fcc) return 'fcc';
+    if (kinds.buttons) return 'buttons';
+    return 'fcc';
+  }
+  if (isRemoteHead) {
+    if (kinds.fcc && kinds.blade) return 'fcc+blade';
+    if (kinds.fcc) return 'fcc';
+    if (kinds.blade) return 'blade';
+    return 'fcc';
+  }
+  // default
+  if (kinds.fcc) return 'fcc';
+  if (kinds.blade) return 'blade';
+  return 'fcc';
+}
+
+// ══════════════════════════════════════════
+// RESOLVER HTML BUILDERS
+// ══════════════════════════════════════════
+
+function buildFCCResolverHTML(typeKey, group) {
+  var fccOptions = [];
+  group.forEach(function(k) {
+    if (k.fcc && k.fcc !== 'N/A' && k.fcc !== '' && fccOptions.indexOf(k.fcc) === -1) fccOptions.push(k.fcc);
+  });
+  var opts = fccOptions.map(function(f) { return '<option value="' + f + '">' + f + '</option>'; }).join('');
+  var safeKey = CSS.escape ? CSS.escape(typeKey) : typeKey.replace(/[^a-zA-Z0-9]/g,'_');
+  return '<div class="ckc-resolver-hint"><span style="font-size:1rem;flex-shrink:0;margin-top:1px;">⚠</span><div class="ckc-resolver-hint-text"><strong>Multiple remotes found for your vehicle.</strong> Check the FCC ID printed on the back of your existing remote.</div></div>' +
+    '<select class="ckc-fcc-select" id="ckc-fcc-sel-' + safeKey + '" onchange="onCKCFCCSelect(\'' + typeKey + '\')">' +
+    '<option value="">\u2014 Select your FCC ID \u2014</option>' + opts + '</select>' +
+    '<div class="ckc-fcc-fallback">Not in the list? Type it here:</div>' +
+    '<input class="ckc-fcc-input" id="ckc-fcc-inp-' + safeKey + '" type="text" placeholder="e.g. GQ4-53T" oninput="onCKCFCCInput(\'' + typeKey + '\')" />' +
+    '<button class="ckc-resolve-btn" id="ckc-fcc-btn-' + safeKey + '" disabled onclick="resolveFCC(\'' + typeKey + '\')">Confirm My Remote \u2192</button>';
+}
+
+function buildButtonsResolverHTML(typeKey, group) {
+  var btnCounts = [];
+  group.forEach(function(k) { if (k.buttonCount > 0 && btnCounts.indexOf(k.buttonCount) === -1) btnCounts.push(k.buttonCount); });
+  btnCounts.sort();
+  var safeKey = typeKey.replace(/[^a-zA-Z0-9]/g,'_');
+  var opts = btnCounts.map(function(b) {
+    return '<button class="ckc-btn-count-opt" onclick="onCKCBtnCount(\'' + typeKey + '\',' + b + ',this)">' + b + ' Button' + (b>1?'s':'') + '</button>';
+  }).join('');
+  return '<div class="ckc-resolver-hint"><span style="font-size:1rem;flex-shrink:0;margin-top:1px;">⚠</span><div class="ckc-resolver-hint-text"><strong>How many buttons does your remote have?</strong></div></div>' +
+    '<div class="ckc-btn-count-row" id="ckc-btns-' + safeKey + '">' + opts + '</div>' +
+    '<button class="ckc-resolve-btn" id="ckc-btn-btn-' + safeKey + '" disabled onclick="resolveButtons(\'' + typeKey + '\')">Confirm Button Count \u2192</button>';
+}
+
+function buildBladeResolverHTML(typeKey, group) {
+  var keyways = [];
+  group.forEach(function(k) { if (k.keyway && k.keyway !== 'N/A' && k.keyway !== '' && keyways.indexOf(k.keyway) === -1) keyways.push(k.keyway); });
+  var safeKey = typeKey.replace(/[^a-zA-Z0-9]/g,'_');
+  return '<div class="ckc-resolver-hint"><span style="font-size:1rem;flex-shrink:0;margin-top:1px;">⚠</span><div class="ckc-resolver-hint-text"><strong>Two blade types found for your vehicle.</strong> Upload a photo of your existing key blade — our AI will identify which one you need.</div></div>' +
+    '<div class="ckc-upload-area" id="ckc-upload-' + safeKey + '">' +
+    '<input type="file" class="ckc-upload-file-input" id="ckc-file-' + safeKey + '" accept="image/*" onchange="onCKCBladeFile(\'' + typeKey + '\')">' +
+    '<div style="font-size:1.4rem;margin-bottom:5px;">📷</div>' +
+    '<div class="ckc-upload-label"><strong>Tap to upload a photo</strong> of your key blade</div>' +
+    '<div class="ckc-upload-sub">Well-lit, blade facing camera works best</div>' +
+    '</div>' +
+    '<div class="ckc-blade-preview" id="ckc-prev-' + safeKey + '"><img id="ckc-prev-img-' + safeKey + '" src="" alt="Key blade"><button class="ckc-blade-reset" onclick="resetCKCBlade(\'' + typeKey + '\')">✕</button></div>' +
+    '<div class="ckc-analyzing" id="ckc-analyzing-' + safeKey + '"><div class="ckc-spinner"></div><span>Analyzing your key blade...</span></div>' +
+    '<div class="ckc-blade-msg" id="ckc-blade-msg-' + safeKey + '"></div>' +
+    '<button class="ckc-resolve-btn" id="ckc-blade-btn-' + safeKey + '" disabled onclick="resolveBlade(\'' + typeKey + '\')">Identify My Blade \u2192</button>';
+}
+
+function buildFCCPlusBladeHTML(typeKey, group) {
+  return buildFCCResolverHTML(typeKey, group) +
+    '<div id="ckc-blade-step-' + typeKey.replace(/[^a-zA-Z0-9]/g,'_') + '" style="display:none">' +
+    '<hr class="ckc-step-divider">' +
+    '<div class="ckc-step-label">Step 2 of 2 — Confirm your blade profile</div>' +
+    buildBladeResolverHTML(typeKey + '__blade', group) +
+    '</div>';
+}
+
+function buildFCCPlusButtonsHTML(typeKey, group) {
+  return buildFCCResolverHTML(typeKey, group) +
+    '<div id="ckc-buttons-step-' + typeKey.replace(/[^a-zA-Z0-9]/g,'_') + '" style="display:none">' +
+    '<hr class="ckc-step-divider">' +
+    '<div class="ckc-step-label">Step 2 of 2 — How many buttons does your remote have?</div>' +
+    buildButtonsResolverHTML(typeKey + '__buttons', group) +
+    '</div>';
+}
+
+// ══════════════════════════════════════════
+// RESOLVER EVENT HANDLERS
+// ══════════════════════════════════════════
+
+function _safeKey(t) { return t.replace(/[^a-zA-Z0-9]/g,'_'); }
+
+function onCKCFCCSelect(typeKey) {
+  var val = document.getElementById('ckc-fcc-sel-' + _safeKey(typeKey)).value;
+  if (val) document.getElementById('ckc-fcc-inp-' + _safeKey(typeKey)).value = '';
+  _resolverState[typeKey] = _resolverState[typeKey] || {};
+  _resolverState[typeKey].fcc = val;
+  document.getElementById('ckc-fcc-btn-' + _safeKey(typeKey)).disabled = !val;
+}
+
+function onCKCFCCInput(typeKey) {
+  var val = document.getElementById('ckc-fcc-inp-' + _safeKey(typeKey)).value.trim().toUpperCase();
+  if (val) document.getElementById('ckc-fcc-sel-' + _safeKey(typeKey)).value = '';
+  _resolverState[typeKey] = _resolverState[typeKey] || {};
+  _resolverState[typeKey].fcc = val;
+  document.getElementById('ckc-fcc-btn-' + _safeKey(typeKey)).disabled = !val;
+}
+
+function onCKCBtnCount(typeKey, count, el) {
+  var safeKey = _safeKey(typeKey);
+  document.querySelectorAll('#ckc-btns-' + safeKey + ' .ckc-btn-count-opt').forEach(function(b) { b.classList.remove('selected'); });
+  el.classList.add('selected');
+  _resolverState[typeKey] = _resolverState[typeKey] || {};
+  _resolverState[typeKey].buttons = count;
+  document.getElementById('ckc-btn-btn-' + safeKey).disabled = false;
+}
+
+function onCKCBladeFile(typeKey) {
+  var safeKey = _safeKey(typeKey);
+  var file = document.getElementById('ckc-file-' + safeKey).files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    _resolverState[typeKey] = _resolverState[typeKey] || {};
+    _resolverState[typeKey].bladeImage = e.target.result;
+    document.getElementById('ckc-prev-img-' + safeKey).src = e.target.result;
+    document.getElementById('ckc-prev-' + safeKey).style.display = 'block';
+    document.getElementById('ckc-upload-' + safeKey).style.display = 'none';
+    document.getElementById('ckc-blade-btn-' + safeKey).disabled = false;
+    document.getElementById('ckc-blade-msg-' + safeKey).style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function resetCKCBlade(typeKey) {
+  var safeKey = _safeKey(typeKey);
+  _resolverState[typeKey] = _resolverState[typeKey] || {};
+  _resolverState[typeKey].bladeImage = null;
+  document.getElementById('ckc-prev-' + safeKey).style.display = 'none';
+  document.getElementById('ckc-upload-' + safeKey).style.display = 'block';
+  document.getElementById('ckc-blade-btn-' + safeKey).disabled = true;
+  document.getElementById('ckc-blade-msg-' + safeKey).style.display = 'none';
+  document.getElementById('ckc-analyzing-' + safeKey).classList.remove('active');
+  document.getElementById('ckc-file-' + safeKey).value = '';
+}
+
+// ── FCC resolution
+function resolveFCC(typeKey) {
+  var state = _resolverState[typeKey] || {};
+  var entered = (state.fcc || '').trim().toUpperCase();
+  var group = _resolverState[typeKey + '__group'] || [];
+  var matched = null;
+  group.forEach(function(k) { if ((k.fcc || '').toUpperCase() === entered) matched = k; });
+  if (matched) {
+    var mode = _resolverState[typeKey + '__mode'];
+    if (mode === 'fcc+blade') {
+      // FCC confirmed — advance to blade step
+      _resolverState[typeKey].fccMatchedSku = matched.sku;
+      var safeKey = _safeKey(typeKey);
+      document.getElementById('ckc-fcc-btn-' + safeKey).textContent = '\u2713 FCC confirmed';
+      document.getElementById('ckc-fcc-btn-' + safeKey).disabled = true;
+      document.getElementById('ckc-fcc-sel-' + safeKey).disabled = true;
+      document.getElementById('ckc-fcc-inp-' + safeKey).disabled = true;
+      document.getElementById('ckc-blade-step-' + safeKey).style.display = 'block';
+    } else if (mode === 'fcc+buttons') {
+      _resolverState[typeKey].fccMatchedSku = matched.sku;
+      var safeKey = _safeKey(typeKey);
+      document.getElementById('ckc-fcc-btn-' + safeKey).textContent = '\u2713 FCC confirmed';
+      document.getElementById('ckc-fcc-btn-' + safeKey).disabled = true;
+      document.getElementById('ckc-fcc-sel-' + safeKey).disabled = true;
+      document.getElementById('ckc-fcc-inp-' + safeKey).disabled = true;
+      document.getElementById('ckc-buttons-step-' + safeKey).style.display = 'block';
+    } else {
+      // FCC alone resolves it
+      unlockCKCCard(matched.sku, group);
+    }
+  } else {
+    fallbackCFQ(typeKey, group, 'FCC ID not found in our records for this vehicle.');
+  }
+}
+
+// ── Button count resolution
+function resolveButtons(typeKey) {
+  var state = _resolverState[typeKey] || {};
+  var count = state.buttons;
+  var group = _resolverState[typeKey + '__group'] || [];
+  // If this is a step-2 for fcc+buttons, the base typeKey is the parent
+  var baseTypeKey = typeKey.replace('__buttons','');
+  var fccMatchedSku = (_resolverState[baseTypeKey] || {}).fccMatchedSku;
+  var matched = null;
+  group.forEach(function(k) {
+    if (fccMatchedSku) {
+      // must match both FCC and button count
+      if (k.sku === fccMatchedSku && k.buttonCount === count) matched = k;
+    } else {
+      if (k.buttonCount === count) matched = k;
+    }
+  });
+  if (matched) {
+    unlockCKCCard(matched.sku, group);
+  } else {
+    fallbackCFQ(baseTypeKey, group, 'Button count didn\'t match a key in our records.');
+  }
+}
+
+// ── Blade resolution via Claude Vision
+async function resolveBlade(typeKey) {
+  var safeKey = _safeKey(typeKey);
+  var state = _resolverState[typeKey] || {};
+  if (!state.bladeImage) return;
+  document.getElementById('ckc-blade-btn-' + safeKey).disabled = true;
+  document.getElementById('ckc-analyzing-' + safeKey).classList.add('active');
+  document.getElementById('ckc-blade-msg-' + safeKey).style.display = 'none';
+
+  // If this is a step-2 blade, parent group is under the base type
+  var baseTypeKey = typeKey.replace('__blade','');
+  var group = _resolverState[baseTypeKey + '__group'] || _resolverState[typeKey + '__group'] || [];
+  var fccMatchedSku = (_resolverState[baseTypeKey] || {}).fccMatchedSku;
+
+  var keyways = [];
+  group.forEach(function(k) { if (k.keyway && k.keyway !== 'N/A' && k.keyway !== '' && keyways.indexOf(k.keyway) === -1) keyways.push(k.keyway); });
+
+  var base64 = state.bladeImage.split(',')[1];
+  state.bladeRetry = (state.bladeRetry || 0);
+
+  try {
+    var result = await analyzeBladeWithClaude(base64, keyways, lastSearchParams.year + ' ' + lastSearchParams.make + ' ' + lastSearchParams.model);
+    document.getElementById('ckc-analyzing-' + safeKey).classList.remove('active');
+
+    if (result.matched) {
+      var msgEl = document.getElementById('ckc-blade-msg-' + safeKey);
+      msgEl.className = 'ckc-blade-msg success';
+      msgEl.innerHTML = '\u2713 Blade identified as <strong>' + result.keyway + '</strong> \u2014 ' + result.description;
+      msgEl.style.display = 'block';
+      var matched = null;
+      group.forEach(function(k) {
+        if (k.keyway === result.keyway) {
+          if (fccMatchedSku) {
+            if (k.sku === fccMatchedSku) matched = k;
+          } else {
+            matched = k;
+          }
+        }
+      });
+      setTimeout(function() {
+        if (matched) {
+          unlockCKCCard(matched.sku, group);
+        } else if (fccMatchedSku) {
+          // FCC and blade disagree
+          var msgBox = document.createElement('div');
+          msgBox.style.cssText = 'margin-top:12px;padding:13px 16px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;font-size:0.85rem;line-height:1.6;color:#d4a054;';
+          msgBox.innerHTML = '<strong style="color:#f59e0b;display:block;margin-bottom:4px;">\u26a0 Your remote and blade are pointing to different keys.</strong>This can happen when a vehicle has been rekeyed or had a remote replaced. Give us a call with your VIN ready and we\'ll sort it out in under a minute.';
+          document.getElementById('ckc-analyzing-' + safeKey).parentNode.appendChild(msgBox);
+          fallbackCFQ(baseTypeKey, group, '');
+        } else {
+          fallbackCFQ(baseTypeKey, group, 'Blade identified but didn\'t match our records.');
+        }
+      }, 1000);
+    } else if (result.unclear) {
+      state.bladeRetry++;
+      var msgEl = document.getElementById('ckc-blade-msg-' + safeKey);
+      if (state.bladeRetry < 2) {
+        msgEl.className = 'ckc-blade-msg warn';
+        msgEl.innerHTML = '\u26a0 We couldn\'t clearly make out the blade profile. Try a well-lit photo with the blade flat and facing the camera.';
+        msgEl.style.display = 'block';
+        resetCKCBlade(typeKey);
+      } else {
+        msgEl.className = 'ckc-blade-msg error';
+        msgEl.innerHTML = '\u26a0 Unable to identify the blade from your photos. Please call us \u2014 we\'ll confirm the right key for your vehicle in under a minute.';
+        msgEl.style.display = 'block';
+        fallbackCFQ(baseTypeKey, group, '');
+      }
+    } else {
+      var msgEl = document.getElementById('ckc-blade-msg-' + safeKey);
+      msgEl.className = 'ckc-blade-msg error';
+      msgEl.innerHTML = result.error || '\u26a0 Analysis failed. Please try again.';
+      msgEl.style.display = 'block';
+      document.getElementById('ckc-blade-btn-' + safeKey).disabled = false;
+    }
+  } catch(e) {
+    document.getElementById('ckc-analyzing-' + safeKey).classList.remove('active');
+    var msgEl = document.getElementById('ckc-blade-msg-' + safeKey);
+    msgEl.className = 'ckc-blade-msg error';
+    msgEl.innerHTML = '\u26a0 Analysis service unavailable. Please call us at (336) 510-9816.';
+    msgEl.style.display = 'block';
+  }
+}
+
+// ── Claude Vision API — blade identification
+async function analyzeBladeWithClaude(base64, keyways, vehicleContext) {
+  var prompt = 'You are an automotive locksmith assistant specializing in key blade identification.\n\n' +
+    'Vehicle: ' + vehicleContext + '\nPossible blade types: ' + keyways.join(', ') + '\n\n' +
+    'Analyze this key blade image. Key identifiers by type:\n' +
+    '- High security blades (e.g. H75, HON66, TOY43-HS): have cuts on both edges or laser-cut sidewinder pattern\n' +
+    '- Standard blades (e.g. H84, HON58R, B111): single-sided cuts, traditional profile\n\n' +
+    'Respond ONLY with valid JSON, no text outside:\n' +
+    '{"matched":true,"keyway":"H75","description":"High security double-sided blade","confidence":"high"}\n' +
+    'OR if unclear: {"matched":false,"unclear":true,"reason":"Image too dark"}';
+  var response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: [
+        { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } },
+        { type: 'text', text: prompt }
+      ]}]
+    })
+  });
+  if (!response.ok) throw new Error('API ' + response.status);
+  var data = await response.json();
+  var text = data.content.map(function(b) { return b.text || ''; }).join('').trim();
+  try {
+    var parsed = JSON.parse(text.replace(/```json|```/g,'').trim());
+    if (parsed.matched && keyways.indexOf(parsed.keyway) === -1) return { matched: false, unclear: true, reason: 'Keyway not in conflict group' };
+    return parsed;
+  } catch(e) {
+    return { matched: false, error: '\u26a0 Could not parse result. Please try again.' };
+  }
+}
+
+// ── Unlock matched card, grey out others in same type group
+function unlockCKCCard(matchedSku, group) {
+  group.forEach(function(k) {
+    var cardEl = document.getElementById('ckc-card-' + k.sku);
+    if (!cardEl) return;
+    if (k.sku === matchedSku) {
+      cardEl.classList.remove('ckc-conflict-card');
+      cardEl.classList.add('ckc-resolved');
+      var resolver = cardEl.querySelector('.ckc-resolver');
+      if (resolver) resolver.style.display = 'none';
+      var btnEl = cardEl.querySelector('.ckc-card-btn');
+      if (btnEl) {
+        var keyIndex = window._ckcMatches.findIndex(function(m) { return m.sku === k.sku; });
+        btnEl.innerHTML = '<button class="ckc-buy-now-btn" onclick="openCheckout(' + keyIndex + ')">\u2713 Buy Now</button><div class="ckc-resolved-confirm show">\u2713 Matched to your key</div>';
+      }
+    } else {
+      cardEl.classList.add('ckc-greyed');
+    }
+  });
+}
+
+// ── Fall back to Call for Quote on all cards in group
+function fallbackCFQ(typeKey, group, reason) {
+  group.forEach(function(k, i) {
+    var cardEl = document.getElementById('ckc-card-' + k.sku);
+    if (!cardEl) return;
+    var resolver = cardEl.querySelector('.ckc-resolver');
+    if (resolver) resolver.style.display = 'none';
+    var btnEl = cardEl.querySelector('.ckc-card-btn');
+    if (btnEl && i === 0) {
+      btnEl.innerHTML = '<a href="tel:+13365109816" class="ckc-add-btn" style="background:#f59e0b;">\ud83d\udcde Call for Quote \u00b7 (336) 510-9816</a>';
+    } else if (btnEl) {
+      btnEl.innerHTML = '';
+    }
+  });
+}
+
+// ══════════════════════════════════════════
+// MAIN SEARCH
+// ══════════════════════════════════════════
+
 function searchKeys() {
   var year = parseInt(document.getElementById('ckc-year').value);
   var make = document.getElementById('ckc-make').value;
   var model = document.getElementById('ckc-model').value;
   var resultsDiv = document.getElementById('ckc-results');
+
   var db = getDB().filter(function(k) {
     return k.type !== 'KEY BLADE' &&
       !k.title.toLowerCase().includes('universal') &&
@@ -814,7 +1018,8 @@ function searchKeys() {
       !k.sku.toUpperCase().endsWith('AM10');
   });
 
-  lastSearchParams = { year: year, make: make, model: model };
+  lastSearchParams = { year, make, model };
+  _resolverState = {}; // reset resolver state on new search
 
   var matches = [];
   db.forEach(function(key) {
@@ -839,6 +1044,29 @@ function searchKeys() {
 
   var conflictTypes = detectConflict(matches);
 
+  // Pre-compute per-type groups for resolvers
+  var byType = {};
+  matches.forEach(function(m) {
+    var t = m.type || 'Key';
+    if (!byType[t]) byType[t] = [];
+    byType[t].push(m);
+  });
+
+  // Store groups and modes in resolver state
+  for (var type in byType) {
+    if (conflictTypes.has(type)) {
+      var group = byType[type];
+      var kinds = getConflictKinds(group);
+      var mode = resolverTypeFor(type, kinds);
+      _resolverState[type + '__group'] = group;
+      _resolverState[type + '__mode'] = mode;
+      // For blade step in combined resolvers, store group under blade key too
+      if (mode === 'fcc+blade') _resolverState[type + '__blade__group'] = group;
+      if (mode === 'fcc+buttons') _resolverState[type + '__buttons__group'] = group;
+      _resolverState[type] = _resolverState[type] || {};
+    }
+  }
+
   if (matches.length === 0) {
     resultsDiv.innerHTML = '<div class="ckc-no-results"><h3>No exact match found</h3><p>We may still have a key for your ' + year + ' ' + make + ' ' + model + '.<br>Give us a call and we\'ll find the right one for you.</p><a href="tel:+13365109816" class="ckc-call-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>Call Carolina Key Cutters</a></div>';
     return;
@@ -848,7 +1076,8 @@ function searchKeys() {
 
   html += '<div class="ckc-programming-card"><div class="ckc-programming-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></div><div class="ckc-programming-info"><h3>Mobile Key Programming & Cutting \u2014 as low as $' + PROGRAMMING_FEE + '</h3><p>We come to your location \u00b7 Save $10+ vs competitors \u00b7 Includes key cutting + programming</p><p style="font-size:0.82rem;color:#888;margin-top:6px;">*$' + PROGRAMMING_FEE + ' add-a-key rate \u2014 you must have a working key. All keys lost (AKL), EEPROM, or module work quoted separately \u2014 <a href="tel:+13365109816" style="color:var(--ckc-gold);">call for details</a>.</p></div><div class="ckc-programming-price"><span style="font-size:1rem;font-weight:500;opacity:0.7;">as low as</span><br>$' + PROGRAMMING_FEE + '</div></div>';
 
-  // no global banners — conflict and smart key warnings handled per card
+  // Track which type has already had its resolver rendered
+  var resolverRenderedForType = {};
 
   matches.forEach(function(key, idx) {
     var compatList = key.vehicles.map(function(v) { return v.years + ' ' + v.make + ' ' + v.model; }).join(' \u00b7 ');
@@ -861,36 +1090,43 @@ function searchKeys() {
       imgHTML = '<div class="ckc-key-img-loading" id="' + imgId + '" data-sku="' + key.sku + '" data-handle="' + (key.handle || '') + '"></div>';
     }
 
-    var stockHTML;
-    if (key.inStock) {
-      stockHTML = '<div class="ckc-stock-badge in-stock"><span class="ckc-stock-dot"></span> In Stock \u2014 Same Day Service</div>';
-    } else {
-      stockHTML = '<div class="ckc-stock-badge ships"><span class="ckc-stock-dot"></span> Available for Order (Allow 2-3 Days)</div>';
-    }
+    var stockHTML = key.inStock
+      ? '<div class="ckc-stock-badge in-stock"><span class="ckc-stock-dot"></span> In Stock \u2014 Same Day Service</div>'
+      : '<div class="ckc-stock-badge ships"><span class="ckc-stock-dot"></span> Available for Order (Allow 2-3 Days)</div>';
 
     var totalPrice = (displayPrice + PROGRAMMING_FEE).toFixed(2);
-    var priceNote, btnHTML;
+    var priceNote, btnHTML, resolverHTML = '', isConflictCard = false;
 
     var t = (key.type || '').toLowerCase();
     var isSmartKey = (t === 'smart key' || t === 'smart key (fobik)' || t === 'premium smart key' || t === 'fobik');
     var itemHasConflict = conflictTypes.has(key.type || 'Key');
 
     if (isSmartKey) {
-      // Smart Key / FOBIK / Proximity — always Call for Quote
       priceNote = '<div style="font-size:0.82rem;color:#f59e0b;margin-bottom:8px;">\u26a0 Smart Key programming requires module-level work on most vehicles. Call to confirm program pricing before ordering. Please have your VIN ready.</div>';
       btnHTML = '<a href="tel:+13365109816" class="ckc-add-btn" style="background:#f59e0b;">\ud83d\udcde Call for Quote &middot; (336) 510-9816</a>';
     } else if (itemHasConflict) {
-      // Conflict detected for this key type — show $65 total price AND conflict warning
-      priceNote = '<div class="ckc-key-price-note">+ $' + PROGRAMMING_FEE + ' service call = <strong>$' + totalPrice + ' total</strong></div><div style="font-size:0.82rem;color:#f59e0b;margin-top:6px;margin-bottom:8px;">\u26a0 The results of this search have detected multiple trim levels for your vehicle year. Call to make sure you purchase the correct item for your car. Please have your VIN ready.</div>';
-      btnHTML = '<a href="tel:+13365109816" class="ckc-add-btn" style="background:#f59e0b;">\ud83d\udcde Call for Quote &middot; (336) 510-9816</a>';
+      isConflictCard = true;
+      priceNote = '<div class="ckc-key-price-note">+ $' + PROGRAMMING_FEE + ' service call = <strong>$' + totalPrice + ' total</strong></div>';
+      btnHTML = ''; // resolver handles the button
+      // Only render resolver on the FIRST card of this conflicted type
+      if (!resolverRenderedForType[key.type]) {
+        resolverRenderedForType[key.type] = true;
+        var group = byType[key.type] || [];
+        var mode = _resolverState[key.type + '__mode'] || 'fcc';
+        var resolverInner = '';
+        if (mode === 'fcc') resolverInner = buildFCCResolverHTML(key.type, group);
+        else if (mode === 'blade') resolverInner = buildBladeResolverHTML(key.type, group);
+        else if (mode === 'buttons') resolverInner = buildButtonsResolverHTML(key.type, group);
+        else if (mode === 'fcc+blade') resolverInner = buildFCCPlusBladeHTML(key.type, group);
+        else if (mode === 'fcc+buttons') resolverInner = buildFCCPlusButtonsHTML(key.type, group);
+        resolverHTML = '<div class="ckc-resolver">' + resolverInner + '</div>';
+      }
     } else {
-      // Clean — show Buy Now
       priceNote = '<div class="ckc-key-price-note">+ $' + PROGRAMMING_FEE + ' service call = <strong>$' + totalPrice + ' total</strong></div><div style="font-size:0.85rem;color:var(--ckc-text-muted);margin-bottom:4px;">includes mobile key programming & cutting</div>';
       btnHTML = '<button class="ckc-add-btn" onclick="openCheckout(' + idx + ')">Buy Now</button>';
     }
 
-    var callForQuote = isSmartKey || itemHasConflict;
-
+    var callForQuote = isSmartKey;
     var detailParts = ['SKU: ' + key.sku];
     if (key.fcc && key.fcc !== 'N/A' && key.fcc !== '') detailParts.push('FCC: ' + key.fcc);
     if (key.keyway && key.keyway !== 'N/A' && key.keyway !== '') detailParts.push('Blade: ' + key.keyway);
@@ -898,10 +1134,33 @@ function searchKeys() {
     var infoCompat = callForQuote ? '' : '<div class="ckc-key-compat">' + compatList + '</div>';
     var pricingCompat = callForQuote ? '<div class="ckc-key-compat" style="margin-top:12px;text-align:left;font-size:0.88rem;line-height:1.7;">' + compatList + '</div>' : '';
     var detailsUnderImg = '<div style="font-size:0.72rem;color:var(--ckc-text-muted);margin-top:8px;text-align:center;line-height:1.5;word-break:break-word;">' + detailParts.join('<br>') + '</div>';
-    html += '<div class="ckc-key-card"><div style="display:flex;flex-direction:column;align-items:center;">' + imgHTML + detailsUnderImg + '</div>' + '<div class="ckc-key-info"><div class="ckc-key-type">' + (key.type || 'Key') + '</div><h3>' + key.title + '</h3>' + infoCompat + '</div><div class="ckc-key-pricing"><div class="ckc-key-price">$' + displayPrice.toFixed(2) + '</div>' + priceNote + stockHTML + btnHTML + pricingCompat + '</div></div>';
+    var conflictClass = isConflictCard ? ' ckc-conflict-card' : '';
+
+    html += '<div class="ckc-key-card' + conflictClass + '" id="ckc-card-' + key.sku + '">' +
+      '<div style="display:flex;flex-direction:column;align-items:center;">' + imgHTML + detailsUnderImg + '</div>' +
+      '<div class="ckc-key-info"><div class="ckc-key-type">' + (key.type || 'Key') + '</div><h3>' + key.title + '</h3>' + infoCompat + '</div>' +
+      '<div class="ckc-key-pricing"><div class="ckc-key-price">$' + displayPrice.toFixed(2) + '</div>' + priceNote + stockHTML + '<div class="ckc-card-btn">' + btnHTML + '</div>' + pricingCompat + '</div>' +
+      resolverHTML +
+      '</div>';
   });
 
   resultsDiv.innerHTML = html;
+
+  // Wire up drag-and-drop for blade uploaders
+  document.querySelectorAll('.ckc-upload-area').forEach(function(area) {
+    area.addEventListener('dragover', function(e) { e.preventDefault(); area.classList.add('dragover'); });
+    area.addEventListener('dragleave', function() { area.classList.remove('dragover'); });
+    area.addEventListener('drop', function(e) {
+      e.preventDefault(); area.classList.remove('dragover');
+      var file = e.dataTransfer.files[0];
+      if (!file || !file.type.startsWith('image/')) return;
+      var fileInput = area.querySelector('.ckc-upload-file-input');
+      if (!fileInput) return;
+      var dt = new DataTransfer(); dt.items.add(file); fileInput.files = dt.files;
+      fileInput.dispatchEvent(new Event('change'));
+    });
+  });
+
   lazyLoadImages();
   resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -920,7 +1179,7 @@ async function lazyLoadImages() {
       } else {
         el.outerHTML = '<div class="ckc-key-img-placeholder">🔑</div>';
       }
-    } catch (e) {
+    } catch(e) {
       el.outerHTML = '<div class="ckc-key-img-placeholder">🔑</div>';
     }
   }
@@ -937,11 +1196,8 @@ function renderCheckout() {
   var total = keyPrice + PROGRAMMING_FEE;
   var resultsDiv = document.getElementById('ckc-results');
   var stockLabel = k.status === 'active' ? '\u2705 In Stock \u2014 Same Day' : '\ud83d\udce6 Available for Order (2-3 Days)';
-
   var progDisclaimer = '<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:14px 16px;margin:14px 0;font-size:0.88rem;color:#d4a054;line-height:1.5;">\u26a0\ufe0f <strong style="color:#f59e0b;">Pricing Notice:</strong> The $' + PROGRAMMING_FEE + ' service call fee covers add-a-key programming when you have a working key. All keys lost (AKL), EEPROM, or module programming may require additional cost. We will confirm your exact total before any work begins \u2014 no surprises.</div>';
-
   resultsDiv.innerHTML = '<div class="ckc-checkout-panel"><h3>\ud83d\uded2 Your Order</h3><div class="ckc-checkout-line"><span class="ckc-checkout-line-label">' + k.title + '<br><small style="color:var(--ckc-text-muted)">' + k.type + ' \u00b7 ' + stockLabel + '</small></span><span class="ckc-checkout-line-price">$' + keyPrice.toFixed(2) + '</span></div><div class="ckc-checkout-line"><span class="ckc-checkout-line-label">\ud83d\udd27 Mobile Key Programming & Cutting<br><small style="color:var(--ckc-text-muted)">We come to you \u2014 includes key cutting + programming</small></span><span class="ckc-checkout-line-price">$' + PROGRAMMING_FEE + '.00</span></div>' + progDisclaimer + '<div class="ckc-checkout-total"><span class="ckc-checkout-total-label">Total</span><span class="ckc-checkout-total-price">$' + total.toFixed(2) + '</span></div><div class="ckc-checkout-tax">+ NC sales tax calculated at checkout</div><div style="font-size:0.85rem;color:var(--ckc-text-muted);text-align:center;margin-bottom:14px;">Service available in the Triad, NC area</div><button class="ckc-checkout-btn" id="ckc-checkout-btn" onclick="startShopifyCheckout()">Proceed to Checkout \u2192</button><button class="ckc-back-btn" onclick="backToResults()">\u2190 Back to results</button></div>';
-
   resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -953,7 +1209,7 @@ async function startShopifyCheckout() {
   btn.textContent = 'Opening checkout...';
   try {
     var k = selectedKey;
-    var handle = (k.handle || k.sku || '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    var handle = (k.handle || k.sku || '').toLowerCase().replace(/[^a-z0-9]+/g,'-');
     var PROGRAMMING_VARIANT = '45908511228101';
     var vehicleNote = 'Vehicle: ' + lastSearchParams.year + ' ' + lastSearchParams.make + ' ' + lastSearchParams.model;
     var shopifyUrl;
@@ -962,12 +1218,12 @@ async function startShopifyCheckout() {
       var prodData = await prodJson.json();
       var keyVariantId = prodData.product.variants[0].id;
       shopifyUrl = 'https://' + SHOPIFY_DOMAIN + '/cart/' + keyVariantId + ':1,' + PROGRAMMING_VARIANT + ':1?note=' + encodeURIComponent(vehicleNote);
-    } catch (e) {
+    } catch(e) {
       shopifyUrl = 'https://' + SHOPIFY_DOMAIN + '/products/' + handle + '?note=' + encodeURIComponent(vehicleNote);
     }
     window.open(shopifyUrl, '_blank');
     showPostPurchase();
-  } catch (err) {
+  } catch(err) {
     btn.disabled = false;
     btn.textContent = 'Proceed to Secure Checkout \u2192';
     alert('Unable to open checkout. Please call us at (336) 510-9816 to order.');
@@ -980,7 +1236,7 @@ function showPostPurchase() {
 }
 
 function resetFinder() {
-  selectedKey = null; lastSearchParams = {}; window._ckcMatches = [];
+  selectedKey = null; lastSearchParams = {}; window._ckcMatches = []; _resolverState = {};
   var resultsDiv = document.getElementById('ckc-results');
   resultsDiv.innerHTML = ''; resultsDiv.classList.remove('active');
   document.getElementById('ckc-year').value = '';
