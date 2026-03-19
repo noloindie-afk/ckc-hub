@@ -247,29 +247,18 @@
 
 <script>
 // ════════════════════════════════════════
-// CKC KEY FINDER v8.34 — CONFLICT RESOLVER
-// Conflicted key cards now show an inline resolver instead of Call for Quote.
-// Resolver type is determined per conflict:
-//   FCC conflict (remotes)       → dropdown + free text FCC input
-//   Button count conflict        → button count selector
-//   Blade/keyway conflict        → photo upload → Claude Vision API
-//   Remote Head Key / Flip Key   → FCC first, then blade (two-step)
-//   Remote Keyless Entry         → FCC + button count only (no blade)
-//   Transponder Key              → blade only
-// On match: matched card unlocks Buy Now, others grey out.
-// On failure: retry once, then fall back to Call for Quote with context.
-// Smart Key / FOBIK always routes to Call for Quote (unchanged).
-// v8.33: Per-type conflict detection — no cross-type contamination.
-// v8.32: VIN ready prompt on Smart Key and conflict messages.
-// v8.31: Per-card conflict warnings, global banner removed.
-// v8.28: AM10 bulk SKU exclusion.
+// CKC KEY FINDER v8.35 — PER-CARD RESOLVER
+// Every conflicted card now gets its own independent resolver keyed by SKU.
+// Blade photo upload identifies the blade and unlocks that specific card.
+// If blade doesn't match that card, shows "not a match" and lets customer
+// try the other cards. v8.34: Full conflict resolver system introduced.
 // ════════════════════════════════════════
 
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbziNH6F0k8keGuaE2MhRPmqAjKRWvZxiWxi5YcstLZ40j29tN5VyBat_r_ekDRVy0CX/exec';
 const PROGRAMMING_FEE = 65;
 const SHOPIFY_DOMAIN = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
-const CKC_VERSION = 'v8.34';
+const CKC_VERSION = 'v8.35';
 
 var liveCatalog = [];
 var isLive = false;
@@ -884,6 +873,13 @@ async function resolveBlade(typeKey) {
           }
         }
       });
+      // Also check: does the blade match THIS card specifically (per-card resolver)
+      var thisCardSku = _resolverState[typeKey + '__sku'] || _resolverState[baseTypeKey + '__sku'];
+      if (!matched && thisCardSku) {
+        group.forEach(function(k) {
+          if (k.sku === thisCardSku && k.keyway === result.keyway) matched = k;
+        });
+      }
       setTimeout(function() {
         if (matched) {
           unlockCKCCard(matched.sku, group);
@@ -895,7 +891,12 @@ async function resolveBlade(typeKey) {
           document.getElementById('ckc-analyzing-' + safeKey).parentNode.appendChild(msgBox);
           fallbackCFQ(baseTypeKey, group, '');
         } else {
-          fallbackCFQ(baseTypeKey, group, 'Blade identified but didn\'t match our records.');
+          // Blade identified but doesn't match this card — show not-a-match message on this card only
+          var msgEl = document.getElementById('ckc-blade-msg-' + safeKey);
+          msgEl.className = 'ckc-blade-msg warn';
+          msgEl.innerHTML = '\u26a0 This blade (' + result.keyway + ') doesn\'t match this key. Check the other cards above or below.';
+          msgEl.style.display = 'block';
+          document.getElementById('ckc-blade-btn-' + safeKey).disabled = false;
         }
       }, 1000);
     } else if (result.unclear) {
@@ -1076,8 +1077,7 @@ function searchKeys() {
 
   html += '<div class="ckc-programming-card"><div class="ckc-programming-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></div><div class="ckc-programming-info"><h3>Mobile Key Programming & Cutting \u2014 as low as $' + PROGRAMMING_FEE + '</h3><p>We come to your location \u00b7 Save $10+ vs competitors \u00b7 Includes key cutting + programming</p><p style="font-size:0.82rem;color:#888;margin-top:6px;">*$' + PROGRAMMING_FEE + ' add-a-key rate \u2014 you must have a working key. All keys lost (AKL), EEPROM, or module work quoted separately \u2014 <a href="tel:+13365109816" style="color:var(--ckc-gold);">call for details</a>.</p></div><div class="ckc-programming-price"><span style="font-size:1rem;font-weight:500;opacity:0.7;">as low as</span><br>$' + PROGRAMMING_FEE + '</div></div>';
 
-  // Track which type has already had its resolver rendered
-  var resolverRenderedForType = {};
+  // Each conflicted card gets its own resolver — no type-level deduplication
 
   matches.forEach(function(key, idx) {
     var compatList = key.vehicles.map(function(v) { return v.years + ' ' + v.make + ' ' + v.model; }).join(' \u00b7 ');
@@ -1108,19 +1108,21 @@ function searchKeys() {
       isConflictCard = true;
       priceNote = '<div class="ckc-key-price-note">+ $' + PROGRAMMING_FEE + ' service call = <strong>$' + totalPrice + ' total</strong></div>';
       btnHTML = ''; // resolver handles the button
-      // Only render resolver on the FIRST card of this conflicted type
-      if (!resolverRenderedForType[key.type]) {
-        resolverRenderedForType[key.type] = true;
-        var group = byType[key.type] || [];
-        var mode = _resolverState[key.type + '__mode'] || 'fcc';
-        var resolverInner = '';
-        if (mode === 'fcc') resolverInner = buildFCCResolverHTML(key.type, group);
-        else if (mode === 'blade') resolverInner = buildBladeResolverHTML(key.type, group);
-        else if (mode === 'buttons') resolverInner = buildButtonsResolverHTML(key.type, group);
-        else if (mode === 'fcc+blade') resolverInner = buildFCCPlusBladeHTML(key.type, group);
-        else if (mode === 'fcc+buttons') resolverInner = buildFCCPlusButtonsHTML(key.type, group);
-        resolverHTML = '<div class="ckc-resolver">' + resolverInner + '</div>';
-      }
+      // Every conflicted card gets its own resolver, keyed by SKU so handlers are independent
+      var group = byType[key.type] || [];
+      var mode = _resolverState[key.type + '__mode'] || 'fcc';
+      var cardTypeKey = key.type + '__' + key.sku; // unique per card
+      _resolverState[cardTypeKey + '__group'] = group;
+      _resolverState[cardTypeKey + '__mode'] = mode;
+      _resolverState[cardTypeKey + '__sku'] = key.sku; // which card this resolver belongs to
+      _resolverState[cardTypeKey] = {};
+      var resolverInner = '';
+      if (mode === 'fcc') resolverInner = buildFCCResolverHTML(cardTypeKey, group);
+      else if (mode === 'blade') resolverInner = buildBladeResolverHTML(cardTypeKey, group);
+      else if (mode === 'buttons') resolverInner = buildButtonsResolverHTML(cardTypeKey, group);
+      else if (mode === 'fcc+blade') resolverInner = buildFCCPlusBladeHTML(cardTypeKey, group);
+      else if (mode === 'fcc+buttons') resolverInner = buildFCCPlusButtonsHTML(cardTypeKey, group);
+      resolverHTML = '<div class="ckc-resolver">' + resolverInner + '</div>';
     } else {
       priceNote = '<div class="ckc-key-price-note">+ $' + PROGRAMMING_FEE + ' service call = <strong>$' + totalPrice + ' total</strong></div><div style="font-size:0.85rem;color:var(--ckc-text-muted);margin-bottom:4px;">includes mobile key programming & cutting</div>';
       btnHTML = '<button class="ckc-add-btn" onclick="openCheckout(' + idx + ')">Buy Now</button>';
