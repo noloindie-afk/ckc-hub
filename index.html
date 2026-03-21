@@ -1,3 +1,4 @@
+
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ═══ CKC KEY FINDER — EMBEDDABLE ═══ */
@@ -246,12 +247,54 @@
 
 <script>
 // ════════════════════════════════════════
-// CKC KEY FINDER v8.36 — BUTTON COUNT FIX
-// v8.36: buttonCount now read directly from catalog Buttons column
-//        instead of being parsed from title string via regex.
-//        N/A values parse to NaN and fall through to 0 correctly.
-// v8.35: Per-card resolver system. Every conflicted card gets its own
-//        independent resolver keyed by SKU.
+// CKC KEY FINDER v8.37
+// ════════════════════════════════════════
+// BUSINESS RULES — MUST SURVIVE EVERY VERSION UPDATE
+// These rules are the source of truth. Any code change must
+// preserve all rules below. Check each rule before releasing.
+//
+// RULE 1: Remote Head Key — ALWAYS show blade resolver on every
+//         card, even if only one result for that vehicle.
+//         Blade type (e.g. H128 vs HU101) is ALWAYS ambiguous
+//         without physical verification.
+//
+// RULE 2: Transponder Key — ALWAYS show blade resolver on every
+//         card, even if only one result for that vehicle.
+//         Keyway is ALWAYS required to cut the key correctly.
+//
+// RULE 3: Remote (Keyless Entry) — show FCC resolver if FCC
+//         conflict exists; show button count resolver if button
+//         count conflict exists; show fcc+buttons if both.
+//
+// RULE 4: Smart Key / FOBIK / Premium Smart Key — always Call
+//         for Quote. Never show Buy Now. Never show resolver.
+//
+// RULE 5: inStock = Vendor field === 'CKC' only. Never derive
+//         from status field.
+//
+// RULE 6: buttonCount read directly from catalog Buttons column.
+//         Never parsed from title string.
+//         N/A parses to NaN, falls through to 0 via || 0.
+//
+// RULE 7: Excluded from results entirely:
+//         - Type = KEY BLADE
+//         - Title contains 'universal'
+//         - Title contains 'pack of'
+//         - SKU starts with AUT-
+//         - SKU starts with IKEY
+//         - SKU ends with AM10
+//
+// RULE 8: eepromRisk / Call for Quote triggered by key Type only:
+//         Smart Key, Smart Key (FOBIK), Premium Smart Key, FOBIK.
+//         Never triggered by conflict flags or chip type.
+//
+// RULE 9: Every conflicted card gets its own independent resolver
+//         keyed by SKU. Resolvers do not share state across cards.
+//
+// RULE 10: Blade resolver — on match, unlock that card with
+//          Buy Now and grey out all other cards in the type group.
+//          On no-match, show warning on that card only.
+//          After 2 failed photo attempts, fall back to CFQ.
 // ════════════════════════════════════════
 
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbziNH6F0k8keGuaE2MhRPmqAjKRWvZxiWxi5YcstLZ40j29tN5VyBat_r_ekDRVy0CX/exec';
@@ -269,6 +312,12 @@ var lastSearchParams = {};
 var _resolverState = {};
 
 function getDisplayPrice(key) { return parseFloat(key.price) || 0; }
+
+// RULE 1 + 2: Types that ALWAYS get blade resolver regardless of conflict detection
+function alwaysBladeResolver(keyType) {
+  var t = (keyType || '').toLowerCase();
+  return t === 'remote head key' || t === 'remote flip key' || t === 'transponder key';
+}
 
 // ════════════════════════════════════════
 // MODEL NORMALIZATION MAP
@@ -630,17 +679,12 @@ function resolverTypeFor(keyType, kinds) {
   var isKeyless = (t === 'remote (keyless entry)');
   var isRemoteHead = (t === 'remote head key' || t === 'remote flip key');
   var isTransponder = (t === 'transponder key');
-  if (isTransponder) return 'blade';
+  // RULE 1 + 2: Always blade for these types
+  if (isTransponder || isRemoteHead) return 'blade';
   if (isKeyless) {
     if (kinds.fcc && kinds.buttons) return 'fcc+buttons';
     if (kinds.fcc) return 'fcc';
     if (kinds.buttons) return 'buttons';
-    return 'fcc';
-  }
-  if (isRemoteHead) {
-    if (kinds.fcc && kinds.blade) return 'fcc+blade';
-    if (kinds.fcc) return 'fcc';
-    if (kinds.blade) return 'blade';
     return 'fcc';
   }
   // default
@@ -1046,7 +1090,9 @@ function searchKeys() {
   });
 
   for (var type in byType) {
-    if (conflictTypes.has(type)) {
+    // RULE 1+2: Always-blade types treated as conflicted for resolver purposes
+    var isAlwaysBlade = alwaysBladeResolver(type);
+    if (conflictTypes.has(type) || isAlwaysBlade) {
       var group = byType[type];
       var kinds = getConflictKinds(group);
       var mode = resolverTypeFor(type, kinds);
@@ -1086,18 +1132,21 @@ function searchKeys() {
     var priceNote, btnHTML, resolverHTML = '', isConflictCard = false;
 
     var t = (key.type || '').toLowerCase();
+    // RULE 4: Smart Key / FOBIK always CFQ
     var isSmartKey = (t === 'smart key' || t === 'smart key (fobik)' || t === 'premium smart key' || t === 'fobik');
+    // RULE 1+2: Always blade resolver for these types
+    var needsBladeResolver = alwaysBladeResolver(key.type);
     var itemHasConflict = conflictTypes.has(key.type || 'Key');
 
     if (isSmartKey) {
       priceNote = '<div style="font-size:0.82rem;color:#f59e0b;margin-bottom:8px;">\u26a0 Smart Key programming requires module-level work on most vehicles. Call to confirm program pricing before ordering. Please have your VIN ready.</div>';
       btnHTML = '<a href="tel:+13365109816" class="ckc-add-btn" style="background:#f59e0b;">\ud83d\udcde Call for Quote &middot; (336) 510-9816</a>';
-    } else if (itemHasConflict) {
+    } else if (needsBladeResolver || itemHasConflict) {
       isConflictCard = true;
       priceNote = '<div class="ckc-key-price-note">+ $' + PROGRAMMING_FEE + ' service call = <strong>$' + totalPrice + ' total</strong></div>';
       btnHTML = '';
       var group = byType[key.type] || [];
-      var mode = _resolverState[key.type + '__mode'] || 'fcc';
+      var mode = _resolverState[key.type + '__mode'] || 'blade';
       var cardTypeKey = key.type + '__' + key.sku;
       _resolverState[cardTypeKey + '__group'] = group;
       _resolverState[cardTypeKey + '__mode'] = mode;
