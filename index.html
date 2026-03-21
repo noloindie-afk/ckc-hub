@@ -1,4 +1,3 @@
-
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ═══ CKC KEY FINDER — EMBEDDABLE ═══ */
@@ -247,18 +246,19 @@
 
 <script>
 // ════════════════════════════════════════
-// CKC KEY FINDER v8.35 — PER-CARD RESOLVER
-// Every conflicted card now gets its own independent resolver keyed by SKU.
-// Blade photo upload identifies the blade and unlocks that specific card.
-// If blade doesn't match that card, shows "not a match" and lets customer
-// try the other cards. v8.34: Full conflict resolver system introduced.
+// CKC KEY FINDER v8.36 — BUTTON COUNT FIX
+// v8.36: buttonCount now read directly from catalog Buttons column
+//        instead of being parsed from title string via regex.
+//        N/A values parse to NaN and fall through to 0 correctly.
+// v8.35: Per-card resolver system. Every conflicted card gets its own
+//        independent resolver keyed by SKU.
 // ════════════════════════════════════════
 
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbziNH6F0k8keGuaE2MhRPmqAjKRWvZxiWxi5YcstLZ40j29tN5VyBat_r_ekDRVy0CX/exec';
 const PROGRAMMING_FEE = 65;
 const SHOPIFY_DOMAIN = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
-const CKC_VERSION = 'v8.35';
+const CKC_VERSION = 'v8.36';
 
 var liveCatalog = [];
 var isLive = false;
@@ -350,21 +350,21 @@ function normModel(m) {
 
 // ══ FALLBACK DATABASE ══
 var FALLBACK_DATABASE = [
-  { sku: "FOR-15-AM", title: "Ford Transponder Key H92/H84/H85 (80-Bit)", type: "Transponder Key", price: 29.99, image: "", inStock: true, status: "active", fcc: "N/A", keyway: "H92", vehicles: [
+  { sku: "FOR-15-AM", title: "Ford Transponder Key H92/H84/H85 (80-Bit)", type: "Transponder Key", price: 29.99, image: "", inStock: true, status: "active", fcc: "N/A", keyway: "H92", buttonCount: 0, vehicles: [
     { make: "Ford", model: "F-150", years: "2004-2014" }, { make: "Ford", model: "F-250", years: "2004-2011" },
     { make: "Ford", model: "Ranger", years: "2001-2011" }, { make: "Ford", model: "Explorer", years: "2001-2010" },
     { make: "Ford", model: "Expedition", years: "2003-2013" }, { make: "Ford", model: "Escape", years: "2001-2012" },
     { make: "Ford", model: "Edge", years: "2007-2015" }, { make: "Ford", model: "Mustang", years: "2005-2014" }
   ]},
-  { sku: "TOY-10-AM", title: "Toyota Transponder Key TOY43", type: "Transponder Key", price: 29.99, image: "", inStock: true, status: "active", fcc: "N/A", keyway: "TOY43", vehicles: [
+  { sku: "TOY-10-AM", title: "Toyota Transponder Key TOY43", type: "Transponder Key", price: 29.99, image: "", inStock: true, status: "active", fcc: "N/A", keyway: "TOY43", buttonCount: 0, vehicles: [
     { make: "Toyota", model: "Camry", years: "2003-2010" }, { make: "Toyota", model: "Corolla", years: "2003-2010" },
     { make: "Toyota", model: "RAV4", years: "2003-2010" }, { make: "Toyota", model: "Tacoma", years: "2005-2012" }
   ]},
-  { sku: "HON-07-AM", title: "Honda Transponder Key HO01", type: "Transponder Key", price: 29.99, image: "", inStock: true, status: "active", fcc: "N/A", keyway: "HO01", vehicles: [
+  { sku: "HON-07-AM", title: "Honda Transponder Key HO01", type: "Transponder Key", price: 29.99, image: "", inStock: true, status: "active", fcc: "N/A", keyway: "HO01", buttonCount: 0, vehicles: [
     { make: "Honda", model: "Accord", years: "2003-2012" }, { make: "Honda", model: "Civic", years: "2006-2013" },
     { make: "Honda", model: "CR-V", years: "2005-2013" }, { make: "Honda", model: "Pilot", years: "2005-2013" }
   ]},
-  { sku: "CHV-11-AM", title: "GM/Chevrolet Transponder Key B111", type: "Transponder Key", price: 29.99, image: "", inStock: true, status: "active", fcc: "N/A", keyway: "B111", vehicles: [
+  { sku: "CHV-11-AM", title: "GM/Chevrolet Transponder Key B111", type: "Transponder Key", price: 29.99, image: "", inStock: true, status: "active", fcc: "N/A", keyway: "B111", buttonCount: 0, vehicles: [
     { make: "Chevrolet", model: "Silverado 1500", years: "2007-2013" }, { make: "Chevrolet", model: "Impala", years: "2006-2013" },
     { make: "GMC", model: "Sierra 1500", years: "2007-2013" }, { make: "GMC", model: "Yukon", years: "2007-2013" }
   ]}
@@ -435,8 +435,9 @@ function normalizeProduct(p) {
   var keyway = p.Keyway || p.keyway || '';
   var chip = p.Chip || p.chip || '';
   var conflictFlag = p.Conflict_Flag || p.conflict_flag || '';
-  var btnMatch = (title || '').match(/\b(\d)\s*[-]?\s*button/i) || (title || '').match(/\b(\d)b\b/i);
-  var buttonCount = btnMatch ? parseInt(btnMatch[1]) : 0;
+  // v8.36: Read buttonCount directly from catalog Buttons column.
+  // N/A values parse to NaN and fall through to 0 via || 0.
+  var buttonCount = parseInt(p.Buttons || p.buttons) || 0;
   var vehicles = [];
   var MAKE_ALIASES = {
     'chevy':'Chevrolet','chevrolet':'Chevrolet','chevroley':'Chevrolet','cehvrolet':'Chevrolet','chevorlet':'Chevrolet','chrevrolet':'Chevrolet',
@@ -785,7 +786,6 @@ function resolveFCC(typeKey) {
   if (matched) {
     var mode = _resolverState[typeKey + '__mode'];
     if (mode === 'fcc+blade') {
-      // FCC confirmed — advance to blade step
       _resolverState[typeKey].fccMatchedSku = matched.sku;
       var safeKey = _safeKey(typeKey);
       document.getElementById('ckc-fcc-btn-' + safeKey).textContent = '\u2713 FCC confirmed';
@@ -802,7 +802,6 @@ function resolveFCC(typeKey) {
       document.getElementById('ckc-fcc-inp-' + safeKey).disabled = true;
       document.getElementById('ckc-buttons-step-' + safeKey).style.display = 'block';
     } else {
-      // FCC alone resolves it
       unlockCKCCard(matched.sku, group);
     }
   } else {
@@ -815,13 +814,11 @@ function resolveButtons(typeKey) {
   var state = _resolverState[typeKey] || {};
   var count = state.buttons;
   var group = _resolverState[typeKey + '__group'] || [];
-  // If this is a step-2 for fcc+buttons, the base typeKey is the parent
   var baseTypeKey = typeKey.replace('__buttons','');
   var fccMatchedSku = (_resolverState[baseTypeKey] || {}).fccMatchedSku;
   var matched = null;
   group.forEach(function(k) {
     if (fccMatchedSku) {
-      // must match both FCC and button count
       if (k.sku === fccMatchedSku && k.buttonCount === count) matched = k;
     } else {
       if (k.buttonCount === count) matched = k;
@@ -843,7 +840,6 @@ async function resolveBlade(typeKey) {
   document.getElementById('ckc-analyzing-' + safeKey).classList.add('active');
   document.getElementById('ckc-blade-msg-' + safeKey).style.display = 'none';
 
-  // If this is a step-2 blade, parent group is under the base type
   var baseTypeKey = typeKey.replace('__blade','');
   var group = _resolverState[baseTypeKey + '__group'] || _resolverState[typeKey + '__group'] || [];
   var fccMatchedSku = (_resolverState[baseTypeKey] || {}).fccMatchedSku;
@@ -873,7 +869,6 @@ async function resolveBlade(typeKey) {
           }
         }
       });
-      // Also check: does the blade match THIS card specifically (per-card resolver)
       var thisCardSku = _resolverState[typeKey + '__sku'] || _resolverState[baseTypeKey + '__sku'];
       if (!matched && thisCardSku) {
         group.forEach(function(k) {
@@ -884,14 +879,12 @@ async function resolveBlade(typeKey) {
         if (matched) {
           unlockCKCCard(matched.sku, group);
         } else if (fccMatchedSku) {
-          // FCC and blade disagree
           var msgBox = document.createElement('div');
           msgBox.style.cssText = 'margin-top:12px;padding:13px 16px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;font-size:0.85rem;line-height:1.6;color:#d4a054;';
           msgBox.innerHTML = '<strong style="color:#f59e0b;display:block;margin-bottom:4px;">\u26a0 Your remote and blade are pointing to different keys.</strong>This can happen when a vehicle has been rekeyed or had a remote replaced. Give us a call with your VIN ready and we\'ll sort it out in under a minute.';
           document.getElementById('ckc-analyzing-' + safeKey).parentNode.appendChild(msgBox);
           fallbackCFQ(baseTypeKey, group, '');
         } else {
-          // Blade identified but doesn't match this card — show not-a-match message on this card only
           var msgEl = document.getElementById('ckc-blade-msg-' + safeKey);
           msgEl.className = 'ckc-blade-msg warn';
           msgEl.innerHTML = '\u26a0 This blade (' + result.keyway + ') doesn\'t match this key. Check the other cards above or below.';
@@ -1020,7 +1013,7 @@ function searchKeys() {
   });
 
   lastSearchParams = { year, make, model };
-  _resolverState = {}; // reset resolver state on new search
+  _resolverState = {};
 
   var matches = [];
   db.forEach(function(key) {
@@ -1045,7 +1038,6 @@ function searchKeys() {
 
   var conflictTypes = detectConflict(matches);
 
-  // Pre-compute per-type groups for resolvers
   var byType = {};
   matches.forEach(function(m) {
     var t = m.type || 'Key';
@@ -1053,7 +1045,6 @@ function searchKeys() {
     byType[t].push(m);
   });
 
-  // Store groups and modes in resolver state
   for (var type in byType) {
     if (conflictTypes.has(type)) {
       var group = byType[type];
@@ -1061,7 +1052,6 @@ function searchKeys() {
       var mode = resolverTypeFor(type, kinds);
       _resolverState[type + '__group'] = group;
       _resolverState[type + '__mode'] = mode;
-      // For blade step in combined resolvers, store group under blade key too
       if (mode === 'fcc+blade') _resolverState[type + '__blade__group'] = group;
       if (mode === 'fcc+buttons') _resolverState[type + '__buttons__group'] = group;
       _resolverState[type] = _resolverState[type] || {};
@@ -1076,8 +1066,6 @@ function searchKeys() {
   var html = '<div class="ckc-results-header"><div class="ckc-results-title">Keys for your ' + year + ' ' + make + ' ' + model + '</div><div class="ckc-results-count">' + matches.length + ' option' + (matches.length > 1 ? 's' : '') + ' found' + (isLive ? ' \u00b7 Live inventory' : '') + '</div></div>';
 
   html += '<div class="ckc-programming-card"><div class="ckc-programming-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></div><div class="ckc-programming-info"><h3>Mobile Key Programming & Cutting \u2014 as low as $' + PROGRAMMING_FEE + '</h3><p>We come to your location \u00b7 Save $10+ vs competitors \u00b7 Includes key cutting + programming</p><p style="font-size:0.82rem;color:#888;margin-top:6px;">*$' + PROGRAMMING_FEE + ' add-a-key rate \u2014 you must have a working key. All keys lost (AKL), EEPROM, or module work quoted separately \u2014 <a href="tel:+13365109816" style="color:var(--ckc-gold);">call for details</a>.</p></div><div class="ckc-programming-price"><span style="font-size:1rem;font-weight:500;opacity:0.7;">as low as</span><br>$' + PROGRAMMING_FEE + '</div></div>';
-
-  // Each conflicted card gets its own resolver — no type-level deduplication
 
   matches.forEach(function(key, idx) {
     var compatList = key.vehicles.map(function(v) { return v.years + ' ' + v.make + ' ' + v.model; }).join(' \u00b7 ');
@@ -1107,14 +1095,13 @@ function searchKeys() {
     } else if (itemHasConflict) {
       isConflictCard = true;
       priceNote = '<div class="ckc-key-price-note">+ $' + PROGRAMMING_FEE + ' service call = <strong>$' + totalPrice + ' total</strong></div>';
-      btnHTML = ''; // resolver handles the button
-      // Every conflicted card gets its own resolver, keyed by SKU so handlers are independent
+      btnHTML = '';
       var group = byType[key.type] || [];
       var mode = _resolverState[key.type + '__mode'] || 'fcc';
-      var cardTypeKey = key.type + '__' + key.sku; // unique per card
+      var cardTypeKey = key.type + '__' + key.sku;
       _resolverState[cardTypeKey + '__group'] = group;
       _resolverState[cardTypeKey + '__mode'] = mode;
-      _resolverState[cardTypeKey + '__sku'] = key.sku; // which card this resolver belongs to
+      _resolverState[cardTypeKey + '__sku'] = key.sku;
       _resolverState[cardTypeKey] = {};
       var resolverInner = '';
       if (mode === 'fcc') resolverInner = buildFCCResolverHTML(cardTypeKey, group);
@@ -1148,7 +1135,6 @@ function searchKeys() {
 
   resultsDiv.innerHTML = html;
 
-  // Wire up drag-and-drop for blade uploaders
   document.querySelectorAll('.ckc-upload-area').forEach(function(area) {
     area.addEventListener('dragover', function(e) { e.preventDefault(); area.classList.add('dragover'); });
     area.addEventListener('dragleave', function() { area.classList.remove('dragover'); });
