@@ -1,4 +1,3 @@
-
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ═══ CKC KEY FINDER — EMBEDDABLE ═══ */
@@ -301,12 +300,13 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbziNH6F0k8keGuaE2MhR
 const PROGRAMMING_FEE = 65;
 const SHOPIFY_DOMAIN = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
-const CKC_VERSION = 'v8.36';
+const CKC_VERSION = 'v8.38';
 
 var liveCatalog = [];
 var isLive = false;
 var selectedKey = null;
 var lastSearchParams = {};
+var _ckcMatches = [];
 
 // Per-search resolver state — keyed by type string
 var _resolverState = {};
@@ -1012,7 +1012,7 @@ function unlockCKCCard(matchedSku, group) {
       if (resolver) resolver.style.display = 'none';
       var btnEl = cardEl.querySelector('.ckc-card-btn');
       if (btnEl) {
-        var keyIndex = window._ckcMatches.findIndex(function(m) { return m.sku === k.sku; });
+        var keyIndex = _ckcMatches.findIndex(function(m) { return m.sku === k.sku; });
         btnEl.innerHTML = '<button class="ckc-buy-now-btn" onclick="openCheckout(' + keyIndex + ')">\u2713 Buy Now</button><div class="ckc-resolved-confirm show">\u2713 Matched to your key</div>';
       }
     } else {
@@ -1077,7 +1077,7 @@ function searchKeys() {
     return (typeOrder[a.type] !== undefined ? typeOrder[a.type] : 99) - (typeOrder[b.type] !== undefined ? typeOrder[b.type] : 99);
   });
 
-  window._ckcMatches = matches;
+  _ckcMatches = matches;
   resultsDiv.classList.add('active');
 
   var conflictTypes = detectConflict(matches);
@@ -1223,7 +1223,7 @@ async function lazyLoadImages() {
 }
 
 function openCheckout(keyIndex) {
-  selectedKey = window._ckcMatches[keyIndex];
+  selectedKey = _ckcMatches[keyIndex];
   renderCheckout();
 }
 
@@ -1273,7 +1273,7 @@ function showPostPurchase() {
 }
 
 function resetFinder() {
-  selectedKey = null; lastSearchParams = {}; window._ckcMatches = []; _resolverState = {};
+  selectedKey = null; lastSearchParams = {}; _ckcMatches = []; _resolverState = {};
   var resultsDiv = document.getElementById('ckc-results');
   resultsDiv.innerHTML = ''; resultsDiv.classList.remove('active');
   document.getElementById('ckc-year').value = '';
