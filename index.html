@@ -1,4 +1,3 @@
-
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ═══ CKC KEY FINDER — EMBEDDABLE ═══ */
@@ -315,6 +314,78 @@
   white-space: nowrap;
   padding-top: 2px;
 }
+/* ═══ VIN MODAL (v8.44 RULE 13) ═══ */
+.ckc-vin-modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999; padding: 20px; animation: ckc-fadeUp 0.2s ease;
+}
+.ckc-vin-modal {
+  background: #1a1a1a; border: 2px solid var(--ckc-gold);
+  border-radius: 16px; padding: 32px 28px; width: 100%;
+  max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+.ckc-vin-modal h3 {
+  font-family: 'Outfit', sans-serif; font-size: 1.2rem;
+  font-weight: 700; color: var(--ckc-gold); margin-bottom: 8px;
+}
+.ckc-vin-modal p {
+  font-size: 0.88rem; color: var(--ckc-text-muted);
+  margin-bottom: 20px; line-height: 1.6;
+}
+.ckc-vin-modal-field { position: relative; margin-bottom: 10px; }
+.ckc-vin-modal-input {
+  width: 100%; padding: 14px 60px 14px 16px;
+  background: #222; border: 2px solid var(--ckc-border);
+  border-radius: 10px; color: var(--ckc-text);
+  font-family: monospace; font-size: 1.1rem;
+  letter-spacing: 2px; text-transform: uppercase;
+  outline: none; transition: border-color 0.2s;
+}
+.ckc-vin-modal-input:focus { border-color: var(--ckc-gold); }
+.ckc-vin-modal-input.valid { border-color: var(--ckc-success); }
+.ckc-vin-counter {
+  position: absolute; right: 14px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8rem; font-weight: 700;
+  color: var(--ckc-text-muted); font-family: monospace;
+}
+.ckc-vin-counter.done { color: var(--ckc-success); }
+.ckc-vin-hint {
+  font-size: 0.75rem; color: var(--ckc-text-muted);
+  margin-bottom: 18px; line-height: 1.5;
+}
+.ckc-vin-hint strong { color: var(--ckc-text); }
+.ckc-vin-modal-btns { display: flex; gap: 10px; }
+.ckc-vin-call-btn {
+  flex: 1; padding: 14px; background: var(--ckc-gold); color: #111;
+  border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
+}
+.ckc-vin-call-btn:hover { background: var(--ckc-primary-light); }
+.ckc-vin-call-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+.ckc-vin-cancel-btn {
+  padding: 14px 20px; background: transparent;
+  border: 1px solid var(--ckc-border); border-radius: 10px;
+  color: var(--ckc-text-muted); font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem; cursor: pointer; transition: all 0.2s;
+}
+.ckc-vin-cancel-btn:hover { border-color: var(--ckc-text-muted); color: var(--ckc-text); }
+/* Tool URL display on CFQ card after VIN submitted */
+.ckc-tool-url {
+  margin-top: 10px; padding: 10px 14px;
+  background: rgba(201,162,39,0.07);
+  border: 1px solid rgba(201,162,39,0.2);
+  border-radius: 8px; font-size: 0.75rem;
+  color: var(--ckc-gold-light); word-break: break-all;
+  line-height: 1.6; display: none;
+}
+.ckc-tool-url.show { display: block; }
+.ckc-tool-url-label {
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--ckc-gold);
+  margin-bottom: 4px; display: block;
+}
 </style>
 
 <!-- ═══ KEY FINDER WIDGET ═══ -->
@@ -369,7 +440,7 @@
 
 <script>
 // ════════════════════════════════════════
-// CKC KEY FINDER v8.43
+// CKC KEY FINDER v8.44
 // ════════════════════════════════════════
 // BUSINESS RULES — MUST SURVIVE EVERY VERSION UPDATE
 // These rules are the source of truth. Any code change must
@@ -440,19 +511,39 @@
 //          gate — they are always CFQ (RULES 4, 8) and the gate
 //          question makes no sense for Smart Key customers.
 //          Blade type hint (keyway codes) never shown to customer.
+//
+// RULE 13: Every CFQ card shows a VIN reminder before the call
+//          button: "Have your VIN ready — found on dashboard
+//          lower-left or driver door jamb sticker."
+//          When customer clicks any CFQ button, a VIN modal fires
+//          BEFORE the call is placed. VIN field is mandatory —
+//          exactly 17 characters, auto-uppercase, invalid chars
+//          blocked (no I/O/Q), character counter shown, submit
+//          disabled until valid. On submit: call activates AND
+//          a pre-filled internal tool URL is generated encoding
+//          VIN, YMM, AAK/AKL, SKU, blade, FCC, key price.
+//          That URL is displayed on the CFQ card so James can tap
+//          it when he answers the call. VIN reminder also shown
+//          in qualifier panel subtitle before gate question.
 // ════════════════════════════════════════
 
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbziNH6F0k8keGuaE2MhRPmqAjKRWvZxiWxi5YcstLZ40j29tN5VyBat_r_ekDRVy0CX/exec';
 const PROGRAMMING_FEE = 65;
 const SHOPIFY_DOMAIN = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
-const CKC_VERSION = 'v8.43';
+const CKC_VERSION = 'v8.44';
+// v8.44 RULE 13: Internal tool URL — pre-filled with all job data when customer submits VIN
+const INTERNAL_TOOL_URL = 'https://carolinakeycutters.com/tools';
 
 var liveCatalog = [];
 var isLive = false;
 var selectedKey = null;
 var lastSearchParams = {};
 var _ckcMatches = [];
+// v8.44: Stores VIN entered by customer at CFQ modal — shared across all CFQ cards
+var _customerVIN = '';
+// v8.44: Stores the resolved CFQ card data (SKU, blade, FCC, key price) for internal tool URL
+var _cfqCardData = {};
 
 // Global qualifier state — set once upfront, applied to all cards
 var _qualState = {
@@ -958,9 +1049,11 @@ function buildQualifierPanel(needsBlade, needsFCC, needsButtons, bladeGroup, fcc
 
   return '<div class="ckc-qualifier-panel" id="ckc-qualifier-panel">' +
     '<h3>🔍 One Quick Check Before We Show Your Results</h3>' +
-    '<div class="ckc-qualifier-subtitle">Answer one quick question to get started.</div>' +
+    '<div class="ckc-qualifier-subtitle">Answer one quick question to get started.' +
+    '<div style="margin-top:10px;padding:10px 14px;background:rgba(201,162,39,0.07);border:1px solid rgba(201,162,39,0.18);border-radius:8px;font-size:0.82rem;color:#b8a060;line-height:1.5;">' +
+    '📋 <strong style="color:var(--ckc-gold-light);">Tip:</strong> Locate your VIN now in case you need to call for a quote. Found on your <strong style="color:var(--ckc-text);">dashboard lower-left</strong> (visible through the windshield) or <strong style="color:var(--ckc-text);">driver door jamb sticker</strong>.' +
+    '</div></div>' +
     gateHTML +
-    // Remaining qualifiers hidden until gate answered Yes
     '<div id="ckc-qual-followup" style="display:none;">' +
     sections.join('') +
     '</div>' +
@@ -1135,6 +1228,105 @@ function onQualBtnCount(count, el) {
   checkQualReady();
 }
 
+// ══════════════════════════════════════════
+// VIN MODAL — RULE 13
+// ══════════════════════════════════════════
+
+// Called by every CFQ button. Stores card data then shows VIN modal.
+function openVINModal(cardData) {
+  _cfqCardData = cardData || {};
+  // If VIN already entered this session, skip modal and go straight to call
+  if (_customerVIN.length === 17) {
+    placeCallAndOpenTool();
+    return;
+  }
+  var overlay = document.createElement('div');
+  overlay.className = 'ckc-vin-modal-overlay';
+  overlay.id = 'ckc-vin-overlay';
+  overlay.innerHTML =
+    '<div class="ckc-vin-modal">' +
+    '<h3>📋 One Last Step Before We Connect</h3>' +
+    '<p>Enter your VIN so we can prepare your quote before the call. This saves time and helps us give you an accurate price immediately.</p>' +
+    '<div class="ckc-vin-modal-field">' +
+    '<input type="text" class="ckc-vin-modal-input" id="ckc-vin-modal-inp" maxlength="17" placeholder="17-DIGIT VIN" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"' +
+    ' oninput="onVINModalInput(this)" onkeydown="if(event.key===\'Enter\')submitVINModal()">' +
+    '<span class="ckc-vin-counter" id="ckc-vin-counter">0/17</span>' +
+    '</div>' +
+    '<div class="ckc-vin-hint">Found on your <strong>dashboard lower-left</strong> (visible through windshield) or <strong>driver door jamb sticker</strong>.</div>' +
+    '<div class="ckc-vin-modal-btns">' +
+    '<button class="ckc-vin-cancel-btn" onclick="closeVINModal()">Cancel</button>' +
+    '<button class="ckc-vin-call-btn" id="ckc-vin-submit-btn" disabled onclick="submitVINModal()">📞 Connect & Call (336) 510-9816</button>' +
+    '</div>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  setTimeout(function() { var inp = document.getElementById('ckc-vin-modal-inp'); if (inp) inp.focus(); }, 100);
+}
+
+function onVINModalInput(el) {
+  // Strip invalid VIN chars (I, O, Q not allowed), force uppercase
+  var val = el.value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g, '');
+  el.value = val;
+  var counter = document.getElementById('ckc-vin-counter');
+  var submitBtn = document.getElementById('ckc-vin-submit-btn');
+  var len = val.length;
+  counter.textContent = len + '/17';
+  if (len === 17) {
+    counter.className = 'ckc-vin-counter done';
+    el.classList.add('valid');
+    submitBtn.disabled = false;
+  } else {
+    counter.className = 'ckc-vin-counter';
+    el.classList.remove('valid');
+    submitBtn.disabled = true;
+  }
+}
+
+function closeVINModal() {
+  var overlay = document.getElementById('ckc-vin-overlay');
+  if (overlay) overlay.remove();
+}
+
+function submitVINModal() {
+  var inp = document.getElementById('ckc-vin-modal-inp');
+  if (!inp || inp.value.length !== 17) return;
+  _customerVIN = inp.value.toUpperCase();
+  closeVINModal();
+  placeCallAndOpenTool();
+}
+
+function placeCallAndOpenTool() {
+  // Build internal tool URL with all captured data
+  var toolURL = buildInternalToolURL();
+
+  // Display tool URL on the CFQ card so James can tap it
+  var cardSku = _cfqCardData.sku || '';
+  if (cardSku) {
+    var toolUrlEl = document.getElementById('ckc-tool-url-' + cardSku);
+    if (toolUrlEl) {
+      toolUrlEl.innerHTML = '<span class="ckc-tool-url-label">🔧 Tap when you answer the call:</span>' + toolURL;
+      toolUrlEl.classList.add('show');
+    }
+  }
+
+  // Place the call
+  window.location.href = 'tel:+13365109816';
+}
+
+function buildInternalToolURL() {
+  var params = new URLSearchParams({
+    vin: _customerVIN,
+    y: lastSearchParams.year || '',
+    mk: lastSearchParams.make || '',
+    mo: lastSearchParams.model || '',
+    svc: _qualState.aklSelected ? 'akl' : 'aak',
+    sku: _cfqCardData.sku || '',
+    blade: _cfqCardData.blade || (_qualState.bladeResult ? _qualState.bladeResult.keyway : ''),
+    fcc: _cfqCardData.fcc || _qualState.fccValue || '',
+    kp: _cfqCardData.keyPrice || '0'
+  });
+  return INTERNAL_TOOL_URL + '?' + params.toString();
+}
+
 function checkQualReady() {
   // v8.42 RULE 12: Gate must be answered first. If AKL, ready immediately.
   if (!_qualState.workingKeyAnswered) {
@@ -1260,17 +1452,25 @@ function renderCards() {
 
     if (isSmart) {
       // RULE 4: Smart Keys always CFQ — no toggle. (RULE 11)
+      // RULE 13: CFQ button opens VIN modal before dialing
       cardClass += ' ckc-cfq-card';
       priceNote = '<div style="font-size:0.82rem;color:#f59e0b;margin-bottom:8px;">\u26a0 Smart Key programming requires module-level work on most vehicles. Call to confirm program pricing. Please have your VIN ready.</div>';
       if (_qualState.bladeResult) {
         priceNote += '<div style="font-size:0.82rem;color:var(--ckc-success);margin-bottom:8px;">\u2713 Blade identified: ' + _qualState.bladeResult.keyway + '</div>';
       }
-      btnHTML = '<a href="tel:+13365109816" class="ckc-add-btn" style="background:#f59e0b;">\ud83d\udcde Call for Quote &middot; (336) 510-9816</a>';
+      var cfqCardData = JSON.stringify({ sku: key.sku, blade: key.keyway || '', fcc: key.fcc || '', keyPrice: displayPrice.toFixed(2) }).replace(/"/g, '&quot;');
+      btnHTML = '<div style="font-size:0.78rem;color:var(--ckc-text-muted);margin-bottom:8px;padding:8px 10px;background:rgba(201,162,39,0.06);border-radius:6px;border:1px solid rgba(201,162,39,0.15);">📋 Have your VIN ready before calling \u2014 found on dashboard lower-left or driver door jamb sticker.</div>' +
+        '<button class="ckc-add-btn" style="background:#f59e0b;" onclick="openVINModal(' + cfqCardData + ')">\ud83d\udcde Call for Quote &middot; (336) 510-9816</button>' +
+        '<div class="ckc-tool-url" id="ckc-tool-url-' + key.sku + '"></div>';
     } else if (aklMode && (inBladeGroup || inFCCGroup || inBtnsGroup)) {
       // v8.41 RULE 12: AKL selected — all qualifier group cards go CFQ, no Buy Now, no toggle
+      // v8.44 RULE 13: CFQ button opens VIN modal before dialing
       cardClass += ' ckc-cfq-card';
       priceNote = '<div style="font-size:0.82rem;color:#f87171;margin-bottom:8px;">\ud83d\udd11 All keys lost \u2014 a locksmith needs to verify your blade and program your new key on-site.</div>';
-      btnHTML = '<a href="tel:+13365109816" class="ckc-add-btn" style="background:#f59e0b;">\ud83d\udcde Call for Quote &middot; (336) 510-9816</a>';
+      var cfqCardDataAKL = JSON.stringify({ sku: key.sku, blade: key.keyway || '', fcc: key.fcc || '', keyPrice: displayPrice.toFixed(2) }).replace(/"/g, '&quot;');
+      btnHTML = '<div style="font-size:0.78rem;color:var(--ckc-text-muted);margin-bottom:8px;padding:8px 10px;background:rgba(201,162,39,0.06);border-radius:6px;border:1px solid rgba(201,162,39,0.15);">📋 Have your VIN ready before calling \u2014 found on dashboard lower-left or driver door jamb sticker.</div>' +
+        '<button class="ckc-add-btn" style="background:#f59e0b;" onclick="openVINModal(' + cfqCardDataAKL + ')">\ud83d\udcde Call for Quote &middot; (336) 510-9816</button>' +
+        '<div class="ckc-tool-url" id="ckc-tool-url-' + key.sku + '"></div>';
     } else if (inBladeGroup) {
       // Blade group: resolved, greyed, or failed-open
       if (bladeFailed) {
@@ -1293,9 +1493,12 @@ function renderCards() {
         priceNote = '';
         btnHTML = '';
       } else {
-        // Safety fallback — CFQ
+        // Safety fallback — CFQ with VIN modal (RULE 13)
         priceNote = '<div class="ckc-key-price-note">+ $' + PROGRAMMING_FEE + ' service call = <strong>$' + totalPrice + ' total</strong></div>';
-        btnHTML = '<a href="tel:+13365109816" class="ckc-add-btn" style="background:#f59e0b;">\ud83d\udcde Call for Quote &middot; (336) 510-9816</a>';
+        var cfqCardDataFb = JSON.stringify({ sku: key.sku, blade: key.keyway || '', fcc: key.fcc || '', keyPrice: displayPrice.toFixed(2) }).replace(/"/g, '&quot;');
+        btnHTML = '<div style="font-size:0.78rem;color:var(--ckc-text-muted);margin-bottom:8px;padding:8px 10px;background:rgba(201,162,39,0.06);border-radius:6px;border:1px solid rgba(201,162,39,0.15);">📋 Have your VIN ready before calling \u2014 found on dashboard lower-left or driver door jamb sticker.</div>' +
+          '<button class="ckc-add-btn" style="background:#f59e0b;" onclick="openVINModal(' + cfqCardDataFb + ')">\ud83d\udcde Call for Quote &middot; (336) 510-9816</button>' +
+          '<div class="ckc-tool-url" id="ckc-tool-url-' + key.sku + '"></div>';
       }
     } else if (inFCCGroup || inBtnsGroup) {
       // FCC / button group
@@ -1614,6 +1817,8 @@ function resetFinder() {
   lastSearchParams = {};
   _ckcMatches = [];
   _progToggle = {};
+  _customerVIN = '';
+  _cfqCardData = {};
   _qualState = { needsBlade: false, needsFCC: false, needsButtons: false, bladeImage: null, bladeResult: null, bladeFailed: false, bladeRetry: 0, fccValue: '', buttonsValue: 0, allQualsDone: false, aklSelected: false, workingKeyAnswered: false };
   _bladeGroup = []; _fccGroup = []; _buttonsGroup = []; _byType = {};
   var resultsDiv = document.getElementById('ckc-results');
