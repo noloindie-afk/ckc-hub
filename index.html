@@ -316,61 +316,64 @@
 }
 /* ═══ VIN MODAL (v8.44 RULE 13) ═══ */
 .ckc-vin-modal-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+  position: fixed; inset: 0; background: rgba(0,0,0,0.85);
   display: flex; align-items: center; justify-content: center;
   z-index: 9999; padding: 20px; animation: ckc-fadeUp 0.2s ease;
 }
 .ckc-vin-modal {
-  background: #1a1a1a; border: 2px solid var(--ckc-gold);
+  background: #ffffff; border: 3px solid var(--ckc-gold);
   border-radius: 16px; padding: 32px 28px; width: 100%;
-  max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  max-width: 440px; box-shadow: 0 24px 80px rgba(0,0,0,0.7);
 }
 .ckc-vin-modal h3 {
-  font-family: 'Outfit', sans-serif; font-size: 1.2rem;
-  font-weight: 700; color: var(--ckc-gold); margin-bottom: 8px;
+  font-family: 'Outfit', sans-serif; font-size: 1.25rem;
+  font-weight: 800; color: #111; margin-bottom: 8px;
 }
 .ckc-vin-modal p {
-  font-size: 0.88rem; color: var(--ckc-text-muted);
+  font-size: 0.9rem; color: #444;
   margin-bottom: 20px; line-height: 1.6;
 }
 .ckc-vin-modal-field { position: relative; margin-bottom: 10px; }
 .ckc-vin-modal-input {
-  width: 100%; padding: 14px 60px 14px 16px;
-  background: #222; border: 2px solid var(--ckc-border);
-  border-radius: 10px; color: var(--ckc-text);
-  font-family: monospace; font-size: 1.1rem;
-  letter-spacing: 2px; text-transform: uppercase;
+  width: 100%; padding: 16px 64px 16px 18px;
+  background: #f5f5f5; border: 2px solid #ccc;
+  border-radius: 10px; color: #111;
+  font-family: monospace; font-size: 1.15rem;
+  letter-spacing: 2.5px; text-transform: uppercase;
   outline: none; transition: border-color 0.2s;
 }
-.ckc-vin-modal-input:focus { border-color: var(--ckc-gold); }
-.ckc-vin-modal-input.valid { border-color: var(--ckc-success); }
+.ckc-vin-modal-input::placeholder { color: #aaa; letter-spacing: 1px; font-size: 0.95rem; }
+.ckc-vin-modal-input:focus { border-color: var(--ckc-gold); background: #fff; }
+.ckc-vin-modal-input.valid { border-color: #16a34a; background: #f0fdf4; }
 .ckc-vin-counter {
   position: absolute; right: 14px; top: 50%;
   transform: translateY(-50%);
-  font-size: 0.8rem; font-weight: 700;
-  color: var(--ckc-text-muted); font-family: monospace;
+  font-size: 0.82rem; font-weight: 700;
+  color: #999; font-family: monospace;
 }
-.ckc-vin-counter.done { color: var(--ckc-success); }
+.ckc-vin-counter.done { color: #16a34a; }
 .ckc-vin-hint {
-  font-size: 0.75rem; color: var(--ckc-text-muted);
-  margin-bottom: 18px; line-height: 1.5;
+  font-size: 0.78rem; color: #666;
+  margin-bottom: 20px; line-height: 1.6;
+  padding: 10px 12px; background: #fffbeb;
+  border: 1px solid #fde68a; border-radius: 8px;
 }
-.ckc-vin-hint strong { color: var(--ckc-text); }
+.ckc-vin-hint strong { color: #111; }
 .ckc-vin-modal-btns { display: flex; gap: 10px; }
 .ckc-vin-call-btn {
-  flex: 1; padding: 14px; background: var(--ckc-gold); color: #111;
+  flex: 1; padding: 15px; background: var(--ckc-gold); color: #111;
   border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif;
   font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
 }
-.ckc-vin-call-btn:hover { background: var(--ckc-primary-light); }
-.ckc-vin-call-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+.ckc-vin-call-btn:hover { background: var(--ckc-primary-light); transform: translateY(-1px); }
+.ckc-vin-call-btn:disabled { background: #e5e5e5; color: #aaa; cursor: not-allowed; transform: none; }
 .ckc-vin-cancel-btn {
-  padding: 14px 20px; background: transparent;
-  border: 1px solid var(--ckc-border); border-radius: 10px;
-  color: var(--ckc-text-muted); font-family: 'DM Sans', sans-serif;
+  padding: 15px 20px; background: transparent;
+  border: 1.5px solid #ddd; border-radius: 10px;
+  color: #666; font-family: 'DM Sans', sans-serif;
   font-size: 0.95rem; cursor: pointer; transition: all 0.2s;
 }
-.ckc-vin-cancel-btn:hover { border-color: var(--ckc-text-muted); color: var(--ckc-text); }
+.ckc-vin-cancel-btn:hover { border-color: #999; color: #333; }
 /* Tool URL display on CFQ card after VIN submitted */
 .ckc-tool-url {
   margin-top: 10px; padding: 10px 14px;
