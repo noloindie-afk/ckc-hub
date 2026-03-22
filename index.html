@@ -245,7 +245,7 @@
 .ckc-upload-label { font-size: 0.85rem; color: var(--ckc-text-muted); }
 .ckc-upload-label strong { color: var(--ckc-text); }
 .ckc-upload-sub { font-size: 0.72rem; color: #666; margin-top: 3px; }
-.ckc-blade-preview { display: none; position: relative; margin-bottom: 10px; border-radius: 8px; overflow: hidden; background: #f9fafb; }
+.ckc-blade-preview { display: none; position: relative; margin-bottom: 10px; border-radius: 8px; overflow: hidden; background: #1a1a1a; }
 .ckc-blade-preview img { width: 100%; max-height: 150px; object-fit: contain; display: block; padding: 6px; }
 .ckc-blade-reset { position: absolute; top: 5px; right: 5px; width: 24px; height: 24px; border-radius: 50%; background: rgba(0,0,0,0.55); border: none; color: #fff; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .ckc-analyzing { display: none; align-items: center; gap: 9px; padding: 10px 13px; background: rgba(201,162,39,0.07); border: 1px solid rgba(201,162,39,0.18); border-radius: 8px; font-size: 0.83rem; color: var(--ckc-gold); margin-bottom: 9px; }
@@ -1581,7 +1581,12 @@ async function analyzeBladeWithClaude(base64, keyways, vehicleContext) {
     'OR if unclear: {"matched":false,"unclear":true,"reason":"Image too dark"}';
   var response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': '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',
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 1000,
