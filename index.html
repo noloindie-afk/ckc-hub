@@ -260,6 +260,61 @@
 .ckc-resolve-btn { width: 100%; padding: 11px; background: var(--ckc-gold); color: #111; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.92rem; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-top: 4px; }
 .ckc-resolve-btn:hover { background: var(--ckc-primary-light); }
 .ckc-resolve-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+/* ═══ PROGRAMMING TOGGLE (v8.40) ═══ */
+.ckc-prog-toggle {
+  margin-top: 12px;
+  border: 1px solid var(--ckc-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.ckc-prog-toggle-opt {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid var(--ckc-border);
+}
+.ckc-prog-toggle-opt:last-child { border-bottom: none; }
+.ckc-prog-toggle-opt:hover { background: rgba(255,255,255,0.03); }
+.ckc-prog-toggle-opt.selected { background: rgba(201,162,39,0.07); }
+.ckc-prog-radio {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--ckc-border);
+  flex-shrink: 0;
+  margin-top: 2px;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ckc-prog-toggle-opt.selected .ckc-prog-radio {
+  border-color: var(--ckc-gold);
+  background: var(--ckc-gold);
+}
+.ckc-prog-radio-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #111;
+  display: none;
+}
+.ckc-prog-toggle-opt.selected .ckc-prog-radio-dot { display: block; }
+.ckc-prog-label { font-size: 0.88rem; line-height: 1.4; }
+.ckc-prog-label strong { color: var(--ckc-text); font-size: 0.92rem; }
+.ckc-prog-label span { color: var(--ckc-text-muted); display: block; margin-top: 1px; font-size: 0.8rem; }
+.ckc-prog-price-tag {
+  margin-left: auto;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--ckc-gold);
+  white-space: nowrap;
+  padding-top: 2px;
+}
 </style>
 
 <!-- ═══ KEY FINDER WIDGET ═══ -->
@@ -314,7 +369,7 @@
 
 <script>
 // ════════════════════════════════════════
-// CKC KEY FINDER v8.39
+// CKC KEY FINDER v8.40
 // ════════════════════════════════════════
 // BUSINESS RULES — MUST SURVIVE EVERY VERSION UPDATE
 // These rules are the source of truth. Any code change must
@@ -366,13 +421,20 @@
 //          Buy Now (or CFQ for Smart Keys) and all other cards
 //          in the blade group are greyed out. On no-match after
 //          2 photo attempts, all cards in group fall back to CFQ.
+//
+// RULE 11: Every unlocked Buy Now card shows a programming toggle
+//          defaulting to "Includes programming & key cutting" ($65
+//          added to price). Customer may switch to "Key only — I'll
+//          handle programming myself" which removes the $65 and
+//          appends a note to the Shopify cart: "Key only — customer
+//          handling programming". CFQ cards are never affected.
 // ════════════════════════════════════════
 
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbziNH6F0k8keGuaE2MhRPmqAjKRWvZxiWxi5YcstLZ40j29tN5VyBat_r_ekDRVy0CX/exec';
 const PROGRAMMING_FEE = 65;
 const SHOPIFY_DOMAIN = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
-const CKC_VERSION = 'v8.39';
+const CKC_VERSION = 'v8.40';
 
 var liveCatalog = [];
 var isLive = false;
@@ -399,6 +461,45 @@ var _bladeGroup = [];    // all cards that need blade qualification (RHK, Transp
 var _fccGroup = [];      // Remote (Keyless Entry) cards with FCC conflict
 var _buttonsGroup = [];  // Remote (Keyless Entry) cards with button count conflict
 var _byType = {};
+
+// v8.40: Per-card programming toggle state. Key = SKU, value = 'full' or 'keyonly'
+// Default is 'full' (includes programming). Set when customer interacts with toggle.
+var _progToggle = {};
+
+// v8.40: Build the programming toggle HTML for an unlocked Buy Now card
+function buildProgToggleHTML(sku, keyPrice) {
+  var totalWithProg = (keyPrice + PROGRAMMING_FEE).toFixed(2);
+  var keyOnlyPrice = keyPrice.toFixed(2);
+  return '<div class="ckc-prog-toggle" id="ckc-prog-toggle-' + sku + '">' +
+    // Option 1: Includes programming (default selected)
+    '<div class="ckc-prog-toggle-opt selected" id="ckc-prog-opt-full-' + sku + '" onclick="setProgToggle(\'' + sku + '\',\'full\',' + keyPrice + ')">' +
+      '<div class="ckc-prog-radio"><div class="ckc-prog-radio-dot"></div></div>' +
+      '<div class="ckc-prog-label"><strong>Includes programming & key cutting</strong><span>We come to you \u00b7 mobile service in the Triad, NC</span></div>' +
+      '<div class="ckc-prog-price-tag">$' + totalWithProg + '</div>' +
+    '</div>' +
+    // Option 2: Key only
+    '<div class="ckc-prog-toggle-opt" id="ckc-prog-opt-keyonly-' + sku + '" onclick="setProgToggle(\'' + sku + '\',\'keyonly\',' + keyPrice + ')">' +
+      '<div class="ckc-prog-radio"><div class="ckc-prog-radio-dot"></div></div>' +
+      '<div class="ckc-prog-label"><strong>Key only</strong><span>I\'ll handle programming myself</span></div>' +
+      '<div class="ckc-prog-price-tag">$' + keyOnlyPrice + '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+// v8.40: Handle toggle selection — updates visual state and Buy Now button price display
+function setProgToggle(sku, mode, keyPrice) {
+  _progToggle[sku] = mode;
+  var fullOpt = document.getElementById('ckc-prog-opt-full-' + sku);
+  var keyOpt = document.getElementById('ckc-prog-opt-keyonly-' + sku);
+  if (!fullOpt || !keyOpt) return;
+  if (mode === 'full') {
+    fullOpt.classList.add('selected');
+    keyOpt.classList.remove('selected');
+  } else {
+    keyOpt.classList.add('selected');
+    fullOpt.classList.remove('selected');
+  }
+}
 
 function getDisplayPrice(key) { return parseFloat(key.price) || 0; }
 
@@ -1049,7 +1150,7 @@ function renderCards() {
     var inBtnsGroup = _buttonsGroup.some(function(k) { return k.sku === key.sku; });
 
     if (isSmart) {
-      // RULE 4: Smart Keys always CFQ — blade result shown if identified
+      // RULE 4: Smart Keys always CFQ — blade result shown if identified. No toggle. (RULE 11)
       cardClass += ' ckc-cfq-card';
       priceNote = '<div style="font-size:0.82rem;color:#f59e0b;margin-bottom:8px;">\u26a0 Smart Key programming requires module-level work on most vehicles. Call to confirm program pricing. Please have your VIN ready.</div>';
       if (_qualState.bladeResult) {
@@ -1059,16 +1160,18 @@ function renderCards() {
     } else if (inBladeGroup) {
       // Blade group: resolved, greyed, or failed-open
       if (bladeFailed) {
-        // Failed blade ID — show all cards as Buy Now (we confirm on arrival)
+        // Failed blade ID — show all cards as Buy Now with toggle (RULE 11)
         cardClass += ' ckc-resolved';
-        priceNote = '<div class="ckc-key-price-note">+ $' + PROGRAMMING_FEE + ' service call = <strong>$' + totalPrice + ' total</strong></div><div style="font-size:0.85rem;color:var(--ckc-text-muted);margin-bottom:4px;">includes mobile key programming & cutting</div>';
-        btnHTML = '<button class="ckc-buy-now-btn" onclick="openCheckout(' + idx + ')">\u2713 Buy Now</button>';
+        priceNote = '<div class="ckc-key-price-note" id="ckc-pricenote-' + key.sku + '">+ $' + PROGRAMMING_FEE + ' service call = <strong>$' + totalPrice + ' total</strong></div>';
+        btnHTML = '<button class="ckc-buy-now-btn" onclick="openCheckout(' + idx + ')">\u2713 Buy Now</button>' +
+          buildProgToggleHTML(key.sku, displayPrice);
         resolvedNote = '<div class="ckc-resolved-confirm show">Blade confirmed on arrival</div>';
       } else if (bladeWinnerSku === key.sku) {
-        // This card is the blade match
+        // This card is the blade match — show with toggle (RULE 11)
         cardClass += ' ckc-resolved';
-        priceNote = '<div class="ckc-key-price-note">+ $' + PROGRAMMING_FEE + ' service call = <strong>$' + totalPrice + ' total</strong></div>';
-        btnHTML = '<button class="ckc-buy-now-btn" onclick="openCheckout(' + idx + ')">\u2713 Buy Now</button>';
+        priceNote = '<div class="ckc-key-price-note" id="ckc-pricenote-' + key.sku + '">+ $' + PROGRAMMING_FEE + ' service call = <strong>$' + totalPrice + ' total</strong></div>';
+        btnHTML = '<button class="ckc-buy-now-btn" onclick="openCheckout(' + idx + ')">\u2713 Buy Now</button>' +
+          buildProgToggleHTML(key.sku, displayPrice);
         resolvedNote = '<div class="ckc-resolved-confirm show">\u2713 Matched to your blade: ' + (_qualState.bladeResult ? _qualState.bladeResult.keyway : '') + '</div>';
       } else if (bladeWinnerSku !== null) {
         // Another card won — grey this one
@@ -1076,7 +1179,7 @@ function renderCards() {
         priceNote = '';
         btnHTML = '';
       } else {
-        // No blade result yet (shouldn't reach here after qualify, safety fallback)
+        // Safety fallback — CFQ
         priceNote = '<div class="ckc-key-price-note">+ $' + PROGRAMMING_FEE + ' service call = <strong>$' + totalPrice + ' total</strong></div>';
         btnHTML = '<a href="tel:+13365109816" class="ckc-add-btn" style="background:#f59e0b;">\ud83d\udcde Call for Quote &middot; (336) 510-9816</a>';
       }
@@ -1084,17 +1187,21 @@ function renderCards() {
       // FCC / button group
       var winner = btnsWinnerSku || fccWinnerSku;
       if (!winner || winner === key.sku) {
-        cardClass += winner === key.sku ? ' ckc-resolved' : '';
-        priceNote = '<div class="ckc-key-price-note">+ $' + PROGRAMMING_FEE + ' service call = <strong>$' + totalPrice + ' total</strong></div>' + (winner === key.sku ? '' : '<div style="font-size:0.85rem;color:var(--ckc-text-muted);margin-bottom:4px;">includes mobile key programming & cutting</div>');
-        btnHTML = '<button class="' + (winner === key.sku ? 'ckc-buy-now-btn' : 'ckc-add-btn') + '" onclick="openCheckout(' + idx + ')">' + (winner === key.sku ? '\u2713 Buy Now' : 'Buy Now') + '</button>';
-        if (winner === key.sku) resolvedNote = '<div class="ckc-resolved-confirm show">\u2713 Matched to your remote</div>';
+        var isWinner = winner === key.sku;
+        cardClass += isWinner ? ' ckc-resolved' : '';
+        priceNote = '<div class="ckc-key-price-note" id="ckc-pricenote-' + key.sku + '">+ $' + PROGRAMMING_FEE + ' service call = <strong>$' + totalPrice + ' total</strong></div>';
+        // Winner gets Buy Now + toggle; non-winner (unresolved fallback) gets plain Buy Now + toggle
+        btnHTML = '<button class="' + (isWinner ? 'ckc-buy-now-btn' : 'ckc-add-btn') + '" onclick="openCheckout(' + idx + ')">' + (isWinner ? '\u2713 Buy Now' : 'Buy Now') + '</button>' +
+          buildProgToggleHTML(key.sku, displayPrice);
+        if (isWinner) resolvedNote = '<div class="ckc-resolved-confirm show">\u2713 Matched to your remote</div>';
       } else {
         cardClass += ' ckc-greyed';
       }
     } else {
-      // No qualifier needed for this card — straight Buy Now
-      priceNote = '<div class="ckc-key-price-note">+ $' + PROGRAMMING_FEE + ' service call = <strong>$' + totalPrice + ' total</strong></div><div style="font-size:0.85rem;color:var(--ckc-text-muted);margin-bottom:4px;">includes mobile key programming & cutting</div>';
-      btnHTML = '<button class="ckc-add-btn" onclick="openCheckout(' + idx + ')">Buy Now</button>';
+      // No qualifier needed — straight Buy Now with toggle (RULE 11)
+      priceNote = '<div class="ckc-key-price-note" id="ckc-pricenote-' + key.sku + '">+ $' + PROGRAMMING_FEE + ' service call = <strong>$' + totalPrice + ' total</strong></div>';
+      btnHTML = '<button class="ckc-add-btn" onclick="openCheckout(' + idx + ')">Buy Now</button>' +
+        buildProgToggleHTML(key.sku, displayPrice);
     }
 
     var detailParts = ['SKU: ' + key.sku];
@@ -1311,19 +1418,40 @@ async function lazyLoadImages() {
   }
 }
 
+// v8.40: Reads programming toggle state for the selected key before opening checkout
 function openCheckout(keyIndex) {
   selectedKey = _ckcMatches[keyIndex];
+  var sku = selectedKey ? selectedKey.sku : null;
+  // Default to 'full' if toggle not yet interacted with (RULE 11)
+  selectedKey._progMode = (sku && _progToggle[sku]) ? _progToggle[sku] : 'full';
   renderCheckout();
 }
 
 function renderCheckout() {
   var k = selectedKey;
   var keyPrice = getDisplayPrice(k);
-  var total = keyPrice + PROGRAMMING_FEE;
+  var progMode = k._progMode || 'full';
+  var isKeyOnly = progMode === 'keyonly';
+  var total = isKeyOnly ? keyPrice : keyPrice + PROGRAMMING_FEE;
   var resultsDiv = document.getElementById('ckc-results');
   var stockLabel = k.status === 'active' ? '\u2705 In Stock \u2014 Same Day' : '\ud83d\udce6 Available for Order (2-3 Days)';
-  var progDisclaimer = '<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:14px 16px;margin:14px 0;font-size:0.88rem;color:#d4a054;line-height:1.5;">\u26a0\ufe0f <strong style="color:#f59e0b;">Pricing Notice:</strong> The $' + PROGRAMMING_FEE + ' service call fee covers add-a-key programming when you have a working key. All keys lost (AKL), EEPROM, or module programming may require additional cost. We will confirm your exact total before any work begins \u2014 no surprises.</div>';
-  resultsDiv.innerHTML = '<div class="ckc-checkout-panel"><h3>\ud83d\uded2 Your Order</h3><div class="ckc-checkout-line"><span class="ckc-checkout-line-label">' + k.title + '<br><small style="color:var(--ckc-text-muted)">' + k.type + ' \u00b7 ' + stockLabel + '</small></span><span class="ckc-checkout-line-price">$' + keyPrice.toFixed(2) + '</span></div><div class="ckc-checkout-line"><span class="ckc-checkout-line-label">\ud83d\udd27 Mobile Key Programming & Cutting<br><small style="color:var(--ckc-text-muted)">We come to you \u2014 includes key cutting + programming</small></span><span class="ckc-checkout-line-price">$' + PROGRAMMING_FEE + '.00</span></div>' + progDisclaimer + '<div class="ckc-checkout-total"><span class="ckc-checkout-total-label">Total</span><span class="ckc-checkout-total-price">$' + total.toFixed(2) + '</span></div><div class="ckc-checkout-tax">+ NC sales tax calculated at checkout</div><div style="font-size:0.85rem;color:var(--ckc-text-muted);text-align:center;margin-bottom:14px;">Service available in the Triad, NC area</div><button class="ckc-checkout-btn" id="ckc-checkout-btn" onclick="startShopifyCheckout()">Proceed to Checkout \u2192</button><button class="ckc-back-btn" onclick="backToResults()">\u2190 Back to results</button></div>';
+
+  var progLine = isKeyOnly
+    ? ''
+    : '<div class="ckc-checkout-line"><span class="ckc-checkout-line-label">\ud83d\udd27 Mobile Key Programming & Cutting<br><small style="color:var(--ckc-text-muted)">We come to you \u2014 includes key cutting + programming</small></span><span class="ckc-checkout-line-price">$' + PROGRAMMING_FEE + '.00</span></div>';
+
+  var progDisclaimer = isKeyOnly
+    ? '<div style="background:rgba(201,162,39,0.08);border:1px solid rgba(201,162,39,0.25);border-radius:8px;padding:14px 16px;margin:14px 0;font-size:0.88rem;color:#b8a060;line-height:1.5;">\ud83d\udd11 <strong style="color:var(--ckc-gold);">Key only order.</strong> You\'ve selected to handle programming yourself. We\'ll ship your key — no service call included.</div>'
+    : '<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:14px 16px;margin:14px 0;font-size:0.88rem;color:#d4a054;line-height:1.5;">\u26a0\ufe0f <strong style="color:#f59e0b;">Pricing Notice:</strong> The $' + PROGRAMMING_FEE + ' service call fee covers add-a-key programming when you have a working key. All keys lost (AKL), EEPROM, or module programming may require additional cost. We will confirm your exact total before any work begins \u2014 no surprises.</div>';
+
+  resultsDiv.innerHTML = '<div class="ckc-checkout-panel"><h3>\ud83d\uded2 Your Order</h3>' +
+    '<div class="ckc-checkout-line"><span class="ckc-checkout-line-label">' + k.title + '<br><small style="color:var(--ckc-text-muted)">' + k.type + ' \u00b7 ' + stockLabel + '</small></span><span class="ckc-checkout-line-price">$' + keyPrice.toFixed(2) + '</span></div>' +
+    progLine + progDisclaimer +
+    '<div class="ckc-checkout-total"><span class="ckc-checkout-total-label">Total</span><span class="ckc-checkout-total-price">$' + total.toFixed(2) + '</span></div>' +
+    '<div class="ckc-checkout-tax">+ NC sales tax calculated at checkout</div>' +
+    '<div style="font-size:0.85rem;color:var(--ckc-text-muted);text-align:center;margin-bottom:14px;">Service available in the Triad, NC area</div>' +
+    '<button class="ckc-checkout-btn" id="ckc-checkout-btn" onclick="startShopifyCheckout()">Proceed to Checkout \u2192</button>' +
+    '<button class="ckc-back-btn" onclick="backToResults()">\u2190 Back to results</button></div>';
   resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -1335,15 +1463,22 @@ async function startShopifyCheckout() {
   btn.textContent = 'Opening checkout...';
   try {
     var k = selectedKey;
+    var isKeyOnly = (k._progMode === 'keyonly');
     var handle = (k.handle || k.sku || '').toLowerCase().replace(/[^a-z0-9]+/g,'-');
     var PROGRAMMING_VARIANT = '45908511228101';
     var vehicleNote = 'Vehicle: ' + lastSearchParams.year + ' ' + lastSearchParams.make + ' ' + lastSearchParams.model;
+    // v8.40: Append key-only note to cart so order is flagged correctly (RULE 11)
+    if (isKeyOnly) vehicleNote += ' | Key only — customer handling programming';
     var shopifyUrl;
     try {
       var prodJson = await fetch('https://' + SHOPIFY_DOMAIN + '/products/' + handle + '.json');
       var prodData = await prodJson.json();
       var keyVariantId = prodData.product.variants[0].id;
-      shopifyUrl = 'https://' + SHOPIFY_DOMAIN + '/cart/' + keyVariantId + ':1,' + PROGRAMMING_VARIANT + ':1?note=' + encodeURIComponent(vehicleNote);
+      // v8.40: Key-only orders do NOT include the programming variant in cart
+      var cartItems = isKeyOnly
+        ? keyVariantId + ':1'
+        : keyVariantId + ':1,' + PROGRAMMING_VARIANT + ':1';
+      shopifyUrl = 'https://' + SHOPIFY_DOMAIN + '/cart/' + cartItems + '?note=' + encodeURIComponent(vehicleNote);
     } catch(e) {
       shopifyUrl = 'https://' + SHOPIFY_DOMAIN + '/products/' + handle + '?note=' + encodeURIComponent(vehicleNote);
     }
@@ -1365,6 +1500,7 @@ function resetFinder() {
   selectedKey = null;
   lastSearchParams = {};
   _ckcMatches = [];
+  _progToggle = {};
   _qualState = { needsBlade: false, needsFCC: false, needsButtons: false, bladeImage: null, bladeResult: null, bladeFailed: false, bladeRetry: 0, fccValue: '', buttonsValue: 0, allQualsDone: false };
   _bladeGroup = []; _fccGroup = []; _buttonsGroup = []; _byType = {};
   var resultsDiv = document.getElementById('ckc-results');
