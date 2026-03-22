@@ -450,7 +450,7 @@
 
 <script>
 // ════════════════════════════════════════
-// CKC KEY FINDER v8.45
+// CKC KEY FINDER v8.46
 // ════════════════════════════════════════
 // BUSINESS RULES — MUST SURVIVE EVERY VERSION UPDATE
 // These rules are the source of truth. Any code change must
@@ -511,37 +511,32 @@
 //          handling programming". CFQ cards are never affected.
 //
 // RULE 12: Upfront qualifier panel always opens with a working key
-//          gate question — shown first, before blade/FCC/buttons.
-//          "I have a working key" → show remaining qualifiers.
-//          "I don't have a working key" → all qualifier group cards
-//          go CFQ. Mutually exclusive radio — one must be selected
-//          before anything else appears.
-//          Gate ONLY fires when _bladeGroup has RHK, Transponder,
-//          or Remote Flip Key cards. Smart Keys NEVER trigger the
-//          gate — they are always CFQ (RULES 4, 8) and the gate
-//          question makes no sense for Smart Key customers.
+//          gate question — shown first, before all other questions.
+//          "I have a working key" → show Question 2.
+//          "I don't have a working key" → all cards CFQ.
+//          Mutually exclusive radio — one must be selected first.
+//          Gate ONLY fires when _bladeGroup or _fccGroup has cards.
 //          Blade type hint (keyway codes) never shown to customer.
 //
-// RULE 13: Every CFQ card shows a VIN reminder before the call
-//          button: "Have your VIN ready — found on dashboard
-//          lower-left or driver door jamb sticker."
-//          When customer clicks any CFQ button, a VIN modal fires
-//          BEFORE the call is placed. VIN field is mandatory —
-//          exactly 17 characters, auto-uppercase, invalid chars
-//          blocked (no I/O/Q), character counter shown, submit
-//          disabled until valid. On submit: call activates AND
-//          a pre-filled internal tool URL is generated encoding
-//          VIN, YMM, AAK/AKL, SKU, blade, FCC, key price.
-//          That URL is displayed on the CFQ card so James can tap
-//          it when he answers the call. VIN reminder also shown
-//          in qualifier panel subtitle before gate question.
+// RULE 14: Question 2 — key type selection. Only shown when results
+//          contain mixed types. Options shown are dynamic — only
+//          types present in results appear as choices:
+//          - Traditional key (blade) → blade photo qualifier
+//          - Smart Key / push-button → Question 3 (emergency blade?)
+//          - Remote / keyless entry → FCC/button qualifier if conflict
+//          - Remote Head Key → blade photo qualifier
+//          Question 3 — Smart Key only: "Does your smart key have
+//          a hidden emergency blade?" Yes → blade qualifier.
+//          No → Smart Key CFQ shown, RHK/Transponder greyed.
+//          Question 2 only appears when results contain more than
+//          one key type category requiring different qualifier paths.
 // ════════════════════════════════════════
 
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbziNH6F0k8keGuaE2MhRPmqAjKRWvZxiWxi5YcstLZ40j29tN5VyBat_r_ekDRVy0CX/exec';
 const PROGRAMMING_FEE = 65;
 const SHOPIFY_DOMAIN = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
-const CKC_VERSION = 'v8.45';
+const CKC_VERSION = 'v8.46';
 // v8.44 RULE 13: Internal tool URL — pre-filled with all job data when customer submits VIN
 const INTERNAL_TOOL_URL = 'https://carolinakeycutters.com/tools';
 
@@ -561,14 +556,16 @@ var _qualState = {
   needsFCC: false,
   needsButtons: false,
   bladeImage: null,
-  bladeResult: null,      // { keyway, description } or null
-  bladeFailed: false,     // true after 2 failed attempts
+  bladeResult: null,
+  bladeFailed: false,
   bladeRetry: 0,
   fccValue: '',
   buttonsValue: 0,
   allQualsDone: false,
-  aklSelected: false,     // v8.41: true = no working key, all cards CFQ (RULE 12)
-  workingKeyAnswered: false  // v8.42: true once working key gate question answered (RULE 12)
+  aklSelected: false,
+  workingKeyAnswered: false,
+  keyTypeAnswer: '',        // v8.46 RULE 14: 'traditional'|'smart'|'remote'|'rhk'
+  emergencyBladeAnswer: ''  // v8.46 RULE 14: 'yes'|'no' — only for smart key path
 };
 
 // Groups detected during search — used when applying qualifier results to cards
@@ -967,111 +964,132 @@ function getAllFCCs(group) {
   return fccs;
 }
 
-// ══════════════════════════════════════════
-// UPFRONT QUALIFIER PANEL BUILDER
-// ══════════════════════════════════════════
+// v8.46 RULE 14: Detect which key type categories are present in results
+// Returns object with flags for each category present
+function detectKeyTypeCategories() {
+  var hasTraditional = false; // Transponder Key
+  var hasRHK = false;         // Remote Head Key or Remote Flip Key
+  var hasSmart = false;       // Smart Key, FOBIK, Premium Smart Key
+  var hasRemote = false;      // Remote (Keyless Entry)
+  _ckcMatches.forEach(function(k) {
+    var t = (k.type || '').toLowerCase();
+    if (t === 'transponder key') hasTraditional = true;
+    else if (t === 'remote head key' || t === 'remote flip key') hasRHK = true;
+    else if (isSmartKeyType(k.type)) hasSmart = true;
+    else if (t === 'remote (keyless entry)') hasRemote = true;
+  });
+  return { hasTraditional, hasRHK, hasSmart, hasRemote };
+}
+
+// Returns true if Q2 (key type selection) is needed
+// Only needed when results span multiple path categories
+function needsKeyTypeQuestion() {
+  var cats = detectKeyTypeCategories();
+  var pathCount = (cats.hasTraditional || cats.hasRHK ? 1 : 0) + (cats.hasSmart ? 1 : 0) + (cats.hasRemote ? 1 : 0);
+  return pathCount > 1;
+}
 
 function buildQualifierPanel(needsBlade, needsFCC, needsButtons, bladeGroup, fccGroup, buttonsGroup) {
+  var cats = detectKeyTypeCategories();
+  var showQ2 = needsKeyTypeQuestion();
 
-  // v8.42 RULE 12: Working key gate question always shown first.
-  // Remaining qualifiers hidden until "I have a working key" is selected.
-  // Blade keyway hint removed — too technical for customers.
-
-  var totalSteps = (needsBlade ? 1 : 0) + (needsFCC ? 1 : 0) + (needsButtons ? 1 : 0);
-
-  // ── Gate: working key question ──
-  var gateHTML =
+  var q1HTML =
     '<div class="ckc-qualifier-section" id="ckc-qual-gate-section">' +
-    '<div class="ckc-qualifier-section-label">🔑 Do you have a working key?</div>' +
+    '<div class="ckc-qualifier-section-label">\ud83d\udd11 Do you have a working key?</div>' +
     '<p style="font-size:0.88rem;color:var(--ckc-text-muted);margin-bottom:14px;">This helps us determine the right service for you.</p>' +
-    // Option A: Yes
-    '<div id="ckc-gate-yes-opt" style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border:1px solid var(--ckc-border);border-radius:8px;margin-bottom:10px;cursor:pointer;transition:all 0.15s;" onclick="onQualGate(true)">' +
-    '<div id="ckc-gate-yes-radio" style="width:16px;height:16px;border-radius:50%;border:2px solid var(--ckc-border);flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;"><div id="ckc-gate-yes-dot" style="width:6px;height:6px;border-radius:50%;background:#111;display:none;"></div></div>' +
-    '<div style="font-size:0.88rem;line-height:1.4;"><strong style="color:var(--ckc-text);">Yes, I have a working key</strong>' +
-    '<span style="color:var(--ckc-text-muted);display:block;font-size:0.8rem;margin-top:1px;">I can add a spare or replacement key</span></div>' +
-    '</div>' +
-    // Option B: No
-    '<div id="ckc-gate-no-opt" style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border:1px solid var(--ckc-border);border-radius:8px;cursor:pointer;transition:all 0.15s;" onclick="onQualGate(false)">' +
-    '<div id="ckc-gate-no-radio" style="width:16px;height:16px;border-radius:50%;border:2px solid var(--ckc-border);flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;"><div id="ckc-gate-no-dot" style="width:6px;height:6px;border-radius:50%;background:#111;display:none;"></div></div>' +
-    '<div style="font-size:0.88rem;line-height:1.4;"><strong style="color:var(--ckc-text);">No, I don\'t have a working key</strong>' +
-    '<span style="color:var(--ckc-text-muted);display:block;font-size:0.8rem;margin-top:1px;">All keys lost \u2014 I need a locksmith on-site</span></div>' +
-    '</div>' +
-    '</div>';
+    _radioOpt("ckc-gate-yes","onQualGate(true)","Yes, I have a working key","I can add a spare or replacement key",false) +
+    _radioOpt("ckc-gate-no","onQualGate(false)","No, I don\'t have a working key","All keys lost \u2014 I need a locksmith on-site",true) +
+    "</div>";
 
-  // ── Remaining qualifiers — hidden until gate answered "Yes" ──
-  var sections = [];
-
-  if (needsBlade) {
-    var stepLabel = totalSteps > 1 ? 'Step 1 \u2014 ' : '';
-    sections.push(
-      '<div class="ckc-qualifier-section">' +
-      '<div class="ckc-qualifier-section-label">' + stepLabel + '📷 Identify Your Key Blade</div>' +
-      '<p style="font-size:0.88rem;color:var(--ckc-text-muted);margin-bottom:14px;">Your vehicle has multiple key options with different blade cuts. Upload a photo of your existing key so we can match you to the right one.</p>' +
-      '<div class="ckc-upload-area" id="ckc-qual-upload">' +
-      '<input type="file" class="ckc-upload-file-input" id="ckc-qual-file" accept="image/*" onchange="onQualBladeFile()">' +
-      '<div style="font-size:1.4rem;margin-bottom:5px;">📷</div>' +
-      '<div class="ckc-upload-label"><strong>Tap to upload a photo</strong> of your key blade</div>' +
-      '<div class="ckc-upload-sub">Well-lit, blade facing camera works best</div>' +
-      '</div>' +
-      '<div class="ckc-blade-preview" id="ckc-qual-prev"><img id="ckc-qual-prev-img" src="" alt="Key blade"><button class="ckc-blade-reset" onclick="resetQualBlade()">✕</button></div>' +
-      '<div class="ckc-analyzing" id="ckc-qual-analyzing"><div class="ckc-spinner"></div><span>Analyzing your key blade...</span></div>' +
-      '<div class="ckc-blade-msg" id="ckc-qual-blade-msg"></div>' +
-      '<button class="ckc-resolve-btn" id="ckc-qual-blade-btn" disabled onclick="runQualBlade()">Identify My Blade \u2192</button>' +
-      '<div class="ckc-qual-blade-confirmed" id="ckc-qual-blade-confirmed">\u2713 <span id="ckc-qual-blade-confirmed-text">Blade identified</span></div>' +
-      '</div>'
-    );
+  var q2HTML = "";
+  if (showQ2) {
+    var q2Opts = "";
+    if (cats.hasTraditional) q2Opts += _radioOpt("ckc-kt-traditional","onQualKeyType(\'traditional\')","\ud83d\udd11 Traditional key","Has a metal blade I insert into the ignition",false);
+    if (cats.hasRHK)         q2Opts += _radioOpt("ckc-kt-rhk","onQualKeyType(\'rhk\')","\ud83d\udd11\ud83d\udce1 Remote Head Key","Blade + remote buttons in one unit",false);
+    if (cats.hasSmart)       q2Opts += _radioOpt("ckc-kt-smart","onQualKeyType(\'smart\')","\ud83d\udcf1 Smart Key / Push-button start","A fob I keep in my pocket \u2014 no blade to insert",false);
+    if (cats.hasRemote)      q2Opts += _radioOpt("ckc-kt-remote","onQualKeyType(\'remote\')","\ud83d\udce1 Remote / Key fob only","Keyless entry remote \u2014 no blade",false);
+    q2HTML =
+      "<div class=\"ckc-qualifier-section\" id=\"ckc-qual-q2-section\" style=\"display:none;\">" +
+      "<div class=\"ckc-qualifier-section-label\">\ud83d\udd0d What type of key do you have?</div>" +
+      "<p style=\"font-size:0.88rem;color:var(--ckc-text-muted);margin-bottom:14px;\">Select the option that matches your existing key.</p>" +
+      q2Opts +
+      "</div>";
   }
 
+  var q3HTML =
+    "<div class=\"ckc-qualifier-section\" id=\"ckc-qual-q3-section\" style=\"display:none;\">" +
+    "<div class=\"ckc-qualifier-section-label\">\ud83d\udddd Does your smart key have a hidden emergency blade?</div>" +
+    "<p style=\"font-size:0.88rem;color:var(--ckc-text-muted);margin-bottom:14px;\">Many smart key fobs have a small metal key that slides or pops out for emergencies.</p>" +
+    _radioOpt("ckc-eb-yes","onQualEmergencyBlade(\'yes\')","Yes, it has a hidden emergency blade","I can slide or pull it out to photograph",false) +
+    _radioOpt("ckc-eb-no","onQualEmergencyBlade(\'no\')","No, it\'s just the fob","No metal blade \u2014 push-button only",false) +
+    "</div>";
+
+  var bladeHTML =
+    "<div class=\"ckc-qualifier-section\" id=\"ckc-qual-blade-section\" style=\"display:none;\">" +
+    "<div class=\"ckc-qualifier-section-label\">\ud83d\udcf7 Identify Your Key Blade</div>" +
+    "<p style=\"font-size:0.88rem;color:var(--ckc-text-muted);margin-bottom:14px;\">Your vehicle has multiple key options with different blade cuts. Upload a photo of your existing key so we can match you to the right one.</p>" +
+    "<div class=\"ckc-upload-area\" id=\"ckc-qual-upload\">" +
+    "<input type=\"file\" class=\"ckc-upload-file-input\" id=\"ckc-qual-file\" accept=\"image/*\" onchange=\"onQualBladeFile()\">" +
+    "<div style=\"font-size:1.4rem;margin-bottom:5px;\">\ud83d\udcf7</div>" +
+    "<div class=\"ckc-upload-label\"><strong>Tap to upload a photo</strong> of your key blade</div>" +
+    "<div class=\"ckc-upload-sub\">Well-lit, blade facing camera works best</div>" +
+    "</div>" +
+    "<div class=\"ckc-blade-preview\" id=\"ckc-qual-prev\"><img id=\"ckc-qual-prev-img\" src=\"\" alt=\"Key blade\"><button class=\"ckc-blade-reset\" onclick=\"resetQualBlade()\">\u2715</button></div>" +
+    "<div class=\"ckc-analyzing\" id=\"ckc-qual-analyzing\"><div class=\"ckc-spinner\"></div><span>Analyzing your key blade...</span></div>" +
+    "<div class=\"ckc-blade-msg\" id=\"ckc-qual-blade-msg\"></div>" +
+    "<button class=\"ckc-resolve-btn\" id=\"ckc-qual-blade-btn\" disabled onclick=\"runQualBlade()\">Identify My Blade \u2192</button>" +
+    "<div class=\"ckc-qual-blade-confirmed\" id=\"ckc-qual-blade-confirmed\">\u2713 <span id=\"ckc-qual-blade-confirmed-text\">Blade identified</span></div>" +
+    "</div>";
+
+  var fccHTML = "";
   if (needsFCC) {
-    var stepNum = (needsBlade ? 2 : 1);
-    var stepLabel = totalSteps > 1 ? 'Step ' + stepNum + ' \u2014 ' : '';
     var fccOptions = getAllFCCs(fccGroup);
-    var opts = fccOptions.map(function(f) { return '<option value="' + f + '">' + f + '</option>'; }).join('');
-    sections.push(
-      '<div class="ckc-qualifier-section">' +
-      '<div class="ckc-qualifier-section-label">' + stepLabel + '📡 Identify Your Remote</div>' +
-      '<p style="font-size:0.88rem;color:var(--ckc-text-muted);margin-bottom:14px;">Multiple remotes found for your vehicle. Check the FCC ID printed on the back of your existing remote.</p>' +
-      '<select class="ckc-fcc-select" id="ckc-qual-fcc-sel" onchange="onQualFCCSelect()">' +
-      '<option value="">\u2014 Select your FCC ID \u2014</option>' + opts + '</select>' +
-      '<div class="ckc-fcc-fallback">Not in the list? Type it here:</div>' +
-      '<input class="ckc-fcc-input" id="ckc-qual-fcc-inp" type="text" placeholder="e.g. GQ4-53T" oninput="onQualFCCInput()" />' +
-      '</div>'
-    );
+    var opts = fccOptions.map(function(f) { return "<option value=\"" + f + "\">" + f + "</option>"; }).join("");
+    fccHTML =
+      "<div class=\"ckc-qualifier-section\" id=\"ckc-qual-fcc-section\" style=\"display:none;\">" +
+      "<div class=\"ckc-qualifier-section-label\">\ud83d\udce1 Identify Your Remote</div>" +
+      "<p style=\"font-size:0.88rem;color:var(--ckc-text-muted);margin-bottom:14px;\">Multiple remotes found for your vehicle. Check the FCC ID printed on the back of your existing remote.</p>" +
+      "<select class=\"ckc-fcc-select\" id=\"ckc-qual-fcc-sel\" onchange=\"onQualFCCSelect()\"><option value=\"\">\u2014 Select your FCC ID \u2014</option>" + opts + "</select>" +
+      "<div class=\"ckc-fcc-fallback\">Not in the list? Type it here:</div>" +
+      "<input class=\"ckc-fcc-input\" id=\"ckc-qual-fcc-inp\" type=\"text\" placeholder=\"e.g. GQ4-53T\" oninput=\"onQualFCCInput()\" />" +
+      "</div>";
   }
 
+  var btnsHTML = "";
   if (needsButtons) {
-    var stepNum = (needsBlade ? 1 : 0) + (needsFCC ? 1 : 0) + 1;
-    var stepLabel = totalSteps > 1 ? 'Step ' + stepNum + ' \u2014 ' : '';
     var btnCounts = [];
     buttonsGroup.forEach(function(k) { if (k.buttonCount > 0 && btnCounts.indexOf(k.buttonCount) === -1) btnCounts.push(k.buttonCount); });
     btnCounts.sort();
     var btnOpts = btnCounts.map(function(b) {
-      return '<button class="ckc-btn-count-opt" onclick="onQualBtnCount(' + b + ',this)">' + b + ' Button' + (b>1?'s':'') + '</button>';
-    }).join('');
-    sections.push(
-      '<div class="ckc-qualifier-section">' +
-      '<div class="ckc-qualifier-section-label">' + stepLabel + '🔢 Button Count</div>' +
-      '<p style="font-size:0.88rem;color:var(--ckc-text-muted);margin-bottom:14px;">How many buttons does your remote have?</p>' +
-      '<div class="ckc-btn-count-row" id="ckc-qual-btns">' + btnOpts + '</div>' +
-      '</div>'
-    );
+      return "<button class=\"ckc-btn-count-opt\" onclick=\"onQualBtnCount(" + b + ",this)\">" + b + " Button" + (b>1?"s":"") + "</button>";
+    }).join("");
+    btnsHTML =
+      "<div class=\"ckc-qualifier-section\" id=\"ckc-qual-btns-section\" style=\"display:none;\">" +
+      "<div class=\"ckc-qualifier-section-label\">\ud83d\udd22 Button Count</div>" +
+      "<p style=\"font-size:0.88rem;color:var(--ckc-text-muted);margin-bottom:14px;\">How many buttons does your remote have?</p>" +
+      "<div class=\"ckc-btn-count-row\" id=\"ckc-qual-btns\">" + btnOpts + "</div>" +
+      "</div>";
   }
 
-  return '<div class="ckc-qualifier-panel" id="ckc-qualifier-panel">' +
-    '<h3>🔍 One Quick Check Before We Show Your Results</h3>' +
-    '<div class="ckc-qualifier-subtitle">Answer one quick question to get started.' +
-    '<div style="margin-top:10px;padding:10px 14px;background:rgba(201,162,39,0.07);border:1px solid rgba(201,162,39,0.18);border-radius:8px;font-size:0.82rem;color:#b8a060;line-height:1.5;">' +
-    '📋 <strong style="color:var(--ckc-gold-light);">Tip:</strong> Locate your VIN now in case you need to call for a quote. Found on your <strong style="color:var(--ckc-text);">dashboard lower-left</strong> (visible through the windshield) or <strong style="color:var(--ckc-text);">driver door jamb sticker</strong>.' +
-    '</div></div>' +
-    gateHTML +
-    '<div id="ckc-qual-followup" style="display:none;">' +
-    sections.join('') +
-    '</div>' +
-    '<div class="ckc-qualifier-confirm-row">' +
-    '<div class="ckc-qualifier-status" id="ckc-qual-status">Select an option above to continue.</div>' +
-    '<button class="ckc-show-results-btn" id="ckc-show-results-btn" disabled onclick="applyQualifiersAndRender()">Show My Results \u2192</button>' +
-    '</div>' +
-    '</div>';
+  return "<div class=\"ckc-qualifier-panel\" id=\"ckc-qualifier-panel\">" +
+    "<h3>\ud83d\udd0d A Few Quick Questions</h3>" +
+    "<div class=\"ckc-qualifier-subtitle\">Help us find the right key for your vehicle.</div>" +
+    q1HTML + q2HTML + q3HTML + bladeHTML + fccHTML + btnsHTML +
+    "<div class=\"ckc-qualifier-confirm-row\">" +
+    "<div class=\"ckc-qualifier-status\" id=\"ckc-qual-status\">Answer the question above to continue.</div>" +
+    "<button class=\"ckc-show-results-btn\" id=\"ckc-show-results-btn\" disabled onclick=\"applyQualifiersAndRender()\">Show My Results \u2192</button>" +
+    "</div>" +
+    "</div>";
+}
+
+function _radioOpt(id, onclick, label, sublabel, isDanger) {
+  var borderColor = isDanger ? "#f87171" : "var(--ckc-border)";
+  return "<div id=\"" + id + "-opt\" style=\"display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border:1px solid " + borderColor + ";border-radius:8px;margin-bottom:10px;cursor:pointer;transition:all 0.15s;\" onclick=\"" + onclick + "\">" +
+    "<div id=\"" + id + "-radio\" style=\"width:16px;height:16px;border-radius:50%;border:2px solid " + borderColor + ";flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;\">" +
+    "<div id=\"" + id + "-dot\" style=\"width:6px;height:6px;border-radius:50%;background:#111;display:none;\"></div></div>" +
+    "<div style=\"font-size:0.88rem;line-height:1.4;\"><strong style=\"color:var(--ckc-text);\">" + label + "</strong>" +
+    "<span style=\"color:var(--ckc-text-muted);display:block;font-size:0.8rem;margin-top:1px;\">" + sublabel + "</span></div>" +
+    "</div>";
 }
 
 // ══════════════════════════════════════════
@@ -1094,58 +1112,103 @@ function onQualBladeFile() {
   reader.readAsDataURL(file);
 }
 
-// v8.42 RULE 12: Working key gate handler
-// hasKey=true → show follow-up qualifiers, clear AKL state
-// hasKey=false → AKL mode, hide follow-up, unlock Show Results immediately
 function onQualGate(hasKey) {
   _qualState.workingKeyAnswered = true;
   _qualState.aklSelected = !hasKey;
+  _selectRadio('ckc-gate-yes', hasKey, 'var(--ckc-gold)');
+  _selectRadio('ckc-gate-no', !hasKey, '#f87171');
 
-  // Update radio visual state — mutually exclusive
-  var yesOpt = document.getElementById('ckc-gate-yes-opt');
-  var noOpt  = document.getElementById('ckc-gate-no-opt');
-  var yesRadio = document.getElementById('ckc-gate-yes-radio');
-  var noRadio  = document.getElementById('ckc-gate-no-radio');
-  var yesDot = document.getElementById('ckc-gate-yes-dot');
-  var noDot  = document.getElementById('ckc-gate-no-dot');
-
-  if (hasKey) {
-    // Yes selected
-    yesOpt.style.borderColor = 'var(--ckc-gold)';
-    yesOpt.style.background = 'rgba(201,162,39,0.07)';
-    noOpt.style.borderColor = 'var(--ckc-border)';
-    noOpt.style.background = '';
-    yesRadio.style.borderColor = 'var(--ckc-gold)';
-    yesRadio.style.background = 'var(--ckc-gold)';
-    yesDot.style.display = 'block';
-    noRadio.style.borderColor = 'var(--ckc-border)';
-    noRadio.style.background = '';
-    noDot.style.display = 'none';
-    // Show follow-up qualifiers
-    var followup = document.getElementById('ckc-qual-followup');
-    if (followup) followup.style.display = 'block';
+  if (!hasKey) {
+    // AKL — hide all follow-up sections
+    ['ckc-qual-q2-section','ckc-qual-q3-section','ckc-qual-blade-section','ckc-qual-fcc-section','ckc-qual-btns-section'].forEach(function(id) {
+      var el = document.getElementById(id); if (el) el.style.display = 'none';
+    });
+    _qualState.bladeImage = null; _qualState.bladeResult = null; _qualState.fccValue = ''; _qualState.buttonsValue = 0;
   } else {
-    // No selected — AKL
-    noOpt.style.borderColor = '#f87171';
-    noOpt.style.background = 'rgba(248,113,113,0.07)';
-    yesOpt.style.borderColor = 'var(--ckc-border)';
-    yesOpt.style.background = '';
-    noRadio.style.borderColor = '#f87171';
-    noRadio.style.background = '#f87171';
-    noDot.style.display = 'block';
-    yesRadio.style.borderColor = 'var(--ckc-border)';
-    yesRadio.style.background = '';
-    yesDot.style.display = 'none';
-    // Hide follow-up qualifiers — not needed
-    var followup = document.getElementById('ckc-qual-followup');
-    if (followup) followup.style.display = 'none';
-    // Clear any partial answers from follow-up
-    _qualState.bladeImage = null;
-    _qualState.bladeResult = null;
-    _qualState.fccValue = '';
-    _qualState.buttonsValue = 0;
+    // Has working key — show Q2 if needed, otherwise show appropriate qualifiers directly
+    if (needsKeyTypeQuestion()) {
+      var q2 = document.getElementById('ckc-qual-q2-section'); if (q2) q2.style.display = 'block';
+    } else {
+      // Single path — show qualifiers directly
+      _showQualifiersForPath();
+    }
   }
   checkQualReady();
+}
+
+// v8.46: Called when customer selects key type in Q2
+function onQualKeyType(type) {
+  _qualState.keyTypeAnswer = type;
+  _qualState.emergencyBladeAnswer = '';
+  // Deselect all Q2 options visually
+  ['ckc-kt-traditional','ckc-kt-rhk','ckc-kt-smart','ckc-kt-remote'].forEach(function(id) {
+    _selectRadio(id, false, 'var(--ckc-gold)');
+  });
+  _selectRadio('ckc-kt-' + type, true, 'var(--ckc-gold)');
+
+  // Hide Q3 and all qualifier sections first
+  ['ckc-qual-q3-section','ckc-qual-blade-section','ckc-qual-fcc-section','ckc-qual-btns-section'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
+  _qualState.bladeImage = null; _qualState.bladeResult = null; _qualState.bladeFailed = false;
+  _qualState.fccValue = ''; _qualState.buttonsValue = 0;
+
+  if (type === 'smart') {
+    // Show Q3 — does smart key have emergency blade?
+    var q3 = document.getElementById('ckc-qual-q3-section'); if (q3) q3.style.display = 'block';
+  } else {
+    _showQualifiersForPath();
+  }
+  checkQualReady();
+}
+
+// v8.46: Called when customer answers Q3 (emergency blade)
+function onQualEmergencyBlade(answer) {
+  _qualState.emergencyBladeAnswer = answer;
+  _selectRadio('ckc-eb-yes', answer === 'yes', 'var(--ckc-gold)');
+  _selectRadio('ckc-eb-no',  answer === 'no',  'var(--ckc-gold)');
+
+  if (answer === 'yes') {
+    // Has emergency blade — show blade qualifier
+    var bs = document.getElementById('ckc-qual-blade-section'); if (bs) bs.style.display = 'block';
+  } else {
+    // No emergency blade — no blade qualifier needed, ready immediately
+    var bs = document.getElementById('ckc-qual-blade-section'); if (bs) bs.style.display = 'none';
+  }
+  checkQualReady();
+}
+
+// Shows the correct qualifier sections based on key type answer
+function _showQualifiersForPath() {
+  var type = _qualState.keyTypeAnswer || 'traditional';
+  if (type === 'traditional' || type === 'rhk') {
+    // Blade qualifier
+    if (_qualState.needsBlade) { var bs = document.getElementById('ckc-qual-blade-section'); if (bs) bs.style.display = 'block'; }
+    if (_qualState.needsFCC)   { var fs = document.getElementById('ckc-qual-fcc-section'); if (fs) fs.style.display = 'block'; }
+    if (_qualState.needsButtons){ var bts = document.getElementById('ckc-qual-btns-section'); if (bts) bts.style.display = 'block'; }
+  } else if (type === 'remote') {
+    // FCC / button qualifiers only
+    if (_qualState.needsFCC)    { var fs = document.getElementById('ckc-qual-fcc-section'); if (fs) fs.style.display = 'block'; }
+    if (_qualState.needsButtons){ var bts = document.getElementById('ckc-qual-btns-section'); if (bts) bts.style.display = 'block'; }
+  }
+  // Smart key without Q2 context — no blade qualifier
+}
+
+// Helper: select/deselect a radio option visually
+function _selectRadio(id, selected, color) {
+  var opt = document.getElementById(id + '-opt');
+  var radio = document.getElementById(id + '-radio');
+  var dot = document.getElementById(id + '-dot');
+  if (!opt || !radio || !dot) return;
+  if (selected) {
+    opt.style.borderColor = color; opt.style.background = 'rgba(201,162,39,0.07)';
+    radio.style.borderColor = color; radio.style.background = color;
+    dot.style.display = 'block';
+  } else {
+    opt.style.borderColor = 'var(--ckc-border)'; opt.style.background = '';
+    radio.style.borderColor = 'var(--ckc-border)'; radio.style.background = '';
+    dot.style.display = 'none';
+  }
 }
 
 function resetQualBlade() {
@@ -1409,37 +1472,59 @@ function buildInternalToolURL() {
 }
 
 function checkQualReady() {
-  // v8.42 RULE 12: Gate must be answered first. If AKL, ready immediately.
+  var btn = document.getElementById('ckc-show-results-btn');
+  var statusEl = document.getElementById('ckc-qual-status');
+  if (!btn || !statusEl) return;
+
+  // Gate not answered yet
   if (!_qualState.workingKeyAnswered) {
-    document.getElementById('ckc-show-results-btn').disabled = true;
-    document.getElementById('ckc-qual-status').className = 'ckc-qualifier-status';
-    document.getElementById('ckc-qual-status').textContent = 'Select an option above to continue.';
-    return;
+    btn.disabled = true; statusEl.className = 'ckc-qualifier-status';
+    statusEl.textContent = 'Answer the question above to continue.'; return;
   }
+
+  // AKL — ready immediately
   if (_qualState.aklSelected) {
-    document.getElementById('ckc-show-results-btn').disabled = false;
-    document.getElementById('ckc-qual-status').className = 'ckc-qualifier-status ready';
-    document.getElementById('ckc-qual-status').textContent = '\u2713 All keys lost \u2014 click to see service options.';
+    btn.disabled = false; statusEl.className = 'ckc-qualifier-status ready';
+    statusEl.textContent = '\u2713 All keys lost \u2014 click to see service options.'; return;
+  }
+
+  // Q2 needed but not answered
+  if (needsKeyTypeQuestion() && !_qualState.keyTypeAnswer) {
+    btn.disabled = true; statusEl.className = 'ckc-qualifier-status';
+    statusEl.textContent = 'Select your key type to continue.'; return;
+  }
+
+  // Smart Key path — Q3 needed but not answered
+  if (_qualState.keyTypeAnswer === 'smart' && !_qualState.emergencyBladeAnswer) {
+    btn.disabled = true; statusEl.className = 'ckc-qualifier-status';
+    statusEl.textContent = 'Answer the emergency blade question to continue.'; return;
+  }
+
+  // Smart Key, no emergency blade — ready (no blade qualifier needed)
+  if (_qualState.keyTypeAnswer === 'smart' && _qualState.emergencyBladeAnswer === 'no') {
+    btn.disabled = false; statusEl.className = 'ckc-qualifier-status ready';
+    statusEl.textContent = '\u2713 Ready \u2014 click to see your results.'; return;
+  }
+
+  // Remote path — check FCC/buttons
+  if (_qualState.keyTypeAnswer === 'remote') {
+    var fccOk  = !_qualState.needsFCC    || !!_qualState.fccValue;
+    var btnsOk = !_qualState.needsButtons || _qualState.buttonsValue > 0;
+    var ready  = fccOk && btnsOk;
+    btn.disabled = !ready;
+    if (ready) { statusEl.className = 'ckc-qualifier-status ready'; statusEl.textContent = '\u2713 Ready \u2014 click to see your results.'; }
+    else { statusEl.className = 'ckc-qualifier-status'; var m = []; if (!fccOk) m.push('FCC ID'); if (!btnsOk) m.push('button count'); statusEl.textContent = 'Still needed: ' + m.join(', ') + '.'; }
     return;
   }
-  // Has working key — check remaining qualifiers
+
+  // Traditional / RHK / Smart+emergency blade path — check blade + FCC + buttons
   var bladeOk = !_qualState.needsBlade || _qualState.bladeResult || _qualState.bladeFailed;
   var fccOk   = !_qualState.needsFCC   || !!_qualState.fccValue;
   var btnsOk  = !_qualState.needsButtons || _qualState.buttonsValue > 0;
-  var ready = bladeOk && fccOk && btnsOk;
-  document.getElementById('ckc-show-results-btn').disabled = !ready;
-  var statusEl = document.getElementById('ckc-qual-status');
-  if (ready) {
-    statusEl.className = 'ckc-qualifier-status ready';
-    statusEl.textContent = '\u2713 Ready \u2014 click to see your results.';
-  } else {
-    statusEl.className = 'ckc-qualifier-status';
-    var missing = [];
-    if (!bladeOk) missing.push('blade photo');
-    if (!fccOk)   missing.push('FCC ID');
-    if (!btnsOk)  missing.push('button count');
-    statusEl.textContent = 'Still needed: ' + missing.join(', ') + '.';
-  }
+  var ready   = bladeOk && fccOk && btnsOk;
+  btn.disabled = !ready;
+  if (ready) { statusEl.className = 'ckc-qualifier-status ready'; statusEl.textContent = '\u2713 Ready \u2014 click to see your results.'; }
+  else { statusEl.className = 'ckc-qualifier-status'; var missing = []; if (!bladeOk) missing.push('blade photo'); if (!fccOk) missing.push('FCC ID'); if (!btnsOk) missing.push('button count'); statusEl.textContent = 'Still needed: ' + missing.join(', ') + '.'; }
 }
 
 // ══════════════════════════════════════════
@@ -1469,6 +1554,11 @@ function renderCards() {
   // Determine resolved state for each card based on qualifier answers
   // v8.41: AKL selected — all qualifier groups go CFQ immediately (RULE 12)
   var aklMode = _qualState.aklSelected;
+  // v8.46 RULE 14: key type answer determines which cards get Buy Now vs CFQ vs greyed
+  var keyType = _qualState.keyTypeAnswer; // 'traditional'|'smart'|'remote'|'rhk'|''
+  var smartNoEmergency = keyType === 'smart' && _qualState.emergencyBladeAnswer === 'no';
+  var customerHasSmartKey = keyType === 'smart';
+  var customerHasTraditional = keyType === 'traditional' || keyType === 'rhk' || keyType === '';
   var bladeWinnerSku = null;
   var bladeFailed = _qualState.bladeFailed;
   if (!aklMode && _qualState.bladeResult && _qualState.bladeResult.keyway) {
@@ -1532,17 +1622,24 @@ function renderCards() {
     var inBtnsGroup = _buttonsGroup.some(function(k) { return k.sku === key.sku; });
 
     if (isSmart) {
-      // RULE 4: Smart Keys always CFQ — no toggle. (RULE 11)
-      // RULE 13: CFQ button opens VIN modal before dialing
-      cardClass += ' ckc-cfq-card';
-      priceNote = '<div style="font-size:0.82rem;color:#f59e0b;margin-bottom:8px;">\u26a0 Smart Key programming requires module-level work on most vehicles. Call to confirm program pricing. Please have your VIN ready.</div>';
-      if (_qualState.bladeResult) {
-        priceNote += '<div style="font-size:0.82rem;color:var(--ckc-success);margin-bottom:8px;">\u2713 Blade identified: ' + _qualState.bladeResult.keyway + '</div>';
+      // RULE 4: Smart Keys always CFQ — no toggle.
+      // v8.46: If customer said they have a traditional key, grey Smart Key cards out
+      if (customerHasTraditional && keyType !== '') {
+        cardClass += ' ckc-greyed';
+        btnHTML = ''; priceNote = '';
+      } else {
+        cardClass += ' ckc-cfq-card';
+        priceNote = '<div style="font-size:0.82rem;color:#f59e0b;margin-bottom:8px;">\u26a0 Smart Key programming requires module-level work on most vehicles. Call to confirm program pricing. Please have your VIN ready.</div>';
+        if (_qualState.bladeResult) priceNote += '<div style="font-size:0.82rem;color:var(--ckc-success);margin-bottom:8px;">\u2713 Blade identified: ' + _qualState.bladeResult.keyway + '</div>';
+        var cfqCardData = JSON.stringify({ sku: key.sku, blade: key.keyway || '', fcc: key.fcc || '', keyPrice: displayPrice.toFixed(2) }).replace(/"/g, '&quot;');
+        btnHTML = '<div style="font-size:0.78rem;color:var(--ckc-text-muted);margin-bottom:8px;padding:8px 10px;background:rgba(201,162,39,0.06);border-radius:6px;border:1px solid rgba(201,162,39,0.15);">📋 Have your VIN ready before calling \u2014 found on dashboard lower-left or driver door jamb sticker.</div>' +
+          '<button class="ckc-add-btn" style="background:#f59e0b;" onclick="openVINModal(' + cfqCardData + ')">\ud83d\udcde Call for Quote &middot; (336) 510-9816</button>' +
+          '<div class="ckc-tool-url" id="ckc-tool-url-' + key.sku + '"></div>';
       }
-      var cfqCardData = JSON.stringify({ sku: key.sku, blade: key.keyway || '', fcc: key.fcc || '', keyPrice: displayPrice.toFixed(2) }).replace(/"/g, '&quot;');
-      btnHTML = '<div style="font-size:0.78rem;color:var(--ckc-text-muted);margin-bottom:8px;padding:8px 10px;background:rgba(201,162,39,0.06);border-radius:6px;border:1px solid rgba(201,162,39,0.15);">📋 Have your VIN ready before calling \u2014 found on dashboard lower-left or driver door jamb sticker.</div>' +
-        '<button class="ckc-add-btn" style="background:#f59e0b;" onclick="openVINModal(' + cfqCardData + ')">\ud83d\udcde Call for Quote &middot; (336) 510-9816</button>' +
-        '<div class="ckc-tool-url" id="ckc-tool-url-' + key.sku + '"></div>';
+    } else if (smartNoEmergency && inBladeGroup) {
+      // v8.46: Customer has Smart Key with no emergency blade — grey all blade-requiring cards
+      cardClass += ' ckc-greyed';
+      btnHTML = ''; priceNote = '';
     } else if (aklMode && (inBladeGroup || inFCCGroup || inBtnsGroup)) {
       // v8.41 RULE 12: AKL selected — all qualifier group cards go CFQ, no Buy Now, no toggle
       // v8.44 RULE 13: CFQ button opens VIN modal before dialing
@@ -1737,7 +1834,7 @@ function searchKeys() {
   lastSearchParams = { year: year, make: make, model: model };
 
   // Reset all state
-  _qualState = { needsBlade: false, needsFCC: false, needsButtons: false, bladeImage: null, bladeResult: null, bladeFailed: false, bladeRetry: 0, fccValue: '', buttonsValue: 0, allQualsDone: false, aklSelected: false, workingKeyAnswered: false };
+  _qualState = { needsBlade: false, needsFCC: false, needsButtons: false, bladeImage: null, bladeResult: null, bladeFailed: false, bladeRetry: 0, fccValue: '', buttonsValue: 0, allQualsDone: false, aklSelected: false, workingKeyAnswered: false, keyTypeAnswer: '', emergencyBladeAnswer: '' };
   _bladeGroup = [];
   _fccGroup = [];
   _buttonsGroup = [];
@@ -1933,7 +2030,7 @@ function resetFinder() {
   _progToggle = {};
   _customerVIN = '';
   _cfqCardData = {};
-  _qualState = { needsBlade: false, needsFCC: false, needsButtons: false, bladeImage: null, bladeResult: null, bladeFailed: false, bladeRetry: 0, fccValue: '', buttonsValue: 0, allQualsDone: false, aklSelected: false, workingKeyAnswered: false };
+  _qualState = { needsBlade: false, needsFCC: false, needsButtons: false, bladeImage: null, bladeResult: null, bladeFailed: false, bladeRetry: 0, fccValue: '', buttonsValue: 0, allQualsDone: false, aklSelected: false, workingKeyAnswered: false, keyTypeAnswer: '', emergencyBladeAnswer: '' };
   _bladeGroup = []; _fccGroup = []; _buttonsGroup = []; _byType = {};
   var resultsDiv = document.getElementById('ckc-results');
   resultsDiv.innerHTML = ''; resultsDiv.classList.remove('active');
