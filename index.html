@@ -1,4 +1,3 @@
-
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ═══ CKC KEY FINDER — EMBEDDABLE ═══ */
@@ -369,7 +368,7 @@
 
 <script>
 // ════════════════════════════════════════
-// CKC KEY FINDER v8.40
+// CKC KEY FINDER v8.41
 // ════════════════════════════════════════
 // BUSINESS RULES — MUST SURVIVE EVERY VERSION UPDATE
 // These rules are the source of truth. Any code change must
@@ -428,13 +427,19 @@
 //          handle programming myself" which removes the $65 and
 //          appends a note to the Shopify cart: "Key only — customer
 //          handling programming". CFQ cards are never affected.
+//
+// RULE 12: Upfront qualifier panel always shows an "I don't have
+//          an existing key" option alongside the blade photo upload.
+//          If selected: all cards in ALL qualifier groups (blade,
+//          FCC, button count) route to CFQ. No Buy Now is shown.
+//          AKL always requires a locksmith — no self-service path.
 // ════════════════════════════════════════
 
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbziNH6F0k8keGuaE2MhRPmqAjKRWvZxiWxi5YcstLZ40j29tN5VyBat_r_ekDRVy0CX/exec';
 const PROGRAMMING_FEE = 65;
 const SHOPIFY_DOMAIN = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
-const CKC_VERSION = 'v8.40';
+const CKC_VERSION = 'v8.41';
 
 var liveCatalog = [];
 var isLive = false;
@@ -453,7 +458,8 @@ var _qualState = {
   bladeRetry: 0,
   fccValue: '',
   buttonsValue: 0,
-  allQualsDone: false
+  allQualsDone: false,
+  aklSelected: false      // v8.41: true = customer has no existing key, all cards go CFQ (RULE 12)
 };
 
 // Groups detected during search — used when applying qualifier results to cards
@@ -865,6 +871,14 @@ function buildQualifierPanel(needsBlade, needsFCC, needsButtons, bladeGroup, fcc
       '<div class="ckc-qualifier-section">' +
       '<div class="ckc-qualifier-section-label">' + stepLabel + '📷 Identify Your Key Blade</div>' +
       '<p style="font-size:0.88rem;color:var(--ckc-text-muted);margin-bottom:14px;">Your vehicle has multiple key options with different blade cuts. Upload a photo so we can match you to the right key. Blade types for your vehicle: <strong style="color:var(--ckc-text);">' + keywayHint + '</strong></p>' +
+      // v8.41: AKL toggle — shown above upload area (RULE 12)
+      '<div id="ckc-qual-akl-toggle" style="display:flex;align-items:center;gap:10px;padding:11px 14px;background:rgba(248,113,113,0.06);border:1px solid rgba(248,113,113,0.18);border-radius:8px;margin-bottom:14px;cursor:pointer;" onclick="onQualAKL()">' +
+      '<div id="ckc-qual-akl-radio" style="width:16px;height:16px;border-radius:50%;border:2px solid #555;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s;">' +
+      '<div id="ckc-qual-akl-dot" style="width:6px;height:6px;border-radius:50%;background:#111;display:none;"></div></div>' +
+      '<div style="font-size:0.88rem;line-height:1.4;"><strong style="color:var(--ckc-text);">I don\'t have an existing key</strong>' +
+      '<span style="color:var(--ckc-text-muted);display:block;font-size:0.8rem;margin-top:1px;">All keys lost \u2014 I need a locksmith on-site to verify the blade</span></div>' +
+      '</div>' +
+      '<div id="ckc-qual-blade-upload-section">' +
       '<div class="ckc-upload-area" id="ckc-qual-upload">' +
       '<input type="file" class="ckc-upload-file-input" id="ckc-qual-file" accept="image/*" onchange="onQualBladeFile()">' +
       '<div style="font-size:1.4rem;margin-bottom:5px;">📷</div>' +
@@ -876,6 +890,7 @@ function buildQualifierPanel(needsBlade, needsFCC, needsButtons, bladeGroup, fcc
       '<div class="ckc-blade-msg" id="ckc-qual-blade-msg"></div>' +
       '<button class="ckc-resolve-btn" id="ckc-qual-blade-btn" disabled onclick="runQualBlade()">Identify My Blade \u2192</button>' +
       '<div class="ckc-qual-blade-confirmed" id="ckc-qual-blade-confirmed">\u2713 <span id="ckc-qual-blade-confirmed-text">Blade identified</span></div>' +
+      '</div>' +
       '</div>'
     );
   }
@@ -949,6 +964,37 @@ function onQualBladeFile() {
     document.getElementById('ckc-qual-blade-msg').textContent = '';
   };
   reader.readAsDataURL(file);
+}
+
+// v8.41: AKL handler — customer has no existing key (RULE 12)
+// Selecting this collapses ALL qualifier groups to CFQ immediately.
+// Deselecting restores the upload section and clears AKL state.
+function onQualAKL() {
+  var radio = document.getElementById('ckc-qual-akl-radio');
+  var dot = document.getElementById('ckc-qual-akl-dot');
+  var uploadSection = document.getElementById('ckc-qual-blade-upload-section');
+  var toggleEl = document.getElementById('ckc-qual-akl-toggle');
+
+  if (_qualState.aklSelected) {
+    // Deselect — restore upload section
+    _qualState.aklSelected = false;
+    _qualState.bladeImage = null;
+    _qualState.bladeResult = null;
+    if (radio) { radio.style.borderColor = '#555'; radio.style.background = ''; }
+    if (dot) dot.style.display = 'none';
+    if (toggleEl) toggleEl.style.background = 'rgba(248,113,113,0.06)';
+    if (uploadSection) uploadSection.style.display = 'block';
+  } else {
+    // Select AKL — hide upload section, mark ready
+    _qualState.aklSelected = true;
+    _qualState.bladeImage = null;
+    _qualState.bladeResult = null;
+    if (radio) { radio.style.borderColor = '#f87171'; radio.style.background = '#f87171'; }
+    if (dot) dot.style.display = 'block';
+    if (toggleEl) toggleEl.style.background = 'rgba(248,113,113,0.12)';
+    if (uploadSection) uploadSection.style.display = 'none';
+  }
+  checkQualReady();
 }
 
 function resetQualBlade() {
@@ -1042,13 +1088,17 @@ function onQualBtnCount(count, el) {
 }
 
 function checkQualReady() {
-  var bladeOk = !_qualState.needsBlade || _qualState.bladeResult || _qualState.bladeFailed;
-  var fccOk = !_qualState.needsFCC || !!_qualState.fccValue;
-  var btnsOk = !_qualState.needsButtons || _qualState.buttonsValue > 0;
+  // v8.41: AKL selected counts as blade satisfied — no photo needed (RULE 12)
+  var bladeOk = !_qualState.needsBlade || _qualState.bladeResult || _qualState.bladeFailed || _qualState.aklSelected;
+  var fccOk = !_qualState.needsFCC || !!_qualState.fccValue || _qualState.aklSelected;
+  var btnsOk = !_qualState.needsButtons || _qualState.buttonsValue > 0 || _qualState.aklSelected;
   var ready = bladeOk && fccOk && btnsOk;
   document.getElementById('ckc-show-results-btn').disabled = !ready;
   var statusEl = document.getElementById('ckc-qual-status');
-  if (ready) {
+  if (_qualState.aklSelected) {
+    statusEl.className = 'ckc-qualifier-status ready';
+    statusEl.textContent = '\u2713 All keys lost \u2014 click to see service options.';
+  } else if (ready) {
     statusEl.className = 'ckc-qualifier-status ready';
     statusEl.textContent = '\u2713 Ready \u2014 click to see your results.';
   } else {
@@ -1086,10 +1136,11 @@ function renderCards() {
   html += '<div class="ckc-programming-card"><div class="ckc-programming-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></div><div class="ckc-programming-info"><h3>Mobile Key Programming & Cutting \u2014 as low as $' + PROGRAMMING_FEE + '</h3><p>We come to your location \u00b7 Save $10+ vs competitors \u00b7 Includes key cutting + programming</p><p style="font-size:0.82rem;color:#888;margin-top:6px;">*$' + PROGRAMMING_FEE + ' add-a-key rate \u2014 you must have a working key. All keys lost (AKL), EEPROM, or module work quoted separately \u2014 <a href="tel:+13365109816" style="color:var(--ckc-gold);">call for details</a>.</p></div><div class="ckc-programming-price"><span style="font-size:1rem;font-weight:500;opacity:0.7;">as low as</span><br>$' + PROGRAMMING_FEE + '</div></div>';
 
   // Determine resolved state for each card based on qualifier answers
-  // bladeWinner: the SKU that matched the blade (or null)
+  // v8.41: AKL selected — all qualifier groups go CFQ immediately (RULE 12)
+  var aklMode = _qualState.aklSelected;
   var bladeWinnerSku = null;
   var bladeFailed = _qualState.bladeFailed;
-  if (_qualState.bladeResult && _qualState.bladeResult.keyway) {
+  if (!aklMode && _qualState.bladeResult && _qualState.bladeResult.keyway) {
     // Find which card in blade group matches
     _bladeGroup.forEach(function(k) {
       if (k.keyway === _qualState.bladeResult.keyway && !bladeWinnerSku) {
@@ -1150,12 +1201,17 @@ function renderCards() {
     var inBtnsGroup = _buttonsGroup.some(function(k) { return k.sku === key.sku; });
 
     if (isSmart) {
-      // RULE 4: Smart Keys always CFQ — blade result shown if identified. No toggle. (RULE 11)
+      // RULE 4: Smart Keys always CFQ — no toggle. (RULE 11)
       cardClass += ' ckc-cfq-card';
       priceNote = '<div style="font-size:0.82rem;color:#f59e0b;margin-bottom:8px;">\u26a0 Smart Key programming requires module-level work on most vehicles. Call to confirm program pricing. Please have your VIN ready.</div>';
       if (_qualState.bladeResult) {
         priceNote += '<div style="font-size:0.82rem;color:var(--ckc-success);margin-bottom:8px;">\u2713 Blade identified: ' + _qualState.bladeResult.keyway + '</div>';
       }
+      btnHTML = '<a href="tel:+13365109816" class="ckc-add-btn" style="background:#f59e0b;">\ud83d\udcde Call for Quote &middot; (336) 510-9816</a>';
+    } else if (aklMode && (inBladeGroup || inFCCGroup || inBtnsGroup)) {
+      // v8.41 RULE 12: AKL selected — all qualifier group cards go CFQ, no Buy Now, no toggle
+      cardClass += ' ckc-cfq-card';
+      priceNote = '<div style="font-size:0.82rem;color:#f87171;margin-bottom:8px;">\ud83d\udd11 All keys lost \u2014 a locksmith needs to verify your blade and program your new key on-site.</div>';
       btnHTML = '<a href="tel:+13365109816" class="ckc-add-btn" style="background:#f59e0b;">\ud83d\udcde Call for Quote &middot; (336) 510-9816</a>';
     } else if (inBladeGroup) {
       // Blade group: resolved, greyed, or failed-open
@@ -1190,7 +1246,6 @@ function renderCards() {
         var isWinner = winner === key.sku;
         cardClass += isWinner ? ' ckc-resolved' : '';
         priceNote = '<div class="ckc-key-price-note" id="ckc-pricenote-' + key.sku + '">+ $' + PROGRAMMING_FEE + ' service call = <strong>$' + totalPrice + ' total</strong></div>';
-        // Winner gets Buy Now + toggle; non-winner (unresolved fallback) gets plain Buy Now + toggle
         btnHTML = '<button class="' + (isWinner ? 'ckc-buy-now-btn' : 'ckc-add-btn') + '" onclick="openCheckout(' + idx + ')">' + (isWinner ? '\u2713 Buy Now' : 'Buy Now') + '</button>' +
           buildProgToggleHTML(key.sku, displayPrice);
         if (isWinner) resolvedNote = '<div class="ckc-resolved-confirm show">\u2713 Matched to your remote</div>';
@@ -1307,7 +1362,7 @@ function searchKeys() {
   lastSearchParams = { year: year, make: make, model: model };
 
   // Reset all state
-  _qualState = { needsBlade: false, needsFCC: false, needsButtons: false, bladeImage: null, bladeResult: null, bladeFailed: false, bladeRetry: 0, fccValue: '', buttonsValue: 0, allQualsDone: false };
+  _qualState = { needsBlade: false, needsFCC: false, needsButtons: false, bladeImage: null, bladeResult: null, bladeFailed: false, bladeRetry: 0, fccValue: '', buttonsValue: 0, allQualsDone: false, aklSelected: false };
   _bladeGroup = [];
   _fccGroup = [];
   _buttonsGroup = [];
@@ -1501,7 +1556,7 @@ function resetFinder() {
   lastSearchParams = {};
   _ckcMatches = [];
   _progToggle = {};
-  _qualState = { needsBlade: false, needsFCC: false, needsButtons: false, bladeImage: null, bladeResult: null, bladeFailed: false, bladeRetry: 0, fccValue: '', buttonsValue: 0, allQualsDone: false };
+  _qualState = { needsBlade: false, needsFCC: false, needsButtons: false, bladeImage: null, bladeResult: null, bladeFailed: false, bladeRetry: 0, fccValue: '', buttonsValue: 0, allQualsDone: false, aklSelected: false };
   _bladeGroup = []; _fccGroup = []; _buttonsGroup = []; _byType = {};
   var resultsDiv = document.getElementById('ckc-results');
   resultsDiv.innerHTML = ''; resultsDiv.classList.remove('active');
