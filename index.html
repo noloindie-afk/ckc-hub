@@ -246,7 +246,7 @@
 
 <script>
 // ════════════════════════════════════════
-// CKC KEY FINDER v8.37
+// CKC KEY FINDER v8.38
 // ════════════════════════════════════════
 // BUSINESS RULES — MUST SURVIVE EVERY VERSION UPDATE
 // These rules are the source of truth. Any code change must
@@ -306,6 +306,8 @@ var liveCatalog = [];
 var isLive = false;
 var selectedKey = null;
 var lastSearchParams = {};
+// v8.38 FIX: Declared as plain top-level var (not window._ckcMatches) so it is
+// accessible inside GoDaddy iframe context without window scope ambiguity.
 var _ckcMatches = [];
 
 // Per-search resolver state — keyed by type string
@@ -484,7 +486,7 @@ function normalizeProduct(p) {
   var keyway = p.Keyway || p.keyway || '';
   var chip = p.Chip || p.chip || '';
   var conflictFlag = p.Conflict_Flag || p.conflict_flag || '';
-  // v8.36: Read buttonCount directly from catalog Buttons column.
+  // RULE 6 (v8.36): Read buttonCount directly from catalog Buttons column.
   // N/A values parse to NaN and fall through to 0 via || 0.
   var buttonCount = parseInt(p.Buttons || p.buttons) || 0;
   var vehicles = [];
@@ -673,7 +675,6 @@ function getConflictKinds(group) {
 }
 
 // ── resolverTypeFor: given a key type string and conflict kinds, return resolver mode
-// Modes: 'fcc', 'blade', 'fcc+blade', 'fcc+buttons', 'buttons'
 function resolverTypeFor(keyType, kinds) {
   var t = (keyType || '').toLowerCase();
   var isKeyless = (t === 'remote (keyless entry)');
@@ -687,7 +688,6 @@ function resolverTypeFor(keyType, kinds) {
     if (kinds.buttons) return 'buttons';
     return 'fcc';
   }
-  // default
   if (kinds.fcc) return 'fcc';
   if (kinds.blade) return 'blade';
   return 'fcc';
@@ -729,12 +729,12 @@ function buildBladeResolverHTML(typeKey, group) {
   var keyways = [];
   group.forEach(function(k) { if (k.keyway && k.keyway !== 'N/A' && k.keyway !== '' && keyways.indexOf(k.keyway) === -1) keyways.push(k.keyway); });
   var safeKey = typeKey.replace(/[^a-zA-Z0-9]/g,'_');
-  return '<div class="ckc-resolver-hint"><span style="font-size:1rem;flex-shrink:0;margin-top:1px;">⚠</span><div class="ckc-resolver-hint-text"><strong>Two blade types found for your vehicle.</strong> Upload a photo of your existing key blade — our AI will identify which one you need.</div></div>' +
+  return '<div class="ckc-resolver-hint"><span style="font-size:1rem;flex-shrink:0;margin-top:1px;">⚠</span><div class="ckc-resolver-hint-text"><strong>We need to confirm your key blade type.</strong> Upload a photo of your existing key blade — our AI will identify which one you need.</div></div>' +
     '<div class="ckc-upload-area" id="ckc-upload-' + safeKey + '">' +
     '<input type="file" class="ckc-upload-file-input" id="ckc-file-' + safeKey + '" accept="image/*" onchange="onCKCBladeFile(\'' + typeKey + '\')">' +
     '<div style="font-size:1.4rem;margin-bottom:5px;">📷</div>' +
     '<div class="ckc-upload-label"><strong>Tap to upload a photo</strong> of your key blade</div>' +
-    '<div class="ckc-upload-sub">Well-lit, blade facing camera works best</div>' +
+    '<div class="ckc-upload-sub">Well-lit, blade facing camera works best · HU101 (high security sidewinder) or H128 (standard)</div>' +
     '</div>' +
     '<div class="ckc-blade-preview" id="ckc-prev-' + safeKey + '"><img id="ckc-prev-img-' + safeKey + '" src="" alt="Key blade"><button class="ckc-blade-reset" onclick="resetCKCBlade(\'' + typeKey + '\')">✕</button></div>' +
     '<div class="ckc-analyzing" id="ckc-analyzing-' + safeKey + '"><div class="ckc-spinner"></div><span>Analyzing your key blade...</span></div>' +
@@ -929,10 +929,10 @@ async function resolveBlade(typeKey) {
           document.getElementById('ckc-analyzing-' + safeKey).parentNode.appendChild(msgBox);
           fallbackCFQ(baseTypeKey, group, '');
         } else {
-          var msgEl = document.getElementById('ckc-blade-msg-' + safeKey);
-          msgEl.className = 'ckc-blade-msg warn';
-          msgEl.innerHTML = '\u26a0 This blade (' + result.keyway + ') doesn\'t match this key. Check the other cards above or below.';
-          msgEl.style.display = 'block';
+          var msgEl2 = document.getElementById('ckc-blade-msg-' + safeKey);
+          msgEl2.className = 'ckc-blade-msg warn';
+          msgEl2.innerHTML = '\u26a0 This blade (' + result.keyway + ') doesn\'t match this key. Check the other cards above or below.';
+          msgEl2.style.display = 'block';
           document.getElementById('ckc-blade-btn-' + safeKey).disabled = false;
         }
       }, 1000);
@@ -971,10 +971,10 @@ async function analyzeBladeWithClaude(base64, keyways, vehicleContext) {
   var prompt = 'You are an automotive locksmith assistant specializing in key blade identification.\n\n' +
     'Vehicle: ' + vehicleContext + '\nPossible blade types: ' + keyways.join(', ') + '\n\n' +
     'Analyze this key blade image. Key identifiers by type:\n' +
-    '- High security blades (e.g. H75, HON66, TOY43-HS): have cuts on both edges or laser-cut sidewinder pattern\n' +
-    '- Standard blades (e.g. H84, HON58R, B111): single-sided cuts, traditional profile\n\n' +
+    '- High security blades (e.g. HU101, HON66, TOY43-HS): have cuts on both edges or laser-cut sidewinder pattern\n' +
+    '- Standard blades (e.g. H128, H84, HON58R, B111): single-sided cuts, traditional profile\n\n' +
     'Respond ONLY with valid JSON, no text outside:\n' +
-    '{"matched":true,"keyway":"H75","description":"High security double-sided blade","confidence":"high"}\n' +
+    '{"matched":true,"keyway":"HU101","description":"High security double-sided sidewinder blade","confidence":"high"}\n' +
     'OR if unclear: {"matched":false,"unclear":true,"reason":"Image too dark"}';
   var response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -1000,7 +1000,8 @@ async function analyzeBladeWithClaude(base64, keyways, vehicleContext) {
   }
 }
 
-// ── Unlock matched card, grey out others in same type group
+// ── Unlock matched card, grey out others in same type group (RULE 10)
+// v8.38 FIX: References _ckcMatches directly (not window._ckcMatches) for iframe compatibility
 function unlockCKCCard(matchedSku, group) {
   group.forEach(function(k) {
     var cardEl = document.getElementById('ckc-card-' + k.sku);
@@ -1012,6 +1013,7 @@ function unlockCKCCard(matchedSku, group) {
       if (resolver) resolver.style.display = 'none';
       var btnEl = cardEl.querySelector('.ckc-card-btn');
       if (btnEl) {
+        // v8.38 FIX: _ckcMatches not window._ckcMatches
         var keyIndex = _ckcMatches.findIndex(function(m) { return m.sku === k.sku; });
         btnEl.innerHTML = '<button class="ckc-buy-now-btn" onclick="openCheckout(' + keyIndex + ')">\u2713 Buy Now</button><div class="ckc-resolved-confirm show">\u2713 Matched to your key</div>';
       }
@@ -1047,6 +1049,7 @@ function searchKeys() {
   var model = document.getElementById('ckc-model').value;
   var resultsDiv = document.getElementById('ckc-results');
 
+  // RULE 7: Exclusion filters
   var db = getDB().filter(function(k) {
     return k.type !== 'KEY BLADE' &&
       !k.title.toLowerCase().includes('universal') &&
@@ -1077,6 +1080,7 @@ function searchKeys() {
     return (typeOrder[a.type] !== undefined ? typeOrder[a.type] : 99) - (typeOrder[b.type] !== undefined ? typeOrder[b.type] : 99);
   });
 
+  // v8.38 FIX: Assign to _ckcMatches (not window._ckcMatches) for iframe compatibility
   _ckcMatches = matches;
   resultsDiv.classList.add('active');
 
@@ -1090,7 +1094,6 @@ function searchKeys() {
   });
 
   for (var type in byType) {
-    // RULE 1+2: Always-blade types treated as conflicted for resolver purposes
     var isAlwaysBlade = alwaysBladeResolver(type);
     if (conflictTypes.has(type) || isAlwaysBlade) {
       var group = byType[type];
@@ -1132,9 +1135,9 @@ function searchKeys() {
     var priceNote, btnHTML, resolverHTML = '', isConflictCard = false;
 
     var t = (key.type || '').toLowerCase();
-    // RULE 4: Smart Key / FOBIK always CFQ
+    // RULE 4 + RULE 8: Smart Key / FOBIK always CFQ, never Buy Now, never resolver
     var isSmartKey = (t === 'smart key' || t === 'smart key (fobik)' || t === 'premium smart key' || t === 'fobik');
-    // RULE 1+2: Always blade resolver for these types
+    // RULE 1 + 2: Always blade resolver for RHK, Remote Flip Key, Transponder Key
     var needsBladeResolver = alwaysBladeResolver(key.type);
     var itemHasConflict = conflictTypes.has(key.type || 'Key');
 
@@ -1222,6 +1225,7 @@ async function lazyLoadImages() {
   }
 }
 
+// v8.38 FIX: References _ckcMatches directly (not window._ckcMatches)
 function openCheckout(keyIndex) {
   selectedKey = _ckcMatches[keyIndex];
   renderCheckout();
@@ -1272,6 +1276,7 @@ function showPostPurchase() {
   resultsDiv.innerHTML = '<div class="ckc-post-purchase"><div class="ckc-post-purchase-icon">\u2705</div><h3>Order Started!</h3><p>Complete your payment in the checkout tab that just opened.</p><div style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);border-radius:10px;padding:16px 20px;margin:16px auto;max-width:480px;font-size:0.95rem;color:var(--ckc-text-muted);line-height:1.6;text-align:left;">\u2714 We\'ll review your vehicle details and <strong style="color:var(--ckc-text);">confirm your exact programming cost</strong> before your appointment. If additional work is needed beyond standard OBD programming, we\'ll let you know upfront \u2014 no surprises.</div><div class="ckc-email-neon"><div class="ckc-email-neon-inner"><div class="ckc-email-neon-icon">\ud83d\udcc5</div><div class="ckc-email-neon-title">BOOK YOUR APPOINTMENT AFTER CHECKOUT</div><div class="ckc-email-neon-desc">After completing payment, you\'ll see a<br><strong>"Schedule My Appointment"</strong> button on the confirmation page.<br>Click it to choose your date and time!</div><div class="ckc-email-neon-arrow">\u2193 Complete checkout first, then book your appointment \u2193</div></div></div><button class="ckc-new-search-btn" onclick="resetFinder()">Search for another key</button></div>';
 }
 
+// v8.38 FIX: References _ckcMatches directly (not window._ckcMatches)
 function resetFinder() {
   selectedKey = null; lastSearchParams = {}; _ckcMatches = []; _resolverState = {};
   var resultsDiv = document.getElementById('ckc-results');
