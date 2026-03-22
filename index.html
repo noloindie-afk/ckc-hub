@@ -1,3 +1,4 @@
+
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ═══ CKC KEY FINDER — EMBEDDABLE ═══ */
@@ -368,7 +369,7 @@
 
 <script>
 // ════════════════════════════════════════
-// CKC KEY FINDER v8.42
+// CKC KEY FINDER v8.43
 // ════════════════════════════════════════
 // BUSINESS RULES — MUST SURVIVE EVERY VERSION UPDATE
 // These rules are the source of truth. Any code change must
@@ -431,18 +432,21 @@
 // RULE 12: Upfront qualifier panel always opens with a working key
 //          gate question — shown first, before blade/FCC/buttons.
 //          "I have a working key" → show remaining qualifiers.
-//          "I don't have a working key" → all cards go CFQ, no
-//          further questions asked. Mutually exclusive radio —
-//          one must be selected before anything else appears.
-//          Blade type hint (keyway codes) never shown to customer
-//          — too technical, adds confusion not clarity.
+//          "I don't have a working key" → all qualifier group cards
+//          go CFQ. Mutually exclusive radio — one must be selected
+//          before anything else appears.
+//          Gate ONLY fires when _bladeGroup has RHK, Transponder,
+//          or Remote Flip Key cards. Smart Keys NEVER trigger the
+//          gate — they are always CFQ (RULES 4, 8) and the gate
+//          question makes no sense for Smart Key customers.
+//          Blade type hint (keyway codes) never shown to customer.
 // ════════════════════════════════════════
 
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbziNH6F0k8keGuaE2MhRPmqAjKRWvZxiWxi5YcstLZ40j29tN5VyBat_r_ekDRVy0CX/exec';
 const PROGRAMMING_FEE = 65;
 const SHOPIFY_DOMAIN = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
-const CKC_VERSION = 'v8.42';
+const CKC_VERSION = 'v8.43';
 
 var liveCatalog = [];
 var isLive = false;
@@ -467,7 +471,7 @@ var _qualState = {
 };
 
 // Groups detected during search — used when applying qualifier results to cards
-var _bladeGroup = [];    // all cards that need blade qualification (RHK, Transponder, Smart Key w/ blade)
+var _bladeGroup = [];    // cards requiring blade qualification: RHK, Transponder, Remote Flip Key only. Smart Keys excluded (always CFQ).
 var _fccGroup = [];      // Remote (Keyless Entry) cards with FCC conflict
 var _buttonsGroup = [];  // Remote (Keyless Entry) cards with button count conflict
 var _byType = {};
@@ -514,9 +518,13 @@ function setProgToggle(sku, mode, keyPrice) {
 function getDisplayPrice(key) { return parseFloat(key.price) || 0; }
 
 // Types that always require blade identification (RULES 1, 2, 4)
+// Types that require blade identification via upfront qualifier (RULES 1, 2)
+// Smart Keys deliberately excluded — they are always CFQ (RULES 4, 8) and
+// never participate in the blade gate question. Adding them here would show
+// the working key gate to Smart Key customers, which makes no sense.
 function requiresBlade(keyType) {
   var t = (keyType || '').toLowerCase();
-  return t === 'remote head key' || t === 'remote flip key' || t === 'transponder key' || t === 'smart key' || t === 'smart key (fobik)' || t === 'premium smart key' || t === 'fobik';
+  return t === 'remote head key' || t === 'remote flip key' || t === 'transponder key';
 }
 
 // Smart Key types — always CFQ, never Buy Now (RULE 4, 8)
