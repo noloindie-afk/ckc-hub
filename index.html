@@ -1273,27 +1273,34 @@ function openVINModal(cardData) {
   setTimeout(function() { var inp = document.getElementById('ckc-vin-modal-inp'); if (inp) inp.focus(); }, 100);
 }
 
-// ── VIN check digit validation (RULE 13, v8.45)
-// Standard ISO 3779 check digit algorithm.
-// Position 9 of a valid VIN must satisfy the weighted sum formula.
-// Catches bogus/made-up VINs instantly, no API call needed.
-function isValidVINCheckDigit(vin) {
-  var transliteration = {
-    'A':1,'B':2,'C':3,'D':4,'E':5,'F':6,'G':7,'H':8,
-    'J':1,'K':2,'L':3,'M':4,'N':5,'P':7,'R':9,
-    'S':2,'T':3,'U':4,'V':5,'W':6,'X':7,'Y':8,'Z':9,
-    '0':0,'1':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9
-  };
-  var weights = [8,7,6,5,4,3,2,10,0,9,8,7,6,5,4,3,2];
-  var sum = 0;
-  for (var i = 0; i < 17; i++) {
-    var val = transliteration[vin[i]];
-    if (val === undefined) return false;
-    sum += val * weights[i];
+// ── VIN validation (RULE 13, v8.45)
+// Format validation: 17 chars, no I/O/Q, valid first character.
+// Then verifies against NHTSA API — free, no key, catches bogus VINs reliably.
+// Check digit math removed — too many false rejections on real VINs.
+function isValidVINFormat(vin) {
+  if (!vin || vin.length !== 17) return false;
+  // No I, O, Q allowed in any VIN
+  if (/[IOQ]/.test(vin)) return false;
+  // First character must be a valid WMI country code digit/letter
+  if (!/^[A-HJ-NPR-Z1-9]/.test(vin)) return false;
+  // Must be all valid VIN characters
+  if (!/^[A-HJ-NPR-Z0-9]{17}$/.test(vin)) return false;
+  // Reject obvious repeated-character strings
+  if (/^(.)\1{16}$/.test(vin)) return false;
+  return true;
+}
+
+async function verifyVINWithNHTSA(vin) {
+  try {
+    var resp = await fetch('https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues/' + vin + '?format=json', { signal: AbortSignal.timeout(5000) });
+    var data = await resp.json();
+    var r = data.Results && data.Results[0];
+    if (!r || !r.ModelYear || r.ModelYear === '' || r.ErrorCode === '8') return false;
+    return true;
+  } catch(e) {
+    // If NHTSA is unreachable, allow through — don't block customer
+    return true;
   }
-  var remainder = sum % 11;
-  var checkDigit = remainder === 10 ? 'X' : String(remainder);
-  return vin[8] === checkDigit;
 }
 
 function onVINModalInput(el) {
@@ -1304,23 +1311,20 @@ function onVINModalInput(el) {
   var errorEl = document.getElementById('ckc-vin-error');
   var len = val.length;
   counter.textContent = len + '/17';
-
   if (len === 17) {
-    if (isValidVINCheckDigit(val)) {
-      // Valid VIN
+    if (isValidVINFormat(val)) {
       counter.className = 'ckc-vin-counter done';
       el.classList.add('valid');
       el.classList.remove('invalid');
       submitBtn.disabled = false;
       if (errorEl) { errorEl.style.display = 'none'; errorEl.textContent = ''; }
     } else {
-      // 17 chars but fails check digit — bogus VIN
       counter.className = 'ckc-vin-counter error';
       el.classList.remove('valid');
       el.classList.add('invalid');
       submitBtn.disabled = true;
       if (errorEl) {
-        errorEl.textContent = '⚠ That VIN doesn\'t appear to be valid. Check the number on your dashboard or door jamb and try again.';
+        errorEl.textContent = '⚠ That VIN doesn\'t look right. Check the number on your dashboard or door jamb and try again.';
         errorEl.style.display = 'block';
       }
     }
@@ -1333,18 +1337,43 @@ function onVINModalInput(el) {
   }
 }
 
+async function submitVINModal() {
+  var inp = document.getElementById('ckc-vin-modal-inp');
+  if (!inp || inp.value.length !== 17) return;
+  var vin = inp.value.toUpperCase();
+  if (!isValidVINFormat(vin)) return;
+
+  // Show verifying state
+  var submitBtn = document.getElementById('ckc-vin-submit-btn');
+  var errorEl = document.getElementById('ckc-vin-error');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Verifying VIN...';
+
+  var valid = await verifyVINWithNHTSA(vin);
+  if (!valid) {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '📞 Connect & Call (336) 510-9816';
+    inp.classList.remove('valid');
+    inp.classList.add('invalid');
+    document.getElementById('ckc-vin-counter').className = 'ckc-vin-counter error';
+    if (errorEl) {
+      errorEl.textContent = '⚠ That VIN couldn\'t be verified. Double-check the number on your dashboard or door jamb sticker.';
+      errorEl.style.display = 'block';
+    }
+    return;
+  }
+
+  _customerVIN = vin;
+  closeVINModal();
+  placeCallAndOpenTool();
+}
+
 function closeVINModal() {
   var overlay = document.getElementById('ckc-vin-overlay');
   if (overlay) overlay.remove();
 }
 
-function submitVINModal() {
-  var inp = document.getElementById('ckc-vin-modal-inp');
-  if (!inp || inp.value.length !== 17) return;
-  _customerVIN = inp.value.toUpperCase();
-  closeVINModal();
-  placeCallAndOpenTool();
-}
+
 
 function placeCallAndOpenTool() {
   // Build internal tool URL with all captured data
@@ -1620,6 +1649,9 @@ function renderCards() {
 
 // ── Claude Vision API — blade identification (unchanged from v8.38)
 async function analyzeBladeWithClaude(base64, keyways, vehicleContext) {
+  // Compress image before sending — large photos cause API errors
+  var compressedBase64 = await compressImageBase64(base64);
+
   var prompt = 'You are an automotive locksmith assistant specializing in key blade identification.\n\n' +
     'Vehicle: ' + vehicleContext + '\nPossible blade types: ' + keyways.join(', ') + '\n\n' +
     'Analyze this key blade image. Key identifiers by type:\n' +
@@ -1640,12 +1672,17 @@ async function analyzeBladeWithClaude(base64, keyways, vehicleContext) {
       model: 'claude-sonnet-4-20250514',
       max_tokens: 1000,
       messages: [{ role: 'user', content: [
-        { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } },
+        { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: compressedBase64 } },
         { type: 'text', text: prompt }
       ]}]
     })
   });
-  if (!response.ok) throw new Error('API ' + response.status);
+  if (!response.ok) {
+    var errBody = '';
+    try { var errData = await response.json(); errBody = errData.error ? errData.error.message : JSON.stringify(errData); } catch(e) {}
+    console.error('Anthropic API error', response.status, errBody);
+    throw new Error('API ' + response.status + ': ' + errBody);
+  }
   var data = await response.json();
   var text = data.content.map(function(b) { return b.text || ''; }).join('').trim();
   try {
@@ -1655,6 +1692,26 @@ async function analyzeBladeWithClaude(base64, keyways, vehicleContext) {
   } catch(e) {
     return { matched: false, error: '\u26a0 Could not parse result. Please try again.' };
   }
+}
+
+// Compress image to max 800px wide, 0.8 JPEG quality before sending to API
+function compressImageBase64(base64DataUrl) {
+  return new Promise(function(resolve) {
+    var img = new Image();
+    img.onload = function() {
+      var maxW = 800;
+      var scale = img.width > maxW ? maxW / img.width : 1;
+      var canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      var compressed = canvas.toDataURL('image/jpeg', 0.82);
+      resolve(compressed.split(',')[1]);
+    };
+    img.onerror = function() { resolve(base64DataUrl.split(',')[1] || base64DataUrl); };
+    img.src = base64DataUrl.startsWith('data:') ? base64DataUrl : 'data:image/jpeg;base64,' + base64DataUrl;
+  });
 }
 
 // ══════════════════════════════════════════
