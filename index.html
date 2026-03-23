@@ -324,12 +324,12 @@
 
 const SCRIPT_URL       = 'https://script.google.com/macros/s/AKfycbziNH6F0k8keGuaE2MhRPmqAjKRWvZxiWxi5YcstLZ40j29tN5VyBat_r_ekDRVy0CX/exec';
 const BLADE_PROXY_URL  = 'https://ckc-blade-proxy.noloindie.workers.dev';
-const PROGRAMMING_FEE      = 65;
+const PROGRAMMING_FEE      = 75;
 const SHOPIFY_DOMAIN       = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL          = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
 const PROGRAMMING_VARIANT  = '45908511228101';
 const INTERNAL_TOOL_URL    = 'https://carolinakeycutters.com/tools';
-const CKC_VERSION          = 'v8.55';
+const CKC_VERSION          = 'v8.58';
 
 var liveCatalog    = [];
 var isLive         = false;
@@ -1494,20 +1494,32 @@ async function startShopifyCheckout() {
       shopifyUrl = 'https://'+SHOPIFY_DOMAIN+'/products/'+handle+'?note='+encodeURIComponent(vehicleNote);
     }
     window.open(shopifyUrl, '_blank');
-    showPostPurchase();
+    showPostPurchase(isKeyOnly);
   } catch(err) {
     btn.disabled = false; btn.textContent = 'Proceed to Secure Checkout \u2192';
     alert('Unable to open checkout. Please call us at (336) 510-9816 to order.');
   }
 }
-function showPostPurchase() {
+function showPostPurchase(isKeyOnly) {
   var resultsDiv = document.getElementById('ckc-results');
-  resultsDiv.innerHTML = '<div class="ckc-post-purchase"><div class="ckc-post-purchase-icon">\u2705</div><h3>Order Started!</h3><p>Complete your payment in the checkout tab that just opened.</p>' +
-    '<div style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);border-radius:10px;padding:16px 20px;margin:16px auto;max-width:480px;font-size:0.95rem;color:var(--ckc-text-muted);line-height:1.6;text-align:left;">\u2714 We\'ll review your vehicle details and <strong style="color:var(--ckc-text);">confirm your exact programming cost</strong> before your appointment. If additional work is needed beyond standard OBD programming, we\'ll let you know upfront \u2014 no surprises.</div>' +
-    '<div class="ckc-email-neon"><div class="ckc-email-neon-inner"><div class="ckc-email-neon-icon">\uD83D\uDCC5</div><div class="ckc-email-neon-title">BOOK YOUR APPOINTMENT AFTER CHECKOUT</div>' +
-    '<div class="ckc-email-neon-desc">After completing payment, you\'ll see a<br><strong>"Schedule My Appointment"</strong> button on the confirmation page.<br>Click it to choose your date and time!</div>' +
-    '<div class="ckc-email-neon-arrow">\u2193 Complete checkout first, then book your appointment \u2193</div></div></div>' +
-    '<button class="ckc-new-search-btn" onclick="resetFinder()">Search for another key</button></div>';
+
+  if (isKeyOnly) {
+    resultsDiv.innerHTML = '<div class="ckc-post-purchase"><div class="ckc-post-purchase-icon">\uD83D\uDED2</div><h3>Checkout Opened</h3><p>Your checkout tab is open — complete your order there.</p>' +
+      '<div style="background:rgba(201,162,39,0.08);border:1px solid rgba(201,162,39,0.25);border-radius:10px;padding:16px 20px;margin:16px auto;max-width:480px;font-size:0.95rem;color:var(--ckc-text-muted);line-height:1.6;text-align:left;">' +
+      '\uD83D\uDD11 <strong style="color:var(--ckc-gold);">Key only order.</strong> You\'ve selected to handle programming yourself. No appointment needed — your key will ship to you directly.<br><br>' +
+      'If you need programming help later, call us at <a href="tel:+13365109816" style="color:var(--ckc-gold);">(336) 510-9816</a>.</div>' +
+      '<div style="background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);border-radius:10px;padding:16px 20px;margin:16px auto;max-width:480px;font-size:0.95rem;color:var(--ckc-text-muted);line-height:1.6;text-align:left;">' +
+      '\u26a0\uFE0F <strong style="color:#f87171;">Out of stock?</strong> If your item was removed from cart, <a href="tel:+13365109816" style="color:var(--ckc-gold);">call us</a> and we\'ll order it for you.</div>' +
+      '<button class="ckc-new-search-btn" onclick="resetFinder()">Search for another key</button></div>';
+  } else {
+    resultsDiv.innerHTML = '<div class="ckc-post-purchase"><div class="ckc-post-purchase-icon">\uD83D\uDED2</div><h3>Checkout Opened</h3><p>Your checkout tab is open — complete your order there before booking an appointment.</p>' +
+      '<div style="background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);border-radius:10px;padding:16px 20px;margin:16px auto;max-width:480px;font-size:0.95rem;color:var(--ckc-text-muted);line-height:1.6;text-align:left;">' +
+      '\u26a0\uFE0F <strong style="color:#f87171;">Important:</strong> If your item shows as out of stock or is removed from your cart, please <a href="tel:+13365109816" style="color:var(--ckc-gold);">call us at (336) 510-9816</a> and we\'ll get your key ordered and schedule your appointment directly.</div>' +
+      '<div class="ckc-email-neon"><div class="ckc-email-neon-inner"><div class="ckc-email-neon-icon">\uD83D\uDCC5</div><div class="ckc-email-neon-title">BOOK YOUR APPOINTMENT AFTER CHECKOUT</div>' +
+      '<div class="ckc-email-neon-desc">After completing payment, you\'ll see a<br><strong>"Schedule My Appointment"</strong> button on the confirmation page.<br>Click it to choose your date and time!</div>' +
+      '<div class="ckc-email-neon-arrow">\u2193 Complete checkout first, then book your appointment \u2193</div></div></div>' +
+      '<button class="ckc-new-search-btn" onclick="resetFinder()">Search for another key</button></div>';
+  }
 }
 function resetFinder() {
   selectedKey=null; lastSearchParams={}; _ckcMatches=[]; _progToggle={}; _customerVIN=''; _cfqCardData={};
