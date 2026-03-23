@@ -375,7 +375,7 @@ const SHOPIFY_DOMAIN       = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL          = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
 const PROGRAMMING_VARIANT  = '45908511228101';
 const INTERNAL_TOOL_URL    = 'https://carolinakeycutters.com/tools';
-const CKC_VERSION          = 'v8.53';
+const CKC_VERSION          = 'v8.54';
 
 var liveCatalog    = [];
 var isLive         = false;
@@ -1436,80 +1436,88 @@ function _wireBladeDropzone() {
   });
 }
 
-// ══ BLADE ANALYSIS — via hidden iframe form POST (v8.52) ══
-// JSONP GET hits 413 (URL too long) for image payloads.
-// fetch POST hits CORS preflight 405 in iframe context.
-// Solution: hidden iframe + dynamically constructed form POST.
-// No CORS, no preflight. Apps Script receives via e.postData.
-// Response returned via postMessage from the Apps Script page.
+// ══ BLADE ANALYSIS — via Google Drive temp file + JSONP (v8.54) ══
+// Problem: image too large for JSONP GET URL, fetch POST blocked by CORS preflight.
+// Solution: upload compressed image to Drive as temp file (browser→Drive API directly),
+// pass only the file ID via JSONP GET to proxy, proxy reads from Drive,
+// calls Anthropic, deletes temp file, returns result via JSONP callback.
+// Zero CORS issues. No image bytes in URL.
+
+// Step 1: Upload image bytes to Drive, get back a file ID
+async function uploadImageToDrive(base64) {
+  var byteString = atob(base64);
+  var bytes = new Uint8Array(byteString.length);
+  for (var i = 0; i < byteString.length; i++) bytes[i] = byteString.charCodeAt(i);
+  var blob = new Blob([bytes], { type: 'image/jpeg' });
+
+  var metadata = JSON.stringify({ name: 'ckc_blade_tmp_' + Date.now() + '.jpg', parents: ['root'] });
+  var formData = new FormData();
+  formData.append('metadata', new Blob([metadata], { type: 'application/json' }));
+  formData.append('file', blob);
+
+  var resp = await fetch(
+    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',
+    { method: 'POST', headers: { 'Authorization': 'Bearer ' + await getDriveToken() }, body: formData }
+  );
+  if (!resp.ok) throw new Error('Drive upload failed: ' + resp.status);
+  var data = await resp.json();
+  return data.id;
+}
+
+// Get Drive OAuth token via Apps Script token endpoint (same project, no extra auth)
+async function getDriveToken() {
+  return new Promise(function(resolve, reject) {
+    var cb = '_ckcToken_' + Date.now();
+    var timeout = setTimeout(function() { delete window[cb]; reject(new Error('Token timeout')); }, 8000);
+    window[cb] = function(data) { clearTimeout(timeout); delete window[cb]; if (data.token) resolve(data.token); else reject(new Error('No token')); };
+    var s = document.createElement('script');
+    s.src = BLADE_PROXY_URL + '?action=token&callback=' + cb;
+    s.onerror = function() { clearTimeout(timeout); delete window[cb]; reject(new Error('Token fetch failed')); };
+    s.onload = function() { try { document.head.removeChild(s); } catch(e){} };
+    document.head.appendChild(s);
+  });
+}
+
+// Step 2: Pass file ID to proxy via JSONP, proxy does the analysis
 async function analyzeBladeWithClaude(base64, keyways, vehicleContext) {
   var compressedBase64 = await compressImageBase64(base64);
+
+  // Upload to Drive first
+  var fileId;
+  try {
+    fileId = await uploadImageToDrive(compressedBase64);
+  } catch(e) {
+    throw new Error('Drive upload failed: ' + e.message);
+  }
+
+  // Now call proxy with just the file ID — tiny URL, zero size issues
   return new Promise(function(resolve, reject) {
-    var iframeId = '_ckcBladeFrame_' + Date.now();
-    var timeout = setTimeout(function() {
-      cleanup();
-      reject(new Error('Blade proxy timeout'));
-    }, 25000);
-
-    function cleanup() {
-      window.removeEventListener('message', onMessage);
-      var fr = document.getElementById(iframeId);
-      if (fr) fr.remove();
-      var fm = document.getElementById(iframeId + '_form');
-      if (fm) fm.remove();
-    }
-
-    function onMessage(evt) {
-      // Accept messages from any Google Script domain
-      if (!evt.origin.includes('google') && !evt.origin.includes('googleusercontent')) return;
-      try {
-        var data = JSON.parse(evt.data);
-        if (data._ckcBlade) {
-          clearTimeout(timeout); cleanup();
-          if (data.error) { reject(new Error(data.error)); return; }
-          if (data.matched && keyways.indexOf(data.keyway) === -1) {
-            resolve({ matched: false, unclear: true, reason: 'Keyway not in group' });
-          } else { resolve(data); }
-        }
-      } catch(e) {}
-    }
-    window.addEventListener('message', onMessage);
-
-    // Create hidden iframe target
-    var iframe = document.createElement('iframe');
-    iframe.id = iframeId;
-    iframe.name = iframeId;
-    iframe.style.display = 'none';
-    document.body.appendChild(iframe);
-
-    // Build form that POSTs to Apps Script, targeting the hidden iframe
-    var form = document.createElement('form');
-    form.id = iframeId + '_form';
-    form.method = 'POST';
-    form.action = BLADE_PROXY_URL;
-    form.target = iframeId;
-    form.style.display = 'none';
-
-    function addField(name, value) {
-      var input = document.createElement('input');
-      input.type = 'hidden'; input.name = name; input.value = value;
-      form.appendChild(input);
-    }
-    addField('action',  'blade');
-    addField('image',   compressedBase64);
-    addField('keyways', keyways.join(','));
-    addField('vehicle', vehicleContext);
-    addField('origin',  window.location.origin);
-
-    document.body.appendChild(form);
-    form.submit();
+    var cb = '_ckcBlade_' + Date.now();
+    var timeout = setTimeout(function() { delete window[cb]; reject(new Error('Blade proxy timeout')); }, 25000);
+    window[cb] = function(data) {
+      clearTimeout(timeout); delete window[cb];
+      if (data.error) { reject(new Error(data.error)); return; }
+      if (data.matched && keyways.indexOf(data.keyway) === -1) {
+        resolve({ matched: false, unclear: true, reason: 'Keyway not in group' });
+      } else { resolve(data); }
+    };
+    var params = new URLSearchParams({
+      action:   'blade',
+      callback: cb,
+      fileId:   fileId,
+      keyways:  keyways.join(','),
+      vehicle:  vehicleContext
+    });
+    var s = document.createElement('script');
+    s.src = BLADE_PROXY_URL + '?' + params.toString();
+    s.onerror = function() { clearTimeout(timeout); delete window[cb]; reject(new Error('Proxy script failed')); };
+    s.onload = function() { try { document.head.removeChild(s); } catch(e){} };
+    document.head.appendChild(s);
   });
 }
 
 function compressImageBase64(base64DataUrl) {
-  // JSONP GET limit ~7,000 chars of base64 (~5KB image).
-  // Two-pass compression: first pass to 400px/0.6q, check size,
-  // second pass to 300px/0.5q if still too large.
+  // Compress to 600px max — enough for blade identification, manageable for Drive upload
   return new Promise(function(resolve) {
     var img = new Image();
     img.onload = function() {
@@ -1521,10 +1529,7 @@ function compressImageBase64(base64DataUrl) {
         c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
         return c.toDataURL('image/jpeg', q).split(',')[1];
       }
-      var b64 = compress(400, 0.6);
-      if (b64.length > 6500) b64 = compress(300, 0.5);
-      if (b64.length > 6500) b64 = compress(250, 0.4);
-      resolve(b64);
+      resolve(compress(600, 0.75));
     };
     img.onerror = function() { resolve(base64DataUrl.split(',')[1] || base64DataUrl); };
     img.src = base64DataUrl.startsWith('data:') ? base64DataUrl : 'data:image/jpeg;base64,' + base64DataUrl;
