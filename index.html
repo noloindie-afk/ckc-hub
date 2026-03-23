@@ -104,7 +104,7 @@
 .ckc-upload-sub { font-size: 0.72rem; color: #666; margin-top: 3px; }
 .ckc-blade-preview { display: none; position: relative; margin-bottom: 10px; border-radius: 8px; overflow: hidden; background: #1a1a1a; }
 .ckc-blade-preview img { width: 100%; max-height: 150px; object-fit: contain; display: block; padding: 6px; }
-.ckc-blade-reset { position: absolute; top: 5px; right: 5px; width: 24px; height: 24px; border-radius: 50%; background: rgba(0,0,0,0.55); border: none; color: #fff; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.ckc-blade-reset { position: absolute; top: 8px; right: 8px; width: auto; height: auto; border-radius: 20px; background: rgba(0,0,0,0.65); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-size: 0.75rem; font-weight: 600; padding: 5px 10px; cursor: pointer; display: flex; align-items: center; gap: 4px; letter-spacing: 0.3px; }
 .ckc-analyzing { display: none; align-items: center; gap: 9px; padding: 10px 13px; background: rgba(201,162,39,0.07); border: 1px solid rgba(201,162,39,0.18); border-radius: 8px; font-size: 0.83rem; color: var(--ckc-gold); margin-bottom: 9px; }
 .ckc-analyzing.active { display: flex; }
 .ckc-spinner { width: 14px; height: 14px; border: 2px solid rgba(201,162,39,0.25); border-top-color: var(--ckc-gold); border-radius: 50%; animation: ckc-spin 0.8s linear infinite; flex-shrink: 0; }
@@ -375,7 +375,7 @@ const SHOPIFY_DOMAIN       = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL          = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
 const PROGRAMMING_VARIANT  = '45908511228101';
 const INTERNAL_TOOL_URL    = 'https://carolinakeycutters.com/tools';
-const CKC_VERSION          = 'v8.49';
+const CKC_VERSION          = 'v8.51';
 
 var liveCatalog    = [];
 var isLive         = false;
@@ -781,7 +781,7 @@ function buildQualifierPanel() {
     '<div class="ckc-upload-label"><strong>Tap to upload a photo</strong> of your key blade</div>' +
     '<div class="ckc-upload-sub">Well-lit, blade flat and facing camera works best</div>' +
     '</div>' +
-    '<div class="ckc-blade-preview" id="ckc-qual-prev"><img id="ckc-qual-prev-img" src="" alt="Key blade"><button class="ckc-blade-reset" onclick="resetQualBlade()">\u2715</button></div>' +
+    '<div class="ckc-blade-preview" id="ckc-qual-prev"><img id="ckc-qual-prev-img" src="" alt="Key blade"><button class="ckc-blade-reset" onclick="resetQualBlade()" title="Remove photo and try again" aria-label="Remove photo">\u2715 Retake</button></div>' +
     '<div class="ckc-analyzing" id="ckc-qual-analyzing"><div class="ckc-spinner"></div><span>Analyzing your key blade...</span></div>' +
     '<div class="ckc-blade-msg" id="ckc-qual-blade-msg"></div>' +
     '<button class="ckc-resolve-btn" id="ckc-qual-blade-btn" disabled onclick="runQualBlade()">Identify My Blade \u2192</button>' +
@@ -1478,14 +1478,24 @@ async function analyzeBladeWithClaude(base64, keyways, vehicleContext) {
 }
 
 function compressImageBase64(base64DataUrl) {
+  // JSONP GET limit ~7,000 chars of base64 (~5KB image).
+  // Two-pass compression: first pass to 400px/0.6q, check size,
+  // second pass to 300px/0.5q if still too large.
   return new Promise(function(resolve) {
     var img = new Image();
     img.onload = function() {
-      var maxW = 800; var scale = img.width > maxW ? maxW / img.width : 1;
-      var canvas = document.createElement('canvas');
-      canvas.width = Math.round(img.width * scale); canvas.height = Math.round(img.height * scale);
-      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-      resolve(canvas.toDataURL('image/jpeg', 0.82).split(',')[1]);
+      function compress(w, q) {
+        var scale = img.width > w ? w / img.width : 1;
+        var c = document.createElement('canvas');
+        c.width = Math.round(img.width * scale);
+        c.height = Math.round(img.height * scale);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        return c.toDataURL('image/jpeg', q).split(',')[1];
+      }
+      var b64 = compress(400, 0.6);
+      if (b64.length > 6500) b64 = compress(300, 0.5);
+      if (b64.length > 6500) b64 = compress(250, 0.4);
+      resolve(b64);
     };
     img.onerror = function() { resolve(base64DataUrl.split(',')[1] || base64DataUrl); };
     img.src = base64DataUrl.startsWith('data:') ? base64DataUrl : 'data:image/jpeg;base64,' + base64DataUrl;
