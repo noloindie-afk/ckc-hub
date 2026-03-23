@@ -759,7 +759,9 @@ function _svgFlipKey() {
 }
 
 function _illustratedOpt(id, onclick, label, sublabel, svgHTML) {
-  return '<div id="' + id + '-opt" onclick="' + onclick + '" style="border:1px solid var(--ckc-border);border-radius:10px;padding:14px 10px;cursor:pointer;transition:all 0.15s;text-align:center;background:transparent;" onmouseover="this.style.borderColor='rgba(201,162,39,0.5)';this.style.background='rgba(201,162,39,0.04)'" onmouseout="if(!this.classList.contains('ckc-illopt-sel')){this.style.borderColor='var(--ckc-border)';this.style.background='transparent'}">' +
+  var hov = 'this.style.borderColor="rgba(201,162,39,0.5)";this.style.background="rgba(201,162,39,0.04)"';
+  var hout = 'if(!this.classList.contains("ckc-illopt-sel")){this.style.borderColor="var(--ckc-border)";this.style.background="transparent"}';
+  return '<div id="' + id + '-opt" onclick="' + onclick + '" onmouseover="' + hov + '" onmouseout="' + hout + '" style="border:1px solid var(--ckc-border);border-radius:10px;padding:14px 10px;cursor:pointer;transition:all 0.15s;text-align:center;background:transparent;">' +
     svgHTML +
     '<div style="font-size:0.88rem;font-weight:700;color:var(--ckc-text);margin-bottom:4px;">' + label + '</div>' +
     '<div style="font-size:0.75rem;color:var(--ckc-text-muted);line-height:1.4;">' + sublabel + '</div>' +
