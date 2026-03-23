@@ -375,7 +375,7 @@ const SHOPIFY_DOMAIN       = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL          = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
 const PROGRAMMING_VARIANT  = '45908511228101';
 const INTERNAL_TOOL_URL    = 'https://carolinakeycutters.com/tools';
-const CKC_VERSION          = 'v8.51';
+const CKC_VERSION          = 'v8.52';
 
 var liveCatalog    = [];
 var isLive         = false;
@@ -1435,45 +1435,73 @@ function _wireBladeDropzone() {
   });
 }
 
-// ══ BLADE ANALYSIS — via Apps Script proxy (v8.49 — JSONP GET, zero CORS) ══
-// POST fetch to Apps Script always triggers a CORS preflight (405) in iframe
-// contexts regardless of Content-Type. JSONP via script tag injection is
-// GET-only — no preflight ever, same pattern used by catalog sync.
-// Image data passed as URL-encoded query param (compressed to stay under limits).
+// ══ BLADE ANALYSIS — via hidden iframe form POST (v8.52) ══
+// JSONP GET hits 413 (URL too long) for image payloads.
+// fetch POST hits CORS preflight 405 in iframe context.
+// Solution: hidden iframe + dynamically constructed form POST.
+// No CORS, no preflight. Apps Script receives via e.postData.
+// Response returned via postMessage from the Apps Script page.
 async function analyzeBladeWithClaude(base64, keyways, vehicleContext) {
   var compressedBase64 = await compressImageBase64(base64);
   return new Promise(function(resolve, reject) {
-    var cb = '_ckcBlade_' + Date.now();
+    var iframeId = '_ckcBladeFrame_' + Date.now();
     var timeout = setTimeout(function() {
-      delete window[cb];
+      cleanup();
       reject(new Error('Blade proxy timeout'));
-    }, 20000);
-    window[cb] = function(data) {
-      clearTimeout(timeout);
-      delete window[cb];
-      if (data.error) { reject(new Error(data.error)); return; }
-      if (data.matched && keyways.indexOf(data.keyway) === -1) {
-        resolve({ matched: false, unclear: true, reason: 'Keyway not in group' });
-      } else {
-        resolve(data);
-      }
-    };
-    // Encode payload as query params — Apps Script reads via e.parameter in doGet
-    var params = new URLSearchParams({
-      action:   'blade',
-      callback: cb,
-      image:    compressedBase64,
-      keyways:  keyways.join(','),
-      vehicle:  vehicleContext
-    });
-    var s = document.createElement('script');
-    s.src = BLADE_PROXY_URL + '?' + params.toString();
-    s.onerror = function() {
-      clearTimeout(timeout); delete window[cb];
-      reject(new Error('Blade proxy script load failed'));
-    };
-    s.onload = function() { try { document.head.removeChild(s); } catch(e){} };
-    document.head.appendChild(s);
+    }, 25000);
+
+    function cleanup() {
+      window.removeEventListener('message', onMessage);
+      var fr = document.getElementById(iframeId);
+      if (fr) fr.remove();
+      var fm = document.getElementById(iframeId + '_form');
+      if (fm) fm.remove();
+    }
+
+    function onMessage(evt) {
+      // Accept messages from any Google Script domain
+      if (!evt.origin.includes('google') && !evt.origin.includes('googleusercontent')) return;
+      try {
+        var data = JSON.parse(evt.data);
+        if (data._ckcBlade) {
+          clearTimeout(timeout); cleanup();
+          if (data.error) { reject(new Error(data.error)); return; }
+          if (data.matched && keyways.indexOf(data.keyway) === -1) {
+            resolve({ matched: false, unclear: true, reason: 'Keyway not in group' });
+          } else { resolve(data); }
+        }
+      } catch(e) {}
+    }
+    window.addEventListener('message', onMessage);
+
+    // Create hidden iframe target
+    var iframe = document.createElement('iframe');
+    iframe.id = iframeId;
+    iframe.name = iframeId;
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+
+    // Build form that POSTs to Apps Script, targeting the hidden iframe
+    var form = document.createElement('form');
+    form.id = iframeId + '_form';
+    form.method = 'POST';
+    form.action = BLADE_PROXY_URL;
+    form.target = iframeId;
+    form.style.display = 'none';
+
+    function addField(name, value) {
+      var input = document.createElement('input');
+      input.type = 'hidden'; input.name = name; input.value = value;
+      form.appendChild(input);
+    }
+    addField('action',  'blade');
+    addField('image',   compressedBase64);
+    addField('keyways', keyways.join(','));
+    addField('vehicle', vehicleContext);
+    addField('origin',  window.location.origin);
+
+    document.body.appendChild(form);
+    form.submit();
   });
 }
 
