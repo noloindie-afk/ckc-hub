@@ -375,7 +375,7 @@ const SHOPIFY_DOMAIN       = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL          = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
 const PROGRAMMING_VARIANT  = '45908511228101';
 const INTERNAL_TOOL_URL    = 'https://carolinakeycutters.com/tools';
-const CKC_VERSION          = 'v8.47';
+const CKC_VERSION          = 'v8.48';
 
 var liveCatalog    = [];
 var isLive         = false;
@@ -1436,12 +1436,19 @@ function _wireBladeDropzone() {
 }
 
 // ══ BLADE ANALYSIS — via Apps Script proxy (v8.47 — no API key in HTML) ══
+// CORS note: Apps Script redirects POST requests to script.googleusercontent.com.
+// Sending Content-Type: application/json triggers a preflight OPTIONS request,
+// which Apps Script does not handle, causing CORS failure.
+// Fix: send as text/plain — no preflight fired, Apps Script receives body fine.
 async function analyzeBladeWithClaude(base64, keyways, vehicleContext) {
   var compressedBase64 = await compressImageBase64(base64);
+  var body = JSON.stringify({ imageBase64: compressedBase64, keyways: keyways, vehicleContext: vehicleContext });
   var response = await fetch(BLADE_PROXY_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ imageBase64: compressedBase64, keyways: keyways, vehicleContext: vehicleContext })
+    // text/plain avoids CORS preflight — Apps Script parses e.postData.contents regardless
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: body,
+    redirect: 'follow'
   });
   if (!response.ok) { throw new Error('Proxy ' + response.status); }
   var parsed = await response.json();
