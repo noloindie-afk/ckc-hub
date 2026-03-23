@@ -1,6 +1,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ═══ CKC KEY FINDER — EMBEDDABLE ═══ */
+/* ═══ CKC KEY FINDER v8.47 ═══ */
 .ckc-finder {
   --ckc-gold: #c9a227;
   --ckc-gold-light: #e0c458;
@@ -57,7 +57,7 @@
 .ckc-results-title { font-family: 'Outfit', sans-serif; font-size: 1.6rem; font-weight: 700; }
 .ckc-results-count { font-size: 1rem; color: var(--ckc-text-muted); }
 
-/* ═══ UPFRONT QUALIFIER PANEL ═══ */
+/* ═══ QUALIFIER PANEL ═══ */
 .ckc-qualifier-panel {
   background: linear-gradient(135deg, #1a1505, #1a1a0a);
   border: 2px solid var(--ckc-gold);
@@ -66,76 +66,69 @@
   margin-bottom: 32px;
   animation: ckc-fadeUp 0.3s ease;
 }
-.ckc-qualifier-panel h3 {
-  font-family: 'Outfit', sans-serif;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--ckc-gold);
-  margin-bottom: 6px;
-}
-.ckc-qualifier-subtitle {
-  font-size: 0.92rem;
-  color: var(--ckc-text-muted);
-  margin-bottom: 24px;
-}
-.ckc-qualifier-section {
-  margin-bottom: 24px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid var(--ckc-border);
-}
+.ckc-qualifier-panel h3 { font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 700; color: var(--ckc-gold); margin-bottom: 6px; }
+.ckc-qualifier-subtitle { font-size: 0.92rem; color: var(--ckc-text-muted); margin-bottom: 24px; }
+.ckc-qualifier-section { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--ckc-border); }
 .ckc-qualifier-section:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-.ckc-qualifier-section-label {
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  color: var(--ckc-gold);
-  margin-bottom: 10px;
-}
-.ckc-qualifier-confirm-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid var(--ckc-border);
-}
-.ckc-qualifier-status {
-  font-size: 0.85rem;
-  color: var(--ckc-text-muted);
-  flex: 1;
-}
+.ckc-qualifier-section-label { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--ckc-gold); margin-bottom: 10px; }
+.ckc-qualifier-confirm-row { display: flex; align-items: center; gap: 10px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--ckc-border); }
+.ckc-qualifier-status { font-size: 0.85rem; color: var(--ckc-text-muted); flex: 1; }
 .ckc-qualifier-status.ready { color: var(--ckc-success); }
-.ckc-show-results-btn {
-  padding: 14px 36px;
-  background: var(--ckc-gold);
-  color: #111;
-  border: none;
-  border-radius: 10px;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 1.05rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s;
-}
+.ckc-show-results-btn { padding: 14px 36px; background: var(--ckc-gold); color: #111; border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 1.05rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
 .ckc-show-results-btn:hover { background: var(--ckc-primary-light); transform: translateY(-1px); }
 .ckc-show-results-btn:disabled { background: #333; color: #666; cursor: not-allowed; transform: none; }
 
-/* Blade section within qualifier panel */
-.ckc-qual-blade-confirmed {
-  display: none;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  background: rgba(74,222,128,0.07);
-  border: 1px solid rgba(74,222,128,0.2);
-  border-radius: 8px;
-  font-size: 0.88rem;
-  color: var(--ckc-success);
-  margin-top: 10px;
-}
-.ckc-qual-blade-confirmed.show { display: flex; }
+/* Radio options */
+.ckc-radio-opt { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border: 1px solid var(--ckc-border); border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: all 0.15s; }
+.ckc-radio-opt:hover { border-color: rgba(201,162,39,0.4); background: rgba(201,162,39,0.03); }
+.ckc-radio-opt.selected { border-color: var(--ckc-gold); background: rgba(201,162,39,0.07); }
+.ckc-radio-opt.danger { border-color: #f87171; }
+.ckc-radio-opt.danger.selected { border-color: #f87171; background: rgba(248,113,113,0.07); }
+.ckc-radio-circle { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--ckc-border); flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.ckc-radio-opt.selected .ckc-radio-circle { border-color: var(--ckc-gold); background: var(--ckc-gold); }
+.ckc-radio-opt.danger.selected .ckc-radio-circle { border-color: #f87171; background: #f87171; }
+.ckc-radio-dot { width: 6px; height: 6px; border-radius: 50%; background: #111; display: none; }
+.ckc-radio-opt.selected .ckc-radio-dot { display: block; }
+.ckc-radio-label strong { color: var(--ckc-text); font-size: 0.92rem; display: block; }
+.ckc-radio-label span { color: var(--ckc-text-muted); font-size: 0.8rem; margin-top: 1px; display: block; }
 
+/* Blade upload */
+.ckc-qual-blade-confirmed { display: none; align-items: center; gap: 10px; padding: 10px 14px; background: rgba(74,222,128,0.07); border: 1px solid rgba(74,222,128,0.2); border-radius: 8px; font-size: 0.88rem; color: var(--ckc-success); margin-top: 10px; }
+.ckc-qual-blade-confirmed.show { display: flex; }
+.ckc-upload-area { border: 1.5px dashed rgba(201,162,39,0.3); border-radius: 8px; padding: 20px 16px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; margin-bottom: 10px; }
+.ckc-upload-area:hover { border-color: rgba(201,162,39,0.6); background: rgba(201,162,39,0.03); }
+.ckc-upload-area.dragover { border-color: var(--ckc-gold); background: rgba(201,162,39,0.06); }
+.ckc-upload-file-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.ckc-upload-label { font-size: 0.85rem; color: var(--ckc-text-muted); }
+.ckc-upload-label strong { color: var(--ckc-text); }
+.ckc-upload-sub { font-size: 0.72rem; color: #666; margin-top: 3px; }
+.ckc-blade-preview { display: none; position: relative; margin-bottom: 10px; border-radius: 8px; overflow: hidden; background: #1a1a1a; }
+.ckc-blade-preview img { width: 100%; max-height: 150px; object-fit: contain; display: block; padding: 6px; }
+.ckc-blade-reset { position: absolute; top: 5px; right: 5px; width: 24px; height: 24px; border-radius: 50%; background: rgba(0,0,0,0.55); border: none; color: #fff; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.ckc-analyzing { display: none; align-items: center; gap: 9px; padding: 10px 13px; background: rgba(201,162,39,0.07); border: 1px solid rgba(201,162,39,0.18); border-radius: 8px; font-size: 0.83rem; color: var(--ckc-gold); margin-bottom: 9px; }
+.ckc-analyzing.active { display: flex; }
+.ckc-spinner { width: 14px; height: 14px; border: 2px solid rgba(201,162,39,0.25); border-top-color: var(--ckc-gold); border-radius: 50%; animation: ckc-spin 0.8s linear infinite; flex-shrink: 0; }
+@keyframes ckc-spin { to { transform: rotate(360deg); } }
+.ckc-blade-msg { display: none; padding: 10px 13px; border-radius: 8px; font-size: 0.83rem; line-height: 1.5; margin-bottom: 9px; }
+.ckc-blade-msg.success { background: rgba(74,222,128,0.07); border: 1px solid rgba(74,222,128,0.2); color: var(--ckc-success); display: block; }
+.ckc-blade-msg.warn { background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.2); color: #f59e0b; display: block; }
+.ckc-blade-msg.error { background: rgba(248,113,113,0.07); border: 1px solid rgba(248,113,113,0.2); color: #f87171; display: block; }
+.ckc-resolve-btn { width: 100%; padding: 11px; background: var(--ckc-gold); color: #111; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.92rem; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-top: 4px; }
+.ckc-resolve-btn:hover { background: var(--ckc-primary-light); }
+.ckc-resolve-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+
+/* FCC / buttons */
+.ckc-fcc-select { width: 100%; padding: 10px 14px; border: 1px solid var(--ckc-border); border-radius: 8px; background: #222; color: var(--ckc-text); font-family: 'DM Sans', sans-serif; font-size: 0.95rem; margin-bottom: 8px; appearance: none; cursor: pointer; }
+.ckc-fcc-select:focus { outline: none; border-color: var(--ckc-gold); }
+.ckc-fcc-fallback { font-size: 0.78rem; color: var(--ckc-text-muted); margin: 6px 0 5px; }
+.ckc-fcc-input { width: 100%; padding: 10px 14px; border: 1px solid var(--ckc-border); border-radius: 8px; background: #222; color: var(--ckc-text); font-family: monospace, 'DM Sans', sans-serif; font-size: 0.95rem; letter-spacing: 1px; }
+.ckc-fcc-input:focus { outline: none; border-color: var(--ckc-gold); }
+.ckc-btn-count-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+.ckc-btn-count-opt { padding: 9px 14px; border: 1px solid var(--ckc-border); border-radius: 8px; background: #222; color: var(--ckc-text); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; min-width: 60px; text-align: center; }
+.ckc-btn-count-opt:hover { border-color: var(--ckc-gold); }
+.ckc-btn-count-opt.selected { border-color: var(--ckc-gold); background: rgba(201,162,39,0.12); color: var(--ckc-gold); }
+
+/* Key cards */
 .ckc-key-card { background: var(--ckc-card); border-radius: var(--ckc-radius); box-shadow: var(--ckc-shadow); border: 1px solid var(--ckc-border); padding: 36px; margin-bottom: 24px; display: grid; grid-template-columns: 180px 1fr auto; gap: 36px; align-items: start; transition: all 0.35s ease; }
 .ckc-key-card:hover { box-shadow: var(--ckc-shadow-lg); border-color: var(--ckc-gold); transform: translateY(-2px); }
 .ckc-key-card.ckc-resolved { border-color: var(--ckc-success); background: linear-gradient(135deg, #0d1a0d, #111611); }
@@ -160,10 +153,10 @@
 .ckc-key-price { font-family: 'Outfit', sans-serif; font-size: 2.4rem; font-weight: 800; color: #fff; margin-bottom: 2px; }
 .ckc-key-price-note { font-size: 0.92rem; color: var(--ckc-text-muted); margin-bottom: 14px; }
 
-.ckc-stock-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 0.95rem; font-weight: 600; margin-bottom: 14px; }
+.ckc-stock-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 0.88rem; font-weight: 600; margin-bottom: 14px; line-height: 1.4; }
 .ckc-stock-badge.in-stock { color: var(--ckc-success); }
 .ckc-stock-badge.ships { color: var(--ckc-gold); }
-.ckc-stock-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; background: currentColor; }
+.ckc-stock-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; background: currentColor; flex-shrink: 0; margin-top: 3px; }
 
 .ckc-add-btn { display: block; width: 100%; padding: 14px 24px; background: var(--ckc-gold); color: #111; border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 1.08rem; font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration: none; text-align: center; }
 .ckc-add-btn:hover { background: var(--ckc-primary-light); transform: translateY(-1px); }
@@ -173,6 +166,22 @@
 .ckc-resolved-confirm { font-size: 0.82rem; color: var(--ckc-success); margin-top: 8px; text-align: right; display: none; }
 .ckc-resolved-confirm.show { display: block; }
 
+/* Programming toggle */
+.ckc-prog-toggle { margin-top: 12px; border: 1px solid var(--ckc-border); border-radius: 10px; overflow: hidden; }
+.ckc-prog-toggle-opt { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; cursor: pointer; transition: background 0.15s; border-bottom: 1px solid var(--ckc-border); }
+.ckc-prog-toggle-opt:last-child { border-bottom: none; }
+.ckc-prog-toggle-opt:hover { background: rgba(255,255,255,0.03); }
+.ckc-prog-toggle-opt.selected { background: rgba(201,162,39,0.07); }
+.ckc-prog-radio { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--ckc-border); flex-shrink: 0; margin-top: 2px; transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
+.ckc-prog-toggle-opt.selected .ckc-prog-radio { border-color: var(--ckc-gold); background: var(--ckc-gold); }
+.ckc-prog-radio-dot { width: 6px; height: 6px; border-radius: 50%; background: #111; display: none; }
+.ckc-prog-toggle-opt.selected .ckc-prog-radio-dot { display: block; }
+.ckc-prog-label { font-size: 0.88rem; line-height: 1.4; }
+.ckc-prog-label strong { color: var(--ckc-text); font-size: 0.92rem; }
+.ckc-prog-label span { color: var(--ckc-text-muted); display: block; margin-top: 1px; font-size: 0.8rem; }
+.ckc-prog-price-tag { margin-left: auto; font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 0.95rem; color: var(--ckc-gold); white-space: nowrap; padding-top: 2px; }
+
+/* Programming card */
 .ckc-programming-card { background: linear-gradient(135deg, #1f1a0e, #231e10); border: 2px solid var(--ckc-gold); border-radius: var(--ckc-radius); padding: 36px; margin-bottom: 32px; display: flex; align-items: center; gap: 28px; }
 @media (max-width: 700px) { .ckc-programming-card { flex-direction: column; text-align: center; } }
 .ckc-programming-icon { width: 72px; height: 72px; background: var(--ckc-gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -182,15 +191,34 @@
 .ckc-programming-info p { font-size: 1.05rem; color: #b8a060; }
 .ckc-programming-price { font-family: 'Outfit', sans-serif; font-size: 2.2rem; font-weight: 800; color: var(--ckc-gold); text-align: right; line-height: 1.2; }
 
-.ckc-disclaimer { background: var(--ckc-card); border-radius: var(--ckc-radius); border: 1px solid var(--ckc-border); padding: 24px 32px; margin-top: 32px; font-size: 0.95rem; color: var(--ckc-text-muted); line-height: 1.6; }
-.ckc-disclaimer strong { color: var(--ckc-text); }
+/* VIN Modal */
+.ckc-vin-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px; animation: ckc-fadeUp 0.2s ease; }
+.ckc-vin-modal { background: #ffffff; border: 3px solid var(--ckc-gold); border-radius: 16px; padding: 32px 28px; width: 100%; max-width: 440px; box-shadow: 0 24px 80px rgba(0,0,0,0.7); }
+.ckc-vin-modal h3 { font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 800; color: #111; margin-bottom: 8px; }
+.ckc-vin-modal p { font-size: 0.9rem; color: #444; margin-bottom: 20px; line-height: 1.6; }
+.ckc-vin-modal-field { position: relative; margin-bottom: 10px; }
+.ckc-vin-modal-input { width: 100%; padding: 16px 64px 16px 18px; background: #f5f5f5; border: 2px solid #ccc; border-radius: 10px; color: #111; font-family: monospace; font-size: 1.15rem; letter-spacing: 2.5px; text-transform: uppercase; outline: none; transition: border-color 0.2s; }
+.ckc-vin-modal-input::placeholder { color: #aaa; letter-spacing: 1px; font-size: 0.95rem; }
+.ckc-vin-modal-input:focus { border-color: var(--ckc-gold); background: #fff; }
+.ckc-vin-modal-input.valid { border-color: #16a34a; background: #f0fdf4; }
+.ckc-vin-modal-input.invalid { border-color: #dc2626; background: #fef2f2; }
+.ckc-vin-counter { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 0.82rem; font-weight: 700; color: #999; font-family: monospace; }
+.ckc-vin-counter.done { color: #16a34a; }
+.ckc-vin-counter.error { color: #dc2626; }
+.ckc-vin-error { display: none; margin-bottom: 12px; padding: 10px 12px; background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; font-size: 0.82rem; color: #dc2626; line-height: 1.5; }
+.ckc-vin-hint { font-size: 0.78rem; color: #666; margin-bottom: 20px; line-height: 1.6; padding: 10px 12px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; }
+.ckc-vin-hint strong { color: #111; }
+.ckc-vin-modal-btns { display: flex; gap: 10px; }
+.ckc-vin-call-btn { flex: 1; padding: 15px; background: var(--ckc-gold); color: #111; border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+.ckc-vin-call-btn:hover { background: var(--ckc-primary-light); transform: translateY(-1px); }
+.ckc-vin-call-btn:disabled { background: #e5e5e5; color: #aaa; cursor: not-allowed; transform: none; }
+.ckc-vin-cancel-btn { padding: 15px 20px; background: transparent; border: 1.5px solid #ddd; border-radius: 10px; color: #666; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; }
+.ckc-vin-cancel-btn:hover { border-color: #999; color: #333; }
+.ckc-tool-url { margin-top: 10px; padding: 10px 14px; background: rgba(201,162,39,0.07); border: 1px solid rgba(201,162,39,0.2); border-radius: 8px; font-size: 0.75rem; color: var(--ckc-gold-light); word-break: break-all; line-height: 1.6; display: none; }
+.ckc-tool-url.show { display: block; }
+.ckc-tool-url-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--ckc-gold); margin-bottom: 4px; display: block; }
 
-.ckc-no-results { text-align: center; padding: 60px 32px; background: var(--ckc-card); border-radius: var(--ckc-radius); border: 1px solid var(--ckc-border); }
-.ckc-no-results h3 { font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 700; margin-bottom: 10px; }
-.ckc-no-results p { color: var(--ckc-text-muted); font-size: 1.05rem; margin-bottom: 20px; }
-.ckc-call-btn { display: inline-flex; align-items: center; gap: 10px; padding: 14px 36px; background: var(--ckc-gold); color: #111; text-decoration: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 1.08rem; font-weight: 600; transition: all 0.2s; }
-.ckc-call-btn:hover { background: var(--ckc-primary-light); transform: translateY(-1px); }
-
+/* Checkout */
 .ckc-checkout-panel { background: var(--ckc-card); border: 2px solid var(--ckc-gold); border-radius: var(--ckc-radius); padding: 36px; margin-bottom: 24px; animation: ckc-fadeUp 0.3s ease; }
 @keyframes ckc-fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 .ckc-checkout-panel h3 { font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 700; color: var(--ckc-gold); margin-bottom: 20px; }
@@ -207,13 +235,13 @@
 .ckc-back-btn { display: inline-block; margin-top: 12px; background: none; border: 1px solid var(--ckc-border); color: var(--ckc-text-muted); padding: 10px 24px; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
 .ckc-back-btn:hover { border-color: var(--ckc-text-muted); color: var(--ckc-text); }
 
+/* Post-purchase */
 .ckc-post-purchase { text-align: center; padding: 48px 32px; animation: ckc-fadeUp 0.4s ease; }
 .ckc-post-purchase-icon { width: 80px; height: 80px; border-radius: 50%; background: rgba(74,222,128,0.1); border: 2px solid var(--ckc-success); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto 20px; }
 .ckc-post-purchase h3 { font-family: 'Outfit', sans-serif; font-size: 1.6rem; font-weight: 700; color: var(--ckc-success); margin-bottom: 10px; }
 .ckc-post-purchase p { font-size: 1.05rem; color: var(--ckc-text-muted); line-height: 1.6; margin-bottom: 24px; }
 .ckc-new-search-btn { display: inline-block; margin-top: 16px; background: none; border: 1px solid var(--ckc-border); color: var(--ckc-text-muted); padding: 10px 28px; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
 .ckc-new-search-btn:hover { border-color: var(--ckc-gold); color: var(--ckc-gold); }
-
 .ckc-email-neon { margin: 28px auto; max-width: 480px; padding: 4px; border-radius: 16px; background: linear-gradient(135deg, var(--ckc-gold), #e0c458, var(--ckc-gold)); animation: ckc-neon-pulse 2s ease-in-out infinite; box-shadow: 0 0 20px rgba(201,162,39,0.4), 0 0 60px rgba(201,162,39,0.15); }
 @keyframes ckc-neon-pulse { 0%, 100% { box-shadow: 0 0 20px rgba(201,162,39,0.4), 0 0 60px rgba(201,162,39,0.15); } 50% { box-shadow: 0 0 30px rgba(201,162,39,0.6), 0 0 80px rgba(201,162,39,0.25), 0 0 120px rgba(201,162,39,0.1); } }
 .ckc-email-neon-inner { background: #1a1a1a; border-radius: 13px; padding: 36px 28px; text-align: center; }
@@ -224,178 +252,13 @@
 .ckc-email-neon-arrow { font-size: 0.95rem; color: var(--ckc-gold-light); font-weight: 600; animation: ckc-arrow-pulse 1.5s ease-in-out infinite; }
 @keyframes ckc-arrow-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-/* Upfront qualifier - FCC */
-.ckc-fcc-select { width: 100%; padding: 10px 14px; border: 1px solid var(--ckc-border); border-radius: 8px; background: #222; color: var(--ckc-text); font-family: 'DM Sans', sans-serif; font-size: 0.95rem; margin-bottom: 8px; appearance: none; cursor: pointer; }
-.ckc-fcc-select:focus { outline: none; border-color: var(--ckc-gold); }
-.ckc-fcc-fallback { font-size: 0.78rem; color: var(--ckc-text-muted); margin: 6px 0 5px; }
-.ckc-fcc-input { width: 100%; padding: 10px 14px; border: 1px solid var(--ckc-border); border-radius: 8px; background: #222; color: var(--ckc-text); font-family: monospace, 'DM Sans', sans-serif; font-size: 0.95rem; letter-spacing: 1px; }
-.ckc-fcc-input:focus { outline: none; border-color: var(--ckc-gold); }
-
-/* Upfront qualifier - button count */
-.ckc-btn-count-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
-.ckc-btn-count-opt { padding: 9px 14px; border: 1px solid var(--ckc-border); border-radius: 8px; background: #222; color: var(--ckc-text); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; min-width: 60px; text-align: center; }
-.ckc-btn-count-opt:hover { border-color: var(--ckc-gold); }
-.ckc-btn-count-opt.selected { border-color: var(--ckc-gold); background: rgba(201,162,39,0.12); color: var(--ckc-gold); }
-
-/* Upfront qualifier - blade upload */
-.ckc-upload-area { border: 1.5px dashed rgba(201,162,39,0.3); border-radius: 8px; padding: 20px 16px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; margin-bottom: 10px; }
-.ckc-upload-area:hover { border-color: rgba(201,162,39,0.6); background: rgba(201,162,39,0.03); }
-.ckc-upload-area.dragover { border-color: var(--ckc-gold); background: rgba(201,162,39,0.06); }
-.ckc-upload-file-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-.ckc-upload-label { font-size: 0.85rem; color: var(--ckc-text-muted); }
-.ckc-upload-label strong { color: var(--ckc-text); }
-.ckc-upload-sub { font-size: 0.72rem; color: #666; margin-top: 3px; }
-.ckc-blade-preview { display: none; position: relative; margin-bottom: 10px; border-radius: 8px; overflow: hidden; background: #1a1a1a; }
-.ckc-blade-preview img { width: 100%; max-height: 150px; object-fit: contain; display: block; padding: 6px; }
-.ckc-blade-reset { position: absolute; top: 5px; right: 5px; width: 24px; height: 24px; border-radius: 50%; background: rgba(0,0,0,0.55); border: none; color: #fff; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-.ckc-analyzing { display: none; align-items: center; gap: 9px; padding: 10px 13px; background: rgba(201,162,39,0.07); border: 1px solid rgba(201,162,39,0.18); border-radius: 8px; font-size: 0.83rem; color: var(--ckc-gold); margin-bottom: 9px; }
-.ckc-analyzing.active { display: flex; }
-.ckc-spinner { width: 14px; height: 14px; border: 2px solid rgba(201,162,39,0.25); border-top-color: var(--ckc-gold); border-radius: 50%; animation: ckc-spin 0.8s linear infinite; flex-shrink: 0; }
-@keyframes ckc-spin { to { transform: rotate(360deg); } }
-.ckc-blade-msg { display: none; padding: 10px 13px; border-radius: 8px; font-size: 0.83rem; line-height: 1.5; margin-bottom: 9px; }
-.ckc-blade-msg.success { background: rgba(74,222,128,0.07); border: 1px solid rgba(74,222,128,0.2); color: var(--ckc-success); display: block; }
-.ckc-blade-msg.warn { background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.2); color: #f59e0b; display: block; }
-.ckc-blade-msg.error { background: rgba(248,113,113,0.07); border: 1px solid rgba(248,113,113,0.2); color: #f87171; display: block; }
-.ckc-resolve-btn { width: 100%; padding: 11px; background: var(--ckc-gold); color: #111; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.92rem; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-top: 4px; }
-.ckc-resolve-btn:hover { background: var(--ckc-primary-light); }
-.ckc-resolve-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
-/* ═══ PROGRAMMING TOGGLE (v8.40) ═══ */
-.ckc-prog-toggle {
-  margin-top: 12px;
-  border: 1px solid var(--ckc-border);
-  border-radius: 10px;
-  overflow: hidden;
-}
-.ckc-prog-toggle-opt {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px 14px;
-  cursor: pointer;
-  transition: background 0.15s;
-  border-bottom: 1px solid var(--ckc-border);
-}
-.ckc-prog-toggle-opt:last-child { border-bottom: none; }
-.ckc-prog-toggle-opt:hover { background: rgba(255,255,255,0.03); }
-.ckc-prog-toggle-opt.selected { background: rgba(201,162,39,0.07); }
-.ckc-prog-radio {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 2px solid var(--ckc-border);
-  flex-shrink: 0;
-  margin-top: 2px;
-  transition: all 0.15s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.ckc-prog-toggle-opt.selected .ckc-prog-radio {
-  border-color: var(--ckc-gold);
-  background: var(--ckc-gold);
-}
-.ckc-prog-radio-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #111;
-  display: none;
-}
-.ckc-prog-toggle-opt.selected .ckc-prog-radio-dot { display: block; }
-.ckc-prog-label { font-size: 0.88rem; line-height: 1.4; }
-.ckc-prog-label strong { color: var(--ckc-text); font-size: 0.92rem; }
-.ckc-prog-label span { color: var(--ckc-text-muted); display: block; margin-top: 1px; font-size: 0.8rem; }
-.ckc-prog-price-tag {
-  margin-left: auto;
-  font-family: 'Outfit', sans-serif;
-  font-weight: 700;
-  font-size: 0.95rem;
-  color: var(--ckc-gold);
-  white-space: nowrap;
-  padding-top: 2px;
-}
-/* ═══ VIN MODAL (v8.44 RULE 13) ═══ */
-.ckc-vin-modal-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.85);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 9999; padding: 20px; animation: ckc-fadeUp 0.2s ease;
-}
-.ckc-vin-modal {
-  background: #ffffff; border: 3px solid var(--ckc-gold);
-  border-radius: 16px; padding: 32px 28px; width: 100%;
-  max-width: 440px; box-shadow: 0 24px 80px rgba(0,0,0,0.7);
-}
-.ckc-vin-modal h3 {
-  font-family: 'Outfit', sans-serif; font-size: 1.25rem;
-  font-weight: 800; color: #111; margin-bottom: 8px;
-}
-.ckc-vin-modal p {
-  font-size: 0.9rem; color: #444;
-  margin-bottom: 20px; line-height: 1.6;
-}
-.ckc-vin-modal-field { position: relative; margin-bottom: 10px; }
-.ckc-vin-modal-input {
-  width: 100%; padding: 16px 64px 16px 18px;
-  background: #f5f5f5; border: 2px solid #ccc;
-  border-radius: 10px; color: #111;
-  font-family: monospace; font-size: 1.15rem;
-  letter-spacing: 2.5px; text-transform: uppercase;
-  outline: none; transition: border-color 0.2s;
-}
-.ckc-vin-modal-input::placeholder { color: #aaa; letter-spacing: 1px; font-size: 0.95rem; }
-.ckc-vin-modal-input:focus { border-color: var(--ckc-gold); background: #fff; }
-.ckc-vin-modal-input.valid { border-color: #16a34a; background: #f0fdf4; }
-.ckc-vin-modal-input.invalid { border-color: #dc2626; background: #fef2f2; }
-.ckc-vin-counter.error { color: #dc2626; }
-.ckc-vin-error {
-  display: none; margin-bottom: 12px; padding: 10px 12px;
-  background: #fef2f2; border: 1px solid #fca5a5;
-  border-radius: 8px; font-size: 0.82rem; color: #dc2626; line-height: 1.5;
-}
-.ckc-vin-counter {
-  position: absolute; right: 14px; top: 50%;
-  transform: translateY(-50%);
-  font-size: 0.82rem; font-weight: 700;
-  color: #999; font-family: monospace;
-}
-.ckc-vin-counter.done { color: #16a34a; }
-.ckc-vin-hint {
-  font-size: 0.78rem; color: #666;
-  margin-bottom: 20px; line-height: 1.6;
-  padding: 10px 12px; background: #fffbeb;
-  border: 1px solid #fde68a; border-radius: 8px;
-}
-.ckc-vin-hint strong { color: #111; }
-.ckc-vin-modal-btns { display: flex; gap: 10px; }
-.ckc-vin-call-btn {
-  flex: 1; padding: 15px; background: var(--ckc-gold); color: #111;
-  border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif;
-  font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
-}
-.ckc-vin-call-btn:hover { background: var(--ckc-primary-light); transform: translateY(-1px); }
-.ckc-vin-call-btn:disabled { background: #e5e5e5; color: #aaa; cursor: not-allowed; transform: none; }
-.ckc-vin-cancel-btn {
-  padding: 15px 20px; background: transparent;
-  border: 1.5px solid #ddd; border-radius: 10px;
-  color: #666; font-family: 'DM Sans', sans-serif;
-  font-size: 0.95rem; cursor: pointer; transition: all 0.2s;
-}
-.ckc-vin-cancel-btn:hover { border-color: #999; color: #333; }
-/* Tool URL display on CFQ card after VIN submitted */
-.ckc-tool-url {
-  margin-top: 10px; padding: 10px 14px;
-  background: rgba(201,162,39,0.07);
-  border: 1px solid rgba(201,162,39,0.2);
-  border-radius: 8px; font-size: 0.75rem;
-  color: var(--ckc-gold-light); word-break: break-all;
-  line-height: 1.6; display: none;
-}
-.ckc-tool-url.show { display: block; }
-.ckc-tool-url-label {
-  font-size: 0.68rem; font-weight: 700; letter-spacing: 1px;
-  text-transform: uppercase; color: var(--ckc-gold);
-  margin-bottom: 4px; display: block;
-}
+.ckc-disclaimer { background: var(--ckc-card); border-radius: var(--ckc-radius); border: 1px solid var(--ckc-border); padding: 24px 32px; margin-top: 32px; font-size: 0.95rem; color: var(--ckc-text-muted); line-height: 1.6; }
+.ckc-disclaimer strong { color: var(--ckc-text); }
+.ckc-no-results { text-align: center; padding: 60px 32px; background: var(--ckc-card); border-radius: var(--ckc-radius); border: 1px solid var(--ckc-border); }
+.ckc-no-results h3 { font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 700; margin-bottom: 10px; }
+.ckc-no-results p { color: var(--ckc-text-muted); font-size: 1.05rem; margin-bottom: 20px; }
+.ckc-call-btn { display: inline-flex; align-items: center; gap: 10px; padding: 14px 36px; background: var(--ckc-gold); color: #111; text-decoration: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 1.08rem; font-weight: 600; transition: all 0.2s; }
+.ckc-call-btn:hover { background: var(--ckc-primary-light); transform: translateY(-1px); }
 </style>
 
 <!-- ═══ KEY FINDER WIDGET ═══ -->
@@ -408,12 +271,12 @@
         Mobile Service
       </div>
       <div class="ckc-badge">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        Same-Day Available
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+        Professional Programming
       </div>
       <div class="ckc-badge">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M9 12l2 2 4-4"/></svg>
-        Live Inventory
+        Licensed &amp; Certified
       </div>
     </div>
     <div class="ckc-sync-status" id="ckc-sync-status">
@@ -444,196 +307,125 @@
   <div class="ckc-results" id="ckc-results"></div>
 
   <div class="ckc-disclaimer">
-    <strong>Pricing &amp; Service:</strong> All prices shown are for the key only. A $65 service call fee covers professional mobile key programming &amp; cutting — we come to you. The $65 rate applies to add-a-key service (you must have a working key). All keys lost (AKL), EEPROM, or module work quoted separately. Inventory is synced live — "In Stock" means same-day service available. "Available for Order" items typically arrive within 2-3 business days. Service available in the Triad, NC area.
+    <strong>Pricing &amp; Service:</strong> All prices shown are for the key only. A $65 service call fee covers professional mobile key programming &amp; cutting — we come to you. The $65 rate applies to add-a-key service (you must have a working key). All keys lost (AKL), EEPROM, or module work quoted separately. Service available in the Triad, NC area.
   </div>
 </div>
 
 <script>
 // ════════════════════════════════════════
-// CKC KEY FINDER v8.46
+// CKC KEY FINDER v8.47
 // ════════════════════════════════════════
-// BUSINESS RULES — MUST SURVIVE EVERY VERSION UPDATE
-// These rules are the source of truth. Any code change must
-// preserve all rules below. Check each rule before releasing.
+// BUSINESS RULES — SOURCE OF TRUTH
 //
-// RULE 1: Remote Head Key — ALWAYS requires blade identification.
-//         Blade type (e.g. H128 vs HU101) is ALWAYS ambiguous
-//         without physical verification. Asked upfront once for
-//         all RHK cards — matching card unlocked, others greyed.
+// RULE 1:  Remote Head Key — ALWAYS requires blade identification.
+//          Blade type is ALWAYS ambiguous. Asked upfront — matching
+//          card unlocked, others greyed.
 //
-// RULE 2: Transponder Key — ALWAYS requires blade identification.
-//         Keyway is ALWAYS required to cut the key correctly.
-//         Asked upfront once — matching card unlocked, others greyed.
+// RULE 2:  Transponder Key — ALWAYS requires blade identification.
+//          Keyway ALWAYS required to cut correctly.
 //
-// RULE 3: Remote (Keyless Entry) — show FCC qualifier upfront if
-//         FCC conflict exists; show button count qualifier upfront
-//         if button count conflict exists; show both if both.
+// RULE 3:  Remote (Keyless Entry) — FCC qualifier upfront if FCC
+//          conflict; button count upfront if conflict; both if both.
 //
-// RULE 4: Smart Key / FOBIK / Premium Smart Key — always Call
-//         for Quote. Never show Buy Now. Smart Keys with emergency
-//         blades participate in upfront blade qualifier — blade is
-//         identified, then card routes to CFQ (not Buy Now).
+// RULE 4:  Smart Key / FOBIK / Premium Smart Key — always CFQ.
+//          Never Buy Now. Emergency blade path identified via Q3,
+//          blade photo taken, card still routes to CFQ.
 //
-// RULE 5: inStock = Vendor field === 'CKC' only. Never derive
-//         from status field.
+// RULE 5:  inStock = Vendor field === 'CKC' only.
 //
-// RULE 6: buttonCount read directly from catalog Buttons column.
-//         Never parsed from title string.
-//         N/A parses to NaN, falls through to 0 via || 0.
+// RULE 6:  buttonCount from catalog Buttons column directly.
+//          N/A → 0.
 //
-// RULE 7: Excluded from results entirely:
-//         - Type = KEY BLADE
-//         - Title contains 'universal'
-//         - Title contains 'pack of'
-//         - SKU starts with AUT-
-//         - SKU starts with IKEY
-//         - SKU ends with AM10
+// RULE 7:  Excluded: KEY BLADE, 'universal', 'pack of', AUT-,
+//          IKEY prefix, AM10 suffix.
 //
-// RULE 8: eepromRisk / Call for Quote triggered by key Type only:
-//         Smart Key, Smart Key (FOBIK), Premium Smart Key, FOBIK.
-//         Never triggered by conflict flags or chip type.
+// RULE 8:  CFQ triggered by Type only — Smart Key, Smart Key
+//          (FOBIK), Premium Smart Key, FOBIK. Never by conflicts.
 //
-// RULE 9: All qualifying questions (blade, FCC, button count) are
-//         asked ONCE upfront in a single panel before results
-//         render. Answers cascade across all matching cards.
-//         No per-card resolvers — cards render already resolved.
+// RULE 9:  All qualifiers asked ONCE upfront. Answers cascade
+//          across all cards. No per-card resolvers.
 //
-// RULE 10: Blade resolver — on match, the matching card unlocks
-//          Buy Now (or CFQ for Smart Keys) and all other cards
-//          in the blade group are greyed out. On no-match after
-//          2 photo attempts, all cards in group fall back to CFQ.
+// RULE 10: Blade resolver — match unlocks Buy Now for that card,
+//          others greyed. 2 failed attempts → all cards CFQ.
 //
-// RULE 11: Every unlocked Buy Now card shows a programming toggle
-//          defaulting to "Includes programming & key cutting" ($65
-//          added to price). Customer may switch to "Key only — I'll
-//          handle programming myself" which removes the $65 and
-//          appends a note to the Shopify cart: "Key only — customer
-//          handling programming". CFQ cards are never affected.
+// RULE 11: Every unlocked Buy Now card has programming toggle.
+//          Default: includes programming ($65). Key only removes
+//          $65 and appends cart note.
 //
-// RULE 12: Upfront qualifier panel always opens with a working key
-//          gate question — shown first, before all other questions.
-//          "I have a working key" → show Question 2.
-//          "I don't have a working key" → all cards CFQ.
-//          Mutually exclusive radio — one must be selected first.
-//          Gate ONLY fires when _bladeGroup or _fccGroup has cards.
-//          Blade type hint (keyway codes) never shown to customer.
+// RULE 12: Working key gate fires first, before all other questions.
+//          Only fires when _bladeGroup or _fccGroup/_buttonsGroup
+//          has cards. Yes → show Q1 (key type). No → all CFQ.
 //
-// RULE 14: Question 2 — key type selection. Only shown when results
-//          contain mixed types. Options shown are dynamic — only
-//          types present in results appear as choices:
-//          - Traditional key (blade) → blade photo qualifier
-//          - Smart Key / push-button → Question 3 (emergency blade?)
-//          - Remote / keyless entry → FCC/button qualifier if conflict
-//          - Remote Head Key → blade photo qualifier
-//          Question 3 — Smart Key only: "Does your smart key have
-//          a hidden emergency blade?" Yes → blade qualifier.
-//          No → Smart Key CFQ shown, RHK/Transponder greyed.
-//          Question 2 only appears when results contain more than
-//          one key type category requiring different qualifier paths.
+// RULE 13: Every CFQ card shows VIN reminder. CFQ button opens VIN
+//          modal — mandatory 17-char, NHTSA-verified. On submit:
+//          call placed + internal tool URL shown on card.
+//
+// RULE 14: Q1 = "What are you looking for?" — key type selection.
+//          Options built dynamically from YMM catalog results.
+//          Only types present in results are shown. Always includes
+//          "My key type isn't listed." as last option.
+//          Q2 = working key gate (Yes/No).
+//          Q3 = Smart Key emergency blade (Yes/No).
 // ════════════════════════════════════════
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbziNH6F0k8keGuaE2MhRPmqAjKRWvZxiWxi5YcstLZ40j29tN5VyBat_r_ekDRVy0CX/exec';
-const PROGRAMMING_FEE = 65;
-const SHOPIFY_DOMAIN = 'carolina-key-cutters.myshopify.com';
-const BOOKING_URL = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
-const CKC_VERSION = 'v8.46';
-// v8.44 RULE 13: Internal tool URL — pre-filled with all job data when customer submits VIN
-const INTERNAL_TOOL_URL = 'https://carolinakeycutters.com/tools';
+const SCRIPT_URL     = 'https://script.google.com/macros/s/AKfycbziNH6F0k8keGuaE2MhRPmqAjKRWvZxiWxi5YcstLZ40j29tN5VyBat_r_ekDRVy0CX/exec';
+const BLADE_PROXY_URL = 'https://script.google.com/macros/s/AKfycbyM-u5bF1B41LJeoxT3VgKiRZX18MCzcUkKAHcRwqIwMwi5FWZ6q8OZTcjfR6Zky1yK/exec';
+const PROGRAMMING_FEE      = 65;
+const SHOPIFY_DOMAIN       = 'carolina-key-cutters.myshopify.com';
+const BOOKING_URL          = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
+const PROGRAMMING_VARIANT  = '45908511228101';
+const INTERNAL_TOOL_URL    = 'https://carolinakeycutters.com/tools';
+const CKC_VERSION          = 'v8.47';
 
-var liveCatalog = [];
-var isLive = false;
-var selectedKey = null;
+var liveCatalog    = [];
+var isLive         = false;
+var selectedKey    = null;
 var lastSearchParams = {};
-var _ckcMatches = [];
-// v8.44: Stores VIN entered by customer at CFQ modal — shared across all CFQ cards
-var _customerVIN = '';
-// v8.44: Stores the resolved CFQ card data (SKU, blade, FCC, key price) for internal tool URL
-var _cfqCardData = {};
+var _ckcMatches    = [];
+var _customerVIN   = '';
+var _cfqCardData   = {};
 
-// Global qualifier state — set once upfront, applied to all cards
+// Qualifier state — reset on every new search
 var _qualState = {
-  needsBlade: false,
-  needsFCC: false,
-  needsButtons: false,
-  bladeImage: null,
-  bladeResult: null,
-  bladeFailed: false,
-  bladeRetry: 0,
-  fccValue: '',
-  buttonsValue: 0,
-  allQualsDone: false,
-  aklSelected: false,
+  // Q1 — key type (new in v8.47, asked first)
+  keyTypeAnswer:      '',   // 'transponder'|'rhk'|'smart'|'remote'|'notlisted'
+  // Q2 — working key gate
   workingKeyAnswered: false,
-  keyTypeAnswer: '',        // v8.46 RULE 14: 'traditional'|'smart'|'remote'|'rhk'
-  emergencyBladeAnswer: ''  // v8.46 RULE 14: 'yes'|'no' — only for smart key path
+  aklSelected:        false,
+  // Q3 — smart key emergency blade
+  emergencyBladeAnswer: '',   // 'yes'|'no'
+  // Blade qualifier
+  needsBlade:   false,
+  bladeImage:   null,
+  bladeResult:  null,
+  bladeFailed:  false,
+  bladeRetry:   0,
+  // FCC / buttons
+  needsFCC:     false,
+  needsButtons: false,
+  fccValue:     '',
+  buttonsValue: 0,
+  // Overall
+  allQualsDone: false
 };
 
-// Groups detected during search — used when applying qualifier results to cards
-var _bladeGroup = [];    // cards requiring blade qualification: RHK, Transponder, Remote Flip Key only. Smart Keys excluded (always CFQ).
-var _fccGroup = [];      // Remote (Keyless Entry) cards with FCC conflict
-var _buttonsGroup = [];  // Remote (Keyless Entry) cards with button count conflict
-var _byType = {};
+var _bladeGroup   = [];
+var _fccGroup     = [];
+var _buttonsGroup = [];
+var _byType       = {};
+var _progToggle   = {};
 
-// v8.40: Per-card programming toggle state. Key = SKU, value = 'full' or 'keyonly'
-// Default is 'full' (includes programming). Set when customer interacts with toggle.
-var _progToggle = {};
-
-// v8.40: Build the programming toggle HTML for an unlocked Buy Now card
-function buildProgToggleHTML(sku, keyPrice) {
-  var totalWithProg = (keyPrice + PROGRAMMING_FEE).toFixed(2);
-  var keyOnlyPrice = keyPrice.toFixed(2);
-  return '<div class="ckc-prog-toggle" id="ckc-prog-toggle-' + sku + '">' +
-    // Option 1: Includes programming (default selected)
-    '<div class="ckc-prog-toggle-opt selected" id="ckc-prog-opt-full-' + sku + '" onclick="setProgToggle(\'' + sku + '\',\'full\',' + keyPrice + ')">' +
-      '<div class="ckc-prog-radio"><div class="ckc-prog-radio-dot"></div></div>' +
-      '<div class="ckc-prog-label"><strong>Includes programming & key cutting</strong><span>We come to you \u00b7 mobile service in the Triad, NC</span></div>' +
-      '<div class="ckc-prog-price-tag">$' + totalWithProg + '</div>' +
-    '</div>' +
-    // Option 2: Key only
-    '<div class="ckc-prog-toggle-opt" id="ckc-prog-opt-keyonly-' + sku + '" onclick="setProgToggle(\'' + sku + '\',\'keyonly\',' + keyPrice + ')">' +
-      '<div class="ckc-prog-radio"><div class="ckc-prog-radio-dot"></div></div>' +
-      '<div class="ckc-prog-label"><strong>Key only</strong><span>I\'ll handle programming myself</span></div>' +
-      '<div class="ckc-prog-price-tag">$' + keyOnlyPrice + '</div>' +
-    '</div>' +
-  '</div>';
-}
-
-// v8.40: Handle toggle selection — updates visual state and Buy Now button price display
-function setProgToggle(sku, mode, keyPrice) {
-  _progToggle[sku] = mode;
-  var fullOpt = document.getElementById('ckc-prog-opt-full-' + sku);
-  var keyOpt = document.getElementById('ckc-prog-opt-keyonly-' + sku);
-  if (!fullOpt || !keyOpt) return;
-  if (mode === 'full') {
-    fullOpt.classList.add('selected');
-    keyOpt.classList.remove('selected');
-  } else {
-    keyOpt.classList.add('selected');
-    fullOpt.classList.remove('selected');
-  }
-}
-
-function getDisplayPrice(key) { return parseFloat(key.price) || 0; }
-
-// Types that always require blade identification (RULES 1, 2, 4)
-// Types that require blade identification via upfront qualifier (RULES 1, 2)
-// Smart Keys deliberately excluded — they are always CFQ (RULES 4, 8) and
-// never participate in the blade gate question. Adding them here would show
-// the working key gate to Smart Key customers, which makes no sense.
+// ══ KEY TYPE HELPERS ══
 function requiresBlade(keyType) {
   var t = (keyType || '').toLowerCase();
   return t === 'remote head key' || t === 'remote flip key' || t === 'transponder key';
 }
-
-// Smart Key types — always CFQ, never Buy Now (RULE 4, 8)
 function isSmartKeyType(keyType) {
   var t = (keyType || '').toLowerCase();
   return t === 'smart key' || t === 'smart key (fobik)' || t === 'premium smart key' || t === 'fobik';
 }
 
-// ════════════════════════════════════════
-// MODEL NORMALIZATION MAP
-// ════════════════════════════════════════
+// ══ MODEL NORMALIZATION ══
 var MODEL_ALIASES = {
   'f150':'F-150','f-150':'F-150','f 150':'F-150','f series':'F-150','f-series':'F-150',
   'f250':'F-250','f-250':'F-250','f 250':'F-250','f250 super duty':'F-250 Super Duty','f-250 super duty':'F-250 Super Duty',
@@ -702,39 +494,20 @@ var MODEL_ALIASES = {
   'nautilus reserve':'Nautilus','mkz hybrid':'MKZ',
   'outlander sport':'Outlander Sport','outlander phev':'Outlander','eclipse cross':'Eclipse Cross','galant es':'Galant'
 };
-
-function normModel(m) {
-  if (!m) return m;
-  var key = m.trim().toLowerCase();
-  return MODEL_ALIASES[key] || m.trim();
-}
+function normModel(m) { if (!m) return m; var key = m.trim().toLowerCase(); return MODEL_ALIASES[key] || m.trim(); }
 
 // ══ FALLBACK DATABASE ══
 var FALLBACK_DATABASE = [
-  { sku: "FOR-15-AM", title: "Ford Transponder Key H92/H84/H85 (80-Bit)", type: "Transponder Key", price: 29.99, image: "", inStock: true, status: "active", fcc: "N/A", keyway: "H92", buttonCount: 0, vehicles: [
-    { make: "Ford", model: "F-150", years: "2004-2014" }, { make: "Ford", model: "F-250", years: "2004-2011" },
-    { make: "Ford", model: "Ranger", years: "2001-2011" }, { make: "Ford", model: "Explorer", years: "2001-2010" },
-    { make: "Ford", model: "Expedition", years: "2003-2013" }, { make: "Ford", model: "Escape", years: "2001-2012" },
-    { make: "Ford", model: "Edge", years: "2007-2015" }, { make: "Ford", model: "Mustang", years: "2005-2014" }
-  ]},
-  { sku: "TOY-10-AM", title: "Toyota Transponder Key TOY43", type: "Transponder Key", price: 29.99, image: "", inStock: true, status: "active", fcc: "N/A", keyway: "TOY43", buttonCount: 0, vehicles: [
-    { make: "Toyota", model: "Camry", years: "2003-2010" }, { make: "Toyota", model: "Corolla", years: "2003-2010" },
-    { make: "Toyota", model: "RAV4", years: "2003-2010" }, { make: "Toyota", model: "Tacoma", years: "2005-2012" }
-  ]},
-  { sku: "HON-07-AM", title: "Honda Transponder Key HO01", type: "Transponder Key", price: 29.99, image: "", inStock: true, status: "active", fcc: "N/A", keyway: "HO01", buttonCount: 0, vehicles: [
-    { make: "Honda", model: "Accord", years: "2003-2012" }, { make: "Honda", model: "Civic", years: "2006-2013" },
-    { make: "Honda", model: "CR-V", years: "2005-2013" }, { make: "Honda", model: "Pilot", years: "2005-2013" }
-  ]},
-  { sku: "CHV-11-AM", title: "GM/Chevrolet Transponder Key B111", type: "Transponder Key", price: 29.99, image: "", inStock: true, status: "active", fcc: "N/A", keyway: "B111", buttonCount: 0, vehicles: [
-    { make: "Chevrolet", model: "Silverado 1500", years: "2007-2013" }, { make: "Chevrolet", model: "Impala", years: "2006-2013" },
-    { make: "GMC", model: "Sierra 1500", years: "2007-2013" }, { make: "GMC", model: "Yukon", years: "2007-2013" }
-  ]}
+  { sku:"FOR-15-AM",title:"Ford Transponder Key H92/H84/H85 (80-Bit)",type:"Transponder Key",price:29.99,image:"",inStock:true,status:"active",fcc:"N/A",keyway:"H92",buttonCount:0,vehicles:[{make:"Ford",model:"F-150",years:"2004-2014"},{make:"Ford",model:"Ranger",years:"2001-2011"},{make:"Ford",model:"Explorer",years:"2001-2010"},{make:"Ford",model:"Escape",years:"2001-2012"}]},
+  { sku:"TOY-10-AM",title:"Toyota Transponder Key TOY43",type:"Transponder Key",price:29.99,image:"",inStock:true,status:"active",fcc:"N/A",keyway:"TOY43",buttonCount:0,vehicles:[{make:"Toyota",model:"Camry",years:"2003-2010"},{make:"Toyota",model:"Corolla",years:"2003-2010"},{make:"Toyota",model:"RAV4",years:"2003-2010"},{make:"Toyota",model:"Tacoma",years:"2005-2012"}]},
+  { sku:"HON-07-AM",title:"Honda Transponder Key HO01",type:"Transponder Key",price:29.99,image:"",inStock:true,status:"active",fcc:"N/A",keyway:"HO01",buttonCount:0,vehicles:[{make:"Honda",model:"Accord",years:"2003-2012"},{make:"Honda",model:"Civic",years:"2006-2013"},{make:"Honda",model:"CR-V",years:"2005-2013"}]},
+  { sku:"CHV-11-AM",title:"GM/Chevrolet Transponder Key B111",type:"Transponder Key",price:29.99,image:"",inStock:true,status:"active",fcc:"N/A",keyway:"B111",buttonCount:0,vehicles:[{make:"Chevrolet",model:"Silverado 1500",years:"2007-2013"},{make:"Chevrolet",model:"Impala",years:"2006-2013"},{make:"GMC",model:"Sierra 1500",years:"2007-2013"}]}
 ];
 
-// ══ GOOGLE SHEET SYNC ══
+// ══ SHEET SYNC ══
 async function syncFromSheet() {
   var loadingBar = document.getElementById('ckc-loading');
-  var statusEl = document.getElementById('ckc-sync-status');
+  var statusEl   = document.getElementById('ckc-sync-status');
   var statusText = document.getElementById('ckc-sync-text');
   loadingBar.classList.add('active');
   statusText.textContent = 'Syncing...';
@@ -746,7 +519,7 @@ async function syncFromSheet() {
       statusEl.className = 'ckc-sync-status live';
       statusText.textContent = 'Live \u00b7 ' + liveCatalog.length + ' products';
     } else { throw new Error('No products'); }
-  } catch (e) {
+  } catch(e) {
     try {
       var response = await fetch(SCRIPT_URL + '?action=read', { redirect: 'follow' });
       var data2 = await response.json();
@@ -756,10 +529,9 @@ async function syncFromSheet() {
         statusEl.className = 'ckc-sync-status live';
         statusText.textContent = 'Live \u00b7 ' + liveCatalog.length + ' products';
         loadingBar.classList.remove('active');
-        initDropdowns();
-        return;
+        initDropdowns(); return;
       }
-    } catch (e2) {}
+    } catch(e2) {}
     isLive = false;
     statusEl.className = 'ckc-sync-status offline';
     statusText.textContent = 'Offline mode';
@@ -783,25 +555,22 @@ function fetchSheetJSONP() {
 
 function normalizeProduct(p) {
   var compat = parseCompat(p.Compatibility || p.compatibility);
-  var years = parseYears(p.Years || p.years);
-  var title = p.Title || p.title || '';
-  var sku = p.SKU || p.sku || '';
-  var type = p.Type || p.type || '';
-  var price = parseFloat(p.Price || p.price) || 0;
-  var image = p.Image || p.image || '';
+  var years  = parseYears(p.Years || p.years);
+  var title  = p.Title || p.title || '';
+  var sku    = p.SKU || p.sku || '';
+  var type   = p.Type || p.type || '';
+  var price  = parseFloat(p.Price || p.price) || 0;
+  var image  = p.Image || p.image || '';
   var handle = p.Handle || p.handle || '';
-  var status = (p.Status || p.status || 'active').toLowerCase().trim();
   var vendor = (p.Vendor || p.vendor || '').trim();
-  var fcc = p.FCC || p.fcc || '';
+  var fcc    = p.FCC || p.fcc || '';
   var keyway = p.Keyway || p.keyway || '';
-  var chip = p.Chip || p.chip || '';
+  var chip   = p.Chip || p.chip || '';
   var conflictFlag = p.Conflict_Flag || p.conflict_flag || '';
-  // RULE 6 (v8.36): buttonCount from catalog Buttons column directly
-  var buttonCount = parseInt(p.Buttons || p.buttons) || 0;
-  var vehicles = [];
+  var buttonCount  = parseInt(p.Buttons || p.buttons) || 0;
   var MAKE_ALIASES = {
     'chevy':'Chevrolet','chevrolet':'Chevrolet','chevroley':'Chevrolet','cehvrolet':'Chevrolet','chevorlet':'Chevrolet','chrevrolet':'Chevrolet',
-    'gm':'GMC','gmc':'GMC','buick':'Buick','buink':'Buick','cadillac':'Cadillac',
+    'gm':'GMC','gmc':'GMC','buick':'Buick','cadillac':'Cadillac',
     'chrysler':'Chrysler','chrsyler':'Chrysler','chrylser':'Chrysler','crysler':'Chrysler',
     'town':'__SUPPRESS__','town & country':'__SUPPRESS__','town&country':'__SUPPRESS__',
     'all':'__SUPPRESS__','all makes':'__SUPPRESS__','general':'__SUPPRESS__','universal':'__SUPPRESS__',
@@ -817,6 +586,7 @@ function normalizeProduct(p) {
     'isuzu':'Isuzu','suzuki':'Suzuki','saab':'Saab'
   };
   function normMake(m) { return MAKE_ALIASES[(m || '').toLowerCase().trim()] || m; }
+  var vehicles = [];
   if (compat.length > 0) {
     compat.forEach(function(c) {
       var vYears = c.years || (years.length > 0 ? Math.min.apply(null,years) + '-' + Math.max.apply(null,years) : '');
@@ -825,7 +595,7 @@ function normalizeProduct(p) {
     });
   }
   var inStock = (vendor === 'CKC');
-  return { sku, title, type, price, image, handle, status, vendor, inStock, fcc, keyway, chip, conflictFlag, buttonCount, vehicles, _compat: compat, _years: years };
+  return { sku, title, type, price, image, handle, vendor, inStock, fcc, keyway, chip, conflictFlag, buttonCount, vehicles, _compat: compat, _years: years };
 }
 
 function parseCompat(val) {
@@ -833,7 +603,6 @@ function parseCompat(val) {
   if (Array.isArray(val)) return val;
   try { return JSON.parse(val); } catch(e) { return []; }
 }
-
 function parseYears(val) {
   if (!val) return [];
   if (Array.isArray(val)) return val.map(function(y){return Math.round(Number(y));}).filter(function(y){return y>1900&&y<2100;});
@@ -853,7 +622,7 @@ async function tryFetchRKSImage(handle, sku) {
       if (resp.ok) {
         var data = await resp.json();
         if (data.product && data.product.image && data.product.image.src) return data.product.image.src;
-        if (data.product && data.product.images && data.product.images[0] && data.product.images[0].src) return data.product.images[0].src;
+        if (data.product && data.product.images && data.product.images[0]) return data.product.images[0].src;
       }
     } catch(e) {}
   }
@@ -880,7 +649,6 @@ function getMakesForYear(year) {
   });
   return Array.from(makes).sort();
 }
-
 function getModelsForMakeAndYear(make, year) {
   var models = new Set();
   getDB().forEach(function(key) {
@@ -894,14 +662,11 @@ function getModelsForMakeAndYear(make, year) {
   });
   return Array.from(models).sort();
 }
-
 function initDropdowns() {
   var yearSelect = document.getElementById('ckc-year');
   yearSelect.innerHTML = '<option value="">Select Year</option>';
   for (var y = 2027; y >= 1998; y--) {
-    var opt = document.createElement('option');
-    opt.value = y; opt.textContent = y;
-    yearSelect.appendChild(opt);
+    var opt = document.createElement('option'); opt.value = y; opt.textContent = y; yearSelect.appendChild(opt);
   }
 }
 
@@ -909,193 +674,261 @@ document.getElementById('ckc-year').addEventListener('change', function() {
   var year = parseInt(this.value);
   var makeSelect = document.getElementById('ckc-make');
   var modelSelect = document.getElementById('ckc-model');
-  var searchBtn = document.getElementById('ckc-search-btn');
   makeSelect.innerHTML = '<option value="">Select Make</option>';
   modelSelect.innerHTML = '<option value="">Select Model</option>';
-  modelSelect.disabled = true; searchBtn.disabled = true;
+  modelSelect.disabled = true; document.getElementById('ckc-search-btn').disabled = true;
   if (!year) { makeSelect.disabled = true; return; }
   getMakesForYear(year).forEach(function(make) {
     var opt = document.createElement('option'); opt.value = make; opt.textContent = make; makeSelect.appendChild(opt);
   });
   makeSelect.disabled = false;
 });
-
 document.getElementById('ckc-make').addEventListener('change', function() {
   var year = parseInt(document.getElementById('ckc-year').value);
-  var make = this.value;
   var modelSelect = document.getElementById('ckc-model');
-  var searchBtn = document.getElementById('ckc-search-btn');
-  modelSelect.innerHTML = '<option value="">Select Model</option>'; searchBtn.disabled = true;
-  if (!make) { modelSelect.disabled = true; return; }
-  getModelsForMakeAndYear(make, year).forEach(function(model) {
+  modelSelect.innerHTML = '<option value="">Select Model</option>'; document.getElementById('ckc-search-btn').disabled = true;
+  if (!this.value) { modelSelect.disabled = true; return; }
+  getModelsForMakeAndYear(this.value, year).forEach(function(model) {
     var opt = document.createElement('option'); opt.value = model; opt.textContent = model; modelSelect.appendChild(opt);
   });
   modelSelect.disabled = false;
 });
-
 document.getElementById('ckc-model').addEventListener('change', function() {
   document.getElementById('ckc-search-btn').disabled = !this.value;
 });
 
-// ══════════════════════════════════════════
-// CONFLICT DETECTION
-// ══════════════════════════════════════════
-
+// ══ CONFLICT DETECTION ══
 function detectFCCConflict(group) {
   var fccSet = new Set();
   group.forEach(function(k) { if (k.fcc && k.fcc !== 'N/A' && k.fcc !== '') fccSet.add(k.fcc); });
   return fccSet.size > 1;
 }
-
 function detectButtonConflict(group) {
-  var btnSet = new Set(group.map(function(k) { return k.buttonCount; }).filter(function(b) { return b > 0; }));
+  var btnSet = new Set(group.map(function(k){return k.buttonCount;}).filter(function(b){return b>0;}));
   return btnSet.size > 1;
 }
-
 function getAllKeyways(group) {
   var kws = [];
   group.forEach(function(k) { if (k.keyway && k.keyway !== 'N/A' && k.keyway !== '' && kws.indexOf(k.keyway) === -1) kws.push(k.keyway); });
   return kws;
 }
-
 function getAllFCCs(group) {
   var fccs = [];
   group.forEach(function(k) { if (k.fcc && k.fcc !== 'N/A' && k.fcc !== '' && fccs.indexOf(k.fcc) === -1) fccs.push(k.fcc); });
   return fccs;
 }
 
-// v8.46 RULE 14: Detect which key type categories are present in results
-// Returns object with flags for each category present
+// ══ KEY TYPE CATEGORY DETECTION (RULE 14) ══
 function detectKeyTypeCategories() {
-  var hasTraditional = false; // Transponder Key
-  var hasRHK = false;         // Remote Head Key or Remote Flip Key
-  var hasSmart = false;       // Smart Key, FOBIK, Premium Smart Key
-  var hasRemote = false;      // Remote (Keyless Entry)
+  var hasTransponder = false, hasRHK = false, hasSmart = false, hasRemote = false;
   _ckcMatches.forEach(function(k) {
     var t = (k.type || '').toLowerCase();
-    if (t === 'transponder key') hasTraditional = true;
+    if (t === 'transponder key')               hasTransponder = true;
     else if (t === 'remote head key' || t === 'remote flip key') hasRHK = true;
-    else if (isSmartKeyType(k.type)) hasSmart = true;
-    else if (t === 'remote (keyless entry)') hasRemote = true;
+    else if (isSmartKeyType(k.type))           hasSmart = true;
+    else if (t === 'remote (keyless entry)')   hasRemote = true;
   });
-  return { hasTraditional, hasRHK, hasSmart, hasRemote };
+  return { hasTransponder, hasRHK, hasSmart, hasRemote };
 }
 
-// Returns true if Q2 (key type selection) is needed
-// Only needed when results span multiple path categories
-function needsKeyTypeQuestion() {
+// ══════════════════════════════════════════
+// QUALIFIER PANEL — v8.47 FULL REBUILD
+// Q1 first (key type), then Q2 (working key), then Q3/blade/FCC/buttons
+// ══════════════════════════════════════════
+function buildQualifierPanel() {
   var cats = detectKeyTypeCategories();
-  var pathCount = (cats.hasTraditional || cats.hasRHK ? 1 : 0) + (cats.hasSmart ? 1 : 0) + (cats.hasRemote ? 1 : 0);
-  return pathCount > 1;
-}
+  var typeCount = (cats.hasTransponder?1:0) + (cats.hasRHK?1:0) + (cats.hasSmart?1:0) + (cats.hasRemote?1:0);
+  var needsQ1   = typeCount > 1; // Q1 only shown when multiple key type paths exist
 
-function buildQualifierPanel(needsBlade, needsFCC, needsButtons, bladeGroup, fccGroup, buttonsGroup) {
-  var cats = detectKeyTypeCategories();
-  var showQ2 = needsKeyTypeQuestion();
-
-  var q1HTML =
-    '<div class="ckc-qualifier-section" id="ckc-qual-gate-section">' +
-    '<div class="ckc-qualifier-section-label">\ud83d\udd11 Do you have a working key?</div>' +
-    '<p style="font-size:0.88rem;color:var(--ckc-text-muted);margin-bottom:14px;">This helps us determine the right service for you.</p>' +
-    _radioOpt("ckc-gate-yes","onQualGate(true)","Yes, I have a working key","I can add a spare or replacement key",false) +
-    _radioOpt("ckc-gate-no","onQualGate(false)","No, I don\'t have a working key","All keys lost \u2014 I need a locksmith on-site",true) +
-    "</div>";
-
-  var q2HTML = "";
-  if (showQ2) {
-    var q2Opts = "";
-    if (cats.hasTraditional) q2Opts += _radioOpt("ckc-kt-traditional","onQualKeyType(\'traditional\')","\ud83d\udd11 Traditional key","Has a metal blade I insert into the ignition",false);
-    if (cats.hasRHK)         q2Opts += _radioOpt("ckc-kt-rhk","onQualKeyType(\'rhk\')","\ud83d\udd11\ud83d\udce1 Remote Head Key","Blade + remote buttons in one unit",false);
-    if (cats.hasSmart)       q2Opts += _radioOpt("ckc-kt-smart","onQualKeyType(\'smart\')","\ud83d\udcf1 Smart Key / Push-button start","A fob I keep in my pocket \u2014 no blade to insert",false);
-    if (cats.hasRemote)      q2Opts += _radioOpt("ckc-kt-remote","onQualKeyType(\'remote\')","\ud83d\udce1 Remote / Key fob only","Keyless entry remote \u2014 no blade",false);
-    q2HTML =
-      "<div class=\"ckc-qualifier-section\" id=\"ckc-qual-q2-section\" style=\"display:none;\">" +
-      "<div class=\"ckc-qualifier-section-label\">\ud83d\udd0d What type of key do you have?</div>" +
-      "<p style=\"font-size:0.88rem;color:var(--ckc-text-muted);margin-bottom:14px;\">Select the option that matches your existing key.</p>" +
-      q2Opts +
-      "</div>";
+  // Q1 — What are you looking for?
+  var q1HTML = '';
+  if (needsQ1) {
+    var q1Opts = '';
+    if (cats.hasTransponder) q1Opts += _radioOpt('ckc-kt-transponder', 'onQ1KeyType(\'transponder\')', '\uD83D\uDD11 Transponder Key', 'Standard metal key with a chip — insert into ignition', false);
+    if (cats.hasRHK)         q1Opts += _radioOpt('ckc-kt-rhk',         'onQ1KeyType(\'rhk\')',         '\uD83D\uDD11\uD83D\uDCE1 Remote Head Key', 'Blade + remote buttons built into one unit', false);
+    if (cats.hasSmart)       q1Opts += _radioOpt('ckc-kt-smart',       'onQ1KeyType(\'smart\')',       '\uD83D\uDCF1 Smart Key / Push-button start', 'A fob I keep in my pocket — no blade to insert', false);
+    if (cats.hasRemote)      q1Opts += _radioOpt('ckc-kt-remote',      'onQ1KeyType(\'remote\')',      '\uD83D\uDCE1 Remote / Key fob only', 'Keyless entry remote — no blade', false);
+    q1Opts += _radioOpt('ckc-kt-notlisted', 'onQ1KeyType(\'notlisted\')', '\u2753 My key type isn\'t listed', 'Not sure or none of the above match', false);
+    q1HTML = '<div class="ckc-qualifier-section" id="ckc-qual-q1-section">' +
+      '<div class="ckc-qualifier-section-label">\uD83D\uDD0D What are you looking for?</div>' +
+      '<p style="font-size:0.88rem;color:var(--ckc-text-muted);margin-bottom:14px;">Select the option that matches what you need.</p>' +
+      q1Opts + '</div>';
   }
 
-  var q3HTML =
-    "<div class=\"ckc-qualifier-section\" id=\"ckc-qual-q3-section\" style=\"display:none;\">" +
-    "<div class=\"ckc-qualifier-section-label\">\ud83d\udddd Does your smart key have a hidden emergency blade?</div>" +
-    "<p style=\"font-size:0.88rem;color:var(--ckc-text-muted);margin-bottom:14px;\">Many smart key fobs have a small metal key that slides or pops out for emergencies.</p>" +
-    _radioOpt("ckc-eb-yes","onQualEmergencyBlade(\'yes\')","Yes, it has a hidden emergency blade","I can slide or pull it out to photograph",false) +
-    _radioOpt("ckc-eb-no","onQualEmergencyBlade(\'no\')","No, it\'s just the fob","No metal blade \u2014 push-button only",false) +
-    "</div>";
+  // Q2 — Working key gate
+  var q2HTML = '<div class="ckc-qualifier-section" id="ckc-qual-q2-section"' + (needsQ1 ? ' style="display:none;"' : '') + '>' +
+    '<div class="ckc-qualifier-section-label">\uD83D\uDD11 Do you have a working key?</div>' +
+    '<p style="font-size:0.88rem;color:var(--ckc-text-muted);margin-bottom:14px;">This determines the right service for your situation.</p>' +
+    _radioOpt('ckc-gate-yes', 'onQ2Gate(true)',  'Yes, I have a working key',          'I can add a spare or replacement key', false) +
+    _radioOpt('ckc-gate-no',  'onQ2Gate(false)', 'No, I don\'t have a working key', 'All keys lost \u2014 I need a locksmith on-site', true) +
+    '</div>';
 
-  var bladeHTML =
-    "<div class=\"ckc-qualifier-section\" id=\"ckc-qual-blade-section\" style=\"display:none;\">" +
-    "<div class=\"ckc-qualifier-section-label\">\ud83d\udcf7 Identify Your Key Blade</div>" +
-    "<p style=\"font-size:0.88rem;color:var(--ckc-text-muted);margin-bottom:14px;\">Your vehicle has multiple key options with different blade cuts. Upload a photo of your existing key so we can match you to the right one.</p>" +
-    "<div class=\"ckc-upload-area\" id=\"ckc-qual-upload\">" +
-    "<input type=\"file\" class=\"ckc-upload-file-input\" id=\"ckc-qual-file\" accept=\"image/*\" onchange=\"onQualBladeFile()\">" +
-    "<div style=\"font-size:1.4rem;margin-bottom:5px;\">\ud83d\udcf7</div>" +
-    "<div class=\"ckc-upload-label\"><strong>Tap to upload a photo</strong> of your key blade</div>" +
-    "<div class=\"ckc-upload-sub\">Well-lit, blade facing camera works best</div>" +
-    "</div>" +
-    "<div class=\"ckc-blade-preview\" id=\"ckc-qual-prev\"><img id=\"ckc-qual-prev-img\" src=\"\" alt=\"Key blade\"><button class=\"ckc-blade-reset\" onclick=\"resetQualBlade()\">\u2715</button></div>" +
-    "<div class=\"ckc-analyzing\" id=\"ckc-qual-analyzing\"><div class=\"ckc-spinner\"></div><span>Analyzing your key blade...</span></div>" +
-    "<div class=\"ckc-blade-msg\" id=\"ckc-qual-blade-msg\"></div>" +
-    "<button class=\"ckc-resolve-btn\" id=\"ckc-qual-blade-btn\" disabled onclick=\"runQualBlade()\">Identify My Blade \u2192</button>" +
-    "<div class=\"ckc-qual-blade-confirmed\" id=\"ckc-qual-blade-confirmed\">\u2713 <span id=\"ckc-qual-blade-confirmed-text\">Blade identified</span></div>" +
-    "</div>";
+  // Q3 — Smart Key emergency blade
+  var q3HTML = '<div class="ckc-qualifier-section" id="ckc-qual-q3-section" style="display:none;">' +
+    '<div class="ckc-qualifier-section-label">\uD83D\uDDDD Does your smart key have a hidden emergency blade?</div>' +
+    '<p style="font-size:0.88rem;color:var(--ckc-text-muted);margin-bottom:14px;">Many smart key fobs have a small metal blade that slides or pops out for emergencies.</p>' +
+    _radioOpt('ckc-eb-yes', 'onQ3EmergencyBlade(\'yes\')', 'Yes, it has a hidden emergency blade', 'I can slide or pull it out to photograph', false) +
+    _radioOpt('ckc-eb-no',  'onQ3EmergencyBlade(\'no\')',  'No, just the fob',                     'Push-button only \u2014 no metal blade', false) +
+    '</div>';
 
-  var fccHTML = "";
-  if (needsFCC) {
-    var fccOptions = getAllFCCs(fccGroup);
-    var opts = fccOptions.map(function(f) { return "<option value=\"" + f + "\">" + f + "</option>"; }).join("");
-    fccHTML =
-      "<div class=\"ckc-qualifier-section\" id=\"ckc-qual-fcc-section\" style=\"display:none;\">" +
-      "<div class=\"ckc-qualifier-section-label\">\ud83d\udce1 Identify Your Remote</div>" +
-      "<p style=\"font-size:0.88rem;color:var(--ckc-text-muted);margin-bottom:14px;\">Multiple remotes found for your vehicle. Check the FCC ID printed on the back of your existing remote.</p>" +
-      "<select class=\"ckc-fcc-select\" id=\"ckc-qual-fcc-sel\" onchange=\"onQualFCCSelect()\"><option value=\"\">\u2014 Select your FCC ID \u2014</option>" + opts + "</select>" +
-      "<div class=\"ckc-fcc-fallback\">Not in the list? Type it here:</div>" +
-      "<input class=\"ckc-fcc-input\" id=\"ckc-qual-fcc-inp\" type=\"text\" placeholder=\"e.g. GQ4-53T\" oninput=\"onQualFCCInput()\" />" +
-      "</div>";
+  // Blade section
+  var bladeHTML = '<div class="ckc-qualifier-section" id="ckc-qual-blade-section" style="display:none;">' +
+    '<div class="ckc-qualifier-section-label">\uD83D\uDCF7 Identify Your Key Blade</div>' +
+    '<p style="font-size:0.88rem;color:var(--ckc-text-muted);margin-bottom:14px;">Your vehicle has multiple key options with different blade cuts. Upload a photo so we can match you to the right one.</p>' +
+    '<div class="ckc-upload-area" id="ckc-qual-upload">' +
+    '<input type="file" class="ckc-upload-file-input" id="ckc-qual-file" accept="image/*" onchange="onQualBladeFile()">' +
+    '<div style="font-size:1.4rem;margin-bottom:5px;">\uD83D\uDCF7</div>' +
+    '<div class="ckc-upload-label"><strong>Tap to upload a photo</strong> of your key blade</div>' +
+    '<div class="ckc-upload-sub">Well-lit, blade flat and facing camera works best</div>' +
+    '</div>' +
+    '<div class="ckc-blade-preview" id="ckc-qual-prev"><img id="ckc-qual-prev-img" src="" alt="Key blade"><button class="ckc-blade-reset" onclick="resetQualBlade()">\u2715</button></div>' +
+    '<div class="ckc-analyzing" id="ckc-qual-analyzing"><div class="ckc-spinner"></div><span>Analyzing your key blade...</span></div>' +
+    '<div class="ckc-blade-msg" id="ckc-qual-blade-msg"></div>' +
+    '<button class="ckc-resolve-btn" id="ckc-qual-blade-btn" disabled onclick="runQualBlade()">Identify My Blade \u2192</button>' +
+    '<div class="ckc-qual-blade-confirmed" id="ckc-qual-blade-confirmed">\u2713 <span id="ckc-qual-blade-confirmed-text">Blade identified</span></div>' +
+    '</div>';
+
+  // FCC section
+  var fccHTML = '';
+  if (_qualState.needsFCC) {
+    var fccOptions = getAllFCCs(_fccGroup);
+    var opts = fccOptions.map(function(f){return '<option value="'+f+'">'+f+'</option>';}).join('');
+    fccHTML = '<div class="ckc-qualifier-section" id="ckc-qual-fcc-section" style="display:none;">' +
+      '<div class="ckc-qualifier-section-label">\uD83D\uDCE1 Identify Your Remote</div>' +
+      '<p style="font-size:0.88rem;color:var(--ckc-text-muted);margin-bottom:14px;">Multiple remotes found. Check the FCC ID on the back of your existing remote.</p>' +
+      '<select class="ckc-fcc-select" id="ckc-qual-fcc-sel" onchange="onQualFCCSelect()"><option value="">\u2014 Select your FCC ID \u2014</option>' + opts + '</select>' +
+      '<div class="ckc-fcc-fallback">Not listed? Type it here:</div>' +
+      '<input class="ckc-fcc-input" id="ckc-qual-fcc-inp" type="text" placeholder="e.g. GQ4-53T" oninput="onQualFCCInput()" />' +
+      '</div>';
   }
 
-  var btnsHTML = "";
-  if (needsButtons) {
+  // Buttons section
+  var btnsHTML = '';
+  if (_qualState.needsButtons) {
     var btnCounts = [];
-    buttonsGroup.forEach(function(k) { if (k.buttonCount > 0 && btnCounts.indexOf(k.buttonCount) === -1) btnCounts.push(k.buttonCount); });
+    _buttonsGroup.forEach(function(k){if(k.buttonCount>0&&btnCounts.indexOf(k.buttonCount)===-1)btnCounts.push(k.buttonCount);});
     btnCounts.sort();
-    var btnOpts = btnCounts.map(function(b) {
-      return "<button class=\"ckc-btn-count-opt\" onclick=\"onQualBtnCount(" + b + ",this)\">" + b + " Button" + (b>1?"s":"") + "</button>";
-    }).join("");
-    btnsHTML =
-      "<div class=\"ckc-qualifier-section\" id=\"ckc-qual-btns-section\" style=\"display:none;\">" +
-      "<div class=\"ckc-qualifier-section-label\">\ud83d\udd22 Button Count</div>" +
-      "<p style=\"font-size:0.88rem;color:var(--ckc-text-muted);margin-bottom:14px;\">How many buttons does your remote have?</p>" +
-      "<div class=\"ckc-btn-count-row\" id=\"ckc-qual-btns\">" + btnOpts + "</div>" +
-      "</div>";
+    var btnOpts = btnCounts.map(function(b){ return '<button class="ckc-btn-count-opt" onclick="onQualBtnCount('+b+',this)">'+b+' Button'+(b>1?'s':'')+'</button>'; }).join('');
+    btnsHTML = '<div class="ckc-qualifier-section" id="ckc-qual-btns-section" style="display:none;">' +
+      '<div class="ckc-qualifier-section-label">\uD83D\uDD22 Button Count</div>' +
+      '<p style="font-size:0.88rem;color:var(--ckc-text-muted);margin-bottom:14px;">How many buttons does your remote have?</p>' +
+      '<div class="ckc-btn-count-row" id="ckc-qual-btns">' + btnOpts + '</div>' +
+      '</div>';
   }
 
-  return "<div class=\"ckc-qualifier-panel\" id=\"ckc-qualifier-panel\">" +
-    "<h3>\ud83d\udd0d A Few Quick Questions</h3>" +
-    "<div class=\"ckc-qualifier-subtitle\">Help us find the right key for your vehicle.</div>" +
+  return '<div class="ckc-qualifier-panel" id="ckc-qualifier-panel">' +
+    '<h3>\uD83D\uDD0D A Few Quick Questions</h3>' +
+    '<div class="ckc-qualifier-subtitle">Help us find the right key for your vehicle.</div>' +
     q1HTML + q2HTML + q3HTML + bladeHTML + fccHTML + btnsHTML +
-    "<div class=\"ckc-qualifier-confirm-row\">" +
-    "<div class=\"ckc-qualifier-status\" id=\"ckc-qual-status\">Answer the question above to continue.</div>" +
-    "<button class=\"ckc-show-results-btn\" id=\"ckc-show-results-btn\" disabled onclick=\"applyQualifiersAndRender()\">Show My Results \u2192</button>" +
-    "</div>" +
-    "</div>";
+    '<div class="ckc-qualifier-confirm-row">' +
+    '<div class="ckc-qualifier-status" id="ckc-qual-status">Answer the question above to continue.</div>' +
+    '<button class="ckc-show-results-btn" id="ckc-show-results-btn" disabled onclick="applyQualifiersAndRender()">Show My Results \u2192</button>' +
+    '</div></div>';
 }
 
+// ── Radio option builder
 function _radioOpt(id, onclick, label, sublabel, isDanger) {
-  var borderColor = isDanger ? "#f87171" : "var(--ckc-border)";
-  return "<div id=\"" + id + "-opt\" style=\"display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border:1px solid " + borderColor + ";border-radius:8px;margin-bottom:10px;cursor:pointer;transition:all 0.15s;\" onclick=\"" + onclick + "\">" +
-    "<div id=\"" + id + "-radio\" style=\"width:16px;height:16px;border-radius:50%;border:2px solid " + borderColor + ";flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;\">" +
-    "<div id=\"" + id + "-dot\" style=\"width:6px;height:6px;border-radius:50%;background:#111;display:none;\"></div></div>" +
-    "<div style=\"font-size:0.88rem;line-height:1.4;\"><strong style=\"color:var(--ckc-text);\">" + label + "</strong>" +
-    "<span style=\"color:var(--ckc-text-muted);display:block;font-size:0.8rem;margin-top:1px;\">" + sublabel + "</span></div>" +
-    "</div>";
+  var dangerClass = isDanger ? ' danger' : '';
+  return '<div id="' + id + '-opt" class="ckc-radio-opt' + dangerClass + '" onclick="' + onclick + '">' +
+    '<div class="ckc-radio-circle"><div class="ckc-radio-dot"></div></div>' +
+    '<div class="ckc-radio-label"><strong>' + label + '</strong><span>' + sublabel + '</span></div>' +
+    '</div>';
 }
 
-// ══════════════════════════════════════════
-// QUALIFIER EVENT HANDLERS
-// ══════════════════════════════════════════
+// ── Radio select/deselect helper
+function _selectRadio(id, selected) {
+  var opt = document.getElementById(id + '-opt');
+  if (!opt) return;
+  if (selected) { opt.classList.add('selected'); }
+  else { opt.classList.remove('selected'); }
+}
+function _deselectRadioGroup(ids) { ids.forEach(function(id){ _selectRadio(id, false); }); }
 
+// ══ Q1 HANDLER — Key type selection ══
+function onQ1KeyType(type) {
+  _qualState.keyTypeAnswer = type;
+  _deselectRadioGroup(['ckc-kt-transponder','ckc-kt-rhk','ckc-kt-smart','ckc-kt-remote','ckc-kt-notlisted']);
+  _selectRadio('ckc-kt-' + type, true);
+
+  // Reset downstream state
+  _qualState.workingKeyAnswered = false;
+  _qualState.aklSelected = false;
+  _qualState.emergencyBladeAnswer = '';
+  _qualState.bladeImage = null; _qualState.bladeResult = null; _qualState.bladeFailed = false; _qualState.bladeRetry = 0;
+  _qualState.fccValue = ''; _qualState.buttonsValue = 0;
+  _deselectRadioGroup(['ckc-gate-yes','ckc-gate-no','ckc-eb-yes','ckc-eb-no']);
+
+  // Show Q2 (working key gate)
+  var q2 = document.getElementById('ckc-qual-q2-section'); if (q2) q2.style.display = 'block';
+  // Hide Q3 and all qualifier sections
+  ['ckc-qual-q3-section','ckc-qual-blade-section','ckc-qual-fcc-section','ckc-qual-btns-section'].forEach(function(id){
+    var el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
+
+  // "Not listed" — no further questions needed
+  if (type === 'notlisted') {
+    _qualState.workingKeyAnswered = true; // gate not needed for CFQ path
+    checkQualReady();
+  } else {
+    checkQualReady();
+  }
+}
+
+// ══ Q2 HANDLER — Working key gate ══
+function onQ2Gate(hasKey) {
+  _qualState.workingKeyAnswered = true;
+  _qualState.aklSelected = !hasKey;
+  _deselectRadioGroup(['ckc-gate-yes','ckc-gate-no']);
+  _selectRadio('ckc-gate-yes', hasKey);
+  _selectRadio('ckc-gate-no', !hasKey);
+
+  // Hide Q3 and all qualifier sections first
+  ['ckc-qual-q3-section','ckc-qual-blade-section','ckc-qual-fcc-section','ckc-qual-btns-section'].forEach(function(id){
+    var el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
+  _qualState.emergencyBladeAnswer = '';
+  _deselectRadioGroup(['ckc-eb-yes','ckc-eb-no']);
+
+  if (!hasKey) {
+    // AKL — no further qualifier questions
+    checkQualReady(); return;
+  }
+
+  // Has working key — show relevant qualifier sections
+  var type = _qualState.keyTypeAnswer;
+  if (type === 'smart') {
+    // Show Q3 (emergency blade)
+    var q3 = document.getElementById('ckc-qual-q3-section'); if (q3) q3.style.display = 'block';
+  } else if (type === 'transponder' || type === 'rhk' || type === '') {
+    // Show blade section if needed
+    if (_qualState.needsBlade) { var bs = document.getElementById('ckc-qual-blade-section'); if (bs) bs.style.display = 'block'; }
+    if (_qualState.needsFCC)   { var fs = document.getElementById('ckc-qual-fcc-section');   if (fs) fs.style.display = 'block'; }
+    if (_qualState.needsButtons){ var bts = document.getElementById('ckc-qual-btns-section'); if (bts) bts.style.display = 'block'; }
+  } else if (type === 'remote') {
+    if (_qualState.needsFCC)    { var fs2 = document.getElementById('ckc-qual-fcc-section');   if (fs2) fs2.style.display = 'block'; }
+    if (_qualState.needsButtons){ var bts2 = document.getElementById('ckc-qual-btns-section'); if (bts2) bts2.style.display = 'block'; }
+  }
+  checkQualReady();
+}
+
+// ══ Q3 HANDLER — Emergency blade ══
+function onQ3EmergencyBlade(answer) {
+  _qualState.emergencyBladeAnswer = answer;
+  _deselectRadioGroup(['ckc-eb-yes','ckc-eb-no']);
+  _selectRadio('ckc-eb-yes', answer === 'yes');
+  _selectRadio('ckc-eb-no',  answer === 'no');
+
+  if (answer === 'yes') {
+    // Show blade qualifier for smart key with emergency blade
+    if (_qualState.needsBlade) { var bs = document.getElementById('ckc-qual-blade-section'); if (bs) bs.style.display = 'block'; }
+  } else {
+    // No blade — smart key always CFQ anyway, no more questions
+    var bs = document.getElementById('ckc-qual-blade-section'); if (bs) bs.style.display = 'none';
+  }
+  checkQualReady();
+}
+
+// ══ BLADE UPLOAD / ANALYSIS ══
 function onQualBladeFile() {
   var file = document.getElementById('ckc-qual-file').files[0];
   if (!file) return;
@@ -1112,108 +945,8 @@ function onQualBladeFile() {
   reader.readAsDataURL(file);
 }
 
-function onQualGate(hasKey) {
-  _qualState.workingKeyAnswered = true;
-  _qualState.aklSelected = !hasKey;
-  _selectRadio('ckc-gate-yes', hasKey, 'var(--ckc-gold)');
-  _selectRadio('ckc-gate-no', !hasKey, '#f87171');
-
-  if (!hasKey) {
-    // AKL — hide all follow-up sections
-    ['ckc-qual-q2-section','ckc-qual-q3-section','ckc-qual-blade-section','ckc-qual-fcc-section','ckc-qual-btns-section'].forEach(function(id) {
-      var el = document.getElementById(id); if (el) el.style.display = 'none';
-    });
-    _qualState.bladeImage = null; _qualState.bladeResult = null; _qualState.fccValue = ''; _qualState.buttonsValue = 0;
-  } else {
-    // Has working key — show Q2 if needed, otherwise show appropriate qualifiers directly
-    if (needsKeyTypeQuestion()) {
-      var q2 = document.getElementById('ckc-qual-q2-section'); if (q2) q2.style.display = 'block';
-    } else {
-      // Single path — show qualifiers directly
-      _showQualifiersForPath();
-    }
-  }
-  checkQualReady();
-}
-
-// v8.46: Called when customer selects key type in Q2
-function onQualKeyType(type) {
-  _qualState.keyTypeAnswer = type;
-  _qualState.emergencyBladeAnswer = '';
-  // Deselect all Q2 options visually
-  ['ckc-kt-traditional','ckc-kt-rhk','ckc-kt-smart','ckc-kt-remote'].forEach(function(id) {
-    _selectRadio(id, false, 'var(--ckc-gold)');
-  });
-  _selectRadio('ckc-kt-' + type, true, 'var(--ckc-gold)');
-
-  // Hide Q3 and all qualifier sections first
-  ['ckc-qual-q3-section','ckc-qual-blade-section','ckc-qual-fcc-section','ckc-qual-btns-section'].forEach(function(id) {
-    var el = document.getElementById(id); if (el) el.style.display = 'none';
-  });
-  _qualState.bladeImage = null; _qualState.bladeResult = null; _qualState.bladeFailed = false;
-  _qualState.fccValue = ''; _qualState.buttonsValue = 0;
-
-  if (type === 'smart') {
-    // Show Q3 — does smart key have emergency blade?
-    var q3 = document.getElementById('ckc-qual-q3-section'); if (q3) q3.style.display = 'block';
-  } else {
-    _showQualifiersForPath();
-  }
-  checkQualReady();
-}
-
-// v8.46: Called when customer answers Q3 (emergency blade)
-function onQualEmergencyBlade(answer) {
-  _qualState.emergencyBladeAnswer = answer;
-  _selectRadio('ckc-eb-yes', answer === 'yes', 'var(--ckc-gold)');
-  _selectRadio('ckc-eb-no',  answer === 'no',  'var(--ckc-gold)');
-
-  if (answer === 'yes') {
-    // Has emergency blade — show blade qualifier
-    var bs = document.getElementById('ckc-qual-blade-section'); if (bs) bs.style.display = 'block';
-  } else {
-    // No emergency blade — no blade qualifier needed, ready immediately
-    var bs = document.getElementById('ckc-qual-blade-section'); if (bs) bs.style.display = 'none';
-  }
-  checkQualReady();
-}
-
-// Shows the correct qualifier sections based on key type answer
-function _showQualifiersForPath() {
-  var type = _qualState.keyTypeAnswer || 'traditional';
-  if (type === 'traditional' || type === 'rhk') {
-    // Blade qualifier
-    if (_qualState.needsBlade) { var bs = document.getElementById('ckc-qual-blade-section'); if (bs) bs.style.display = 'block'; }
-    if (_qualState.needsFCC)   { var fs = document.getElementById('ckc-qual-fcc-section'); if (fs) fs.style.display = 'block'; }
-    if (_qualState.needsButtons){ var bts = document.getElementById('ckc-qual-btns-section'); if (bts) bts.style.display = 'block'; }
-  } else if (type === 'remote') {
-    // FCC / button qualifiers only
-    if (_qualState.needsFCC)    { var fs = document.getElementById('ckc-qual-fcc-section'); if (fs) fs.style.display = 'block'; }
-    if (_qualState.needsButtons){ var bts = document.getElementById('ckc-qual-btns-section'); if (bts) bts.style.display = 'block'; }
-  }
-  // Smart key without Q2 context — no blade qualifier
-}
-
-// Helper: select/deselect a radio option visually
-function _selectRadio(id, selected, color) {
-  var opt = document.getElementById(id + '-opt');
-  var radio = document.getElementById(id + '-radio');
-  var dot = document.getElementById(id + '-dot');
-  if (!opt || !radio || !dot) return;
-  if (selected) {
-    opt.style.borderColor = color; opt.style.background = 'rgba(201,162,39,0.07)';
-    radio.style.borderColor = color; radio.style.background = color;
-    dot.style.display = 'block';
-  } else {
-    opt.style.borderColor = 'var(--ckc-border)'; opt.style.background = '';
-    radio.style.borderColor = 'var(--ckc-border)'; radio.style.background = '';
-    dot.style.display = 'none';
-  }
-}
-
 function resetQualBlade() {
-  _qualState.bladeImage = null;
-  _qualState.bladeResult = null;
+  _qualState.bladeImage = null; _qualState.bladeResult = null;
   document.getElementById('ckc-qual-prev').style.display = 'none';
   document.getElementById('ckc-qual-upload').style.display = 'block';
   document.getElementById('ckc-qual-blade-btn').disabled = true;
@@ -1233,7 +966,7 @@ async function runQualBlade() {
   document.getElementById('ckc-qual-blade-msg').textContent = '';
 
   var keyways = getAllKeyways(_bladeGroup);
-  var base64 = _qualState.bladeImage.split(',')[1];
+  var base64  = _qualState.bladeImage.split(',')[1];
 
   try {
     var result = await analyzeBladeWithClaude(base64, keyways, lastSearchParams.year + ' ' + lastSearchParams.make + ' ' + lastSearchParams.model);
@@ -1253,13 +986,12 @@ async function runQualBlade() {
       var msgEl = document.getElementById('ckc-qual-blade-msg');
       if (_qualState.bladeRetry < 2) {
         msgEl.className = 'ckc-blade-msg warn';
-        msgEl.textContent = '\u26a0 We couldn\'t make out the blade profile clearly. Try a well-lit photo with the blade flat and facing the camera.';
+        msgEl.textContent = '\u26a0 Couldn\'t make out the blade profile. Try a well-lit photo with the blade flat and facing the camera.';
         resetQualBlade();
       } else {
-        // After 2 failed attempts — mark blade as failed, allow proceeding
         _qualState.bladeFailed = true;
         msgEl.className = 'ckc-blade-msg warn';
-        msgEl.textContent = '\u26a0 Unable to identify blade from photos. We\'ll show all options \u2014 we\'ll confirm the blade when we arrive.';
+        msgEl.textContent = '\u26a0 Unable to identify blade from photos. We\'ll show all options \u2014 our locksmith will confirm the blade when we arrive.';
         document.getElementById('ckc-qual-blade-btn').disabled = true;
         checkQualReady();
       }
@@ -1273,7 +1005,7 @@ async function runQualBlade() {
     document.getElementById('ckc-qual-analyzing').classList.remove('active');
     var msgEl = document.getElementById('ckc-qual-blade-msg');
     msgEl.className = 'ckc-blade-msg error';
-    msgEl.textContent = '\u26a0 Analysis service unavailable. We\'ll show all options \u2014 we\'ll confirm the blade when we arrive.';
+    msgEl.textContent = '\u26a0 Analysis service unavailable. We\'ll show all options \u2014 our locksmith will confirm the blade when we arrive.';
     _qualState.bladeFailed = true;
     document.getElementById('ckc-qual-blade-btn').disabled = true;
     checkQualReady();
@@ -1283,76 +1015,115 @@ async function runQualBlade() {
 function onQualFCCSelect() {
   var val = document.getElementById('ckc-qual-fcc-sel').value;
   if (val) document.getElementById('ckc-qual-fcc-inp').value = '';
-  _qualState.fccValue = val;
-  checkQualReady();
+  _qualState.fccValue = val; checkQualReady();
 }
-
 function onQualFCCInput() {
   var val = document.getElementById('ckc-qual-fcc-inp').value.trim().toUpperCase();
   if (val) document.getElementById('ckc-qual-fcc-sel').value = '';
-  _qualState.fccValue = val;
-  checkQualReady();
+  _qualState.fccValue = val; checkQualReady();
 }
-
 function onQualBtnCount(count, el) {
-  document.querySelectorAll('#ckc-qual-btns .ckc-btn-count-opt').forEach(function(b) { b.classList.remove('selected'); });
-  el.classList.add('selected');
-  _qualState.buttonsValue = count;
-  checkQualReady();
+  document.querySelectorAll('#ckc-qual-btns .ckc-btn-count-opt').forEach(function(b){b.classList.remove('selected');});
+  el.classList.add('selected'); _qualState.buttonsValue = count; checkQualReady();
 }
 
-// ══════════════════════════════════════════
-// VIN MODAL — RULE 13
-// ══════════════════════════════════════════
+// ══ READY CHECK ══
+function checkQualReady() {
+  var btn      = document.getElementById('ckc-show-results-btn');
+  var statusEl = document.getElementById('ckc-qual-status');
+  if (!btn || !statusEl) return;
 
-// Called by every CFQ button. Stores card data then shows VIN modal.
-function openVINModal(cardData) {
-  _cfqCardData = cardData || {};
-  // If VIN already entered this session, skip modal and go straight to call
-  if (_customerVIN.length === 17) {
-    placeCallAndOpenTool();
+  var type = _qualState.keyTypeAnswer;
+  var cats = detectKeyTypeCategories();
+  var needsQ1 = (( (cats.hasTransponder?1:0)+(cats.hasRHK?1:0)+(cats.hasSmart?1:0)+(cats.hasRemote?1:0) ) > 1);
+
+  // Q1 not answered yet
+  if (needsQ1 && !type) {
+    btn.disabled = true; statusEl.className = 'ckc-qualifier-status';
+    statusEl.textContent = 'Select what you\'re looking for to continue.'; return;
+  }
+
+  // "Not listed" — CFQ immediately, no further questions
+  if (type === 'notlisted') {
+    btn.disabled = false; statusEl.className = 'ckc-qualifier-status ready';
+    statusEl.textContent = '\u2713 Ready \u2014 click to see service options.'; return;
+  }
+
+  // Q2 gate not answered
+  if (!_qualState.workingKeyAnswered) {
+    btn.disabled = true; statusEl.className = 'ckc-qualifier-status';
+    statusEl.textContent = 'Do you have a working key?'; return;
+  }
+
+  // AKL — ready
+  if (_qualState.aklSelected) {
+    btn.disabled = false; statusEl.className = 'ckc-qualifier-status ready';
+    statusEl.textContent = '\u2713 All keys lost \u2014 click to see service options.'; return;
+  }
+
+  // Smart key — Q3 needed
+  if (type === 'smart' && !_qualState.emergencyBladeAnswer) {
+    btn.disabled = true; statusEl.className = 'ckc-qualifier-status';
+    statusEl.textContent = 'Does your smart key have an emergency blade?'; return;
+  }
+
+  // Smart key, no emergency blade — ready (always CFQ, no blade qualifier)
+  if (type === 'smart' && _qualState.emergencyBladeAnswer === 'no') {
+    btn.disabled = false; statusEl.className = 'ckc-qualifier-status ready';
+    statusEl.textContent = '\u2713 Ready \u2014 click to see your results.'; return;
+  }
+
+  // Remote — check FCC / buttons
+  if (type === 'remote') {
+    var fccOk  = !_qualState.needsFCC    || !!_qualState.fccValue;
+    var btnsOk = !_qualState.needsButtons || _qualState.buttonsValue > 0;
+    var ready  = fccOk && btnsOk;
+    btn.disabled = !ready;
+    if (ready) { statusEl.className = 'ckc-qualifier-status ready'; statusEl.textContent = '\u2713 Ready \u2014 click to see your results.'; }
+    else { statusEl.className = 'ckc-qualifier-status'; var m=[]; if(!fccOk)m.push('FCC ID'); if(!btnsOk)m.push('button count'); statusEl.textContent = 'Still needed: ' + m.join(', ') + '.'; }
     return;
   }
+
+  // Transponder / RHK / Smart+emergency — check blade + FCC + buttons
+  var bladeOk = !_qualState.needsBlade || _qualState.bladeResult || _qualState.bladeFailed;
+  var fccOk2  = !_qualState.needsFCC   || !!_qualState.fccValue;
+  var btnsOk2 = !_qualState.needsButtons || _qualState.buttonsValue > 0;
+  var ready2  = bladeOk && fccOk2 && btnsOk2;
+  btn.disabled = !ready2;
+  if (ready2) { statusEl.className = 'ckc-qualifier-status ready'; statusEl.textContent = '\u2713 Ready \u2014 click to see your results.'; }
+  else { statusEl.className = 'ckc-qualifier-status'; var missing=[]; if(!bladeOk)missing.push('blade photo'); if(!fccOk2)missing.push('FCC ID'); if(!btnsOk2)missing.push('button count'); statusEl.textContent = 'Still needed: ' + missing.join(', ') + '.'; }
+}
+
+// ══ VIN MODAL — RULE 13 ══
+function openVINModal(cardData) {
+  _cfqCardData = cardData || {};
+  if (_customerVIN.length === 17) { placeCallAndOpenTool(); return; }
   var overlay = document.createElement('div');
-  overlay.className = 'ckc-vin-modal-overlay';
-  overlay.id = 'ckc-vin-overlay';
-  overlay.innerHTML =
-    '<div class="ckc-vin-modal">' +
-    '<h3>📋 One Last Step Before We Connect</h3>' +
+  overlay.className = 'ckc-vin-modal-overlay'; overlay.id = 'ckc-vin-overlay';
+  overlay.innerHTML = '<div class="ckc-vin-modal">' +
+    '<h3>\uD83D\uDCCB One Last Step Before We Connect</h3>' +
     '<p>Enter your VIN so we can prepare your quote before the call. This saves time and helps us give you an accurate price immediately.</p>' +
     '<div class="ckc-vin-modal-field">' +
-    '<input type="text" class="ckc-vin-modal-input" id="ckc-vin-modal-inp" maxlength="17" placeholder="17-DIGIT VIN" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"' +
-    ' oninput="onVINModalInput(this)" onkeydown="if(event.key===\'Enter\')submitVINModal()">' +
-    '<span class="ckc-vin-counter" id="ckc-vin-counter">0/17</span>' +
-    '</div>' +
+    '<input type="text" class="ckc-vin-modal-input" id="ckc-vin-modal-inp" maxlength="17" placeholder="17-DIGIT VIN" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" oninput="onVINModalInput(this)" onkeydown="if(event.key===\'Enter\')submitVINModal()">' +
+    '<span class="ckc-vin-counter" id="ckc-vin-counter">0/17</span></div>' +
     '<div class="ckc-vin-error" id="ckc-vin-error"></div>' +
     '<div class="ckc-vin-hint">Found on your <strong>dashboard lower-left</strong> (visible through windshield) or <strong>driver door jamb sticker</strong>.</div>' +
     '<div class="ckc-vin-modal-btns">' +
     '<button class="ckc-vin-cancel-btn" onclick="closeVINModal()">Cancel</button>' +
-    '<button class="ckc-vin-call-btn" id="ckc-vin-submit-btn" disabled onclick="submitVINModal()">📞 Connect & Call (336) 510-9816</button>' +
-    '</div>' +
-    '</div>';
+    '<button class="ckc-vin-call-btn" id="ckc-vin-submit-btn" disabled onclick="submitVINModal()">\uD83D\uDCDE Connect &amp; Call (336) 510-9816</button>' +
+    '</div></div>';
   document.body.appendChild(overlay);
-  setTimeout(function() { var inp = document.getElementById('ckc-vin-modal-inp'); if (inp) inp.focus(); }, 100);
+  setTimeout(function(){ var inp = document.getElementById('ckc-vin-modal-inp'); if(inp) inp.focus(); }, 100);
 }
 
-// ── VIN validation (RULE 13, v8.45)
-// Format validation: 17 chars, no I/O/Q, valid first character.
-// Then verifies against NHTSA API — free, no key, catches bogus VINs reliably.
-// Check digit math removed — too many false rejections on real VINs.
 function isValidVINFormat(vin) {
   if (!vin || vin.length !== 17) return false;
-  // No I, O, Q allowed in any VIN
   if (/[IOQ]/.test(vin)) return false;
-  // First character must be a valid WMI country code digit/letter
   if (!/^[A-HJ-NPR-Z1-9]/.test(vin)) return false;
-  // Must be all valid VIN characters
   if (!/^[A-HJ-NPR-Z0-9]{17}$/.test(vin)) return false;
-  // Reject obvious repeated-character strings
   if (/^(.)\1{16}$/.test(vin)) return false;
   return true;
 }
-
 async function verifyVINWithNHTSA(vin) {
   try {
     var resp = await fetch('https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues/' + vin + '?format=json', { signal: AbortSignal.timeout(5000) });
@@ -1360,342 +1131,272 @@ async function verifyVINWithNHTSA(vin) {
     var r = data.Results && data.Results[0];
     if (!r || !r.ModelYear || r.ModelYear === '' || r.ErrorCode === '8') return false;
     return true;
-  } catch(e) {
-    // If NHTSA is unreachable, allow through — don't block customer
-    return true;
-  }
+  } catch(e) { return true; }
 }
-
 function onVINModalInput(el) {
-  var val = el.value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g, '');
+  var val = el.value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g,'');
   el.value = val;
-  var counter = document.getElementById('ckc-vin-counter');
+  var counter   = document.getElementById('ckc-vin-counter');
   var submitBtn = document.getElementById('ckc-vin-submit-btn');
-  var errorEl = document.getElementById('ckc-vin-error');
+  var errorEl   = document.getElementById('ckc-vin-error');
   var len = val.length;
   counter.textContent = len + '/17';
   if (len === 17) {
     if (isValidVINFormat(val)) {
-      counter.className = 'ckc-vin-counter done';
-      el.classList.add('valid');
-      el.classList.remove('invalid');
-      submitBtn.disabled = false;
-      if (errorEl) { errorEl.style.display = 'none'; errorEl.textContent = ''; }
+      counter.className = 'ckc-vin-counter done'; el.classList.add('valid'); el.classList.remove('invalid');
+      submitBtn.disabled = false; if(errorEl){errorEl.style.display='none';errorEl.textContent='';}
     } else {
-      counter.className = 'ckc-vin-counter error';
-      el.classList.remove('valid');
-      el.classList.add('invalid');
-      submitBtn.disabled = true;
-      if (errorEl) {
-        errorEl.textContent = '⚠ That VIN doesn\'t look right. Check the number on your dashboard or door jamb and try again.';
-        errorEl.style.display = 'block';
-      }
+      counter.className = 'ckc-vin-counter error'; el.classList.remove('valid'); el.classList.add('invalid');
+      submitBtn.disabled = true; if(errorEl){errorEl.textContent='\u26a0 That VIN doesn\'t look right. Check the number on your dashboard or door jamb.';errorEl.style.display='block';}
     }
   } else {
-    counter.className = 'ckc-vin-counter';
-    el.classList.remove('valid');
-    el.classList.remove('invalid');
-    submitBtn.disabled = true;
-    if (errorEl) { errorEl.style.display = 'none'; errorEl.textContent = ''; }
+    counter.className = 'ckc-vin-counter'; el.classList.remove('valid','invalid');
+    submitBtn.disabled = true; if(errorEl){errorEl.style.display='none';errorEl.textContent='';}
   }
 }
-
 async function submitVINModal() {
   var inp = document.getElementById('ckc-vin-modal-inp');
   if (!inp || inp.value.length !== 17) return;
   var vin = inp.value.toUpperCase();
   if (!isValidVINFormat(vin)) return;
-
-  // Show verifying state
   var submitBtn = document.getElementById('ckc-vin-submit-btn');
-  var errorEl = document.getElementById('ckc-vin-error');
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'Verifying VIN...';
-
+  var errorEl   = document.getElementById('ckc-vin-error');
+  submitBtn.disabled = true; submitBtn.textContent = 'Verifying VIN...';
   var valid = await verifyVINWithNHTSA(vin);
   if (!valid) {
-    submitBtn.disabled = false;
-    submitBtn.innerHTML = '📞 Connect & Call (336) 510-9816';
-    inp.classList.remove('valid');
-    inp.classList.add('invalid');
+    submitBtn.disabled = false; submitBtn.innerHTML = '\uD83D\uDCDE Connect &amp; Call (336) 510-9816';
+    inp.classList.remove('valid'); inp.classList.add('invalid');
     document.getElementById('ckc-vin-counter').className = 'ckc-vin-counter error';
-    if (errorEl) {
-      errorEl.textContent = '⚠ That VIN couldn\'t be verified. Double-check the number on your dashboard or door jamb sticker.';
-      errorEl.style.display = 'block';
-    }
+    if(errorEl){errorEl.textContent='\u26a0 That VIN couldn\'t be verified. Double-check the number on your dashboard or door jamb sticker.';errorEl.style.display='block';}
     return;
   }
-
-  _customerVIN = vin;
-  closeVINModal();
-  placeCallAndOpenTool();
+  _customerVIN = vin; closeVINModal(); placeCallAndOpenTool();
 }
-
-function closeVINModal() {
-  var overlay = document.getElementById('ckc-vin-overlay');
-  if (overlay) overlay.remove();
-}
-
-
-
+function closeVINModal() { var o = document.getElementById('ckc-vin-overlay'); if(o) o.remove(); }
 function placeCallAndOpenTool() {
-  // Build internal tool URL with all captured data
   var toolURL = buildInternalToolURL();
-
-  // Display tool URL on the CFQ card so James can tap it
   var cardSku = _cfqCardData.sku || '';
   if (cardSku) {
     var toolUrlEl = document.getElementById('ckc-tool-url-' + cardSku);
     if (toolUrlEl) {
-      toolUrlEl.innerHTML = '<span class="ckc-tool-url-label">🔧 Tap when you answer the call:</span>' + toolURL;
+      toolUrlEl.innerHTML = '<span class="ckc-tool-url-label">\uD83D\uDD27 Tap when you answer the call:</span>' + toolURL;
       toolUrlEl.classList.add('show');
     }
   }
-
-  // Place the call
   window.location.href = 'tel:+13365109816';
 }
-
 function buildInternalToolURL() {
   var params = new URLSearchParams({
-    vin: _customerVIN,
-    y: lastSearchParams.year || '',
-    mk: lastSearchParams.make || '',
-    mo: lastSearchParams.model || '',
-    svc: _qualState.aklSelected ? 'akl' : 'aak',
-    sku: _cfqCardData.sku || '',
+    vin:  _customerVIN,
+    y:    lastSearchParams.year || '',
+    mk:   lastSearchParams.make || '',
+    mo:   lastSearchParams.model || '',
+    svc:  _qualState.aklSelected ? 'akl' : 'aak',
+    sku:  _cfqCardData.sku || '',
     blade: _cfqCardData.blade || (_qualState.bladeResult ? _qualState.bladeResult.keyway : ''),
-    fcc: _cfqCardData.fcc || _qualState.fccValue || '',
-    kp: _cfqCardData.keyPrice || '0'
+    fcc:  _cfqCardData.fcc || _qualState.fccValue || '',
+    kp:   _cfqCardData.keyPrice || '0',
+    kt:   _qualState.keyTypeAnswer || ''
   });
   return INTERNAL_TOOL_URL + '?' + params.toString();
 }
 
-function checkQualReady() {
-  var btn = document.getElementById('ckc-show-results-btn');
-  var statusEl = document.getElementById('ckc-qual-status');
-  if (!btn || !statusEl) return;
-
-  // Gate not answered yet
-  if (!_qualState.workingKeyAnswered) {
-    btn.disabled = true; statusEl.className = 'ckc-qualifier-status';
-    statusEl.textContent = 'Answer the question above to continue.'; return;
-  }
-
-  // AKL — ready immediately
-  if (_qualState.aklSelected) {
-    btn.disabled = false; statusEl.className = 'ckc-qualifier-status ready';
-    statusEl.textContent = '\u2713 All keys lost \u2014 click to see service options.'; return;
-  }
-
-  // Q2 needed but not answered
-  if (needsKeyTypeQuestion() && !_qualState.keyTypeAnswer) {
-    btn.disabled = true; statusEl.className = 'ckc-qualifier-status';
-    statusEl.textContent = 'Select your key type to continue.'; return;
-  }
-
-  // Smart Key path — Q3 needed but not answered
-  if (_qualState.keyTypeAnswer === 'smart' && !_qualState.emergencyBladeAnswer) {
-    btn.disabled = true; statusEl.className = 'ckc-qualifier-status';
-    statusEl.textContent = 'Answer the emergency blade question to continue.'; return;
-  }
-
-  // Smart Key, no emergency blade — ready (no blade qualifier needed)
-  if (_qualState.keyTypeAnswer === 'smart' && _qualState.emergencyBladeAnswer === 'no') {
-    btn.disabled = false; statusEl.className = 'ckc-qualifier-status ready';
-    statusEl.textContent = '\u2713 Ready \u2014 click to see your results.'; return;
-  }
-
-  // Remote path — check FCC/buttons
-  if (_qualState.keyTypeAnswer === 'remote') {
-    var fccOk  = !_qualState.needsFCC    || !!_qualState.fccValue;
-    var btnsOk = !_qualState.needsButtons || _qualState.buttonsValue > 0;
-    var ready  = fccOk && btnsOk;
-    btn.disabled = !ready;
-    if (ready) { statusEl.className = 'ckc-qualifier-status ready'; statusEl.textContent = '\u2713 Ready \u2014 click to see your results.'; }
-    else { statusEl.className = 'ckc-qualifier-status'; var m = []; if (!fccOk) m.push('FCC ID'); if (!btnsOk) m.push('button count'); statusEl.textContent = 'Still needed: ' + m.join(', ') + '.'; }
-    return;
-  }
-
-  // Traditional / RHK / Smart+emergency blade path — check blade + FCC + buttons
-  var bladeOk = !_qualState.needsBlade || _qualState.bladeResult || _qualState.bladeFailed;
-  var fccOk   = !_qualState.needsFCC   || !!_qualState.fccValue;
-  var btnsOk  = !_qualState.needsButtons || _qualState.buttonsValue > 0;
-  var ready   = bladeOk && fccOk && btnsOk;
-  btn.disabled = !ready;
-  if (ready) { statusEl.className = 'ckc-qualifier-status ready'; statusEl.textContent = '\u2713 Ready \u2014 click to see your results.'; }
-  else { statusEl.className = 'ckc-qualifier-status'; var missing = []; if (!bladeOk) missing.push('blade photo'); if (!fccOk) missing.push('FCC ID'); if (!btnsOk) missing.push('button count'); statusEl.textContent = 'Still needed: ' + missing.join(', ') + '.'; }
-}
-
-// ══════════════════════════════════════════
-// APPLY QUALIFIERS AND RENDER CARDS
-// ══════════════════════════════════════════
-
+// ══ APPLY QUALIFIERS AND RENDER ══
 function applyQualifiersAndRender() {
   _qualState.allQualsDone = true;
-
-  // Remove qualifier panel
-  var panel = document.getElementById('ckc-qualifier-panel');
-  if (panel) panel.remove();
-
+  var panel = document.getElementById('ckc-qualifier-panel'); if(panel) panel.remove();
   renderCards();
 }
 
+// ══ PROGRAMMING TOGGLE ══
+function buildProgToggleHTML(sku, keyPrice) {
+  var totalWithProg = (keyPrice + PROGRAMMING_FEE).toFixed(2);
+  var keyOnlyPrice  = keyPrice.toFixed(2);
+  return '<div class="ckc-prog-toggle" id="ckc-prog-toggle-' + sku + '">' +
+    '<div class="ckc-prog-toggle-opt selected" id="ckc-prog-opt-full-' + sku + '" onclick="setProgToggle(\'' + sku + '\',\'full\',' + keyPrice + ')">' +
+      '<div class="ckc-prog-radio"><div class="ckc-prog-radio-dot"></div></div>' +
+      '<div class="ckc-prog-label"><strong>Includes programming &amp; key cutting</strong><span>We come to you \u00b7 mobile service in the Triad, NC</span></div>' +
+      '<div class="ckc-prog-price-tag">$' + totalWithProg + '</div>' +
+    '</div>' +
+    '<div class="ckc-prog-toggle-opt" id="ckc-prog-opt-keyonly-' + sku + '" onclick="setProgToggle(\'' + sku + '\',\'keyonly\',' + keyPrice + ')">' +
+      '<div class="ckc-prog-radio"><div class="ckc-prog-radio-dot"></div></div>' +
+      '<div class="ckc-prog-label"><strong>Key only</strong><span>I\'ll handle programming myself</span></div>' +
+      '<div class="ckc-prog-price-tag">$' + keyOnlyPrice + '</div>' +
+    '</div></div>';
+}
+function setProgToggle(sku, mode, keyPrice) {
+  _progToggle[sku] = mode;
+  var fullOpt   = document.getElementById('ckc-prog-opt-full-' + sku);
+  var keyOpt    = document.getElementById('ckc-prog-opt-keyonly-' + sku);
+  if (!fullOpt || !keyOpt) return;
+  if (mode === 'full') { fullOpt.classList.add('selected'); keyOpt.classList.remove('selected'); }
+  else { keyOpt.classList.add('selected'); fullOpt.classList.remove('selected'); }
+}
+
+function getDisplayPrice(key) { return parseFloat(key.price) || 0; }
+
+// ══ CFQ CARD BUTTON HTML ══
+function _cfqBtnHTML(key, displayPrice, reasonMsg) {
+  var cfqData = JSON.stringify({ sku: key.sku, blade: key.keyway||'', fcc: key.fcc||'', keyPrice: displayPrice.toFixed(2) }).replace(/"/g,'&quot;');
+  return (reasonMsg ? '<div style="font-size:0.82rem;color:#f59e0b;margin-bottom:8px;padding:8px 10px;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);border-radius:6px;line-height:1.5;">' + reasonMsg + '</div>' : '') +
+    '<div style="font-size:0.78rem;color:var(--ckc-text-muted);margin-bottom:8px;padding:8px 10px;background:rgba(201,162,39,0.06);border-radius:6px;border:1px solid rgba(201,162,39,0.15);">\uD83D\uDCCB Have your VIN ready before calling \u2014 found on dashboard lower-left or driver door jamb sticker.</div>' +
+    '<button class="ckc-add-btn" style="background:#f59e0b;" onclick="openVINModal(' + cfqData + ')">\uD83D\uDCDE Call for Quote \u00b7 (336) 510-9816</button>' +
+    '<div class="ckc-tool-url" id="ckc-tool-url-' + key.sku + '"></div>';
+}
+
+// ══ RENDER CARDS ══
 function renderCards() {
   var resultsDiv = document.getElementById('ckc-results');
-  var year = lastSearchParams.year;
-  var make = lastSearchParams.make;
+  var year  = lastSearchParams.year;
+  var make  = lastSearchParams.make;
   var model = lastSearchParams.model;
 
-  var html = '<div class="ckc-results-header"><div class="ckc-results-title">Keys for your ' + year + ' ' + make + ' ' + model + '</div><div class="ckc-results-count">' + _ckcMatches.length + ' option' + (_ckcMatches.length > 1 ? 's' : '') + ' found' + (isLive ? ' \u00b7 Live inventory' : '') + '</div></div>';
+  var html = '<div class="ckc-results-header">' +
+    '<div class="ckc-results-title">Keys for your ' + year + ' ' + make + ' ' + model + '</div>' +
+    '<div class="ckc-results-count">' + _ckcMatches.length + ' option' + (_ckcMatches.length>1?'s':'') + ' found' + (isLive?' \u00b7 Live inventory':'') + '</div>' +
+    '</div>';
 
-  html += '<div class="ckc-programming-card"><div class="ckc-programming-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></div><div class="ckc-programming-info"><h3>Mobile Key Programming & Cutting \u2014 as low as $' + PROGRAMMING_FEE + '</h3><p>We come to your location \u00b7 Save $10+ vs competitors \u00b7 Includes key cutting + programming</p><p style="font-size:0.82rem;color:#888;margin-top:6px;">*$' + PROGRAMMING_FEE + ' add-a-key rate \u2014 you must have a working key. All keys lost (AKL), EEPROM, or module work quoted separately \u2014 <a href="tel:+13365109816" style="color:var(--ckc-gold);">call for details</a>.</p></div><div class="ckc-programming-price"><span style="font-size:1rem;font-weight:500;opacity:0.7;">as low as</span><br>$' + PROGRAMMING_FEE + '</div></div>';
+  html += '<div class="ckc-programming-card">' +
+    '<div class="ckc-programming-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></div>' +
+    '<div class="ckc-programming-info"><h3>Mobile Key Programming &amp; Cutting \u2014 as low as $' + PROGRAMMING_FEE + '</h3>' +
+    '<p>We come to your location \u00b7 Save $10+ vs competitors \u00b7 Includes key cutting + programming</p>' +
+    '<p style="font-size:0.82rem;color:#888;margin-top:6px;">*$' + PROGRAMMING_FEE + ' add-a-key rate \u2014 you must have a working key. All keys lost (AKL), EEPROM, or module work quoted separately \u2014 <a href="tel:+13365109816" style="color:var(--ckc-gold);">call for details</a>.</p></div>' +
+    '<div class="ckc-programming-price"><span style="font-size:1rem;font-weight:500;opacity:0.7;">as low as</span><br>$' + PROGRAMMING_FEE + '</div></div>';
 
-  // Determine resolved state for each card based on qualifier answers
-  // v8.41: AKL selected — all qualifier groups go CFQ immediately (RULE 12)
-  var aklMode = _qualState.aklSelected;
-  // v8.46 RULE 14: key type answer determines which cards get Buy Now vs CFQ vs greyed
-  var keyType = _qualState.keyTypeAnswer; // 'traditional'|'smart'|'remote'|'rhk'|''
-  var smartNoEmergency = keyType === 'smart' && _qualState.emergencyBladeAnswer === 'no';
-  var customerHasSmartKey = keyType === 'smart';
-  var customerHasTraditional = keyType === 'traditional' || keyType === 'rhk' || keyType === '';
+  // Determine qualifier results for card rendering
+  var type              = _qualState.keyTypeAnswer;
+  var aklMode           = _qualState.aklSelected;
+  var notListed         = type === 'notlisted';
+  var customerIsSmart   = type === 'smart';
+  var customerIsRemote  = type === 'remote';
+  var customerIsBlade   = type === 'transponder' || type === 'rhk' || type === '';
+  var smartNoEmergency  = customerIsSmart && _qualState.emergencyBladeAnswer === 'no';
+
+  // Determine blade winner SKU
   var bladeWinnerSku = null;
-  var bladeFailed = _qualState.bladeFailed;
   if (!aklMode && _qualState.bladeResult && _qualState.bladeResult.keyway) {
-    // Find which card in blade group matches
     _bladeGroup.forEach(function(k) {
-      if (k.keyway === _qualState.bladeResult.keyway && !bladeWinnerSku) {
-        bladeWinnerSku = k.sku;
-      }
+      if (k.keyway === _qualState.bladeResult.keyway && !bladeWinnerSku) bladeWinnerSku = k.sku;
     });
   }
-
-  // FCC winner
   var fccWinnerSku = null;
   if (_qualState.fccValue) {
     _fccGroup.forEach(function(k) {
-      if ((k.fcc || '').toUpperCase() === _qualState.fccValue.toUpperCase() && !fccWinnerSku) {
-        fccWinnerSku = k.sku;
-      }
+      if ((k.fcc||'').toUpperCase() === _qualState.fccValue.toUpperCase() && !fccWinnerSku) fccWinnerSku = k.sku;
     });
   }
-
-  // Button count winner
   var btnsWinnerSku = null;
   if (_qualState.buttonsValue > 0) {
     _buttonsGroup.forEach(function(k) {
       if (k.buttonCount === _qualState.buttonsValue && !btnsWinnerSku) {
-        // If FCC was also resolved, narrow to that SKU first
-        if (fccWinnerSku) {
-          if (k.sku === fccWinnerSku) btnsWinnerSku = k.sku;
-        } else {
-          btnsWinnerSku = k.sku;
-        }
+        if (fccWinnerSku) { if (k.sku === fccWinnerSku) btnsWinnerSku = k.sku; }
+        else btnsWinnerSku = k.sku;
       }
     });
   }
 
   _ckcMatches.forEach(function(key, idx) {
-    var compatList = key.vehicles.map(function(v) { return v.years + ' ' + v.make + ' ' + v.model; }).join(' \u00b7 ');
+    var compatList   = key.vehicles.map(function(v){return v.years + ' ' + v.make + ' ' + v.model;}).join(' \u00b7 ');
     var displayPrice = getDisplayPrice(key);
-    var imgId = 'ckc-img-' + idx;
+    var totalPrice   = (displayPrice + PROGRAMMING_FEE).toFixed(2);
+    var imgId        = 'ckc-img-' + idx;
     var imgHTML;
     if (key.image && key.image.startsWith('http')) {
-      imgHTML = '<img src="' + key.image + '" alt="' + key.title + '" class="ckc-key-img" onerror="this.outerHTML=\'<div class=\\\'ckc-key-img-placeholder\\\'>🔑</div>\'">';
+      imgHTML = '<img src="'+key.image+'" alt="'+key.title+'" class="ckc-key-img" onerror="this.outerHTML=\'<div class=\\\'ckc-key-img-placeholder\\\'>🔑</div>\'">';
     } else {
-      imgHTML = '<div class="ckc-key-img-loading" id="' + imgId + '" data-sku="' + key.sku + '" data-handle="' + (key.handle || '') + '"></div>';
+      imgHTML = '<div class="ckc-key-img-loading" id="'+imgId+'" data-sku="'+key.sku+'" data-handle="'+(key.handle||'')+'"></div>';
     }
 
+    // v8.47 Stock messaging — RULE 14, no "Same Day Service" promise
     var stockHTML = key.inStock
-      ? '<div class="ckc-stock-badge in-stock"><span class="ckc-stock-dot"></span> In Stock \u2014 Same Day Service</div>'
-      : '<div class="ckc-stock-badge ships"><span class="ckc-stock-dot"></span> Available for Order (Allow 2-3 Days)</div>';
+      ? '<div class="ckc-stock-badge in-stock"><span class="ckc-stock-dot"></span>\uD83D\uDFE2 In Stock \u2014 Schedule your programming appointment after checkout</div>'
+      : '<div class="ckc-stock-badge ships"><span class="ckc-stock-dot"></span>\uD83D\uDCE6 Ships in 2-3 days \u2014 Schedule your appointment when you receive confirmation that your key has arrived</div>';
 
-    var totalPrice = (displayPrice + PROGRAMMING_FEE).toFixed(2);
-    var cardClass = 'ckc-key-card';
-    var btnHTML = '';
-    var priceNote = '';
+    var cardClass    = 'ckc-key-card';
+    var btnHTML      = '';
+    var priceNote    = '';
     var resolvedNote = '';
 
-    var isSmart = isSmartKeyType(key.type);
-    var inBladeGroup = _bladeGroup.some(function(k) { return k.sku === key.sku; });
-    var inFCCGroup = _fccGroup.some(function(k) { return k.sku === key.sku; });
-    var inBtnsGroup = _buttonsGroup.some(function(k) { return k.sku === key.sku; });
+    var isSmart     = isSmartKeyType(key.type);
+    var inBladeGroup = _bladeGroup.some(function(k){return k.sku===key.sku;});
+    var inFCCGroup   = _fccGroup.some(function(k){return k.sku===key.sku;});
+    var inBtnsGroup  = _buttonsGroup.some(function(k){return k.sku===key.sku;});
 
-    if (isSmart) {
-      // RULE 4: Smart Keys always CFQ — no toggle.
-      // v8.46: If customer said they have a traditional key, grey Smart Key cards out
-      if (customerHasTraditional && keyType !== '') {
-        cardClass += ' ckc-greyed';
-        btnHTML = ''; priceNote = '';
-      } else {
-        cardClass += ' ckc-cfq-card';
-        priceNote = '<div style="font-size:0.82rem;color:#f59e0b;margin-bottom:8px;">\u26a0 Smart Key programming requires module-level work on most vehicles. Call to confirm program pricing. Please have your VIN ready.</div>';
-        if (_qualState.bladeResult) priceNote += '<div style="font-size:0.82rem;color:var(--ckc-success);margin-bottom:8px;">\u2713 Blade identified: ' + _qualState.bladeResult.keyway + '</div>';
-        var cfqCardData = JSON.stringify({ sku: key.sku, blade: key.keyway || '', fcc: key.fcc || '', keyPrice: displayPrice.toFixed(2) }).replace(/"/g, '&quot;');
-        btnHTML = '<div style="font-size:0.78rem;color:var(--ckc-text-muted);margin-bottom:8px;padding:8px 10px;background:rgba(201,162,39,0.06);border-radius:6px;border:1px solid rgba(201,162,39,0.15);">📋 Have your VIN ready before calling \u2014 found on dashboard lower-left or driver door jamb sticker.</div>' +
-          '<button class="ckc-add-btn" style="background:#f59e0b;" onclick="openVINModal(' + cfqCardData + ')">\ud83d\udcde Call for Quote &middot; (336) 510-9816</button>' +
-          '<div class="ckc-tool-url" id="ckc-tool-url-' + key.sku + '"></div>';
-      }
-    } else if (smartNoEmergency && inBladeGroup) {
-      // v8.46: Customer has Smart Key with no emergency blade — grey all blade-requiring cards
-      cardClass += ' ckc-greyed';
-      btnHTML = ''; priceNote = '';
-    } else if (aklMode && (inBladeGroup || inFCCGroup || inBtnsGroup)) {
-      // v8.41 RULE 12: AKL selected — all qualifier group cards go CFQ, no Buy Now, no toggle
-      // v8.44 RULE 13: CFQ button opens VIN modal before dialing
+    // ── Determine card state ──
+
+    if (notListed) {
+      // Customer said type not listed — all cards CFQ
       cardClass += ' ckc-cfq-card';
-      priceNote = '<div style="font-size:0.82rem;color:#f87171;margin-bottom:8px;">\ud83d\udd11 All keys lost \u2014 a locksmith needs to verify your blade and program your new key on-site.</div>';
-      var cfqCardDataAKL = JSON.stringify({ sku: key.sku, blade: key.keyway || '', fcc: key.fcc || '', keyPrice: displayPrice.toFixed(2) }).replace(/"/g, '&quot;');
-      btnHTML = '<div style="font-size:0.78rem;color:var(--ckc-text-muted);margin-bottom:8px;padding:8px 10px;background:rgba(201,162,39,0.06);border-radius:6px;border:1px solid rgba(201,162,39,0.15);">📋 Have your VIN ready before calling \u2014 found on dashboard lower-left or driver door jamb sticker.</div>' +
-        '<button class="ckc-add-btn" style="background:#f59e0b;" onclick="openVINModal(' + cfqCardDataAKL + ')">\ud83d\udcde Call for Quote &middot; (336) 510-9816</button>' +
-        '<div class="ckc-tool-url" id="ckc-tool-url-' + key.sku + '"></div>';
+      priceNote = '';
+      btnHTML   = _cfqBtnHTML(key, displayPrice, 'We\'ll help you identify the right key \u2014 call us and we\'ll confirm on-site.');
+    } else if (isSmart) {
+      // RULE 4: Smart Keys always CFQ
+      if (customerIsBlade && type !== '') {
+        // Customer identified as wanting a blade-type key — grey smart card
+        cardClass += ' ckc-greyed';
+      } else if (customerIsRemote && type !== '') {
+        cardClass += ' ckc-greyed';
+      } else {
+        // Smart key shown to smart key customer (or no type chosen)
+        cardClass += ' ckc-cfq-card';
+        var smartMsg = '\u26a0 Smart Key programming requires module-level work on most vehicles. Call to confirm pricing. Please have your VIN ready.';
+        if (_qualState.bladeResult) smartMsg += ' Blade identified: ' + _qualState.bladeResult.keyway + '.';
+        btnHTML = _cfqBtnHTML(key, displayPrice, smartMsg);
+      }
+    } else if (aklMode && (inBladeGroup || inFCCGroup || inBtnsGroup)) {
+      // RULE 12: AKL — all qualifier group cards go CFQ
+      cardClass += ' ckc-cfq-card';
+      btnHTML   = _cfqBtnHTML(key, displayPrice, '\uD83D\uDD11 All keys lost \u2014 a locksmith needs to verify your blade and program your new key on-site.');
     } else if (inBladeGroup) {
-      // Blade group: resolved, greyed, or failed-open
-      if (bladeFailed) {
-        // Failed blade ID — show all cards as Buy Now with toggle (RULE 11)
+      // Blade group resolution
+      if (customerIsRemote && type !== '') {
+        // Customer selected remote — grey blade cards
+        cardClass += ' ckc-greyed';
+      } else if (smartNoEmergency && inBladeGroup) {
+        // Smart key, no emergency blade — grey blade cards
+        cardClass += ' ckc-greyed';
+      } else if (_qualState.bladeFailed) {
+        // Failed blade ID — show all as Buy Now (RULE 10)
         cardClass += ' ckc-resolved';
-        priceNote = '<div class="ckc-key-price-note" id="ckc-pricenote-' + key.sku + '">+ $' + PROGRAMMING_FEE + ' service call = <strong>$' + totalPrice + ' total</strong></div>';
-        btnHTML = '<button class="ckc-buy-now-btn" onclick="openCheckout(' + idx + ')">\u2713 Buy Now</button>' +
-          buildProgToggleHTML(key.sku, displayPrice);
+        priceNote  = '<div class="ckc-key-price-note" id="ckc-pricenote-'+key.sku+'">+ $'+PROGRAMMING_FEE+' service call = <strong>$'+totalPrice+' total</strong></div>';
+        btnHTML    = '<button class="ckc-buy-now-btn" onclick="openCheckout('+idx+')">\u2713 Buy Now</button>' + buildProgToggleHTML(key.sku, displayPrice);
         resolvedNote = '<div class="ckc-resolved-confirm show">Blade confirmed on arrival</div>';
       } else if (bladeWinnerSku === key.sku) {
-        // This card is the blade match — show with toggle (RULE 11)
+        // This card matched the blade
         cardClass += ' ckc-resolved';
-        priceNote = '<div class="ckc-key-price-note" id="ckc-pricenote-' + key.sku + '">+ $' + PROGRAMMING_FEE + ' service call = <strong>$' + totalPrice + ' total</strong></div>';
-        btnHTML = '<button class="ckc-buy-now-btn" onclick="openCheckout(' + idx + ')">\u2713 Buy Now</button>' +
-          buildProgToggleHTML(key.sku, displayPrice);
+        priceNote  = '<div class="ckc-key-price-note" id="ckc-pricenote-'+key.sku+'">+ $'+PROGRAMMING_FEE+' service call = <strong>$'+totalPrice+' total</strong></div>';
+        btnHTML    = '<button class="ckc-buy-now-btn" onclick="openCheckout('+idx+')">\u2713 Buy Now</button>' + buildProgToggleHTML(key.sku, displayPrice);
         resolvedNote = '<div class="ckc-resolved-confirm show">\u2713 Matched to your blade: ' + (_qualState.bladeResult ? _qualState.bladeResult.keyway : '') + '</div>';
       } else if (bladeWinnerSku !== null) {
         // Another card won — grey this one
         cardClass += ' ckc-greyed';
-        priceNote = '';
-        btnHTML = '';
       } else {
-        // Safety fallback — CFQ with VIN modal (RULE 13)
-        priceNote = '<div class="ckc-key-price-note">+ $' + PROGRAMMING_FEE + ' service call = <strong>$' + totalPrice + ' total</strong></div>';
-        var cfqCardDataFb = JSON.stringify({ sku: key.sku, blade: key.keyway || '', fcc: key.fcc || '', keyPrice: displayPrice.toFixed(2) }).replace(/"/g, '&quot;');
-        btnHTML = '<div style="font-size:0.78rem;color:var(--ckc-text-muted);margin-bottom:8px;padding:8px 10px;background:rgba(201,162,39,0.06);border-radius:6px;border:1px solid rgba(201,162,39,0.15);">📋 Have your VIN ready before calling \u2014 found on dashboard lower-left or driver door jamb sticker.</div>' +
-          '<button class="ckc-add-btn" style="background:#f59e0b;" onclick="openVINModal(' + cfqCardDataFb + ')">\ud83d\udcde Call for Quote &middot; (336) 510-9816</button>' +
-          '<div class="ckc-tool-url" id="ckc-tool-url-' + key.sku + '"></div>';
+        // Blade qualifier needed but not yet run — CFQ fallback
+        cardClass += ' ckc-cfq-card';
+        priceNote  = '<div class="ckc-key-price-note">+ $'+PROGRAMMING_FEE+' service call = <strong>$'+totalPrice+' total</strong></div>';
+        btnHTML    = _cfqBtnHTML(key, displayPrice, 'We couldn\'t confirm your blade from the photo \u2014 call us and we\'ll identify it on-site.');
       }
     } else if (inFCCGroup || inBtnsGroup) {
       // FCC / button group
-      var winner = btnsWinnerSku || fccWinnerSku;
-      if (!winner || winner === key.sku) {
-        var isWinner = winner === key.sku;
-        cardClass += isWinner ? ' ckc-resolved' : '';
-        priceNote = '<div class="ckc-key-price-note" id="ckc-pricenote-' + key.sku + '">+ $' + PROGRAMMING_FEE + ' service call = <strong>$' + totalPrice + ' total</strong></div>';
-        btnHTML = '<button class="' + (isWinner ? 'ckc-buy-now-btn' : 'ckc-add-btn') + '" onclick="openCheckout(' + idx + ')">' + (isWinner ? '\u2713 Buy Now' : 'Buy Now') + '</button>' +
-          buildProgToggleHTML(key.sku, displayPrice);
-        if (isWinner) resolvedNote = '<div class="ckc-resolved-confirm show">\u2713 Matched to your remote</div>';
-      } else {
+      if (customerIsBlade && type !== '') {
+        // Customer selected blade-type key — grey remote cards
         cardClass += ' ckc-greyed';
+      } else {
+        var winner = btnsWinnerSku || fccWinnerSku;
+        if (!winner || winner === key.sku) {
+          var isWinner = winner === key.sku;
+          cardClass  += isWinner ? ' ckc-resolved' : '';
+          priceNote   = '<div class="ckc-key-price-note" id="ckc-pricenote-'+key.sku+'">+ $'+PROGRAMMING_FEE+' service call = <strong>$'+totalPrice+' total</strong></div>';
+          btnHTML     = '<button class="'+(isWinner?'ckc-buy-now-btn':'ckc-add-btn')+'" onclick="openCheckout('+idx+')">'+(isWinner?'\u2713 Buy Now':'Buy Now')+'</button>' + buildProgToggleHTML(key.sku, displayPrice);
+          if (isWinner) resolvedNote = '<div class="ckc-resolved-confirm show">\u2713 Matched to your remote</div>';
+        } else {
+          cardClass += ' ckc-greyed';
+        }
       }
     } else {
-      // No qualifier needed — straight Buy Now with toggle (RULE 11)
-      priceNote = '<div class="ckc-key-price-note" id="ckc-pricenote-' + key.sku + '">+ $' + PROGRAMMING_FEE + ' service call = <strong>$' + totalPrice + ' total</strong></div>';
-      btnHTML = '<button class="ckc-add-btn" onclick="openCheckout(' + idx + ')">Buy Now</button>' +
-        buildProgToggleHTML(key.sku, displayPrice);
+      // No qualifier needed — straight Buy Now (RULE 11)
+      priceNote = '<div class="ckc-key-price-note" id="ckc-pricenote-'+key.sku+'">+ $'+PROGRAMMING_FEE+' service call = <strong>$'+totalPrice+' total</strong></div>';
+      btnHTML   = '<button class="ckc-add-btn" onclick="openCheckout('+idx+')">Buy Now</button>' + buildProgToggleHTML(key.sku, displayPrice);
     }
 
     var detailParts = ['SKU: ' + key.sku];
@@ -1703,121 +1404,73 @@ function renderCards() {
     if (key.keyway && key.keyway !== 'N/A' && key.keyway !== '') detailParts.push('Blade: ' + key.keyway);
     var detailsUnderImg = '<div style="font-size:0.72rem;color:var(--ckc-text-muted);margin-top:8px;text-align:center;line-height:1.5;word-break:break-word;">' + detailParts.join('<br>') + '</div>';
 
-    var compatDisplay = isSmart
-      ? '<div class="ckc-key-compat" style="margin-top:12px;text-align:left;font-size:0.88rem;line-height:1.7;">' + compatList + '</div>'
-      : '<div class="ckc-key-compat">' + compatList + '</div>';
-    var infoCompat = isSmart ? '' : '<div class="ckc-key-compat">' + compatList + '</div>';
-    var pricingCompat = isSmart ? '<div class="ckc-key-compat" style="margin-top:12px;text-align:left;font-size:0.88rem;line-height:1.7;">' + compatList + '</div>' : '';
-
-    html += '<div class="' + cardClass + '" id="ckc-card-' + key.sku + '">' +
+    html += '<div class="'+cardClass+'" id="ckc-card-'+key.sku+'">' +
       '<div style="display:flex;flex-direction:column;align-items:center;">' + imgHTML + detailsUnderImg + '</div>' +
-      '<div class="ckc-key-info"><div class="ckc-key-type">' + (key.type || 'Key') + '</div><h3>' + key.title + '</h3>' + infoCompat + '</div>' +
-      '<div class="ckc-key-pricing"><div class="ckc-key-price">$' + displayPrice.toFixed(2) + '</div>' + priceNote + stockHTML + '<div class="ckc-card-btn">' + btnHTML + '</div>' + resolvedNote + pricingCompat + '</div>' +
+      '<div class="ckc-key-info"><div class="ckc-key-type">'+(key.type||'Key')+'</div><h3>'+key.title+'</h3><div class="ckc-key-compat">'+compatList+'</div></div>' +
+      '<div class="ckc-key-pricing"><div class="ckc-key-price">$'+displayPrice.toFixed(2)+'</div>' + priceNote + stockHTML + '<div class="ckc-card-btn">'+btnHTML+'</div>' + resolvedNote + '</div>' +
       '</div>';
   });
 
-  // Insert cards into results div after qualifier panel slot
   var cardsDiv = document.getElementById('ckc-cards-container');
-  if (cardsDiv) {
-    cardsDiv.innerHTML = html;
-  } else {
-    resultsDiv.innerHTML = (resultsDiv.innerHTML || '') + '<div id="ckc-cards-container">' + html + '</div>';
-  }
+  if (cardsDiv) { cardsDiv.innerHTML = html; }
+  else { resultsDiv.innerHTML = (resultsDiv.innerHTML||'') + '<div id="ckc-cards-container">'+html+'</div>'; }
 
-  // Drag-and-drop on qualifier panel blade upload if still present
-  var qualUpload = document.getElementById('ckc-qual-upload');
-  if (qualUpload) {
-    qualUpload.addEventListener('dragover', function(e) { e.preventDefault(); qualUpload.classList.add('dragover'); });
-    qualUpload.addEventListener('dragleave', function() { qualUpload.classList.remove('dragover'); });
-    qualUpload.addEventListener('drop', function(e) {
-      e.preventDefault(); qualUpload.classList.remove('dragover');
-      var file = e.dataTransfer.files[0];
-      if (!file || !file.type.startsWith('image/')) return;
-      var fileInput = document.getElementById('ckc-qual-file');
-      if (!fileInput) return;
-      var dt = new DataTransfer(); dt.items.add(file); fileInput.files = dt.files;
-      fileInput.dispatchEvent(new Event('change'));
-    });
-  }
-
+  _wireBladeDropzone();
   lazyLoadImages();
   resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// ── Claude Vision API — blade identification (unchanged from v8.38)
-async function analyzeBladeWithClaude(base64, keyways, vehicleContext) {
-  // Compress image before sending — large photos cause API errors
-  var compressedBase64 = await compressImageBase64(base64);
-
-  var prompt = 'You are an automotive locksmith assistant specializing in key blade identification.\n\n' +
-    'Vehicle: ' + vehicleContext + '\nPossible blade types: ' + keyways.join(', ') + '\n\n' +
-    'Analyze this key blade image. Key identifiers by type:\n' +
-    '- High security blades (e.g. HU101, HON66, TOY43-HS): have cuts on both edges or laser-cut sidewinder pattern\n' +
-    '- Standard blades (e.g. H128, H84, HON58R, B111): single-sided cuts, traditional profile\n\n' +
-    'Respond ONLY with valid JSON, no text outside:\n' +
-    '{"matched":true,"keyway":"HU101","description":"High security double-sided sidewinder blade","confidence":"high"}\n' +
-    'OR if unclear: {"matched":false,"unclear":true,"reason":"Image too dark"}';
-  var response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': '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',
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1000,
-      messages: [{ role: 'user', content: [
-        { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: compressedBase64 } },
-        { type: 'text', text: prompt }
-      ]}]
-    })
+function _wireBladeDropzone() {
+  var qualUpload = document.getElementById('ckc-qual-upload');
+  if (!qualUpload) return;
+  qualUpload.addEventListener('dragover', function(e){e.preventDefault();qualUpload.classList.add('dragover');});
+  qualUpload.addEventListener('dragleave', function(){qualUpload.classList.remove('dragover');});
+  qualUpload.addEventListener('drop', function(e){
+    e.preventDefault(); qualUpload.classList.remove('dragover');
+    var file = e.dataTransfer.files[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    var fileInput = document.getElementById('ckc-qual-file'); if (!fileInput) return;
+    var dt = new DataTransfer(); dt.items.add(file); fileInput.files = dt.files;
+    fileInput.dispatchEvent(new Event('change'));
   });
-  if (!response.ok) {
-    var errBody = '';
-    try { var errData = await response.json(); errBody = errData.error ? errData.error.message : JSON.stringify(errData); } catch(e) {}
-    console.error('Anthropic API error', response.status, errBody);
-    throw new Error('API ' + response.status + ': ' + errBody);
-  }
-  var data = await response.json();
-  var text = data.content.map(function(b) { return b.text || ''; }).join('').trim();
-  try {
-    var parsed = JSON.parse(text.replace(/```json|```/g,'').trim());
-    if (parsed.matched && keyways.indexOf(parsed.keyway) === -1) return { matched: false, unclear: true, reason: 'Keyway not in group' };
-    return parsed;
-  } catch(e) {
-    return { matched: false, error: '\u26a0 Could not parse result. Please try again.' };
-  }
 }
 
-// Compress image to max 800px wide, 0.8 JPEG quality before sending to API
+// ══ BLADE ANALYSIS — via Apps Script proxy (v8.47 — no API key in HTML) ══
+async function analyzeBladeWithClaude(base64, keyways, vehicleContext) {
+  var compressedBase64 = await compressImageBase64(base64);
+  var response = await fetch(BLADE_PROXY_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ imageBase64: compressedBase64, keyways: keyways, vehicleContext: vehicleContext })
+  });
+  if (!response.ok) { throw new Error('Proxy ' + response.status); }
+  var parsed = await response.json();
+  if (parsed.error) { throw new Error(parsed.error); }
+  if (parsed.matched && keyways.indexOf(parsed.keyway) === -1) {
+    return { matched: false, unclear: true, reason: 'Keyway not in group' };
+  }
+  return parsed;
+}
+
 function compressImageBase64(base64DataUrl) {
   return new Promise(function(resolve) {
     var img = new Image();
     img.onload = function() {
-      var maxW = 800;
-      var scale = img.width > maxW ? maxW / img.width : 1;
+      var maxW = 800; var scale = img.width > maxW ? maxW / img.width : 1;
       var canvas = document.createElement('canvas');
-      canvas.width = Math.round(img.width * scale);
-      canvas.height = Math.round(img.height * scale);
-      var ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      var compressed = canvas.toDataURL('image/jpeg', 0.82);
-      resolve(compressed.split(',')[1]);
+      canvas.width = Math.round(img.width * scale); canvas.height = Math.round(img.height * scale);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', 0.82).split(',')[1]);
     };
     img.onerror = function() { resolve(base64DataUrl.split(',')[1] || base64DataUrl); };
     img.src = base64DataUrl.startsWith('data:') ? base64DataUrl : 'data:image/jpeg;base64,' + base64DataUrl;
   });
 }
 
-// ══════════════════════════════════════════
-// MAIN SEARCH
-// ══════════════════════════════════════════
-
+// ══ MAIN SEARCH ══
 function searchKeys() {
-  var year = parseInt(document.getElementById('ckc-year').value);
-  var make = document.getElementById('ckc-make').value;
+  var year  = parseInt(document.getElementById('ckc-year').value);
+  var make  = document.getElementById('ckc-make').value;
   var model = document.getElementById('ckc-model').value;
   var resultsDiv = document.getElementById('ckc-results');
 
@@ -1831,14 +1484,11 @@ function searchKeys() {
       !k.sku.toUpperCase().endsWith('AM10');
   });
 
-  lastSearchParams = { year: year, make: make, model: model };
+  lastSearchParams = { year, make, model };
 
   // Reset all state
-  _qualState = { needsBlade: false, needsFCC: false, needsButtons: false, bladeImage: null, bladeResult: null, bladeFailed: false, bladeRetry: 0, fccValue: '', buttonsValue: 0, allQualsDone: false, aklSelected: false, workingKeyAnswered: false, keyTypeAnswer: '', emergencyBladeAnswer: '' };
-  _bladeGroup = [];
-  _fccGroup = [];
-  _buttonsGroup = [];
-  _byType = {};
+  _qualState = { keyTypeAnswer:'', workingKeyAnswered:false, aklSelected:false, emergencyBladeAnswer:'', needsBlade:false, bladeImage:null, bladeResult:null, bladeFailed:false, bladeRetry:0, needsFCC:false, needsButtons:false, fccValue:'', buttonsValue:0, allQualsDone:false };
+  _bladeGroup=[]; _fccGroup=[]; _buttonsGroup=[]; _byType={}; _progToggle={};
 
   var matches = [];
   db.forEach(function(key) {
@@ -1851,11 +1501,11 @@ function searchKeys() {
     if (matched) matches.push(key);
   });
 
-  var typeOrder = { 'Smart Key (FOBIK)': 0, 'Smart Key': 0, 'FOBIK': 1, 'Remote Head Key': 2, 'Remote Flip Key': 3, 'Remote (Keyless Entry)': 4, 'Transponder Key': 5, 'Key Shell': 6 };
-  matches.sort(function(a, b) {
+  var typeOrder = { 'Smart Key (FOBIK)':0,'Smart Key':0,'FOBIK':1,'Remote Head Key':2,'Remote Flip Key':3,'Remote (Keyless Entry)':4,'Transponder Key':5,'Key Shell':6 };
+  matches.sort(function(a,b) {
     if (a.inStock && !b.inStock) return -1;
     if (!a.inStock && b.inStock) return 1;
-    return (typeOrder[a.type] !== undefined ? typeOrder[a.type] : 99) - (typeOrder[b.type] !== undefined ? typeOrder[b.type] : 99);
+    return (typeOrder[a.type]!==undefined?typeOrder[a.type]:99) - (typeOrder[b.type]!==undefined?typeOrder[b.type]:99);
   });
 
   _ckcMatches = matches;
@@ -1866,180 +1516,122 @@ function searchKeys() {
     return;
   }
 
-  // Group by type
-  matches.forEach(function(m) {
-    var t = m.type || 'Key';
-    if (!_byType[t]) _byType[t] = [];
-    _byType[t].push(m);
-  });
+  matches.forEach(function(m) { var t = m.type||'Key'; if(!_byType[t])_byType[t]=[]; _byType[t].push(m); });
 
-  // Scan results and determine what qualifiers are needed (RULE 9)
+  // Build qualifier groups
   matches.forEach(function(k) {
-    if (requiresBlade(k.type)) {
-      // All blade-requiring types go into blade group
-      if (!_bladeGroup.some(function(b) { return b.sku === k.sku; })) _bladeGroup.push(k);
-    }
+    if (requiresBlade(k.type)) { if (!_bladeGroup.some(function(b){return b.sku===k.sku;})) _bladeGroup.push(k); }
   });
-
-  // Remote (Keyless Entry) — check for FCC and button conflicts
   var remoteGroup = _byType['Remote (Keyless Entry)'] || [];
   if (remoteGroup.length > 1) {
-    if (detectFCCConflict(remoteGroup)) { _fccGroup = remoteGroup; }
-    if (detectButtonConflict(remoteGroup)) { _buttonsGroup = remoteGroup; }
+    if (detectFCCConflict(remoteGroup))    _fccGroup     = remoteGroup;
+    if (detectButtonConflict(remoteGroup)) _buttonsGroup = remoteGroup;
   }
 
-  _qualState.needsBlade = _bladeGroup.length > 0;
-  _qualState.needsFCC = _fccGroup.length > 0;
+  _qualState.needsBlade   = _bladeGroup.length > 0;
+  _qualState.needsFCC     = _fccGroup.length > 0;
   _qualState.needsButtons = _buttonsGroup.length > 0;
 
   var needsAnyQual = _qualState.needsBlade || _qualState.needsFCC || _qualState.needsButtons;
 
   if (needsAnyQual) {
-    // Show qualifier panel, then placeholder for cards
-    resultsDiv.innerHTML =
-      buildQualifierPanel(_qualState.needsBlade, _qualState.needsFCC, _qualState.needsButtons, _bladeGroup, _fccGroup, _buttonsGroup) +
-      '<div id="ckc-cards-container"></div>';
-
-    // Wire up drag-and-drop on blade upload area
-    var qualUpload = document.getElementById('ckc-qual-upload');
-    if (qualUpload) {
-      qualUpload.addEventListener('dragover', function(e) { e.preventDefault(); qualUpload.classList.add('dragover'); });
-      qualUpload.addEventListener('dragleave', function() { qualUpload.classList.remove('dragover'); });
-      qualUpload.addEventListener('drop', function(e) {
-        e.preventDefault(); qualUpload.classList.remove('dragover');
-        var file = e.dataTransfer.files[0];
-        if (!file || !file.type.startsWith('image/')) return;
-        var fileInput = document.getElementById('ckc-qual-file');
-        if (!fileInput) return;
-        var dt = new DataTransfer(); dt.items.add(file); fileInput.files = dt.files;
-        fileInput.dispatchEvent(new Event('change'));
-      });
-    }
+    resultsDiv.innerHTML = buildQualifierPanel() + '<div id="ckc-cards-container"></div>';
+    _wireBladeDropzone();
   } else {
-    // No qualifiers needed — render cards immediately
     _qualState.allQualsDone = true;
     resultsDiv.innerHTML = '<div id="ckc-cards-container"></div>';
     renderCards();
   }
-
   resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 async function lazyLoadImages() {
   var els = document.querySelectorAll('.ckc-key-img-loading');
   for (var i = 0; i < els.length; i++) {
-    var el = els[i];
-    var sku = el.dataset.sku;
-    var handle = el.dataset.handle;
+    var el = els[i]; var sku = el.dataset.sku; var handle = el.dataset.handle;
     if (!sku) continue;
     try {
       var url = await tryFetchRKSImage(handle, sku);
-      if (url) {
-        el.outerHTML = '<img src="' + url + '" alt="Key" class="ckc-key-img" onerror="this.outerHTML=\'<div class=\\\'ckc-key-img-placeholder\\\'>🔑</div>\'">';
-      } else {
-        el.outerHTML = '<div class="ckc-key-img-placeholder">🔑</div>';
-      }
-    } catch(e) {
-      el.outerHTML = '<div class="ckc-key-img-placeholder">🔑</div>';
-    }
+      if (url) { el.outerHTML = '<img src="'+url+'" alt="Key" class="ckc-key-img" onerror="this.outerHTML=\'<div class=\\\'ckc-key-img-placeholder\\\'>🔑</div>\'">'; }
+      else { el.outerHTML = '<div class="ckc-key-img-placeholder">🔑</div>'; }
+    } catch(e) { el.outerHTML = '<div class="ckc-key-img-placeholder">🔑</div>'; }
   }
 }
 
-// v8.40: Reads programming toggle state for the selected key before opening checkout
+// ══ CHECKOUT ══
 function openCheckout(keyIndex) {
   selectedKey = _ckcMatches[keyIndex];
   var sku = selectedKey ? selectedKey.sku : null;
-  // Default to 'full' if toggle not yet interacted with (RULE 11)
   selectedKey._progMode = (sku && _progToggle[sku]) ? _progToggle[sku] : 'full';
   renderCheckout();
 }
-
 function renderCheckout() {
-  var k = selectedKey;
-  var keyPrice = getDisplayPrice(k);
-  var progMode = k._progMode || 'full';
-  var isKeyOnly = progMode === 'keyonly';
+  var k = selectedKey; var keyPrice = getDisplayPrice(k); var isKeyOnly = k._progMode === 'keyonly';
   var total = isKeyOnly ? keyPrice : keyPrice + PROGRAMMING_FEE;
   var resultsDiv = document.getElementById('ckc-results');
-  var stockLabel = k.status === 'active' ? '\u2705 In Stock \u2014 Same Day' : '\ud83d\udce6 Available for Order (2-3 Days)';
-
-  var progLine = isKeyOnly
-    ? ''
-    : '<div class="ckc-checkout-line"><span class="ckc-checkout-line-label">\ud83d\udd27 Mobile Key Programming & Cutting<br><small style="color:var(--ckc-text-muted)">We come to you \u2014 includes key cutting + programming</small></span><span class="ckc-checkout-line-price">$' + PROGRAMMING_FEE + '.00</span></div>';
-
+  var stockLabel = k.inStock ? '\u2705 In Stock' : '\uD83D\uDCE6 Ships in 2-3 days';
+  var progLine = isKeyOnly ? '' :
+    '<div class="ckc-checkout-line"><span class="ckc-checkout-line-label">\uD83D\uDD27 Mobile Key Programming &amp; Cutting<br><small style="color:var(--ckc-text-muted)">We come to you \u2014 includes key cutting + programming</small></span><span class="ckc-checkout-line-price">$'+PROGRAMMING_FEE+'.00</span></div>';
   var progDisclaimer = isKeyOnly
-    ? '<div style="background:rgba(201,162,39,0.08);border:1px solid rgba(201,162,39,0.25);border-radius:8px;padding:14px 16px;margin:14px 0;font-size:0.88rem;color:#b8a060;line-height:1.5;">\ud83d\udd11 <strong style="color:var(--ckc-gold);">Key only order.</strong> You\'ve selected to handle programming yourself. We\'ll ship your key — no service call included.</div>'
-    : '<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:14px 16px;margin:14px 0;font-size:0.88rem;color:#d4a054;line-height:1.5;">\u26a0\ufe0f <strong style="color:#f59e0b;">Pricing Notice:</strong> The $' + PROGRAMMING_FEE + ' service call fee covers add-a-key programming when you have a working key. All keys lost (AKL), EEPROM, or module programming may require additional cost. We will confirm your exact total before any work begins \u2014 no surprises.</div>';
-
-  resultsDiv.innerHTML = '<div class="ckc-checkout-panel"><h3>\ud83d\uded2 Your Order</h3>' +
-    '<div class="ckc-checkout-line"><span class="ckc-checkout-line-label">' + k.title + '<br><small style="color:var(--ckc-text-muted)">' + k.type + ' \u00b7 ' + stockLabel + '</small></span><span class="ckc-checkout-line-price">$' + keyPrice.toFixed(2) + '</span></div>' +
+    ? '<div style="background:rgba(201,162,39,0.08);border:1px solid rgba(201,162,39,0.25);border-radius:8px;padding:14px 16px;margin:14px 0;font-size:0.88rem;color:#b8a060;line-height:1.5;">\uD83D\uDD11 <strong style="color:var(--ckc-gold);">Key only order.</strong> You\'ve selected to handle programming yourself. We\'ll ship your key \u2014 no service call included.</div>'
+    : '<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:14px 16px;margin:14px 0;font-size:0.88rem;color:#d4a054;line-height:1.5;">\u26a0\uFE0F <strong style="color:#f59e0b;">Pricing Notice:</strong> The $'+PROGRAMMING_FEE+' service call fee covers add-a-key programming when you have a working key. All keys lost (AKL), EEPROM, or module programming may require additional cost. We will confirm your exact total before any work begins \u2014 no surprises.</div>';
+  resultsDiv.innerHTML = '<div class="ckc-checkout-panel"><h3>\uD83D\uDED2 Your Order</h3>' +
+    '<div class="ckc-checkout-line"><span class="ckc-checkout-line-label">'+k.title+'<br><small style="color:var(--ckc-text-muted)">'+k.type+' \u00b7 '+stockLabel+'</small></span><span class="ckc-checkout-line-price">$'+keyPrice.toFixed(2)+'</span></div>' +
     progLine + progDisclaimer +
-    '<div class="ckc-checkout-total"><span class="ckc-checkout-total-label">Total</span><span class="ckc-checkout-total-price">$' + total.toFixed(2) + '</span></div>' +
+    '<div class="ckc-checkout-total"><span class="ckc-checkout-total-label">Total</span><span class="ckc-checkout-total-price">$'+total.toFixed(2)+'</span></div>' +
     '<div class="ckc-checkout-tax">+ NC sales tax calculated at checkout</div>' +
     '<div style="font-size:0.85rem;color:var(--ckc-text-muted);text-align:center;margin-bottom:14px;">Service available in the Triad, NC area</div>' +
     '<button class="ckc-checkout-btn" id="ckc-checkout-btn" onclick="startShopifyCheckout()">Proceed to Checkout \u2192</button>' +
     '<button class="ckc-back-btn" onclick="backToResults()">\u2190 Back to results</button></div>';
   resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
-
 function backToResults() { selectedKey = null; searchKeys(); }
-
 async function startShopifyCheckout() {
   var btn = document.getElementById('ckc-checkout-btn');
-  btn.disabled = true;
-  btn.textContent = 'Opening checkout...';
+  btn.disabled = true; btn.textContent = 'Opening checkout...';
   try {
-    var k = selectedKey;
-    var isKeyOnly = (k._progMode === 'keyonly');
-    var handle = (k.handle || k.sku || '').toLowerCase().replace(/[^a-z0-9]+/g,'-');
-    var PROGRAMMING_VARIANT = '45908511228101';
+    var k = selectedKey; var isKeyOnly = k._progMode === 'keyonly';
+    var handle = (k.handle||k.sku||'').toLowerCase().replace(/[^a-z0-9]+/g,'-');
     var vehicleNote = 'Vehicle: ' + lastSearchParams.year + ' ' + lastSearchParams.make + ' ' + lastSearchParams.model;
-    // v8.40: Append key-only note to cart so order is flagged correctly (RULE 11)
-    if (isKeyOnly) vehicleNote += ' | Key only — customer handling programming';
+    if (isKeyOnly) vehicleNote += ' | Key only \u2014 customer handling programming';
     var shopifyUrl;
     try {
-      var prodJson = await fetch('https://' + SHOPIFY_DOMAIN + '/products/' + handle + '.json');
+      var prodJson = await fetch('https://'+SHOPIFY_DOMAIN+'/products/'+handle+'.json');
       var prodData = await prodJson.json();
       var keyVariantId = prodData.product.variants[0].id;
-      // v8.40: Key-only orders do NOT include the programming variant in cart
-      var cartItems = isKeyOnly
-        ? keyVariantId + ':1'
-        : keyVariantId + ':1,' + PROGRAMMING_VARIANT + ':1';
-      shopifyUrl = 'https://' + SHOPIFY_DOMAIN + '/cart/' + cartItems + '?note=' + encodeURIComponent(vehicleNote);
+      var cartItems = isKeyOnly ? keyVariantId+':1' : keyVariantId+':1,'+PROGRAMMING_VARIANT+':1';
+      shopifyUrl = 'https://'+SHOPIFY_DOMAIN+'/cart/'+cartItems+'?note='+encodeURIComponent(vehicleNote);
     } catch(e) {
-      shopifyUrl = 'https://' + SHOPIFY_DOMAIN + '/products/' + handle + '?note=' + encodeURIComponent(vehicleNote);
+      shopifyUrl = 'https://'+SHOPIFY_DOMAIN+'/products/'+handle+'?note='+encodeURIComponent(vehicleNote);
     }
     window.open(shopifyUrl, '_blank');
     showPostPurchase();
   } catch(err) {
-    btn.disabled = false;
-    btn.textContent = 'Proceed to Secure Checkout \u2192';
+    btn.disabled = false; btn.textContent = 'Proceed to Secure Checkout \u2192';
     alert('Unable to open checkout. Please call us at (336) 510-9816 to order.');
   }
 }
-
 function showPostPurchase() {
   var resultsDiv = document.getElementById('ckc-results');
-  resultsDiv.innerHTML = '<div class="ckc-post-purchase"><div class="ckc-post-purchase-icon">\u2705</div><h3>Order Started!</h3><p>Complete your payment in the checkout tab that just opened.</p><div style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);border-radius:10px;padding:16px 20px;margin:16px auto;max-width:480px;font-size:0.95rem;color:var(--ckc-text-muted);line-height:1.6;text-align:left;">\u2714 We\'ll review your vehicle details and <strong style="color:var(--ckc-text);">confirm your exact programming cost</strong> before your appointment. If additional work is needed beyond standard OBD programming, we\'ll let you know upfront \u2014 no surprises.</div><div class="ckc-email-neon"><div class="ckc-email-neon-inner"><div class="ckc-email-neon-icon">\ud83d\udcc5</div><div class="ckc-email-neon-title">BOOK YOUR APPOINTMENT AFTER CHECKOUT</div><div class="ckc-email-neon-desc">After completing payment, you\'ll see a<br><strong>"Schedule My Appointment"</strong> button on the confirmation page.<br>Click it to choose your date and time!</div><div class="ckc-email-neon-arrow">\u2193 Complete checkout first, then book your appointment \u2193</div></div></div><button class="ckc-new-search-btn" onclick="resetFinder()">Search for another key</button></div>';
+  resultsDiv.innerHTML = '<div class="ckc-post-purchase"><div class="ckc-post-purchase-icon">\u2705</div><h3>Order Started!</h3><p>Complete your payment in the checkout tab that just opened.</p>' +
+    '<div style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);border-radius:10px;padding:16px 20px;margin:16px auto;max-width:480px;font-size:0.95rem;color:var(--ckc-text-muted);line-height:1.6;text-align:left;">\u2714 We\'ll review your vehicle details and <strong style="color:var(--ckc-text);">confirm your exact programming cost</strong> before your appointment. If additional work is needed beyond standard OBD programming, we\'ll let you know upfront \u2014 no surprises.</div>' +
+    '<div class="ckc-email-neon"><div class="ckc-email-neon-inner"><div class="ckc-email-neon-icon">\uD83D\uDCC5</div><div class="ckc-email-neon-title">BOOK YOUR APPOINTMENT AFTER CHECKOUT</div>' +
+    '<div class="ckc-email-neon-desc">After completing payment, you\'ll see a<br><strong>"Schedule My Appointment"</strong> button on the confirmation page.<br>Click it to choose your date and time!</div>' +
+    '<div class="ckc-email-neon-arrow">\u2193 Complete checkout first, then book your appointment \u2193</div></div></div>' +
+    '<button class="ckc-new-search-btn" onclick="resetFinder()">Search for another key</button></div>';
 }
-
 function resetFinder() {
-  selectedKey = null;
-  lastSearchParams = {};
-  _ckcMatches = [];
-  _progToggle = {};
-  _customerVIN = '';
-  _cfqCardData = {};
-  _qualState = { needsBlade: false, needsFCC: false, needsButtons: false, bladeImage: null, bladeResult: null, bladeFailed: false, bladeRetry: 0, fccValue: '', buttonsValue: 0, allQualsDone: false, aklSelected: false, workingKeyAnswered: false, keyTypeAnswer: '', emergencyBladeAnswer: '' };
-  _bladeGroup = []; _fccGroup = []; _buttonsGroup = []; _byType = {};
+  selectedKey=null; lastSearchParams={}; _ckcMatches=[]; _progToggle={}; _customerVIN=''; _cfqCardData={};
+  _qualState={keyTypeAnswer:'',workingKeyAnswered:false,aklSelected:false,emergencyBladeAnswer:'',needsBlade:false,bladeImage:null,bladeResult:null,bladeFailed:false,bladeRetry:0,needsFCC:false,needsButtons:false,fccValue:'',buttonsValue:0,allQualsDone:false};
+  _bladeGroup=[]; _fccGroup=[]; _buttonsGroup=[]; _byType={};
   var resultsDiv = document.getElementById('ckc-results');
-  resultsDiv.innerHTML = ''; resultsDiv.classList.remove('active');
-  document.getElementById('ckc-year').value = '';
-  document.getElementById('ckc-make').innerHTML = '<option value="">Select Make</option>';
-  document.getElementById('ckc-model').innerHTML = '<option value="">Select Model</option>';
-  document.getElementById('ckc-make').disabled = true;
-  document.getElementById('ckc-model').disabled = true;
-  document.getElementById('ckc-search-btn').disabled = true;
+  resultsDiv.innerHTML=''; resultsDiv.classList.remove('active');
+  document.getElementById('ckc-year').value='';
+  document.getElementById('ckc-make').innerHTML='<option value="">Select Make</option>';
+  document.getElementById('ckc-model').innerHTML='<option value="">Select Model</option>';
+  document.getElementById('ckc-make').disabled=true;
+  document.getElementById('ckc-model').disabled=true;
+  document.getElementById('ckc-search-btn').disabled=true;
   if (!isLive) syncFromSheet();
 }
 
