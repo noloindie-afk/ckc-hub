@@ -329,7 +329,7 @@ const SHOPIFY_DOMAIN       = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL          = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
 const PROGRAMMING_VARIANT  = '45908511228101';
 const INTERNAL_TOOL_URL    = 'https://carolinakeycutters.com/tools';
-const CKC_VERSION          = 'v8.58';
+const CKC_VERSION          = 'v8.59';
 
 var liveCatalog    = [];
 var isLive         = false;
@@ -366,7 +366,7 @@ var _progToggle   = {};
 // ══ KEY TYPE HELPERS ══
 function requiresBlade(keyType) {
   var t = (keyType || '').toLowerCase();
-  return t === 'remote head key' || t === 'remote flip key' || t === 'transponder key';
+  return t === 'remote head key' || t === 'remote flip key' || t === 'transponder key' || t === 'flip';
 }
 function isSmartKeyType(keyType) {
   var t = (keyType || '').toLowerCase();
@@ -668,15 +668,102 @@ function getAllFCCs(group) {
 
 // ══ KEY TYPE CATEGORY DETECTION ══
 function detectKeyTypeCategories() {
-  var hasTransponder = false, hasRHK = false, hasSmart = false, hasRemote = false;
+  var hasTransponder = false, hasRHK = false, hasSmart = false, hasRemote = false, hasFlip = false;
   _ckcMatches.forEach(function(k) {
     var t = (k.type || '').toLowerCase();
     if (t === 'transponder key')               hasTransponder = true;
-    else if (t === 'remote head key' || t === 'remote flip key') hasRHK = true;
+    else if (t === 'remote head key')          hasRHK = true;
+    else if (t === 'remote flip key')          hasFlip = true;
     else if (isSmartKeyType(k.type))           hasSmart = true;
     else if (t === 'remote (keyless entry)')   hasRemote = true;
   });
-  return { hasTransponder, hasRHK, hasSmart, hasRemote };
+  return { hasTransponder, hasRHK, hasSmart, hasRemote, hasFlip };
+}
+
+// ══ KEY ILLUSTRATIONS ══
+function _svgTransponder() {
+  return '<svg viewBox="0 0 90 110" width="90" height="110" style="display:block;margin:0 auto 8px;">' +
+    '<rect x="28" y="8" width="34" height="32" rx="8" fill="#2a2a2a" stroke="#555" stroke-width="1"/>' +
+    '<rect x="37" y="11" width="16" height="7" rx="3" fill="none" stroke="#666" stroke-width="1.2"/>' +
+    '<rect x="33" y="38" width="24" height="52" rx="2" fill="#c0c0c0" stroke="#999" stroke-width="0.8"/>' +
+    '<rect x="57" y="44" width="6" height="6" rx="1" fill="#d8d8d8" stroke="#aaa" stroke-width="0.6"/>' +
+    '<rect x="57" y="54" width="5" height="6" rx="1" fill="#d8d8d8" stroke="#aaa" stroke-width="0.6"/>' +
+    '<rect x="57" y="64" width="6" height="6" rx="1" fill="#d8d8d8" stroke="#aaa" stroke-width="0.6"/>' +
+    '<rect x="57" y="74" width="5" height="6" rx="1" fill="#d8d8d8" stroke="#aaa" stroke-width="0.6"/>' +
+    '<polygon points="33,90 57,90 45,100" fill="#c0c0c0" stroke="#999" stroke-width="0.8"/>' +
+    '</svg>';
+}
+function _svgRHK() {
+  return '<svg viewBox="0 0 90 120" width="90" height="120" style="display:block;margin:0 auto 8px;">' +
+    '<rect x="37" y="4" width="16" height="40" rx="2" fill="#c0c0c0" stroke="#999" stroke-width="0.8"/>' +
+    '<rect x="53" y="10" width="5" height="5" rx="1" fill="#d8d8d8" stroke="#aaa" stroke-width="0.6"/>' +
+    '<rect x="53" y="19" width="4" height="5" rx="1" fill="#d8d8d8" stroke="#aaa" stroke-width="0.6"/>' +
+    '<rect x="53" y="28" width="5" height="5" rx="1" fill="#d8d8d8" stroke="#aaa" stroke-width="0.6"/>' +
+    '<path d="M18,44 Q16,44 15,48 L13,90 Q13,98 22,101 L68,101 Q77,98 77,90 L75,48 Q74,44 72,44 Z" fill="#1a1a1a" stroke="#444" stroke-width="1"/>' +
+    '<rect x="20" y="52" width="22" height="14" rx="4" fill="#2d2d2d" stroke="#555" stroke-width="0.8"/>' +
+    '<rect x="48" y="52" width="22" height="14" rx="4" fill="#2d2d2d" stroke="#555" stroke-width="0.8"/>' +
+    '<rect x="20" y="70" width="22" height="14" rx="4" fill="#2d2d2d" stroke="#555" stroke-width="0.8"/>' +
+    '<rect x="48" y="70" width="22" height="14" rx="4" fill="#2d2d2d" stroke="#555" stroke-width="0.8"/>' +
+    '<rect x="28" y="88" width="34" height="10" rx="3" fill="#c0392b" stroke="#922b21" stroke-width="0.8"/>' +
+    '</svg>';
+}
+function _svgSmartKey() {
+  return '<svg viewBox="0 0 90 120" width="90" height="120" style="display:block;margin:0 auto 8px;">' +
+    '<rect x="18" y="8" width="54" height="86" rx="16" fill="#1a1a1a" stroke="#888" stroke-width="2"/>' +
+    '<rect x="18" y="8" width="54" height="86" rx="16" fill="none" stroke="#555" stroke-width="1" opacity="0.6"/>' +
+    '<rect x="26" y="18" width="38" height="10" rx="3" fill="#2d2d2d" stroke="#555" stroke-width="0.8"/>' +
+    '<rect x="26" y="32" width="38" height="10" rx="3" fill="#2d2d2d" stroke="#555" stroke-width="0.8"/>' +
+    '<rect x="26" y="46" width="38" height="10" rx="3" fill="#2d2d2d" stroke="#555" stroke-width="0.8"/>' +
+    '<rect x="26" y="60" width="38" height="10" rx="3" fill="#c0392b" stroke="#922b21" stroke-width="0.8"/>' +
+    '<rect x="34" y="88" width="22" height="5" rx="2" fill="#444" stroke="#666" stroke-width="0.8"/>' +
+    '<rect x="36" y="96" width="18" height="7" rx="3" fill="none" stroke="#666" stroke-width="1"/>' +
+    '</svg>';
+}
+function _svgRemote() {
+  return '<svg viewBox="0 0 90 110" width="90" height="110" style="display:block;margin:0 auto 8px;">' +
+    '<path d="M45,8 Q68,8 70,30 L70,78 Q70,96 45,98 Q20,96 20,78 L20,30 Q22,8 45,8 Z" fill="#1a1a1a" stroke="#444" stroke-width="1"/>' +
+    '<circle cx="33" cy="36" r="11" fill="#2d2d2d" stroke="#555" stroke-width="0.8"/>' +
+    '<circle cx="33" cy="36" r="6" fill="none" stroke="#666" stroke-width="1"/>' +
+    '<circle cx="57" cy="36" r="11" fill="#2d2d2d" stroke="#555" stroke-width="0.8"/>' +
+    '<circle cx="57" cy="36" r="6" fill="none" stroke="#666" stroke-width="1"/>' +
+    '<circle cx="33" cy="62" r="11" fill="#c0392b" stroke="#922b21" stroke-width="0.8"/>' +
+    '<circle cx="57" cy="62" r="11" fill="#2d2d2d" stroke="#555" stroke-width="0.8"/>' +
+    '<circle cx="57" cy="62" r="6" fill="none" stroke="#666" stroke-width="1"/>' +
+    '<rect x="38" y="80" width="14" height="10" rx="5" fill="none" stroke="#666" stroke-width="1.2"/>' +
+    '</svg>';
+}
+function _svgFlipKey() {
+  return '<svg viewBox="0 0 90 130" width="90" height="130" style="display:block;margin:0 auto 8px;">' +
+    '<rect x="20" y="6" width="50" height="86" rx="10" fill="#1a1a1a" stroke="#444" stroke-width="1"/>' +
+    '<rect x="20" y="82" width="50" height="10" rx="5" fill="#888" stroke="#bbb" stroke-width="0.8"/>' +
+    '<rect x="27" y="13" width="17" height="15" rx="3" fill="#2d2d2d" stroke="#555" stroke-width="0.8"/>' +
+    '<circle cx="35" cy="20" r="5" fill="none" stroke="#666" stroke-width="1"/>' +
+    '<rect x="46" y="13" width="17" height="15" rx="3" fill="#2d2d2d" stroke="#555" stroke-width="0.8"/>' +
+    '<circle cx="54" cy="20" r="5" fill="none" stroke="#666" stroke-width="1"/>' +
+    '<rect x="27" y="32" width="17" height="15" rx="3" fill="#2d2d2d" stroke="#555" stroke-width="0.8"/>' +
+    '<circle cx="35" cy="39" r="5" fill="none" stroke="#666" stroke-width="1"/>' +
+    '<rect x="46" y="32" width="17" height="15" rx="3" fill="#2d2d2d" stroke="#555" stroke-width="0.8"/>' +
+    '<circle cx="54" cy="39" r="5" fill="none" stroke="#666" stroke-width="1"/>' +
+    '<rect x="27" y="51" width="17" height="15" rx="3" fill="#2d2d2d" stroke="#555" stroke-width="0.8"/>' +
+    '<circle cx="35" cy="58" r="5" fill="none" stroke="#666" stroke-width="1"/>' +
+    '<rect x="46" y="51" width="17" height="15" rx="3" fill="#2d2d2d" stroke="#555" stroke-width="0.8"/>' +
+    '<circle cx="54" cy="58" r="5" fill="none" stroke="#666" stroke-width="1"/>' +
+    '<rect x="31" y="68" width="28" height="10" rx="3" fill="#c0392b" stroke="#922b21" stroke-width="0.8"/>' +
+    '<g transform="rotate(-38,45,92)">' +
+    '<rect x="38" y="92" width="14" height="38" rx="2" fill="#c0c0c0" stroke="#999" stroke-width="0.8"/>' +
+    '<rect x="52" y="98" width="4" height="4" rx="1" fill="#d8d8d8" stroke="#aaa" stroke-width="0.6"/>' +
+    '<rect x="52" y="106" width="3" height="4" rx="1" fill="#d8d8d8" stroke="#aaa" stroke-width="0.6"/>' +
+    '<polygon points="38,130 52,130 45,136" fill="#c0c0c0" stroke="#999" stroke-width="0.8"/>' +
+    '</g>' +
+    '</svg>';
+}
+
+function _illustratedOpt(id, onclick, label, sublabel, svgHTML) {
+  return '<div id="' + id + '-opt" onclick="' + onclick + '" style="border:1px solid var(--ckc-border);border-radius:10px;padding:14px 10px;cursor:pointer;transition:all 0.15s;text-align:center;background:transparent;" onmouseover="this.style.borderColor='rgba(201,162,39,0.5)';this.style.background='rgba(201,162,39,0.04)'" onmouseout="if(!this.classList.contains('ckc-illopt-sel')){this.style.borderColor='var(--ckc-border)';this.style.background='transparent'}">' +
+    svgHTML +
+    '<div style="font-size:0.88rem;font-weight:700;color:var(--ckc-text);margin-bottom:4px;">' + label + '</div>' +
+    '<div style="font-size:0.75rem;color:var(--ckc-text-muted);line-height:1.4;">' + sublabel + '</div>' +
+    '</div>';
 }
 
 // ══════════════════════════════════════════
@@ -684,21 +771,23 @@ function detectKeyTypeCategories() {
 // ══════════════════════════════════════════
 function buildQualifierPanel() {
   var cats = detectKeyTypeCategories();
-  var typeCount = (cats.hasTransponder?1:0) + (cats.hasRHK?1:0) + (cats.hasSmart?1:0) + (cats.hasRemote?1:0);
+  var typeCount = (cats.hasTransponder?1:0) + (cats.hasRHK?1:0) + (cats.hasSmart?1:0) + (cats.hasRemote?1:0) + (cats.hasFlip?1:0);
   var needsQ1   = typeCount > 1;
 
   var q1HTML = '';
   if (needsQ1) {
     var q1Opts = '';
-    if (cats.hasTransponder) q1Opts += _radioOpt('ckc-kt-transponder', 'onQ1KeyType(\'transponder\')', '\uD83D\uDD11 Transponder Key', 'Standard metal key with a chip — insert into ignition', false);
-    if (cats.hasRHK)         q1Opts += _radioOpt('ckc-kt-rhk',         'onQ1KeyType(\'rhk\')',         '\uD83D\uDD11\uD83D\uDCE1 Remote Head Key', 'Blade + remote buttons built into one unit', false);
-    if (cats.hasSmart)       q1Opts += _radioOpt('ckc-kt-smart',       'onQ1KeyType(\'smart\')',       '\uD83D\uDCF1 Smart Key / Push-button start', 'A fob I keep in my pocket — no blade to insert', false);
-    if (cats.hasRemote)      q1Opts += _radioOpt('ckc-kt-remote',      'onQ1KeyType(\'remote\')',      '\uD83D\uDCE1 Remote / Key fob only', 'Keyless entry remote — no blade', false);
-    q1Opts += _radioOpt('ckc-kt-notlisted', 'onQ1KeyType(\'notlisted\')', '\u2753 My key type isn\'t listed', 'Not sure or none of the above match', false);
+    if (cats.hasTransponder) q1Opts += _illustratedOpt('ckc-kt-transponder', 'onQ1KeyType(\'transponder\')', 'Transponder Key', 'Black plastic head, chip inside', _svgTransponder());
+    if (cats.hasRHK)         q1Opts += _illustratedOpt('ckc-kt-rhk',         'onQ1KeyType(\'rhk\')',         'Remote Head Key', 'Blade on top, buttons below', _svgRHK());
+    if (cats.hasSmart)       q1Opts += _illustratedOpt('ckc-kt-smart',       'onQ1KeyType(\'smart\')',       'Smart Key', 'Push-to-start pocket fob', _svgSmartKey());
+    if (cats.hasRemote)      q1Opts += _illustratedOpt('ckc-kt-remote',      'onQ1KeyType(\'remote\')',      'Remote / Keyless Entry', 'Lock\/unlock only, no blade', _svgRemote());
+    if (cats.hasFlip)        q1Opts += _illustratedOpt('ckc-kt-flip',        'onQ1KeyType(\'flip\')',        'Flip Key', 'Blade folds out of fob', _svgFlipKey());
     q1HTML = '<div class="ckc-qualifier-section" id="ckc-qual-q1-section">' +
       '<div class="ckc-qualifier-section-label">\uD83D\uDD0D What are you looking for?</div>' +
-      '<p style="font-size:0.88rem;color:var(--ckc-text-muted);margin-bottom:14px;">Select the option that matches what you need.</p>' +
-      q1Opts + '</div>';
+      '<p style="font-size:0.88rem;color:var(--ckc-text-muted);margin-bottom:14px;">Select the option that best matches your key.</p>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:12px;">' + q1Opts + '</div>' +
+      _radioOpt('ckc-kt-notlisted', 'onQ1KeyType(\'notlisted\')', '\u2753 Not sure / my key type isn\'t listed', 'We\'ll help you identify it when we arrive', false) +
+      '</div>';
   }
 
   var q2HTML = '<div class="ckc-qualifier-section" id="ckc-qual-q2-section"' + (needsQ1 ? ' style="display:none;"' : '') + '>' +
@@ -782,10 +871,28 @@ function _selectRadio(id, selected) {
   else { opt.classList.remove('selected'); }
 }
 function _deselectRadioGroup(ids) { ids.forEach(function(id){ _selectRadio(id, false); }); }
+function _deselectIllustratedGroup(ids) {
+  ids.forEach(function(id) {
+    var el = document.getElementById(id + '-opt');
+    if (!el) return;
+    el.classList.remove('ckc-illopt-sel');
+    el.style.borderColor = 'var(--ckc-border)';
+    el.style.background = 'transparent';
+  });
+}
+function _selectIllustrated(id) {
+  var el = document.getElementById(id + '-opt');
+  if (!el) return;
+  el.classList.add('ckc-illopt-sel');
+  el.style.borderColor = 'var(--ckc-gold)';
+  el.style.background = 'rgba(201,162,39,0.08)';
+}
 
 function onQ1KeyType(type) {
   _qualState.keyTypeAnswer = type;
-  _deselectRadioGroup(['ckc-kt-transponder','ckc-kt-rhk','ckc-kt-smart','ckc-kt-remote','ckc-kt-notlisted']);
+  _deselectRadioGroup(['ckc-kt-transponder','ckc-kt-rhk','ckc-kt-smart','ckc-kt-remote','ckc-kt-flip','ckc-kt-notlisted']);
+  _deselectIllustratedGroup(['ckc-kt-transponder','ckc-kt-rhk','ckc-kt-smart','ckc-kt-remote','ckc-kt-flip']);
+  _selectIllustrated('ckc-kt-' + type);
   _selectRadio('ckc-kt-' + type, true);
   _qualState.workingKeyAnswered = false;
   _qualState.aklSelected = false;
@@ -945,7 +1052,7 @@ function checkQualReady() {
 
   var type = _qualState.keyTypeAnswer;
   var cats = detectKeyTypeCategories();
-  var needsQ1 = (( (cats.hasTransponder?1:0)+(cats.hasRHK?1:0)+(cats.hasSmart?1:0)+(cats.hasRemote?1:0) ) > 1);
+  var needsQ1 = (( (cats.hasTransponder?1:0)+(cats.hasRHK?1:0)+(cats.hasSmart?1:0)+(cats.hasRemote?1:0)+(cats.hasFlip?1:0) ) > 1);
 
   if (needsQ1 && !type) {
     btn.disabled = true; statusEl.className = 'ckc-qualifier-status';
