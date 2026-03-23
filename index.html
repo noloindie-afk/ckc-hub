@@ -1,6 +1,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ═══ CKC KEY FINDER v8.47 ═══ */
+/* ═══ CKC KEY FINDER v8.55 ═══ */
 .ckc-finder {
   --ckc-gold: #c9a227;
   --ckc-gold-light: #e0c458;
@@ -313,69 +313,23 @@
 
 <script>
 // ════════════════════════════════════════
-// CKC KEY FINDER v8.47
+// CKC KEY FINDER v8.55
 // ════════════════════════════════════════
-// BUSINESS RULES — SOURCE OF TRUTH
-//
-// RULE 1:  Remote Head Key — ALWAYS requires blade identification.
-//          Blade type is ALWAYS ambiguous. Asked upfront — matching
-//          card unlocked, others greyed.
-//
-// RULE 2:  Transponder Key — ALWAYS requires blade identification.
-//          Keyway ALWAYS required to cut correctly.
-//
-// RULE 3:  Remote (Keyless Entry) — FCC qualifier upfront if FCC
-//          conflict; button count upfront if conflict; both if both.
-//
-// RULE 4:  Smart Key / FOBIK / Premium Smart Key — always CFQ.
-//          Never Buy Now. Emergency blade path identified via Q3,
-//          blade photo taken, card still routes to CFQ.
-//
-// RULE 5:  inStock = Vendor field === 'CKC' only.
-//
-// RULE 6:  buttonCount from catalog Buttons column directly.
-//          N/A → 0.
-//
-// RULE 7:  Excluded: KEY BLADE, 'universal', 'pack of', AUT-,
-//          IKEY prefix, AM10 suffix.
-//
-// RULE 8:  CFQ triggered by Type only — Smart Key, Smart Key
-//          (FOBIK), Premium Smart Key, FOBIK. Never by conflicts.
-//
-// RULE 9:  All qualifiers asked ONCE upfront. Answers cascade
-//          across all cards. No per-card resolvers.
-//
-// RULE 10: Blade resolver — match unlocks Buy Now for that card,
-//          others greyed. 2 failed attempts → all cards CFQ.
-//
-// RULE 11: Every unlocked Buy Now card has programming toggle.
-//          Default: includes programming ($65). Key only removes
-//          $65 and appends cart note.
-//
-// RULE 12: Working key gate fires first, before all other questions.
-//          Only fires when _bladeGroup or _fccGroup/_buttonsGroup
-//          has cards. Yes → show Q1 (key type). No → all CFQ.
-//
-// RULE 13: Every CFQ card shows VIN reminder. CFQ button opens VIN
-//          modal — mandatory 17-char, NHTSA-verified. On submit:
-//          call placed + internal tool URL shown on card.
-//
-// RULE 14: Q1 = "What are you looking for?" — key type selection.
-//          Options built dynamically from YMM catalog results.
-//          Only types present in results are shown. Always includes
-//          "My key type isn't listed." as last option.
-//          Q2 = working key gate (Yes/No).
-//          Q3 = Smart Key emergency blade (Yes/No).
+// CHANGE LOG v8.55:
+// - BLADE_PROXY_URL updated to Cloudflare Worker
+// - analyzeBladeWithClaude() rewritten as clean fetch POST (no JSONP, no Drive upload)
+// - compressImageBase64 restored to 800px / 0.82 quality (Cloudflare handles large payloads)
+// - Removed uploadImageToDrive() and getDriveToken() (no longer needed)
 // ════════════════════════════════════════
 
-const SCRIPT_URL     = 'https://script.google.com/macros/s/AKfycbziNH6F0k8keGuaE2MhRPmqAjKRWvZxiWxi5YcstLZ40j29tN5VyBat_r_ekDRVy0CX/exec';
-const BLADE_PROXY_URL = 'https://script.google.com/macros/s/AKfycbyM-u5bF1B41LJeoxT3VgKiRZX18MCzcUkKAHcRwqIwMwi5FWZ6q8OZTcjfR6Zky1yK/exec';
+const SCRIPT_URL       = 'https://script.google.com/macros/s/AKfycbziNH6F0k8keGuaE2MhRPmqAjKRWvZxiWxi5YcstLZ40j29tN5VyBat_r_ekDRVy0CX/exec';
+const BLADE_PROXY_URL  = 'https://ckc-blade-proxy.noloindie.workers.dev';
 const PROGRAMMING_FEE      = 65;
 const SHOPIFY_DOMAIN       = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL          = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
 const PROGRAMMING_VARIANT  = '45908511228101';
 const INTERNAL_TOOL_URL    = 'https://carolinakeycutters.com/tools';
-const CKC_VERSION          = 'v8.54';
+const CKC_VERSION          = 'v8.55';
 
 var liveCatalog    = [];
 var isLive         = false;
@@ -387,25 +341,19 @@ var _cfqCardData   = {};
 
 // Qualifier state — reset on every new search
 var _qualState = {
-  // Q1 — key type (new in v8.47, asked first)
-  keyTypeAnswer:      '',   // 'transponder'|'rhk'|'smart'|'remote'|'notlisted'
-  // Q2 — working key gate
+  keyTypeAnswer:      '',
   workingKeyAnswered: false,
   aklSelected:        false,
-  // Q3 — smart key emergency blade
-  emergencyBladeAnswer: '',   // 'yes'|'no'
-  // Blade qualifier
+  emergencyBladeAnswer: '',
   needsBlade:   false,
   bladeImage:   null,
   bladeResult:  null,
   bladeFailed:  false,
   bladeRetry:   0,
-  // FCC / buttons
   needsFCC:     false,
   needsButtons: false,
   fccValue:     '',
   buttonsValue: 0,
-  // Overall
   allQualsDone: false
 };
 
@@ -718,7 +666,7 @@ function getAllFCCs(group) {
   return fccs;
 }
 
-// ══ KEY TYPE CATEGORY DETECTION (RULE 14) ══
+// ══ KEY TYPE CATEGORY DETECTION ══
 function detectKeyTypeCategories() {
   var hasTransponder = false, hasRHK = false, hasSmart = false, hasRemote = false;
   _ckcMatches.forEach(function(k) {
@@ -732,15 +680,13 @@ function detectKeyTypeCategories() {
 }
 
 // ══════════════════════════════════════════
-// QUALIFIER PANEL — v8.47 FULL REBUILD
-// Q1 first (key type), then Q2 (working key), then Q3/blade/FCC/buttons
+// QUALIFIER PANEL
 // ══════════════════════════════════════════
 function buildQualifierPanel() {
   var cats = detectKeyTypeCategories();
   var typeCount = (cats.hasTransponder?1:0) + (cats.hasRHK?1:0) + (cats.hasSmart?1:0) + (cats.hasRemote?1:0);
-  var needsQ1   = typeCount > 1; // Q1 only shown when multiple key type paths exist
+  var needsQ1   = typeCount > 1;
 
-  // Q1 — What are you looking for?
   var q1HTML = '';
   if (needsQ1) {
     var q1Opts = '';
@@ -755,7 +701,6 @@ function buildQualifierPanel() {
       q1Opts + '</div>';
   }
 
-  // Q2 — Working key gate
   var q2HTML = '<div class="ckc-qualifier-section" id="ckc-qual-q2-section"' + (needsQ1 ? ' style="display:none;"' : '') + '>' +
     '<div class="ckc-qualifier-section-label">\uD83D\uDD11 Do you have a working key?</div>' +
     '<p style="font-size:0.88rem;color:var(--ckc-text-muted);margin-bottom:14px;">This determines the right service for your situation.</p>' +
@@ -763,7 +708,6 @@ function buildQualifierPanel() {
     _radioOpt('ckc-gate-no',  'onQ2Gate(false)', 'No, I don\'t have a working key', 'All keys lost \u2014 I need a locksmith on-site', true) +
     '</div>';
 
-  // Q3 — Smart Key emergency blade
   var q3HTML = '<div class="ckc-qualifier-section" id="ckc-qual-q3-section" style="display:none;">' +
     '<div class="ckc-qualifier-section-label">\uD83D\uDDDD Does your smart key have a hidden emergency blade?</div>' +
     '<p style="font-size:0.88rem;color:var(--ckc-text-muted);margin-bottom:14px;">Many smart key fobs have a small metal blade that slides or pops out for emergencies.</p>' +
@@ -771,7 +715,6 @@ function buildQualifierPanel() {
     _radioOpt('ckc-eb-no',  'onQ3EmergencyBlade(\'no\')',  'No, just the fob',                     'Push-button only \u2014 no metal blade', false) +
     '</div>';
 
-  // Blade section
   var bladeHTML = '<div class="ckc-qualifier-section" id="ckc-qual-blade-section" style="display:none;">' +
     '<div class="ckc-qualifier-section-label">\uD83D\uDCF7 Identify Your Key Blade</div>' +
     '<p style="font-size:0.88rem;color:var(--ckc-text-muted);margin-bottom:14px;">Your vehicle has multiple key options with different blade cuts. Upload a photo so we can match you to the right one.</p>' +
@@ -788,7 +731,6 @@ function buildQualifierPanel() {
     '<div class="ckc-qual-blade-confirmed" id="ckc-qual-blade-confirmed">\u2713 <span id="ckc-qual-blade-confirmed-text">Blade identified</span></div>' +
     '</div>';
 
-  // FCC section
   var fccHTML = '';
   if (_qualState.needsFCC) {
     var fccOptions = getAllFCCs(_fccGroup);
@@ -802,7 +744,6 @@ function buildQualifierPanel() {
       '</div>';
   }
 
-  // Buttons section
   var btnsHTML = '';
   if (_qualState.needsButtons) {
     var btnCounts = [];
@@ -826,7 +767,6 @@ function buildQualifierPanel() {
     '</div></div>';
 }
 
-// ── Radio option builder
 function _radioOpt(id, onclick, label, sublabel, isDanger) {
   var dangerClass = isDanger ? ' danger' : '';
   return '<div id="' + id + '-opt" class="ckc-radio-opt' + dangerClass + '" onclick="' + onclick + '">' +
@@ -835,7 +775,6 @@ function _radioOpt(id, onclick, label, sublabel, isDanger) {
     '</div>';
 }
 
-// ── Radio select/deselect helper
 function _selectRadio(id, selected) {
   var opt = document.getElementById(id + '-opt');
   if (!opt) return;
@@ -844,63 +783,40 @@ function _selectRadio(id, selected) {
 }
 function _deselectRadioGroup(ids) { ids.forEach(function(id){ _selectRadio(id, false); }); }
 
-// ══ Q1 HANDLER — Key type selection ══
 function onQ1KeyType(type) {
   _qualState.keyTypeAnswer = type;
   _deselectRadioGroup(['ckc-kt-transponder','ckc-kt-rhk','ckc-kt-smart','ckc-kt-remote','ckc-kt-notlisted']);
   _selectRadio('ckc-kt-' + type, true);
-
-  // Reset downstream state
   _qualState.workingKeyAnswered = false;
   _qualState.aklSelected = false;
   _qualState.emergencyBladeAnswer = '';
   _qualState.bladeImage = null; _qualState.bladeResult = null; _qualState.bladeFailed = false; _qualState.bladeRetry = 0;
   _qualState.fccValue = ''; _qualState.buttonsValue = 0;
   _deselectRadioGroup(['ckc-gate-yes','ckc-gate-no','ckc-eb-yes','ckc-eb-no']);
-
-  // Show Q2 (working key gate)
   var q2 = document.getElementById('ckc-qual-q2-section'); if (q2) q2.style.display = 'block';
-  // Hide Q3 and all qualifier sections
   ['ckc-qual-q3-section','ckc-qual-blade-section','ckc-qual-fcc-section','ckc-qual-btns-section'].forEach(function(id){
     var el = document.getElementById(id); if (el) el.style.display = 'none';
   });
-
-  // "Not listed" — no further questions needed
-  if (type === 'notlisted') {
-    _qualState.workingKeyAnswered = true; // gate not needed for CFQ path
-    checkQualReady();
-  } else {
-    checkQualReady();
-  }
+  if (type === 'notlisted') { _qualState.workingKeyAnswered = true; }
+  checkQualReady();
 }
 
-// ══ Q2 HANDLER — Working key gate ══
 function onQ2Gate(hasKey) {
   _qualState.workingKeyAnswered = true;
   _qualState.aklSelected = !hasKey;
   _deselectRadioGroup(['ckc-gate-yes','ckc-gate-no']);
   _selectRadio('ckc-gate-yes', hasKey);
   _selectRadio('ckc-gate-no', !hasKey);
-
-  // Hide Q3 and all qualifier sections first
   ['ckc-qual-q3-section','ckc-qual-blade-section','ckc-qual-fcc-section','ckc-qual-btns-section'].forEach(function(id){
     var el = document.getElementById(id); if (el) el.style.display = 'none';
   });
   _qualState.emergencyBladeAnswer = '';
   _deselectRadioGroup(['ckc-eb-yes','ckc-eb-no']);
-
-  if (!hasKey) {
-    // AKL — no further qualifier questions
-    checkQualReady(); return;
-  }
-
-  // Has working key — show relevant qualifier sections
+  if (!hasKey) { checkQualReady(); return; }
   var type = _qualState.keyTypeAnswer;
   if (type === 'smart') {
-    // Show Q3 (emergency blade)
     var q3 = document.getElementById('ckc-qual-q3-section'); if (q3) q3.style.display = 'block';
   } else if (type === 'transponder' || type === 'rhk' || type === '') {
-    // Show blade section if needed
     if (_qualState.needsBlade) { var bs = document.getElementById('ckc-qual-blade-section'); if (bs) bs.style.display = 'block'; }
     if (_qualState.needsFCC)   { var fs = document.getElementById('ckc-qual-fcc-section');   if (fs) fs.style.display = 'block'; }
     if (_qualState.needsButtons){ var bts = document.getElementById('ckc-qual-btns-section'); if (bts) bts.style.display = 'block'; }
@@ -911,24 +827,19 @@ function onQ2Gate(hasKey) {
   checkQualReady();
 }
 
-// ══ Q3 HANDLER — Emergency blade ══
 function onQ3EmergencyBlade(answer) {
   _qualState.emergencyBladeAnswer = answer;
   _deselectRadioGroup(['ckc-eb-yes','ckc-eb-no']);
   _selectRadio('ckc-eb-yes', answer === 'yes');
   _selectRadio('ckc-eb-no',  answer === 'no');
-
   if (answer === 'yes') {
-    // Show blade qualifier for smart key with emergency blade
     if (_qualState.needsBlade) { var bs = document.getElementById('ckc-qual-blade-section'); if (bs) bs.style.display = 'block'; }
   } else {
-    // No blade — smart key always CFQ anyway, no more questions
     var bs = document.getElementById('ckc-qual-blade-section'); if (bs) bs.style.display = 'none';
   }
   checkQualReady();
 }
 
-// ══ BLADE UPLOAD / ANALYSIS ══
 function onQualBladeFile() {
   var file = document.getElementById('ckc-qual-file').files[0];
   if (!file) return;
@@ -1027,7 +938,6 @@ function onQualBtnCount(count, el) {
   el.classList.add('selected'); _qualState.buttonsValue = count; checkQualReady();
 }
 
-// ══ READY CHECK ══
 function checkQualReady() {
   var btn      = document.getElementById('ckc-show-results-btn');
   var statusEl = document.getElementById('ckc-qual-status');
@@ -1037,43 +947,30 @@ function checkQualReady() {
   var cats = detectKeyTypeCategories();
   var needsQ1 = (( (cats.hasTransponder?1:0)+(cats.hasRHK?1:0)+(cats.hasSmart?1:0)+(cats.hasRemote?1:0) ) > 1);
 
-  // Q1 not answered yet
   if (needsQ1 && !type) {
     btn.disabled = true; statusEl.className = 'ckc-qualifier-status';
     statusEl.textContent = 'Select what you\'re looking for to continue.'; return;
   }
-
-  // "Not listed" — CFQ immediately, no further questions
   if (type === 'notlisted') {
     btn.disabled = false; statusEl.className = 'ckc-qualifier-status ready';
     statusEl.textContent = '\u2713 Ready \u2014 click to see service options.'; return;
   }
-
-  // Q2 gate not answered
   if (!_qualState.workingKeyAnswered) {
     btn.disabled = true; statusEl.className = 'ckc-qualifier-status';
     statusEl.textContent = 'Do you have a working key?'; return;
   }
-
-  // AKL — ready
   if (_qualState.aklSelected) {
     btn.disabled = false; statusEl.className = 'ckc-qualifier-status ready';
     statusEl.textContent = '\u2713 All keys lost \u2014 click to see service options.'; return;
   }
-
-  // Smart key — Q3 needed
   if (type === 'smart' && !_qualState.emergencyBladeAnswer) {
     btn.disabled = true; statusEl.className = 'ckc-qualifier-status';
     statusEl.textContent = 'Does your smart key have an emergency blade?'; return;
   }
-
-  // Smart key, no emergency blade — ready (always CFQ, no blade qualifier)
   if (type === 'smart' && _qualState.emergencyBladeAnswer === 'no') {
     btn.disabled = false; statusEl.className = 'ckc-qualifier-status ready';
     statusEl.textContent = '\u2713 Ready \u2014 click to see your results.'; return;
   }
-
-  // Remote — check FCC / buttons
   if (type === 'remote') {
     var fccOk  = !_qualState.needsFCC    || !!_qualState.fccValue;
     var btnsOk = !_qualState.needsButtons || _qualState.buttonsValue > 0;
@@ -1083,8 +980,6 @@ function checkQualReady() {
     else { statusEl.className = 'ckc-qualifier-status'; var m=[]; if(!fccOk)m.push('FCC ID'); if(!btnsOk)m.push('button count'); statusEl.textContent = 'Still needed: ' + m.join(', ') + '.'; }
     return;
   }
-
-  // Transponder / RHK / Smart+emergency — check blade + FCC + buttons
   var bladeOk = !_qualState.needsBlade || _qualState.bladeResult || _qualState.bladeFailed;
   var fccOk2  = !_qualState.needsFCC   || !!_qualState.fccValue;
   var btnsOk2 = !_qualState.needsButtons || _qualState.buttonsValue > 0;
@@ -1094,7 +989,7 @@ function checkQualReady() {
   else { statusEl.className = 'ckc-qualifier-status'; var missing=[]; if(!bladeOk)missing.push('blade photo'); if(!fccOk2)missing.push('FCC ID'); if(!btnsOk2)missing.push('button count'); statusEl.textContent = 'Still needed: ' + missing.join(', ') + '.'; }
 }
 
-// ══ VIN MODAL — RULE 13 ══
+// ══ VIN MODAL ══
 function openVINModal(cardData) {
   _cfqCardData = cardData || {};
   if (_customerVIN.length === 17) { placeCallAndOpenTool(); return; }
@@ -1201,14 +1096,12 @@ function buildInternalToolURL() {
   return INTERNAL_TOOL_URL + '?' + params.toString();
 }
 
-// ══ APPLY QUALIFIERS AND RENDER ══
 function applyQualifiersAndRender() {
   _qualState.allQualsDone = true;
   var panel = document.getElementById('ckc-qualifier-panel'); if(panel) panel.remove();
   renderCards();
 }
 
-// ══ PROGRAMMING TOGGLE ══
 function buildProgToggleHTML(sku, keyPrice) {
   var totalWithProg = (keyPrice + PROGRAMMING_FEE).toFixed(2);
   var keyOnlyPrice  = keyPrice.toFixed(2);
@@ -1235,7 +1128,6 @@ function setProgToggle(sku, mode, keyPrice) {
 
 function getDisplayPrice(key) { return parseFloat(key.price) || 0; }
 
-// ══ CFQ CARD BUTTON HTML ══
 function _cfqBtnHTML(key, displayPrice, reasonMsg) {
   var cfqData = JSON.stringify({ sku: key.sku, blade: key.keyway||'', fcc: key.fcc||'', keyPrice: displayPrice.toFixed(2) }).replace(/"/g,'&quot;');
   return (reasonMsg ? '<div style="font-size:0.82rem;color:#f59e0b;margin-bottom:8px;padding:8px 10px;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);border-radius:6px;line-height:1.5;">' + reasonMsg + '</div>' : '') +
@@ -1244,7 +1136,6 @@ function _cfqBtnHTML(key, displayPrice, reasonMsg) {
     '<div class="ckc-tool-url" id="ckc-tool-url-' + key.sku + '"></div>';
 }
 
-// ══ RENDER CARDS ══
 function renderCards() {
   var resultsDiv = document.getElementById('ckc-results');
   var year  = lastSearchParams.year;
@@ -1263,7 +1154,6 @@ function renderCards() {
     '<p style="font-size:0.82rem;color:#888;margin-top:6px;">*$' + PROGRAMMING_FEE + ' add-a-key rate \u2014 you must have a working key. All keys lost (AKL), EEPROM, or module work quoted separately \u2014 <a href="tel:+13365109816" style="color:var(--ckc-gold);">call for details</a>.</p></div>' +
     '<div class="ckc-programming-price"><span style="font-size:1rem;font-weight:500;opacity:0.7;">as low as</span><br>$' + PROGRAMMING_FEE + '</div></div>';
 
-  // Determine qualifier results for card rendering
   var type              = _qualState.keyTypeAnswer;
   var aklMode           = _qualState.aklSelected;
   var notListed         = type === 'notlisted';
@@ -1272,7 +1162,6 @@ function renderCards() {
   var customerIsBlade   = type === 'transponder' || type === 'rhk' || type === '';
   var smartNoEmergency  = customerIsSmart && _qualState.emergencyBladeAnswer === 'no';
 
-  // Determine blade winner SKU
   var bladeWinnerSku = null;
   if (!aklMode && _qualState.bladeResult && _qualState.bladeResult.keyway) {
     _bladeGroup.forEach(function(k) {
@@ -1307,7 +1196,6 @@ function renderCards() {
       imgHTML = '<div class="ckc-key-img-loading" id="'+imgId+'" data-sku="'+key.sku+'" data-handle="'+(key.handle||'')+'"></div>';
     }
 
-    // v8.47 Stock messaging — RULE 14, no "Same Day Service" promise
     var stockHTML = key.inStock
       ? '<div class="ckc-stock-badge in-stock"><span class="ckc-stock-dot"></span>\uD83D\uDFE2 In Stock \u2014 Schedule your programming appointment after checkout</div>'
       : '<div class="ckc-stock-badge ships"><span class="ckc-stock-dot"></span>\uD83D\uDCE6 Ships in 2-3 days \u2014 Schedule your appointment when you receive confirmation that your key has arrived</div>';
@@ -1322,65 +1210,45 @@ function renderCards() {
     var inFCCGroup   = _fccGroup.some(function(k){return k.sku===key.sku;});
     var inBtnsGroup  = _buttonsGroup.some(function(k){return k.sku===key.sku;});
 
-    // ── Determine card state ──
-
     if (notListed) {
-      // Customer said type not listed — all cards CFQ
       cardClass += ' ckc-cfq-card';
-      priceNote = '';
       btnHTML   = _cfqBtnHTML(key, displayPrice, 'We\'ll help you identify the right key \u2014 call us and we\'ll confirm on-site.');
     } else if (isSmart) {
-      // RULE 4: Smart Keys always CFQ
       if (customerIsBlade && type !== '') {
-        // Customer identified as wanting a blade-type key — grey smart card
         cardClass += ' ckc-greyed';
       } else if (customerIsRemote && type !== '') {
         cardClass += ' ckc-greyed';
       } else {
-        // Smart key shown to smart key customer (or no type chosen)
         cardClass += ' ckc-cfq-card';
         var smartMsg = '\u26a0 Smart Key programming requires module-level work on most vehicles. Call to confirm pricing. Please have your VIN ready.';
         if (_qualState.bladeResult) smartMsg += ' Blade identified: ' + _qualState.bladeResult.keyway + '.';
         btnHTML = _cfqBtnHTML(key, displayPrice, smartMsg);
       }
     } else if (aklMode && (inBladeGroup || inFCCGroup || inBtnsGroup)) {
-      // RULE 12: AKL — all qualifier group cards go CFQ
       cardClass += ' ckc-cfq-card';
       btnHTML   = _cfqBtnHTML(key, displayPrice, '\uD83D\uDD11 All keys lost \u2014 a locksmith needs to verify your blade and program your new key on-site.');
     } else if (inBladeGroup) {
-      // Blade group resolution
       if (customerIsRemote && type !== '') {
-        // Customer selected remote — grey blade cards
         cardClass += ' ckc-greyed';
       } else if (smartNoEmergency && inBladeGroup) {
-        // Smart key, no emergency blade — grey blade cards
         cardClass += ' ckc-greyed';
-       } else if (_qualState.bladeFailed) {
-        // Failed blade ID — RULE 10 revised: CFQ instead of Buy Now.
-        // Showing all cards as Buy Now creates a silent conflict when cards
-        // have different blades/button counts. Customer must call so locksmith
-        // can verify blade on-site before order is placed.
+      } else if (_qualState.bladeFailed) {
         cardClass += ' ckc-cfq-card';
         btnHTML    = _cfqBtnHTML(key, displayPrice, 'We couldn\'t identify your blade from the photo — call us and we\'ll confirm the right key when we arrive.');
       } else if (bladeWinnerSku === key.sku) {
-        // This card matched the blade
         cardClass += ' ckc-resolved';
         priceNote  = '<div class="ckc-key-price-note" id="ckc-pricenote-'+key.sku+'">+ $'+PROGRAMMING_FEE+' service call = <strong>$'+totalPrice+' total</strong></div>';
         btnHTML    = '<button class="ckc-buy-now-btn" onclick="openCheckout('+idx+')">\u2713 Buy Now</button>' + buildProgToggleHTML(key.sku, displayPrice);
         resolvedNote = '<div class="ckc-resolved-confirm show">\u2713 Matched to your blade: ' + (_qualState.bladeResult ? _qualState.bladeResult.keyway : '') + '</div>';
       } else if (bladeWinnerSku !== null) {
-        // Another card won — grey this one
         cardClass += ' ckc-greyed';
       } else {
-        // Blade qualifier needed but not yet run — CFQ fallback
         cardClass += ' ckc-cfq-card';
         priceNote  = '<div class="ckc-key-price-note">+ $'+PROGRAMMING_FEE+' service call = <strong>$'+totalPrice+' total</strong></div>';
         btnHTML    = _cfqBtnHTML(key, displayPrice, 'We couldn\'t confirm your blade from the photo \u2014 call us and we\'ll identify it on-site.');
       }
     } else if (inFCCGroup || inBtnsGroup) {
-      // FCC / button group
       if (customerIsBlade && type !== '') {
-        // Customer selected blade-type key — grey remote cards
         cardClass += ' ckc-greyed';
       } else {
         var winner = btnsWinnerSku || fccWinnerSku;
@@ -1395,7 +1263,6 @@ function renderCards() {
         }
       }
     } else {
-      // No qualifier needed — straight Buy Now (RULE 11)
       priceNote = '<div class="ckc-key-price-note" id="ckc-pricenote-'+key.sku+'">+ $'+PROGRAMMING_FEE+' service call = <strong>$'+totalPrice+' total</strong></div>';
       btnHTML   = '<button class="ckc-add-btn" onclick="openCheckout('+idx+')">Buy Now</button>' + buildProgToggleHTML(key.sku, displayPrice);
     }
@@ -1436,88 +1303,44 @@ function _wireBladeDropzone() {
   });
 }
 
-// ══ BLADE ANALYSIS — via Google Drive temp file + JSONP (v8.54) ══
-// Problem: image too large for JSONP GET URL, fetch POST blocked by CORS preflight.
-// Solution: upload compressed image to Drive as temp file (browser→Drive API directly),
-// pass only the file ID via JSONP GET to proxy, proxy reads from Drive,
-// calls Anthropic, deletes temp file, returns result via JSONP callback.
-// Zero CORS issues. No image bytes in URL.
+// ══ BLADE ANALYSIS — Cloudflare Worker (v8.55) ══
+// Clean fetch POST to Cloudflare Worker.
+// Worker handles CORS, calls Anthropic, returns JSON.
+// No JSONP, no Drive upload, no size limitations.
 
-// Step 1: Upload image bytes to Drive, get back a file ID
-async function uploadImageToDrive(base64) {
-  var byteString = atob(base64);
-  var bytes = new Uint8Array(byteString.length);
-  for (var i = 0; i < byteString.length; i++) bytes[i] = byteString.charCodeAt(i);
-  var blob = new Blob([bytes], { type: 'image/jpeg' });
-
-  var metadata = JSON.stringify({ name: 'ckc_blade_tmp_' + Date.now() + '.jpg', parents: ['root'] });
-  var formData = new FormData();
-  formData.append('metadata', new Blob([metadata], { type: 'application/json' }));
-  formData.append('file', blob);
-
-  var resp = await fetch(
-    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',
-    { method: 'POST', headers: { 'Authorization': 'Bearer ' + await getDriveToken() }, body: formData }
-  );
-  if (!resp.ok) throw new Error('Drive upload failed: ' + resp.status);
-  var data = await resp.json();
-  return data.id;
-}
-
-// Get Drive OAuth token via Apps Script token endpoint (same project, no extra auth)
-async function getDriveToken() {
-  return new Promise(function(resolve, reject) {
-    var cb = '_ckcToken_' + Date.now();
-    var timeout = setTimeout(function() { delete window[cb]; reject(new Error('Token timeout')); }, 8000);
-    window[cb] = function(data) { clearTimeout(timeout); delete window[cb]; if (data.token) resolve(data.token); else reject(new Error('No token')); };
-    var s = document.createElement('script');
-    s.src = BLADE_PROXY_URL + '?action=token&callback=' + cb;
-    s.onerror = function() { clearTimeout(timeout); delete window[cb]; reject(new Error('Token fetch failed')); };
-    s.onload = function() { try { document.head.removeChild(s); } catch(e){} };
-    document.head.appendChild(s);
-  });
-}
-
-// Step 2: Pass file ID to proxy via JSONP, proxy does the analysis
 async function analyzeBladeWithClaude(base64, keyways, vehicleContext) {
   var compressedBase64 = await compressImageBase64(base64);
 
-  // Upload to Drive first
-  var fileId;
-  try {
-    fileId = await uploadImageToDrive(compressedBase64);
-  } catch(e) {
-    throw new Error('Drive upload failed: ' + e.message);
+  var response = await fetch(BLADE_PROXY_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      imageBase64: compressedBase64,
+      keyways: keyways,
+      vehicleContext: vehicleContext
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error('Blade proxy error: ' + response.status);
   }
 
-  // Now call proxy with just the file ID — tiny URL, zero size issues
-  return new Promise(function(resolve, reject) {
-    var cb = '_ckcBlade_' + Date.now();
-    var timeout = setTimeout(function() { delete window[cb]; reject(new Error('Blade proxy timeout')); }, 25000);
-    window[cb] = function(data) {
-      clearTimeout(timeout); delete window[cb];
-      if (data.error) { reject(new Error(data.error)); return; }
-      if (data.matched && keyways.indexOf(data.keyway) === -1) {
-        resolve({ matched: false, unclear: true, reason: 'Keyway not in group' });
-      } else { resolve(data); }
-    };
-    var params = new URLSearchParams({
-      action:   'blade',
-      callback: cb,
-      fileId:   fileId,
-      keyways:  keyways.join(','),
-      vehicle:  vehicleContext
-    });
-    var s = document.createElement('script');
-    s.src = BLADE_PROXY_URL + '?' + params.toString();
-    s.onerror = function() { clearTimeout(timeout); delete window[cb]; reject(new Error('Proxy script failed')); };
-    s.onload = function() { try { document.head.removeChild(s); } catch(e){} };
-    document.head.appendChild(s);
-  });
+  var result = await response.json();
+
+  if (result.error) {
+    throw new Error(result.error);
+  }
+
+  // Validate keyway is in our group
+  if (result.matched && keyways.indexOf(result.keyway) === -1) {
+    return { matched: false, unclear: true, reason: 'Keyway not in group' };
+  }
+
+  return result;
 }
 
+// Restored to 800px / 0.82 quality — Cloudflare handles large payloads
 function compressImageBase64(base64DataUrl) {
-  // Compress to 600px max — enough for blade identification, manageable for Drive upload
   return new Promise(function(resolve) {
     var img = new Image();
     img.onload = function() {
@@ -1529,7 +1352,7 @@ function compressImageBase64(base64DataUrl) {
         c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
         return c.toDataURL('image/jpeg', q).split(',')[1];
       }
-      resolve(compress(600, 0.75));
+      resolve(compress(800, 0.82));
     };
     img.onerror = function() { resolve(base64DataUrl.split(',')[1] || base64DataUrl); };
     img.src = base64DataUrl.startsWith('data:') ? base64DataUrl : 'data:image/jpeg;base64,' + base64DataUrl;
@@ -1543,7 +1366,6 @@ function searchKeys() {
   var model = document.getElementById('ckc-model').value;
   var resultsDiv = document.getElementById('ckc-results');
 
-  // RULE 7: Exclusion filters
   var db = getDB().filter(function(k) {
     return k.type !== 'KEY BLADE' &&
       !k.title.toLowerCase().includes('universal') &&
@@ -1555,7 +1377,6 @@ function searchKeys() {
 
   lastSearchParams = { year, make, model };
 
-  // Reset all state
   _qualState = { keyTypeAnswer:'', workingKeyAnswered:false, aklSelected:false, emergencyBladeAnswer:'', needsBlade:false, bladeImage:null, bladeResult:null, bladeFailed:false, bladeRetry:0, needsFCC:false, needsButtons:false, fccValue:'', buttonsValue:0, allQualsDone:false };
   _bladeGroup=[]; _fccGroup=[]; _buttonsGroup=[]; _byType={}; _progToggle={};
 
@@ -1587,7 +1408,6 @@ function searchKeys() {
 
   matches.forEach(function(m) { var t = m.type||'Key'; if(!_byType[t])_byType[t]=[]; _byType[t].push(m); });
 
-  // Build qualifier groups
   matches.forEach(function(k) {
     if (requiresBlade(k.type)) { if (!_bladeGroup.some(function(b){return b.sku===k.sku;})) _bladeGroup.push(k); }
   });
