@@ -1,6 +1,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ═══ CKC KEY FINDER v8.55 ═══ */
+/* ═══ CKC KEY FINDER v8.61 ═══ */
 .ckc-finder {
   --ckc-gold: #c9a227;
   --ckc-gold-light: #e0c458;
@@ -313,23 +313,23 @@
 
 <script>
 // ════════════════════════════════════════
-// CKC KEY FINDER v8.55
+// CKC KEY FINDER v8.61
 // ════════════════════════════════════════
-// CHANGE LOG v8.55:
-// - BLADE_PROXY_URL updated to Cloudflare Worker
-// - analyzeBladeWithClaude() rewritten as clean fetch POST (no JSONP, no Drive upload)
-// - compressImageBase64 restored to 800px / 0.82 quality (Cloudflare handles large payloads)
-// - Removed uploadImageToDrive() and getDriveToken() (no longer needed)
+// CHANGE LOG v8.61:
+// - syncFromSheet() rewritten: JSONP removed (blocked by GoDaddy iframe sandbox)
+// - fetch() CORS fallback removed (blocked by CORS policy)
+// - Catalog now fetched via Cloudflare Worker /catalog route (server-side proxy)
+// - Retry logic: 2 attempts, 2s delay between, 20s timeout per attempt
 // ════════════════════════════════════════
 
-const SCRIPT_URL       = 'https://script.google.com/macros/s/AKfycbx2GeawOneONhHGh2qqdE82Y1y46F7Oj8rpyg24IcK7W8g8U71nmM6SSmlxa01hxEVu/exec';
-const BLADE_PROXY_URL  = 'https://ckc-blade-proxy.noloindie.workers.dev';
+const SCRIPT_URL           = 'https://script.google.com/macros/s/AKfycbx2GeawOneONhHGh2qqdE82Y1y46F7Oj8rpyg24IcK7W8g8U71nmM6SSmlxa01hxEVu/exec';
+const BLADE_PROXY_URL      = 'https://ckc-blade-proxy.noloindie.workers.dev';
 const PROGRAMMING_FEE      = 75;
 const SHOPIFY_DOMAIN       = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL          = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
 const PROGRAMMING_VARIANT  = '45908511228101';
 const INTERNAL_TOOL_URL    = 'https://carolinakeycutters.com/tools';
-const CKC_VERSION          = 'v8.60';
+const CKC_VERSION          = 'v8.61';
 
 var liveCatalog    = [];
 var isLive         = false;
@@ -339,22 +339,11 @@ var _ckcMatches    = [];
 var _customerVIN   = '';
 var _cfqCardData   = {};
 
-// Qualifier state — reset on every new search
 var _qualState = {
-  keyTypeAnswer:      '',
-  workingKeyAnswered: false,
-  aklSelected:        false,
-  emergencyBladeAnswer: '',
-  needsBlade:   false,
-  bladeImage:   null,
-  bladeResult:  null,
-  bladeFailed:  false,
-  bladeRetry:   0,
-  needsFCC:     false,
-  needsButtons: false,
-  fccValue:     '',
-  buttonsValue: 0,
-  allQualsDone: false
+  keyTypeAnswer: '', workingKeyAnswered: false, aklSelected: false,
+  emergencyBladeAnswer: '', needsBlade: false, bladeImage: null,
+  bladeResult: null, bladeFailed: false, bladeRetry: 0,
+  needsFCC: false, needsButtons: false, fccValue: '', buttonsValue: 0, allQualsDone: false
 };
 
 var _bladeGroup   = [];
@@ -452,53 +441,60 @@ var FALLBACK_DATABASE = [
   { sku:"CHV-11-AM",title:"GM/Chevrolet Transponder Key B111",type:"Transponder Key",price:29.99,image:"",inStock:true,status:"active",fcc:"N/A",keyway:"B111",buttonCount:0,vehicles:[{make:"Chevrolet",model:"Silverado 1500",years:"2007-2013"},{make:"Chevrolet",model:"Impala",years:"2006-2013"},{make:"GMC",model:"Sierra 1500",years:"2007-2013"}]}
 ];
 
-// ══ SHEET SYNC ══
+// ══ SHEET SYNC — v8.61 ══
+// JSONP and direct fetch() both fail in the GoDaddy iframe sandbox due to
+// script injection blocking and CORS restrictions respectively.
+// Solution: proxy the Apps Script call server-side via the Cloudflare Worker /catalog route.
 async function syncFromSheet() {
   var loadingBar = document.getElementById('ckc-loading');
   var statusEl   = document.getElementById('ckc-sync-status');
   var statusText = document.getElementById('ckc-sync-text');
   loadingBar.classList.add('active');
   statusText.textContent = 'Syncing...';
-  try {
-    var data = await fetchSheetJSONP();
-    if (data && data.status === 'ok' && data.products && data.products.length > 0) {
-      liveCatalog = data.products.map(normalizeProduct);
-      isLive = true;
-      statusEl.className = 'ckc-sync-status live';
-      statusText.textContent = 'Live \u00b7 ' + liveCatalog.length + ' products';
-    } else { throw new Error('No products'); }
-  } catch(e) {
+
+  var maxAttempts = 2;
+  for (var attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      var response = await fetch(SCRIPT_URL + '?action=read', { redirect: 'follow' });
-      var data2 = await response.json();
-      if (data2.status === 'ok' && data2.products && data2.products.length > 0) {
-        liveCatalog = data2.products.map(normalizeProduct);
-        isLive = true;
-        statusEl.className = 'ckc-sync-status live';
+      var controller = new AbortController();
+      var timeoutId  = setTimeout(function() { controller.abort(); }, 20000);
+
+      var response = await fetch(BLADE_PROXY_URL + '/catalog', {
+        method:  'GET',
+        signal:  controller.signal,
+        headers: { 'Accept': 'application/json' }
+      });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) throw new Error('Worker returned ' + response.status);
+
+      var data = await response.json();
+
+      if (data && data.status === 'ok' && data.products && data.products.length > 0) {
+        liveCatalog = data.products.map(normalizeProduct);
+        isLive      = true;
+        statusEl.className     = 'ckc-sync-status live';
         statusText.textContent = 'Live \u00b7 ' + liveCatalog.length + ' products';
         loadingBar.classList.remove('active');
-        initDropdowns(); return;
+        initDropdowns();
+        return;
+      } else {
+        throw new Error('Empty or invalid catalog response');
       }
-    } catch(e2) {}
-    isLive = false;
-    statusEl.className = 'ckc-sync-status offline';
-    statusText.textContent = 'Offline mode';
+
+    } catch (e) {
+      if (attempt < maxAttempts) {
+        statusText.textContent = 'Retrying\u2026';
+        await new Promise(function(r) { setTimeout(r, 2000); });
+      }
+    }
   }
+
+  // All attempts failed — fall back to offline mode
+  isLive = false;
+  statusEl.className     = 'ckc-sync-status offline';
+  statusText.textContent = 'Offline mode';
   loadingBar.classList.remove('active');
   initDropdowns();
-}
-
-function fetchSheetJSONP() {
-  return new Promise(function(resolve, reject) {
-    var cb = '_ckcCB_' + Date.now();
-    var timeout = setTimeout(function() { delete window[cb]; reject(new Error('Timeout')); }, 10000);
-    window[cb] = function(data) { clearTimeout(timeout); delete window[cb]; resolve(data); };
-    var s = document.createElement('script');
-    s.src = SCRIPT_URL + '?action=read&callback=' + cb;
-    s.onerror = function() { clearTimeout(timeout); delete window[cb]; reject(new Error('Failed')); };
-    document.head.appendChild(s);
-    s.onload = function() { try { document.head.removeChild(s); } catch(e){} };
-  });
 }
 
 function normalizeProduct(p) {
@@ -870,8 +866,7 @@ function _radioOpt(id, onclick, label, sublabel, isDanger) {
 function _selectRadio(id, selected) {
   var opt = document.getElementById(id + '-opt');
   if (!opt) return;
-  if (selected) { opt.classList.add('selected'); }
-  else { opt.classList.remove('selected'); }
+  if (selected) { opt.classList.add('selected'); } else { opt.classList.remove('selected'); }
 }
 function _deselectRadioGroup(ids) { ids.forEach(function(id){ _selectRadio(id, false); }); }
 function _deselectIllustratedGroup(ids) {
@@ -897,9 +892,7 @@ function onQ1KeyType(type) {
   _deselectIllustratedGroup(['ckc-kt-transponder','ckc-kt-rhk','ckc-kt-smart','ckc-kt-remote','ckc-kt-flip']);
   _selectIllustrated('ckc-kt-' + type);
   _selectRadio('ckc-kt-' + type, true);
-  _qualState.workingKeyAnswered = false;
-  _qualState.aklSelected = false;
-  _qualState.emergencyBladeAnswer = '';
+  _qualState.workingKeyAnswered = false; _qualState.aklSelected = false; _qualState.emergencyBladeAnswer = '';
   _qualState.bladeImage = null; _qualState.bladeResult = null; _qualState.bladeFailed = false; _qualState.bladeRetry = 0;
   _qualState.fccValue = ''; _qualState.buttonsValue = 0;
   _deselectRadioGroup(['ckc-gate-yes','ckc-gate-no','ckc-eb-yes','ckc-eb-no']);
@@ -912,27 +905,24 @@ function onQ1KeyType(type) {
 }
 
 function onQ2Gate(hasKey) {
-  _qualState.workingKeyAnswered = true;
-  _qualState.aklSelected = !hasKey;
+  _qualState.workingKeyAnswered = true; _qualState.aklSelected = !hasKey;
   _deselectRadioGroup(['ckc-gate-yes','ckc-gate-no']);
-  _selectRadio('ckc-gate-yes', hasKey);
-  _selectRadio('ckc-gate-no', !hasKey);
+  _selectRadio('ckc-gate-yes', hasKey); _selectRadio('ckc-gate-no', !hasKey);
   ['ckc-qual-q3-section','ckc-qual-blade-section','ckc-qual-fcc-section','ckc-qual-btns-section'].forEach(function(id){
     var el = document.getElementById(id); if (el) el.style.display = 'none';
   });
-  _qualState.emergencyBladeAnswer = '';
-  _deselectRadioGroup(['ckc-eb-yes','ckc-eb-no']);
+  _qualState.emergencyBladeAnswer = ''; _deselectRadioGroup(['ckc-eb-yes','ckc-eb-no']);
   if (!hasKey) { checkQualReady(); return; }
   var type = _qualState.keyTypeAnswer;
   if (type === 'smart') {
     var q3 = document.getElementById('ckc-qual-q3-section'); if (q3) q3.style.display = 'block';
   } else if (type === 'transponder' || type === 'rhk' || type === '') {
-    if (_qualState.needsBlade) { var bs = document.getElementById('ckc-qual-blade-section'); if (bs) bs.style.display = 'block'; }
-    if (_qualState.needsFCC)   { var fs = document.getElementById('ckc-qual-fcc-section');   if (fs) fs.style.display = 'block'; }
-    if (_qualState.needsButtons){ var bts = document.getElementById('ckc-qual-btns-section'); if (bts) bts.style.display = 'block'; }
+    if (_qualState.needsBlade)  { var bs  = document.getElementById('ckc-qual-blade-section'); if (bs)  bs.style.display  = 'block'; }
+    if (_qualState.needsFCC)    { var fs  = document.getElementById('ckc-qual-fcc-section');   if (fs)  fs.style.display  = 'block'; }
+    if (_qualState.needsButtons){ var bts = document.getElementById('ckc-qual-btns-section');  if (bts) bts.style.display = 'block'; }
   } else if (type === 'remote') {
-    if (_qualState.needsFCC)    { var fs2 = document.getElementById('ckc-qual-fcc-section');   if (fs2) fs2.style.display = 'block'; }
-    if (_qualState.needsButtons){ var bts2 = document.getElementById('ckc-qual-btns-section'); if (bts2) bts2.style.display = 'block'; }
+    if (_qualState.needsFCC)    { var fs2  = document.getElementById('ckc-qual-fcc-section');   if (fs2)  fs2.style.display  = 'block'; }
+    if (_qualState.needsButtons){ var bts2 = document.getElementById('ckc-qual-btns-section');  if (bts2) bts2.style.display = 'block'; }
   }
   checkQualReady();
 }
@@ -940,12 +930,11 @@ function onQ2Gate(hasKey) {
 function onQ3EmergencyBlade(answer) {
   _qualState.emergencyBladeAnswer = answer;
   _deselectRadioGroup(['ckc-eb-yes','ckc-eb-no']);
-  _selectRadio('ckc-eb-yes', answer === 'yes');
-  _selectRadio('ckc-eb-no',  answer === 'no');
+  _selectRadio('ckc-eb-yes', answer === 'yes'); _selectRadio('ckc-eb-no', answer === 'no');
   if (answer === 'yes') {
     if (_qualState.needsBlade) { var bs = document.getElementById('ckc-qual-blade-section'); if (bs) bs.style.display = 'block'; }
   } else {
-    var bs = document.getElementById('ckc-qual-blade-section'); if (bs) bs.style.display = 'none';
+    var bs2 = document.getElementById('ckc-qual-blade-section'); if (bs2) bs2.style.display = 'none';
   }
   checkQualReady();
 }
@@ -985,48 +974,44 @@ async function runQualBlade() {
   document.getElementById('ckc-qual-analyzing').classList.add('active');
   document.getElementById('ckc-qual-blade-msg').className = 'ckc-blade-msg';
   document.getElementById('ckc-qual-blade-msg').textContent = '';
-
   var keyways = getAllKeyways(_bladeGroup);
   var base64  = _qualState.bladeImage.split(',')[1];
-
   try {
     var result = await analyzeBladeWithClaude(base64, keyways, lastSearchParams.year + ' ' + lastSearchParams.make + ' ' + lastSearchParams.model);
     document.getElementById('ckc-qual-analyzing').classList.remove('active');
-
     if (result.matched) {
       _qualState.bladeResult = result;
       var msgEl = document.getElementById('ckc-qual-blade-msg');
       msgEl.className = 'ckc-blade-msg success';
       msgEl.textContent = '\u2713 Blade identified: ' + result.keyway + ' \u2014 ' + result.description;
-      var confirmedEl = document.getElementById('ckc-qual-blade-confirmed');
       document.getElementById('ckc-qual-blade-confirmed-text').textContent = 'Blade confirmed: ' + result.keyway;
-      confirmedEl.classList.add('show');
+      document.getElementById('ckc-qual-blade-confirmed').classList.add('show');
       checkQualReady();
     } else if (result.unclear) {
       _qualState.bladeRetry++;
-      var msgEl = document.getElementById('ckc-qual-blade-msg');
+      var msgEl2 = document.getElementById('ckc-qual-blade-msg');
       if (_qualState.bladeRetry < 2) {
-        msgEl.className = 'ckc-blade-msg warn';
-        msgEl.textContent = '\u26a0 Couldn\'t make out the blade profile. Try a well-lit photo with the blade flat and facing the camera.';
+        msgEl2.className = 'ckc-blade-msg warn';
+        msgEl2.textContent = '\u26a0 Couldn\'t make out the blade profile. Try a well-lit photo with the blade flat and facing the camera.';
         resetQualBlade();
       } else {
         _qualState.bladeFailed = true;
-        msgEl.className = 'ckc-blade-msg warn';
-        msgEl.textContent = '\u26a0 Unable to identify blade from photos. We\'ll show all options \u2014 our locksmith will confirm the blade when we arrive.';
+        msgEl2.className = 'ckc-blade-msg warn';
+        msgEl2.textContent = '\u26a0 Unable to identify blade from photos. We\'ll show all options \u2014 our locksmith will confirm the blade when we arrive.';
         document.getElementById('ckc-qual-blade-btn').disabled = true;
         checkQualReady();
       }
     } else {
-      var msgEl = document.getElementById('ckc-qual-blade-msg');
-      msgEl.className = 'ckc-blade-msg error';
-      msgEl.textContent = result.error || '\u26a0 Analysis failed. Please try again.';
+      var msgEl3 = document.getElementById('ckc-qual-blade-msg');
+      msgEl3.className = 'ckc-blade-msg error';
+      msgEl3.textContent = result.error || '\u26a0 Analysis failed. Please try again.';
       document.getElementById('ckc-qual-blade-btn').disabled = false;
     }
   } catch(e) {
     document.getElementById('ckc-qual-analyzing').classList.remove('active');
-    var msgEl = document.getElementById('ckc-qual-blade-msg');
-    msgEl.className = 'ckc-blade-msg error';
-    msgEl.textContent = '\u26a0 Analysis service unavailable. We\'ll show all options \u2014 our locksmith will confirm the blade when we arrive.';
+    var msgEl4 = document.getElementById('ckc-qual-blade-msg');
+    msgEl4.className = 'ckc-blade-msg error';
+    msgEl4.textContent = '\u26a0 Analysis service unavailable. We\'ll show all options \u2014 our locksmith will confirm the blade when we arrive.';
     _qualState.bladeFailed = true;
     document.getElementById('ckc-qual-blade-btn').disabled = true;
     checkQualReady();
@@ -1052,39 +1037,19 @@ function checkQualReady() {
   var btn      = document.getElementById('ckc-show-results-btn');
   var statusEl = document.getElementById('ckc-qual-status');
   if (!btn || !statusEl) return;
-
-  var type = _qualState.keyTypeAnswer;
-  var cats = detectKeyTypeCategories();
-  var needsQ1 = (( (cats.hasTransponder?1:0)+(cats.hasRHK?1:0)+(cats.hasSmart?1:0)+(cats.hasRemote?1:0)+(cats.hasFlip?1:0) ) > 1);
-
-  if (needsQ1 && !type) {
-    btn.disabled = true; statusEl.className = 'ckc-qualifier-status';
-    statusEl.textContent = 'Select what you\'re looking for to continue.'; return;
-  }
-  if (type === 'notlisted') {
-    btn.disabled = false; statusEl.className = 'ckc-qualifier-status ready';
-    statusEl.textContent = '\u2713 Ready \u2014 click to see service options.'; return;
-  }
-  if (!_qualState.workingKeyAnswered) {
-    btn.disabled = true; statusEl.className = 'ckc-qualifier-status';
-    statusEl.textContent = 'Do you have a working key?'; return;
-  }
-  if (_qualState.aklSelected) {
-    btn.disabled = false; statusEl.className = 'ckc-qualifier-status ready';
-    statusEl.textContent = '\u2713 All keys lost \u2014 click to see service options.'; return;
-  }
-  if (type === 'smart' && !_qualState.emergencyBladeAnswer) {
-    btn.disabled = true; statusEl.className = 'ckc-qualifier-status';
-    statusEl.textContent = 'Does your smart key have an emergency blade?'; return;
-  }
-  if (type === 'smart' && _qualState.emergencyBladeAnswer === 'no') {
-    btn.disabled = false; statusEl.className = 'ckc-qualifier-status ready';
-    statusEl.textContent = '\u2713 Ready \u2014 click to see your results.'; return;
-  }
+  var type   = _qualState.keyTypeAnswer;
+  var cats   = detectKeyTypeCategories();
+  var needsQ1 = (((cats.hasTransponder?1:0)+(cats.hasRHK?1:0)+(cats.hasSmart?1:0)+(cats.hasRemote?1:0)+(cats.hasFlip?1:0)) > 1);
+  if (needsQ1 && !type) { btn.disabled = true; statusEl.className = 'ckc-qualifier-status'; statusEl.textContent = 'Select what you\'re looking for to continue.'; return; }
+  if (type === 'notlisted') { btn.disabled = false; statusEl.className = 'ckc-qualifier-status ready'; statusEl.textContent = '\u2713 Ready \u2014 click to see service options.'; return; }
+  if (!_qualState.workingKeyAnswered) { btn.disabled = true; statusEl.className = 'ckc-qualifier-status'; statusEl.textContent = 'Do you have a working key?'; return; }
+  if (_qualState.aklSelected) { btn.disabled = false; statusEl.className = 'ckc-qualifier-status ready'; statusEl.textContent = '\u2713 All keys lost \u2014 click to see service options.'; return; }
+  if (type === 'smart' && !_qualState.emergencyBladeAnswer) { btn.disabled = true; statusEl.className = 'ckc-qualifier-status'; statusEl.textContent = 'Does your smart key have an emergency blade?'; return; }
+  if (type === 'smart' && _qualState.emergencyBladeAnswer === 'no') { btn.disabled = false; statusEl.className = 'ckc-qualifier-status ready'; statusEl.textContent = '\u2713 Ready \u2014 click to see your results.'; return; }
   if (type === 'remote') {
-    var fccOk  = !_qualState.needsFCC    || !!_qualState.fccValue;
+    var fccOk = !_qualState.needsFCC || !!_qualState.fccValue;
     var btnsOk = !_qualState.needsButtons || _qualState.buttonsValue > 0;
-    var ready  = fccOk && btnsOk;
+    var ready = fccOk && btnsOk;
     btn.disabled = !ready;
     if (ready) { statusEl.className = 'ckc-qualifier-status ready'; statusEl.textContent = '\u2713 Ready \u2014 click to see your results.'; }
     else { statusEl.className = 'ckc-qualifier-status'; var m=[]; if(!fccOk)m.push('FCC ID'); if(!btnsOk)m.push('button count'); statusEl.textContent = 'Still needed: ' + m.join(', ') + '.'; }
@@ -1141,9 +1106,9 @@ async function verifyVINWithNHTSA(vin) {
 function onVINModalInput(el) {
   var val = el.value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g,'');
   el.value = val;
-  var counter   = document.getElementById('ckc-vin-counter');
+  var counter = document.getElementById('ckc-vin-counter');
   var submitBtn = document.getElementById('ckc-vin-submit-btn');
-  var errorEl   = document.getElementById('ckc-vin-error');
+  var errorEl = document.getElementById('ckc-vin-error');
   var len = val.length;
   counter.textContent = len + '/17';
   if (len === 17) {
@@ -1183,25 +1148,16 @@ function placeCallAndOpenTool() {
   var cardSku = _cfqCardData.sku || '';
   if (cardSku) {
     var toolUrlEl = document.getElementById('ckc-tool-url-' + cardSku);
-    if (toolUrlEl) {
-      toolUrlEl.innerHTML = '<span class="ckc-tool-url-label">\uD83D\uDD27 Tap when you answer the call:</span>' + toolURL;
-      toolUrlEl.classList.add('show');
-    }
+    if (toolUrlEl) { toolUrlEl.innerHTML = '<span class="ckc-tool-url-label">\uD83D\uDD27 Tap when you answer the call:</span>' + toolURL; toolUrlEl.classList.add('show'); }
   }
   window.location.href = 'tel:+13365109816';
 }
 function buildInternalToolURL() {
   var params = new URLSearchParams({
-    vin:  _customerVIN,
-    y:    lastSearchParams.year || '',
-    mk:   lastSearchParams.make || '',
-    mo:   lastSearchParams.model || '',
-    svc:  _qualState.aklSelected ? 'akl' : 'aak',
-    sku:  _cfqCardData.sku || '',
-    blade: _cfqCardData.blade || (_qualState.bladeResult ? _qualState.bladeResult.keyway : ''),
-    fcc:  _cfqCardData.fcc || _qualState.fccValue || '',
-    kp:   _cfqCardData.keyPrice || '0',
-    kt:   _qualState.keyTypeAnswer || ''
+    vin: _customerVIN, y: lastSearchParams.year||'', mk: lastSearchParams.make||'', mo: lastSearchParams.model||'',
+    svc: _qualState.aklSelected?'akl':'aak', sku: _cfqCardData.sku||'',
+    blade: _cfqCardData.blade||(_qualState.bladeResult?_qualState.bladeResult.keyway:''),
+    fcc: _cfqCardData.fcc||_qualState.fccValue||'', kp: _cfqCardData.keyPrice||'0', kt: _qualState.keyTypeAnswer||''
   });
   return INTERNAL_TOOL_URL + '?' + params.toString();
 }
@@ -1229,8 +1185,8 @@ function buildProgToggleHTML(sku, keyPrice) {
 }
 function setProgToggle(sku, mode, keyPrice) {
   _progToggle[sku] = mode;
-  var fullOpt   = document.getElementById('ckc-prog-opt-full-' + sku);
-  var keyOpt    = document.getElementById('ckc-prog-opt-keyonly-' + sku);
+  var fullOpt = document.getElementById('ckc-prog-opt-full-' + sku);
+  var keyOpt  = document.getElementById('ckc-prog-opt-keyonly-' + sku);
   if (!fullOpt || !keyOpt) return;
   if (mode === 'full') { fullOpt.classList.add('selected'); keyOpt.classList.remove('selected'); }
   else { keyOpt.classList.add('selected'); fullOpt.classList.remove('selected'); }
@@ -1248,9 +1204,7 @@ function _cfqBtnHTML(key, displayPrice, reasonMsg) {
 
 function renderCards() {
   var resultsDiv = document.getElementById('ckc-results');
-  var year  = lastSearchParams.year;
-  var make  = lastSearchParams.make;
-  var model = lastSearchParams.model;
+  var year = lastSearchParams.year, make = lastSearchParams.make, model = lastSearchParams.model;
 
   var html = '<div class="ckc-results-header">' +
     '<div class="ckc-results-title">Keys for your ' + year + ' ' + make + ' ' + model + '</div>' +
@@ -1264,71 +1218,53 @@ function renderCards() {
     '<p style="font-size:0.82rem;color:#888;margin-top:6px;">*$' + PROGRAMMING_FEE + ' add-a-key rate \u2014 you must have a working key. All keys lost (AKL), EEPROM, or module work quoted separately \u2014 <a href="tel:+13365109816" style="color:var(--ckc-gold);">call for details</a>.</p></div>' +
     '<div class="ckc-programming-price"><span style="font-size:1rem;font-weight:500;opacity:0.7;">as low as</span><br>$' + PROGRAMMING_FEE + '</div></div>';
 
-  var type              = _qualState.keyTypeAnswer;
-  var aklMode           = _qualState.aklSelected;
-  var notListed         = type === 'notlisted';
-  var customerIsSmart   = type === 'smart';
-  var customerIsRemote  = type === 'remote';
-  var customerIsBlade   = type === 'transponder' || type === 'rhk' || type === '';
-  var smartNoEmergency  = customerIsSmart && _qualState.emergencyBladeAnswer === 'no';
+  var type = _qualState.keyTypeAnswer, aklMode = _qualState.aklSelected, notListed = type === 'notlisted';
+  var customerIsSmart = type === 'smart', customerIsRemote = type === 'remote';
+  var customerIsBlade = type === 'transponder' || type === 'rhk' || type === '';
+  var smartNoEmergency = customerIsSmart && _qualState.emergencyBladeAnswer === 'no';
 
   var bladeWinnerSku = null;
   if (!aklMode && _qualState.bladeResult && _qualState.bladeResult.keyway) {
-    _bladeGroup.forEach(function(k) {
-      if (k.keyway === _qualState.bladeResult.keyway && !bladeWinnerSku) bladeWinnerSku = k.sku;
-    });
+    _bladeGroup.forEach(function(k) { if (k.keyway === _qualState.bladeResult.keyway && !bladeWinnerSku) bladeWinnerSku = k.sku; });
   }
   var fccWinnerSku = null;
   if (_qualState.fccValue) {
-    _fccGroup.forEach(function(k) {
-      if ((k.fcc||'').toUpperCase() === _qualState.fccValue.toUpperCase() && !fccWinnerSku) fccWinnerSku = k.sku;
-    });
+    _fccGroup.forEach(function(k) { if ((k.fcc||'').toUpperCase() === _qualState.fccValue.toUpperCase() && !fccWinnerSku) fccWinnerSku = k.sku; });
   }
   var btnsWinnerSku = null;
   if (_qualState.buttonsValue > 0) {
     _buttonsGroup.forEach(function(k) {
       if (k.buttonCount === _qualState.buttonsValue && !btnsWinnerSku) {
-        if (fccWinnerSku) { if (k.sku === fccWinnerSku) btnsWinnerSku = k.sku; }
-        else btnsWinnerSku = k.sku;
+        if (fccWinnerSku) { if (k.sku === fccWinnerSku) btnsWinnerSku = k.sku; } else btnsWinnerSku = k.sku;
       }
     });
   }
 
   _ckcMatches.forEach(function(key, idx) {
-    var compatList   = key.vehicles.map(function(v){return v.years + ' ' + v.make + ' ' + v.model;}).join(' \u00b7 ');
+    var compatList   = key.vehicles.map(function(v){return v.years+' '+v.make+' '+v.model;}).join(' \u00b7 ');
     var displayPrice = getDisplayPrice(key);
     var totalPrice   = (displayPrice + PROGRAMMING_FEE).toFixed(2);
     var imgId        = 'ckc-img-' + idx;
-    var imgHTML;
-    if (key.image && key.image.startsWith('http')) {
-      imgHTML = '<img src="'+key.image+'" alt="'+key.title+'" class="ckc-key-img" onerror="this.outerHTML=\'<div class=\\\'ckc-key-img-placeholder\\\'>🔑</div>\'">';
-    } else {
-      imgHTML = '<div class="ckc-key-img-loading" id="'+imgId+'" data-sku="'+key.sku+'" data-handle="'+(key.handle||'')+'"></div>';
-    }
+    var imgHTML = (key.image && key.image.startsWith('http'))
+      ? '<img src="'+key.image+'" alt="'+key.title+'" class="ckc-key-img" onerror="this.outerHTML=\'<div class=\\\'ckc-key-img-placeholder\\\'>🔑</div>\'">'
+      : '<div class="ckc-key-img-loading" id="'+imgId+'" data-sku="'+key.sku+'" data-handle="'+(key.handle||'')+'"></div>';
 
     var stockHTML = key.inStock
       ? '<div class="ckc-stock-badge in-stock"><span class="ckc-stock-dot"></span>\uD83D\uDFE2 In Stock \u2014 Schedule your programming appointment after checkout</div>'
       : '<div class="ckc-stock-badge ships"><span class="ckc-stock-dot"></span>\uD83D\uDCE6 Ships in 2-3 days \u2014 Schedule your appointment when you receive confirmation that your key has arrived</div>';
 
-    var cardClass    = 'ckc-key-card';
-    var btnHTML      = '';
-    var priceNote    = '';
-    var resolvedNote = '';
-
-    var isSmart     = isSmartKeyType(key.type);
+    var cardClass = 'ckc-key-card', btnHTML = '', priceNote = '', resolvedNote = '';
+    var isSmart      = isSmartKeyType(key.type);
     var inBladeGroup = _bladeGroup.some(function(k){return k.sku===key.sku;});
     var inFCCGroup   = _fccGroup.some(function(k){return k.sku===key.sku;});
     var inBtnsGroup  = _buttonsGroup.some(function(k){return k.sku===key.sku;});
 
     if (notListed) {
       cardClass += ' ckc-cfq-card';
-      btnHTML   = _cfqBtnHTML(key, displayPrice, 'We\'ll help you identify the right key \u2014 call us and we\'ll confirm on-site.');
+      btnHTML    = _cfqBtnHTML(key, displayPrice, 'We\'ll help you identify the right key \u2014 call us and we\'ll confirm on-site.');
     } else if (isSmart) {
-      if (customerIsBlade && type !== '') {
-        cardClass += ' ckc-greyed';
-      } else if (customerIsRemote && type !== '') {
-        cardClass += ' ckc-greyed';
-      } else {
+      if ((customerIsBlade && type !== '') || (customerIsRemote && type !== '')) { cardClass += ' ckc-greyed'; }
+      else {
         cardClass += ' ckc-cfq-card';
         var smartMsg = '\u26a0 Smart Key programming requires module-level work on most vehicles. Call to confirm pricing. Please have your VIN ready.';
         if (_qualState.bladeResult) smartMsg += ' Blade identified: ' + _qualState.bladeResult.keyway + '.';
@@ -1336,41 +1272,32 @@ function renderCards() {
       }
     } else if (aklMode && (inBladeGroup || inFCCGroup || inBtnsGroup)) {
       cardClass += ' ckc-cfq-card';
-      btnHTML   = _cfqBtnHTML(key, displayPrice, '\uD83D\uDD11 All keys lost \u2014 a locksmith needs to verify your blade and program your new key on-site.');
+      btnHTML    = _cfqBtnHTML(key, displayPrice, '\uD83D\uDD11 All keys lost \u2014 a locksmith needs to verify your blade and program your new key on-site.');
     } else if (inBladeGroup) {
-      if (customerIsRemote && type !== '') {
-        cardClass += ' ckc-greyed';
-      } else if (smartNoEmergency && inBladeGroup) {
-        cardClass += ' ckc-greyed';
-      } else if (_qualState.bladeFailed) {
-        cardClass += ' ckc-cfq-card';
-        btnHTML    = _cfqBtnHTML(key, displayPrice, 'We couldn\'t identify your blade from the photo — call us and we\'ll confirm the right key when we arrive.');
-      } else if (bladeWinnerSku === key.sku) {
-        cardClass += ' ckc-resolved';
-        priceNote  = '<div class="ckc-key-price-note" id="ckc-pricenote-'+key.sku+'">+ $'+PROGRAMMING_FEE+' service call = <strong>$'+totalPrice+' total</strong></div>';
-        btnHTML    = '<button class="ckc-buy-now-btn" onclick="openCheckout('+idx+')">\u2713 Buy Now</button>' + buildProgToggleHTML(key.sku, displayPrice);
+      if ((customerIsRemote && type !== '') || (smartNoEmergency && inBladeGroup)) { cardClass += ' ckc-greyed'; }
+      else if (_qualState.bladeFailed) { cardClass += ' ckc-cfq-card'; btnHTML = _cfqBtnHTML(key, displayPrice, 'We couldn\'t identify your blade from the photo — call us and we\'ll confirm the right key when we arrive.'); }
+      else if (bladeWinnerSku === key.sku) {
+        cardClass   += ' ckc-resolved';
+        priceNote    = '<div class="ckc-key-price-note" id="ckc-pricenote-'+key.sku+'">+ $'+PROGRAMMING_FEE+' service call = <strong>$'+totalPrice+' total</strong></div>';
+        btnHTML      = '<button class="ckc-buy-now-btn" onclick="openCheckout('+idx+')">\u2713 Buy Now</button>' + buildProgToggleHTML(key.sku, displayPrice);
         resolvedNote = '<div class="ckc-resolved-confirm show">\u2713 Matched to your blade: ' + (_qualState.bladeResult ? _qualState.bladeResult.keyway : '') + '</div>';
-      } else if (bladeWinnerSku !== null) {
-        cardClass += ' ckc-greyed';
-      } else {
+      } else if (bladeWinnerSku !== null) { cardClass += ' ckc-greyed'; }
+      else {
         cardClass += ' ckc-cfq-card';
-        priceNote  = '<div class="ckc-key-price-note">+ $'+PROGRAMMING_FEE+' service call = <strong>$'+totalPrice+' total</strong></div>';
-        btnHTML    = _cfqBtnHTML(key, displayPrice, 'We couldn\'t confirm your blade from the photo \u2014 call us and we\'ll identify it on-site.');
+        priceNote   = '<div class="ckc-key-price-note">+ $'+PROGRAMMING_FEE+' service call = <strong>$'+totalPrice+' total</strong></div>';
+        btnHTML     = _cfqBtnHTML(key, displayPrice, 'We couldn\'t confirm your blade from the photo \u2014 call us and we\'ll identify it on-site.');
       }
     } else if (inFCCGroup || inBtnsGroup) {
-      if (customerIsBlade && type !== '') {
-        cardClass += ' ckc-greyed';
-      } else {
+      if (customerIsBlade && type !== '') { cardClass += ' ckc-greyed'; }
+      else {
         var winner = btnsWinnerSku || fccWinnerSku;
         if (!winner || winner === key.sku) {
           var isWinner = winner === key.sku;
-          cardClass  += isWinner ? ' ckc-resolved' : '';
-          priceNote   = '<div class="ckc-key-price-note" id="ckc-pricenote-'+key.sku+'">+ $'+PROGRAMMING_FEE+' service call = <strong>$'+totalPrice+' total</strong></div>';
-          btnHTML     = '<button class="'+(isWinner?'ckc-buy-now-btn':'ckc-add-btn')+'" onclick="openCheckout('+idx+')">'+(isWinner?'\u2713 Buy Now':'Buy Now')+'</button>' + buildProgToggleHTML(key.sku, displayPrice);
+          cardClass   += isWinner ? ' ckc-resolved' : '';
+          priceNote    = '<div class="ckc-key-price-note" id="ckc-pricenote-'+key.sku+'">+ $'+PROGRAMMING_FEE+' service call = <strong>$'+totalPrice+' total</strong></div>';
+          btnHTML      = '<button class="'+(isWinner?'ckc-buy-now-btn':'ckc-add-btn')+'" onclick="openCheckout('+idx+')">'+(isWinner?'\u2713 Buy Now':'Buy Now')+'</button>' + buildProgToggleHTML(key.sku, displayPrice);
           if (isWinner) resolvedNote = '<div class="ckc-resolved-confirm show">\u2713 Matched to your remote</div>';
-        } else {
-          cardClass += ' ckc-greyed';
-        }
+        } else { cardClass += ' ckc-greyed'; }
       }
     } else {
       priceNote = '<div class="ckc-key-price-note" id="ckc-pricenote-'+key.sku+'">+ $'+PROGRAMMING_FEE+' service call = <strong>$'+totalPrice+' total</strong></div>';
@@ -1392,7 +1319,6 @@ function renderCards() {
   var cardsDiv = document.getElementById('ckc-cards-container');
   if (cardsDiv) { cardsDiv.innerHTML = html; }
   else { resultsDiv.innerHTML = (resultsDiv.innerHTML||'') + '<div id="ckc-cards-container">'+html+'</div>'; }
-
   _wireBladeDropzone();
   lazyLoadImages();
   resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1413,43 +1339,21 @@ function _wireBladeDropzone() {
   });
 }
 
-// ══ BLADE ANALYSIS — Cloudflare Worker (v8.55) ══
-// Clean fetch POST to Cloudflare Worker.
-// Worker handles CORS, calls Anthropic, returns JSON.
-// No JSONP, no Drive upload, no size limitations.
-
+// ══ BLADE ANALYSIS — Cloudflare Worker ══
 async function analyzeBladeWithClaude(base64, keyways, vehicleContext) {
   var compressedBase64 = await compressImageBase64(base64);
-
   var response = await fetch(BLADE_PROXY_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      imageBase64: compressedBase64,
-      keyways: keyways,
-      vehicleContext: vehicleContext
-    })
+    body: JSON.stringify({ imageBase64: compressedBase64, keyways: keyways, vehicleContext: vehicleContext })
   });
-
-  if (!response.ok) {
-    throw new Error('Blade proxy error: ' + response.status);
-  }
-
+  if (!response.ok) throw new Error('Blade proxy error: ' + response.status);
   var result = await response.json();
-
-  if (result.error) {
-    throw new Error(result.error);
-  }
-
-  // Validate keyway is in our group
-  if (result.matched && keyways.indexOf(result.keyway) === -1) {
-    return { matched: false, unclear: true, reason: 'Keyway not in group' };
-  }
-
+  if (result.error) throw new Error(result.error);
+  if (result.matched && keyways.indexOf(result.keyway) === -1) return { matched: false, unclear: true, reason: 'Keyway not in group' };
   return result;
 }
 
-// Restored to 800px / 0.82 quality — Cloudflare handles large payloads
 function compressImageBase64(base64DataUrl) {
   return new Promise(function(resolve) {
     var img = new Image();
@@ -1457,8 +1361,7 @@ function compressImageBase64(base64DataUrl) {
       function compress(w, q) {
         var scale = img.width > w ? w / img.width : 1;
         var c = document.createElement('canvas');
-        c.width = Math.round(img.width * scale);
-        c.height = Math.round(img.height * scale);
+        c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
         c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
         return c.toDataURL('image/jpeg', q).split(',')[1];
       }
@@ -1486,7 +1389,6 @@ function searchKeys() {
   });
 
   lastSearchParams = { year, make, model };
-
   _qualState = { keyTypeAnswer:'', workingKeyAnswered:false, aklSelected:false, emergencyBladeAnswer:'', needsBlade:false, bladeImage:null, bladeResult:null, bladeFailed:false, bladeRetry:0, needsFCC:false, needsButtons:false, fccValue:'', buttonsValue:0, allQualsDone:false };
   _bladeGroup=[]; _fccGroup=[]; _buttonsGroup=[]; _byType={}; _progToggle={};
 
@@ -1517,10 +1419,7 @@ function searchKeys() {
   }
 
   matches.forEach(function(m) { var t = m.type||'Key'; if(!_byType[t])_byType[t]=[]; _byType[t].push(m); });
-
-  matches.forEach(function(k) {
-    if (requiresBlade(k.type)) { if (!_bladeGroup.some(function(b){return b.sku===k.sku;})) _bladeGroup.push(k); }
-  });
+  matches.forEach(function(k) { if (requiresBlade(k.type)) { if (!_bladeGroup.some(function(b){return b.sku===k.sku;})) _bladeGroup.push(k); } });
   var remoteGroup = _byType['Remote (Keyless Entry)'] || [];
   if (remoteGroup.length > 1) {
     if (detectFCCConflict(remoteGroup))    _fccGroup     = remoteGroup;
@@ -1532,7 +1431,6 @@ function searchKeys() {
   _qualState.needsButtons = _buttonsGroup.length > 0;
 
   var needsAnyQual = _qualState.needsBlade || _qualState.needsFCC || _qualState.needsButtons;
-
   if (needsAnyQual) {
     resultsDiv.innerHTML = buildQualifierPanel() + '<div id="ckc-cards-container"></div>';
     _wireBladeDropzone();
@@ -1612,7 +1510,6 @@ async function startShopifyCheckout() {
 }
 function showPostPurchase(isKeyOnly) {
   var resultsDiv = document.getElementById('ckc-results');
-
   if (isKeyOnly) {
     resultsDiv.innerHTML = '<div class="ckc-post-purchase"><div class="ckc-post-purchase-icon">\uD83D\uDED2</div><h3>Checkout Opened</h3><p>Your checkout tab is open — complete your order there.</p>' +
       '<div style="background:rgba(201,162,39,0.08);border:1px solid rgba(201,162,39,0.25);border-radius:10px;padding:16px 20px;margin:16px auto;max-width:480px;font-size:0.95rem;color:var(--ckc-text-muted);line-height:1.6;text-align:left;">' +
