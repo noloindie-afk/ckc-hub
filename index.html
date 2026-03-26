@@ -1,6 +1,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ═══ CKC KEY FINDER v8.63 ═══ */
+/* ═══ CKC KEY FINDER v8.64 ═══ */
 .ckc-finder {
   --ckc-gold: #c9a227;
   --ckc-gold-light: #e0c458;
@@ -363,7 +363,7 @@ const SHOPIFY_DOMAIN       = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL          = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
 const PROGRAMMING_VARIANT  = '45908511228101';
 const INTERNAL_TOOL_URL    = 'https://carolinakeycutters.com/tools';
-const CKC_VERSION          = 'v8.63';
+const CKC_VERSION          = 'v8.64';
 
 var liveCatalog      = [];
 var isLive           = false;
@@ -723,7 +723,6 @@ function goBack() {
 function scrollToWizard() {
   var el = document.getElementById('ckc-wizard-area');
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  setTimeout(postHeight, 100);
 }
 
 // ══ MAIN SEARCH ENTRY POINT ══
@@ -1458,13 +1457,19 @@ function resetFinder() {
 }
 
 // ══ IFRAME RESIZE ══
+var _postHeightTimer = null;
 function postHeight() {
-  if (window.parent !== window) {
-    var h = document.getElementById('ckc-finder-root').scrollHeight + 40;
+  if (window.parent === window) return;
+  if (_postHeightTimer) clearTimeout(_postHeightTimer);
+  _postHeightTimer = setTimeout(function() {
+    var el = document.getElementById('ckc-finder-root');
+    if (!el) return;
+    var h = el.scrollHeight + 40;
     window.parent.postMessage({ type: 'ckc-resize', height: h }, '*');
-  }
+    _postHeightTimer = null;
+  }, 120);
 }
-var _resizeObserver = new ResizeObserver(postHeight);
+var _resizeObserver = new ResizeObserver(function() { postHeight(); });
 
 (async function init() {
   await syncFromSheet();
