@@ -1,6 +1,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ═══ CKC KEY FINDER v8.66 ═══ */
+/* ═══ CKC KEY FINDER v8.67 ═══ */
 .ckc-finder {
   --ckc-gold: #c9a227;
   --ckc-gold-light: #e0c458;
@@ -363,7 +363,7 @@ const SHOPIFY_DOMAIN       = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL          = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
 const PROGRAMMING_VARIANT  = '45908511228101';
 const INTERNAL_TOOL_URL    = 'https://carolinakeycutters.com/tools';
-const CKC_VERSION          = 'v8.66';
+const CKC_VERSION          = 'v8.67';
 
 var liveCatalog      = [];
 var isLive           = false;
@@ -826,6 +826,10 @@ function renderScreen2() {
 
   html += '</div>' +
     '<div style="margin-top:20px;padding:12px 14px;background:rgba(201,162,39,0.06);border:1px solid rgba(201,162,39,0.15);border-radius:8px;font-size:0.82rem;color:var(--ckc-text-muted);">🔑 <strong style="color:var(--ckc-text);">Need a plain metal key with no chip or remote?</strong> We cut those too — <a href="tel:+13365109816" style="color:var(--ckc-gold);">call us at (336) 510-9816</a>.</div>' +
+    '<div class="ckc-none-match-opt" style="margin-top:12px;" onclick="onKeyNotShown()">' +
+    '<span style="font-size:1.2rem;">🔍</span>' +
+    '<div><strong style="color:var(--ckc-text);font-size:0.9rem;">I don\'t see my key type listed</strong><div style="font-size:0.78rem;margin-top:2px;">We\'ll source the right key for your vehicle</div></div>' +
+    '</div>' +
     '</div>';
 
   document.getElementById('ckc-wizard-area').innerHTML = html;
@@ -854,9 +858,23 @@ function _typeSubLabel(type) {
 }
 function _escAttr(s) { return (s||'').replace(/'/g,"\\'"); }
 
-function onTypeSelected(type) {
-  _wiz.typeAnswer = type;
-  advanceFromType();
+function onKeyNotShown() {
+  pauseResize();
+  var ymm = lastSearchParams.year + ' ' + lastSearchParams.make + ' ' + lastSearchParams.model;
+  document.getElementById('ckc-wizard-area').innerHTML =
+    '<div style="background:var(--ckc-card);border-radius:var(--ckc-radius);border:1px solid var(--ckc-border);padding:40px 36px;text-align:center;">' +
+    '<div style="font-size:3rem;margin-bottom:16px;">🔍</div>' +
+    '<div style="font-family:\'Outfit\',sans-serif;font-size:1.5rem;font-weight:700;color:var(--ckc-text);margin-bottom:12px;">We\'ll source it for you</div>' +
+    '<p style="font-size:1rem;color:var(--ckc-text-muted);line-height:1.7;margin-bottom:8px;">We don\'t currently have that key in our catalog for your <strong style="color:var(--ckc-text);">' + ymm + '</strong>, but that doesn\'t mean we can\'t get it.</p>' +
+    '<p style="font-size:1rem;color:var(--ckc-text-muted);line-height:1.7;margin-bottom:28px;">Give us a call with your VIN and we\'ll identify the exact key you need, source it, and come to you — usually same day or next day.</p>' +
+    '<a href="tel:+13365109816" class="ckc-call-btn" style="display:inline-flex;margin-bottom:16px;">' +
+    '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>' +
+    'Call (336) 510-9816</a>' +
+    '<div style="font-size:0.82rem;color:#555;margin-bottom:24px;">Have your VIN ready — found on your dashboard lower-left or driver door jamb sticker</div>' +
+    '<button class="ckc-back-btn" onclick="goBack()">← Back to key types</button>' +
+    '</div>';
+  showScreen(2);
+  resumeResize();
 }
 
 function advanceFromType() {
@@ -1466,7 +1484,8 @@ function resetFinder() {
 
 // ══ IFRAME RESIZE ══
 var _postHeightTimer = null;
-var _resizeObserver = null;
+var _resizeObserver  = null;
+var _lastSentHeight  = 0;
 
 function postHeight() {
   if (window.parent === window) return;
@@ -1475,6 +1494,8 @@ function postHeight() {
     var el = document.getElementById('ckc-finder-root');
     if (!el) return;
     var h = el.scrollHeight + 40;
+    if (Math.abs(h - _lastSentHeight) < 8) { _postHeightTimer = null; return; }
+    _lastSentHeight = h;
     window.parent.postMessage({ type: 'ckc-resize', height: h }, '*');
     _postHeightTimer = null;
   }, 400);
