@@ -1,6 +1,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ═══ CKC KEY FINDER v8.68 ═══ */
+/* ═══ CKC KEY FINDER v8.69 ═══ */
 .ckc-finder {
   --ckc-gold: #c9a227;
   --ckc-gold-light: #e0c458;
@@ -363,7 +363,7 @@ const SHOPIFY_DOMAIN       = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL          = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
 const PROGRAMMING_VARIANT  = '45908511228101';
 const INTERNAL_TOOL_URL    = 'https://carolinakeycutters.com/tools';
-const CKC_VERSION          = 'v8.68';
+const CKC_VERSION          = 'v8.69';
 
 var liveCatalog      = [];
 var isLive           = false;
@@ -696,9 +696,7 @@ function detectBladeConflict(group) {
 // ══ WIZARD NAVIGATION ══
 function showScreen(n) {
   _wiz.screen = n;
-  // Hide screen 1 when wizard starts
   document.getElementById('ckc-screen-1').classList.toggle('active', n === 1);
-  postHeight();
 }
 
 function goBack() {
@@ -802,7 +800,7 @@ function renderScreen2() {
   var types = Object.keys(_byType);
   var ymm = lastSearchParams.year + ' ' + lastSearchParams.make + ' ' + lastSearchParams.model;
   var html = '<div class="ckc-type-screen">' +
-    '<div class="ckc-screen-header"><button class="ckc-back-btn-wiz" onclick="goBack()">← Back</button><div class="ckc-screen-title">Select Key Type</div></div>' +
+    '<div class="ckc-screen-header"><button class="ckc-back-btn-wiz" onclick="goBack()">← Change vehicle</button><div class="ckc-screen-title">Select Key Type</div></div>' +
     '<div class="ckc-vehicle-label">🚗 ' + ymm + '</div>' +
     '<div class="ckc-type-screen-q">Which type of key does your vehicle use?</div>' +
     '<div class="ckc-type-screen-sub">Select the option that matches your current key.</div>' +
@@ -1489,9 +1487,9 @@ function resetFinder() {
 }
 
 // ══ IFRAME RESIZE ══
+// No ResizeObserver — each screen render sends exactly one postMessage after
+// the DOM settles. This prevents the feedback loop that causes shaking.
 var _postHeightTimer = null;
-var _resizeObserver  = null;
-var _lastSentHeight  = 0;
 
 function postHeight() {
   if (window.parent === window) return;
@@ -1499,29 +1497,22 @@ function postHeight() {
   _postHeightTimer = setTimeout(function() {
     var el = document.getElementById('ckc-finder-root');
     if (!el) return;
-    var h = el.scrollHeight + 40;
-    if (Math.abs(h - _lastSentHeight) < 8) { _postHeightTimer = null; return; }
-    _lastSentHeight = h;
-    window.parent.postMessage({ type: 'ckc-resize', height: h }, '*');
+    window.parent.postMessage({ type: 'ckc-resize', height: el.scrollHeight + 40 }, '*');
     _postHeightTimer = null;
-  }, 400);
+  }, 350);
 }
 
 function pauseResize() {
-  if (_resizeObserver) _resizeObserver.disconnect();
   if (_postHeightTimer) { clearTimeout(_postHeightTimer); _postHeightTimer = null; }
 }
 
 function resumeResize() {
-  var root = document.getElementById('ckc-finder-root');
-  if (_resizeObserver && root) _resizeObserver.observe(root);
   postHeight();
 }
 
 function initResizeObserver() {
-  _resizeObserver = new ResizeObserver(function() { postHeight(); });
-  var root = document.getElementById('ckc-finder-root');
-  if (root) _resizeObserver.observe(root);
+  // Intentionally empty — ResizeObserver removed to eliminate shake feedback loop.
+  // Height is sent deliberately once per screen transition via resumeResize().
 }
 
 (async function init() {
