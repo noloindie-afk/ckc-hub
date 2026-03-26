@@ -1,6 +1,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ═══ CKC KEY FINDER v8.64 ═══ */
+/* ═══ CKC KEY FINDER v8.66 ═══ */
 .ckc-finder {
   --ckc-gold: #c9a227;
   --ckc-gold-light: #e0c458;
@@ -335,7 +335,7 @@
   <div id="ckc-wizard-area"></div>
 
   <div class="ckc-disclaimer">
-    <strong>Pricing &amp; Service:</strong> All prices shown are for the key only. A $65 service call fee covers professional mobile key programming &amp; cutting — we come to you. The $65 rate applies to add-a-key service (you must have a working key). All keys lost (AKL), EEPROM, or module work quoted separately. Service available in the Triad, NC area.
+    <strong>Pricing &amp; Service:</strong> All prices shown are for the key only. A $75 service call fee covers professional mobile key programming &amp; cutting — we come to you. The $75 rate applies to add-a-key service (you must have a working key). All keys lost (AKL), EEPROM, or module work quoted separately. Service available in the Triad, NC area.
   </div>
 </div>
 
@@ -363,7 +363,7 @@ const SHOPIFY_DOMAIN       = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL          = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
 const PROGRAMMING_VARIANT  = '45908511228101';
 const INTERNAL_TOOL_URL    = 'https://carolinakeycutters.com/tools';
-const CKC_VERSION          = 'v8.64';
+const CKC_VERSION          = 'v8.66';
 
 var liveCatalog      = [];
 var isLive           = false;
@@ -702,8 +702,9 @@ function showScreen(n) {
 }
 
 function goBack() {
+  pauseResize();
   var s = _wiz.screen;
-  if (s === 2) { _wiz.typeAnswer = ''; showScreen(1); document.getElementById('ckc-wizard-area').innerHTML = ''; }
+  if (s === 2) { _wiz.typeAnswer = ''; showScreen(1); document.getElementById('ckc-wizard-area').innerHTML = ''; resumeResize(); }
   else if (s === 3) { _wiz.bladeAnswer = ''; showScreen(2); renderScreen2(); }
   else if (s === 4) { _wiz.tierAnswer = ''; _wiz.finalKey = null; showScreen(3); renderScreen3(); }
   else if (s === 5) {
@@ -727,6 +728,7 @@ function scrollToWizard() {
 
 // ══ MAIN SEARCH ENTRY POINT ══
 function startWizard() {
+  pauseResize();
   var year  = parseInt(document.getElementById('ckc-year').value);
   var make  = document.getElementById('ckc-make').value;
   var model = document.getElementById('ckc-model').value;
@@ -774,6 +776,7 @@ function startWizard() {
       '<a href="tel:+13365109816" class="ckc-call-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>Call Carolina Key Cutters</a>' +
       '<br><br><button class="ckc-new-search-btn" onclick="resetFinder()">Try a different vehicle</button></div>';
     scrollToWizard();
+    resumeResize();
     return;
   }
 
@@ -828,6 +831,7 @@ function renderScreen2() {
   document.getElementById('ckc-wizard-area').innerHTML = html;
   showScreen(2);
   lazyLoadTypeImages();
+  resumeResize();
 }
 
 function _typeIcon(type) {
@@ -975,6 +979,7 @@ function renderScreen3() {
   showScreen(3);
   lazyLoadCompareImages();
   initMagnifiers(showGroup);
+  resumeResize();
 }
 
 function onBladeSelected(sku) {
@@ -1087,6 +1092,7 @@ function renderScreen4(candidates) {
   html += '</div></div>';
   document.getElementById('ckc-wizard-area').innerHTML = html;
   showScreen(4);
+  resumeResize();
 }
 
 function onTierSelected(sku) {
@@ -1189,6 +1195,7 @@ function renderScreen5() {
       if (el2 && url) el2.outerHTML = '<img src="' + url + '" alt="Key" class="ckc-buynow-img" onerror="this.outerHTML=\'<div class=\\\'ckc-buynow-img-ph\\\'>🔑</div>\'">';
     });
   }
+  resumeResize();
 }
 
 function setS5ProgToggle(sku, mode, keyPrice) {
@@ -1229,6 +1236,7 @@ function renderCheckout(key) {
     '<div style="font-size:0.85rem;color:var(--ckc-text-muted);text-align:center;margin-bottom:14px;">Service available in the Triad, NC area</div>' +
     '<button class="ckc-checkout-btn" id="ckc-checkout-btn" onclick="startShopifyCheckout()">Proceed to Checkout →</button>' +
     '<button class="ckc-back-btn" onclick="goBack()">← Back</button></div>';
+  resumeResize();
 }
 
 // ══ VIN MODAL ══
@@ -1453,11 +1461,13 @@ function resetFinder() {
   document.getElementById('ckc-search-btn').disabled = true;
   if (!isLive) syncFromSheet();
   document.getElementById('ckc-finder-root').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  setTimeout(postHeight, 200);
+  resumeResize();
 }
 
 // ══ IFRAME RESIZE ══
 var _postHeightTimer = null;
+var _resizeObserver = null;
+
 function postHeight() {
   if (window.parent === window) return;
   if (_postHeightTimer) clearTimeout(_postHeightTimer);
@@ -1467,14 +1477,30 @@ function postHeight() {
     var h = el.scrollHeight + 40;
     window.parent.postMessage({ type: 'ckc-resize', height: h }, '*');
     _postHeightTimer = null;
-  }, 120);
+  }, 400);
 }
-var _resizeObserver = new ResizeObserver(function() { postHeight(); });
+
+function pauseResize() {
+  if (_resizeObserver) _resizeObserver.disconnect();
+  if (_postHeightTimer) { clearTimeout(_postHeightTimer); _postHeightTimer = null; }
+}
+
+function resumeResize() {
+  var root = document.getElementById('ckc-finder-root');
+  if (_resizeObserver && root) _resizeObserver.observe(root);
+  postHeight();
+}
+
+function initResizeObserver() {
+  _resizeObserver = new ResizeObserver(function() { postHeight(); });
+  var root = document.getElementById('ckc-finder-root');
+  if (root) _resizeObserver.observe(root);
+}
 
 (async function init() {
   await syncFromSheet();
   if (!isLive) initDropdowns();
-  _resizeObserver.observe(document.getElementById('ckc-finder-root'));
+  initResizeObserver();
   postHeight();
 })();
 </script>
