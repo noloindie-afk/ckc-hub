@@ -1,6 +1,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ═══ CKC KEY FINDER v8.62 ═══ */
+/* ═══ CKC KEY FINDER v8.63 ═══ */
 .ckc-finder {
   --ckc-gold: #c9a227;
   --ckc-gold-light: #e0c458;
@@ -108,6 +108,13 @@
 
 .ckc-none-match-opt { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1px dashed rgba(255,255,255,0.15); border-radius: 10px; cursor: pointer; transition: all 0.15s; margin-top: 4px; color: var(--ckc-text-muted); font-size: 0.9rem; }
 .ckc-none-match-opt:hover { border-color: rgba(255,255,255,0.3); color: var(--ckc-text); }
+
+/* ═══ MAGNIFIER ═══ */
+.ckc-mag-wrap { position: relative; width: 100%; padding-bottom: 90%; overflow: hidden; border-radius: 8px; background: #f9fafb; margin-bottom: 10px; }
+.ckc-mag-wrap img.ckc-mag-base { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; padding: 6px; display: block; }
+.ckc-mag-wrap .ckc-mag-ph { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; background: linear-gradient(135deg, #252525, #2d2d2d); }
+.ckc-mag-lens { position: absolute; width: 100px; height: 100px; border-radius: 50%; border: 2.5px solid var(--ckc-gold); pointer-events: none; display: none; overflow: hidden; z-index: 10; }
+.ckc-mag-lens img { position: absolute; object-fit: contain; background: #f9fafb; }
 
 /* FCC screen */
 .ckc-fcc-select { width: 100%; padding: 12px 16px; border: 2px solid var(--ckc-border); border-radius: 10px; background: #222; color: var(--ckc-text); font-family: 'DM Sans', sans-serif; font-size: 1rem; margin-bottom: 10px; appearance: none; cursor: pointer; }
@@ -356,7 +363,7 @@ const SHOPIFY_DOMAIN       = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL          = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
 const PROGRAMMING_VARIANT  = '45908511228101';
 const INTERNAL_TOOL_URL    = 'https://carolinakeycutters.com/tools';
-const CKC_VERSION          = 'v8.62';
+const CKC_VERSION          = 'v8.63';
 
 var liveCatalog      = [];
 var isLive           = false;
@@ -893,34 +900,59 @@ function _getFCCConflictGroup(group) {
 function renderScreen3() {
   var type  = _wiz.typeAnswer;
   var group = _byType[type] || [];
-  var ymm   = lastSearchParams.year + ' ' + lastSearchParams.make + ' ' + lastSearchParams.model;
 
   var bladeGroup = _getBladeConflictGroup(group);
   var fccGroup   = _getFCCConflictGroup(group);
-  var showGroup  = bladeGroup.length > 1 ? bladeGroup : fccGroup;
+  var rawGroup   = bladeGroup.length > 1 ? bladeGroup : fccGroup;
   var isBladeQ   = bladeGroup.length > 1;
+
+  // Deduplicate by keyway — one card per unique blade profile
+  _wiz._bladeKeywaySKUs = {};
+  var showGroup = [];
+  if (isBladeQ) {
+    rawGroup.forEach(function(key) {
+      var kw = (key.keyway || '—').toUpperCase();
+      if (kw === 'UNIVERSAL' || kw === 'N/A' || kw === '') return;
+      if (!_wiz._bladeKeywaySKUs[kw]) {
+        _wiz._bladeKeywaySKUs[kw] = [];
+        showGroup.push(key);
+      }
+      _wiz._bladeKeywaySKUs[kw].push(key.sku);
+    });
+  } else {
+    showGroup = rawGroup;
+  }
 
   var html = '<div class="ckc-qual-screen">' +
     '<div class="ckc-screen-header"><button class="ckc-back-btn-wiz" onclick="goBack()">← Back</button><div class="ckc-screen-title">' + (isBladeQ ? 'Blade Match' : 'Remote Match') + '</div></div>' +
     '<div class="ckc-qual-screen-q">' + (isBladeQ ? '🔑 Which blade matches your key?' : '📡 Which remote matches yours?') + '</div>' +
-    '<div class="ckc-qual-screen-sub">Your vehicle has ' + showGroup.length + ' options. Select the one that matches what you currently have.</div>' +
+    '<div class="ckc-qual-screen-sub">Your vehicle has ' + showGroup.length + ' option' + (showGroup.length !== 1 ? 's' : '') + '. Hover to zoom. Select the one that matches what you currently have.</div>' +
     '<div class="ckc-compare-grid">';
 
   showGroup.forEach(function(key) {
-    var sel = _wiz.bladeAnswer === key.sku ? ' selected' : '';
-    var imgHTML = (key.image && key.image.startsWith('http'))
-      ? '<img src="' + key.image + '" alt="' + key.title + '" class="ckc-compare-card-img" onerror="this.parentNode.querySelector(\'.ckc-compare-card-img\').style.display=\'none\'">'
-      : '<div class="ckc-compare-card-img-loading" id="ckc-cmpimg-' + key.sku.replace(/[^a-z0-9]/gi,'') + '" data-sku="' + key.sku + '" data-handle="' + (key.handle||'') + '"></div>';
+    var sel    = _wiz.bladeAnswer === key.sku ? ' selected' : '';
+    var safeId = key.sku.replace(/[^a-z0-9]/gi, '');
+    var imgSrc = (key.image && key.image.startsWith('http')) ? key.image : '';
 
+    var innerImg = imgSrc
+      ? '<img class="ckc-mag-base" id="ckc-cmpimg-' + safeId + '" src="' + imgSrc + '" alt="' + key.title + '" onerror="this.outerHTML=\'<div class=\\\'ckc-mag-ph\\\'>🔑</div>\'">'
+      : '<div class="ckc-mag-ph" id="ckc-cmpimg-' + safeId + '" data-sku="' + key.sku + '" data-handle="' + (key.handle||'') + '">🔑</div>';
+
+    var lensInnerSrc = imgSrc ? imgSrc : '';
     var detail = isBladeQ
       ? '<div class="ckc-compare-card-blade">Blade: ' + (key.keyway || '—') + '</div>'
       : (key.fcc && key.fcc !== 'N/A' ? '<div class="ckc-compare-card-blade">FCC: ' + key.fcc + '</div>' : '') +
         (key.buttonCount > 0 ? '<div class="ckc-compare-card-blade">' + key.buttonCount + ' Button' + (key.buttonCount > 1 ? 's' : '') + '</div>' : '');
 
     html += '<div class="ckc-compare-card' + sel + '" onclick="onBladeSelected(\'' + _escAttr(key.sku) + '\')">' +
-      imgHTML + detail +
+      '<div class="ckc-mag-wrap" id="ckc-magwrap-' + safeId + '">' +
+        innerImg +
+        '<div class="ckc-mag-lens" id="ckc-lens-' + safeId + '">' +
+          '<img id="ckc-lensimg-' + safeId + '" src="' + lensInnerSrc + '" alt="">' +
+        '</div>' +
+      '</div>' +
+      detail +
       '<div class="ckc-compare-card-title">' + key.title + '</div>' +
-      '<div class="ckc-compare-card-price">$' + key.price.toFixed(2) + '</div>' +
       '<div class="ckc-compare-card-check"><div class="ckc-compare-card-check-dot"></div></div>' +
       '</div>';
   });
@@ -932,7 +964,6 @@ function renderScreen3() {
     '</div>' +
     '</div>';
 
-  // FCC fallback section if FCC conflict
   if (!isBladeQ) {
     html += '<div style="background:var(--ckc-card);border:1px solid var(--ckc-border);border-radius:var(--ckc-radius);padding:24px 28px;margin-top:16px;">' +
       '<div style="font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--ckc-text-muted);margin-bottom:12px;">Can\'t find an FCC ID on your remote?</div>' +
@@ -944,6 +975,7 @@ function renderScreen3() {
   document.getElementById('ckc-wizard-area').innerHTML = html;
   showScreen(3);
   lazyLoadCompareImages();
+  initMagnifiers(showGroup);
 }
 
 function onBladeSelected(sku) {
@@ -978,16 +1010,23 @@ function advanceFromBlade(sku) {
   var type  = _wiz.typeAnswer;
   var group = _byType[type] || [];
 
-  // Filter to selected SKU if we have one
+  // If we have a keyway→SKU map (from deduped blade screen), expand to all SKUs for that keyway
   var candidates;
-  if (sku && sku !== 'none') {
+  if (sku && sku !== 'none' && _wiz._bladeKeywaySKUs) {
+    // Find keyway for selected SKU
+    var selectedKey = group.find(function(k){ return k.sku === sku; });
+    var kw = selectedKey ? (selectedKey.keyway||'').toUpperCase() : null;
+    var kwSkus = kw && _wiz._bladeKeywaySKUs[kw] ? _wiz._bladeKeywaySKUs[kw] : [sku];
+    candidates = group.filter(function(k){ return kwSkus.indexOf(k.sku) !== -1; });
+    if (candidates.length === 0) candidates = group.filter(function(k){ return k.sku === sku; });
+  } else if (sku && sku !== 'none') {
     candidates = group.filter(function(k){ return k.sku === sku; });
     if (candidates.length === 0) candidates = group;
   } else {
     candidates = group;
   }
 
-  // Check for tier conflict (aftermarket vs OEM same keyway/FCC)
+  // Check for tier conflict among candidates
   var tierCandidates = _getTierCandidates(candidates);
   if (tierCandidates.length > 1) {
     showScreen(4);
@@ -1351,15 +1390,53 @@ async function lazyLoadTypeImages() {
   }
 }
 async function lazyLoadCompareImages() {
-  var els = document.querySelectorAll('.ckc-compare-card-img-loading[data-sku]');
+  var els = document.querySelectorAll('.ckc-mag-ph[data-sku]');
   for (var i = 0; i < els.length; i++) {
     var el = els[i]; var sku = el.dataset.sku; var handle = el.dataset.handle;
     if (!sku || !el.id) continue;
     var url = await tryFetchRKSImage(handle, sku);
+    var safeId = sku.replace(/[^a-z0-9]/gi,'');
     var el2 = document.getElementById(el.id);
-    if (el2 && url) el2.outerHTML = '<img src="' + url + '" alt="Key" class="ckc-compare-card-img" onerror="this.outerHTML=\'<div style=\\\'height:120px\\\'></div>\'">';
-    else if (el2) el2.outerHTML = '<div style="height:120px"></div>';
+    if (el2 && url) {
+      el2.outerHTML = '<img class="ckc-mag-base" id="ckc-cmpimg-' + safeId + '" src="' + url + '" alt="Key" onerror="this.outerHTML=\'<div class=\\\'ckc-mag-ph\\\'>🔑</div>\'">';
+      // Also update the lens image src
+      var lensImg = document.getElementById('ckc-lensimg-' + safeId);
+      if (lensImg) lensImg.src = url;
+    }
   }
+}
+
+function initMagnifiers(group) {
+  group.forEach(function(key) {
+    var safeId  = key.sku.replace(/[^a-z0-9]/gi,'');
+    var wrap    = document.getElementById('ckc-magwrap-' + safeId);
+    var lens    = document.getElementById('ckc-lens-' + safeId);
+    var lensImg = document.getElementById('ckc-lensimg-' + safeId);
+    if (!wrap || !lens || !lensImg) return;
+    var ZOOM = 3, LS = 100;
+
+    function moveLens(mx, my) {
+      var ww = wrap.offsetWidth, wh = wrap.offsetHeight;
+      lens.style.left    = Math.max(0, Math.min(mx - LS/2, ww - LS)) + 'px';
+      lens.style.top     = Math.max(0, Math.min(my - LS/2, wh - LS)) + 'px';
+      lens.style.display = 'block';
+      lensImg.style.width  = (ww * ZOOM) + 'px';
+      lensImg.style.height = (wh * ZOOM) + 'px';
+      lensImg.style.left   = -(mx * ZOOM - LS/2) + 'px';
+      lensImg.style.top    = -(my * ZOOM - LS/2) + 'px';
+    }
+    wrap.addEventListener('mousemove', function(e) {
+      var r = wrap.getBoundingClientRect();
+      moveLens(e.clientX - r.left, e.clientY - r.top);
+    });
+    wrap.addEventListener('mouseleave', function() { lens.style.display = 'none'; });
+    wrap.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+      var r = wrap.getBoundingClientRect();
+      moveLens(e.touches[0].clientX - r.left, e.touches[0].clientY - r.top);
+    }, { passive: false });
+    wrap.addEventListener('touchend', function() { lens.style.display = 'none'; });
+  });
 }
 
 // ══ RESET ══
