@@ -1,6 +1,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ═══ CKC KEY FINDER v8.70 ═══ */
+/* ═══ CKC KEY FINDER v8.72 ═══ */
 .ckc-finder {
   --ckc-gold: #c9a227;
   --ckc-gold-light: #e0c458;
@@ -363,7 +363,7 @@ const SHOPIFY_DOMAIN       = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL          = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
 const PROGRAMMING_VARIANT  = '45908511228101';
 const INTERNAL_TOOL_URL    = 'https://carolinakeycutters.com/tools';
-const CKC_VERSION          = 'v8.70';
+const CKC_VERSION          = 'v8.72';
 
 var liveCatalog      = [];
 var isLive           = false;
@@ -928,6 +928,17 @@ function renderScreen3() {
   var fccGroup   = _getFCCConflictGroup(group);
   var rawGroup   = bladeGroup.length > 1 ? bladeGroup : fccGroup;
   var isBladeQ   = bladeGroup.length > 1;
+  var type = _wiz.typeAnswer.toLowerCase();
+  var s3Question = isBladeQ
+    ? (type.includes('flip') ? '🔑 Which key matches yours?' :
+       type.includes('remote head') ? '🔑 Which blade matches your key?' :
+       type.includes('transponder') ? '🔑 Which blade matches your key?' :
+       '📡 Which remote matches yours?')
+    : '📡 Which remote matches yours?';
+  var s3Sub = isBladeQ
+    ? (type.includes('flip') ? 'Your vehicle has two flip key options. Select the one that matches what you currently have.' :
+       'Your vehicle has ' + showGroup.length + ' option' + (showGroup.length !== 1 ? 's' : '') + '. Hover to zoom. Select the one that matches what you currently have.')
+    : 'Your vehicle has ' + showGroup.length + ' option' + (showGroup.length !== 1 ? 's' : '') + '. Hover to zoom. Select the one that matches what you currently have.';
 
   // Deduplicate by keyway — one card per unique blade profile
   _wiz._bladeKeywaySKUs = {};
@@ -947,9 +958,9 @@ function renderScreen3() {
   }
 
   var html = '<div class="ckc-qual-screen">' +
-    '<div class="ckc-screen-header"><button class="ckc-back-btn-wiz" onclick="goBack()">← Back</button><div class="ckc-screen-title">' + (isBladeQ ? 'Blade Match' : 'Remote Match') + '</div></div>' +
-    '<div class="ckc-qual-screen-q">' + (isBladeQ ? '🔑 Which blade matches your key?' : '📡 Which remote matches yours?') + '</div>' +
-    '<div class="ckc-qual-screen-sub">Your vehicle has ' + showGroup.length + ' option' + (showGroup.length !== 1 ? 's' : '') + '. Hover to zoom. Select the one that matches what you currently have.</div>' +
+    '<div class="ckc-screen-header"><button class="ckc-back-btn-wiz" onclick="goBack()">← Back</button><div class="ckc-screen-title">' + (isBladeQ ? 'Key Match' : 'Remote Match') + '</div></div>' +
+    '<div class="ckc-qual-screen-q">' + s3Question + '</div>' +
+    '<div class="ckc-qual-screen-sub">' + s3Sub + '</div>' +
     '<div class="ckc-compare-grid">';
 
   showGroup.forEach(function(key) {
@@ -1198,7 +1209,9 @@ function renderScreen5() {
       '</div>' +
       '<div class="ckc-price-tax-note">+ NC sales tax calculated at checkout</div>' +
       '<div style="font-size:0.82rem;color:var(--ckc-text-muted);text-align:center;margin-bottom:16px;">Service available in the Triad, NC area</div>' +
-      '<div style="padding:14px 16px;background:rgba(201,162,39,0.07);border:1px solid rgba(201,162,39,0.2);border-radius:10px;font-size:0.88rem;color:var(--ckc-text-muted);line-height:1.6;margin-bottom:16px;text-align:center;">📋 Ready to order? Call us with your VIN and we\'ll get everything set up for you — key, cutting, and programming.</div>' +
+      (key.inStock
+        ? '<div style="padding:14px 16px;background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.2);border-radius:10px;font-size:0.88rem;color:var(--ckc-text-muted);line-height:1.6;margin-bottom:16px;text-align:center;">🟢 This key is in stock. Call us to place your order and schedule your appointment.</div>'
+        : '<div style="padding:14px 16px;background:rgba(201,162,39,0.07);border:1px solid rgba(201,162,39,0.2);border-radius:10px;font-size:0.88rem;color:var(--ckc-text-muted);line-height:1.6;margin-bottom:16px;text-align:center;">📋 Ready to order? Call us with your VIN and we\'ll get everything set up for you — key, cutting, and programming.</div>') +
       '<a href="tel:+13365109816" class="ckc-buy-now-btn" style="text-decoration:none;display:block;text-align:center;">📞 Call to Order · (336) 510-9816</a>';
     if (progMode !== 'full') {
       html += '<div style="margin-top:10px;padding:10px 14px;background:rgba(201,162,39,0.07);border:1px solid rgba(201,162,39,0.2);border-radius:8px;font-size:0.82rem;color:var(--ckc-text-muted);">Key only — call us and we\'ll order it for you and have it shipped directly to you.</div>';
