@@ -1,6 +1,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ═══ CKC KEY FINDER v8.75 ═══ */
+/* ═══ CKC KEY FINDER v8.76 ═══ */
 .ckc-finder {
   --ckc-gold: #c9a227;
   --ckc-gold-light: #e0c458;
@@ -341,7 +341,7 @@
 
 <script>
 // ════════════════════════════════════════
-// CKC KEY FINDER v8.75
+// CKC KEY FINDER v8.76
 // ════════════════════════════════════════
 // CHANGE LOG v8.74:
 // - Removed "usually same day or next day" timeline promise from "We'll source it for you" screen
@@ -355,7 +355,7 @@ const SHOPIFY_DOMAIN       = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL          = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
 const PROGRAMMING_VARIANT  = '45908511228101';
 const INTERNAL_TOOL_URL    = 'https://carolinakeycutters.com/tools';
-const CKC_VERSION          = 'v8.75';
+const CKC_VERSION          = 'v8.76';
 
 var liveCatalog      = [];
 var isLive           = false;
@@ -957,6 +957,7 @@ function renderScreen3() {
       '</div>' +
       detail +
       '<div class="ckc-compare-card-title">' + key.title + '</div>' +
+      '<div class="ckc-compare-card-price">$' + key.price.toFixed(2) + '</div>' +
       '<div class="ckc-compare-card-check"><div class="ckc-compare-card-check-dot"></div></div>' +
       '</div>';
   });
@@ -1147,6 +1148,10 @@ function renderScreen5() {
       ? 'Smart Key programming requires module-level work on most vehicles. Pricing varies by year, make, and model — call us for an exact quote before we arrive.'
       : 'We\'ll identify the exact key for your vehicle using your VIN. Call us and we\'ll have everything ready before we arrive.';
     html += '<div class="ckc-cfq-notice">' + cfqMsg + '</div>' +
+      '<div class="ckc-price-summary" style="margin-bottom:16px;">' +
+      '<div class="ckc-price-line"><span>Key price</span><span>$' + keyPrice.toFixed(2) + '</span></div>' +
+      '<div class="ckc-price-line"><span>Programming</span><span style="color:var(--ckc-gold);">Quoted on call</span></div>' +
+      '</div>' +
       '<div class="ckc-cfq-vin-hint">📋 Have your VIN ready — found on your dashboard lower-left or driver door jamb sticker.</div>' +
       '<a href="tel:+13365109816" class="ckc-cfq-btn" style="text-decoration:none;display:block;text-align:center;">📞 Call to Order · (336) 510-9816</a>';
   } else {
