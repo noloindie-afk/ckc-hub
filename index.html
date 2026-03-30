@@ -1,6 +1,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ═══ CKC KEY FINDER v8.73 ═══ */
+/* ═══ CKC KEY FINDER v8.74 ═══ */
 .ckc-finder {
   --ckc-gold: #c9a227;
   --ckc-gold-light: #e0c458;
@@ -341,11 +341,11 @@
 
 <script>
 // ════════════════════════════════════════
-// CKC KEY FINDER v8.73
+// CKC KEY FINDER v8.74
 // ════════════════════════════════════════
-// CHANGE LOG v8.73:
-// - Fixed renderScreen3 crash: s3Sub referenced showGroup before it was defined
-// - Screen 2 question text updated to "Which of these matches your current key or remote?"
+// CHANGE LOG v8.74:
+// - Removed "usually same day or next day" timeline promise from "We'll source it for you" screen
+// - Replaced with accurate copy: source it, come to you, handle cutting and programming on-site
 // ════════════════════════════════════════
 
 const SCRIPT_URL           = 'https://script.google.com/macros/s/AKfycbxDw7dtdohInyx2kqeYM5EYNCpMaBN9Kdg3m_mtPGVKaz1jgw8bW4wZfwrUF3xR1gJW/exec';
@@ -355,7 +355,7 @@ const SHOPIFY_DOMAIN       = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL          = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
 const PROGRAMMING_VARIANT  = '45908511228101';
 const INTERNAL_TOOL_URL    = 'https://carolinakeycutters.com/tools';
-const CKC_VERSION          = 'v8.73';
+const CKC_VERSION          = 'v8.74';
 
 var liveCatalog      = [];
 var isLive           = false;
@@ -837,7 +837,7 @@ function onKeyNotShown() {
     '<div style="font-size:3rem;margin-bottom:16px;">🔍</div>' +
     '<div style="font-family:\'Outfit\',sans-serif;font-size:1.5rem;font-weight:700;color:var(--ckc-text);margin-bottom:12px;">We\'ll source it for you</div>' +
     '<p style="font-size:1rem;color:var(--ckc-text-muted);line-height:1.7;margin-bottom:8px;">We don\'t currently have that key in our catalog for your <strong style="color:var(--ckc-text);">' + ymm + '</strong>, but that doesn\'t mean we can\'t get it.</p>' +
-    '<p style="font-size:1rem;color:var(--ckc-text-muted);line-height:1.7;margin-bottom:28px;">Give us a call with your VIN and we\'ll identify the exact key you need, source it, and come to you — usually same day or next day.</p>' +
+    '<p style="font-size:1rem;color:var(--ckc-text-muted);line-height:1.7;margin-bottom:28px;">Give us a call with your VIN and we\'ll identify the exact key you need, source it, come to you, and handle all the cutting and programming on-site.</p>' +
     '<a href="tel:+13365109816" class="ckc-call-btn" style="display:inline-flex;margin-bottom:16px;">' +
     '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>' +
     'Call (336) 510-9816</a>' +
