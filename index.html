@@ -1,6 +1,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ═══ CKC KEY FINDER v8.77 ═══ */
+/* ═══ CKC KEY FINDER v8.78 ═══ */
 .ckc-finder {
   --ckc-gold: #c9a227;
   --ckc-gold-light: #e0c458;
@@ -341,7 +341,7 @@
 
 <script>
 // ════════════════════════════════════════
-// CKC KEY FINDER v8.77
+// CKC KEY FINDER v8.78
 // ════════════════════════════════════════
 // CHANGE LOG v8.77:
 // - Buy Now button shown only for blade key types where customer selected
@@ -359,7 +359,7 @@ const SHOPIFY_DOMAIN       = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL          = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
 const PROGRAMMING_VARIANT  = '45908511228101';
 const INTERNAL_TOOL_URL    = 'https://carolinakeycutters.com/tools';
-const CKC_VERSION          = 'v8.77';
+const CKC_VERSION          = 'v8.78';
 
 var liveCatalog      = [];
 var isLive           = false;
@@ -416,7 +416,10 @@ function isBuyNowEligible() {
                     type === 'flip';
   if (!isBladeType) return false;
   if (!_wiz.bladeAnswer || _wiz.bladeAnswer === 'none') return false;
-  if (!_wiz._bladeImgLoaded) return false;
+  // Image confirmed: either lazy-loaded (flag set) OR already inline in catalog
+  var key = _wiz.finalKey;
+  var hasInlineImage = key && key.image && key.image.startsWith('http');
+  if (!_wiz._bladeImgLoaded && !hasInlineImage) return false;
   return true;
 }
 
@@ -1124,8 +1127,8 @@ function renderScreen5() {
   if (!key) return;
 
   var sku = key.sku;
-  if (!_progToggle[sku]) _progToggle[sku] = 'full';
-  var progMode = _progToggle[sku];
+  _progToggle[sku] = 'full'; // Key only removed — always full service
+  var progMode = 'full';
   var keyPrice  = parseFloat(key.price) || 0;
   var total     = progMode === 'full' ? keyPrice + PROGRAMMING_FEE : keyPrice;
   var totalStr  = total.toFixed(2);
@@ -1174,21 +1177,15 @@ function renderScreen5() {
       '<div class="ckc-cfq-vin-hint">📋 Have your VIN ready — found on your dashboard lower-left or driver door jamb sticker.</div>' +
       '<a href="tel:+13365109816" class="ckc-cfq-btn" style="text-decoration:none;display:block;text-align:center;">📞 Call to Order · (336) 510-9816</a>';
   } else {
-    html += '<div class="ckc-prog-toggle" id="ckc-s5-prog-' + sku + '">' +
-      '<div class="ckc-prog-toggle-opt' + (progMode==='full'?' selected':'') + '" onclick="setS5ProgToggle(\'' + _escAttr(sku) + '\',\'full\',' + keyPrice + ')">' +
-        '<div class="ckc-prog-radio"><div class="ckc-prog-radio-dot"></div></div>' +
-        '<div class="ckc-prog-label"><strong>Includes programming & key cutting</strong><span>We come to you · mobile service in the Triad, NC</span></div>' +
-        '<div class="ckc-prog-price-tag">$' + (keyPrice + PROGRAMMING_FEE).toFixed(2) + '</div>' +
+    html += '<div style="background:rgba(201,162,39,0.06);border:1px solid rgba(201,162,39,0.15);border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px;">' +
+      '<span style="font-size:1.1rem;">🔧</span>' +
+      '<div><strong style="color:var(--ckc-text);font-size:0.95rem;">Includes mobile programming & key cutting</strong><div style="font-size:0.82rem;color:var(--ckc-text-muted);margin-top:2px;">We come to you · Triad, NC area</div></div>' +
+      '<div style="margin-left:auto;font-family:\'Outfit\',sans-serif;font-weight:800;font-size:1.15rem;color:var(--ckc-gold);white-space:nowrap;">+$' + PROGRAMMING_FEE + '</div>' +
       '</div>' +
-      '<div class="ckc-prog-toggle-opt' + (progMode==='keyonly'?' selected':'') + '" onclick="setS5ProgToggle(\'' + _escAttr(sku) + '\',\'keyonly\',' + keyPrice + ')">' +
-        '<div class="ckc-prog-radio"><div class="ckc-prog-radio-dot"></div></div>' +
-        '<div class="ckc-prog-label"><strong>Key only</strong><span>I\'ll handle programming myself</span></div>' +
-        '<div class="ckc-prog-price-tag">$' + keyPrice.toFixed(2) + '</div>' +
-      '</div></div>' +
       '<div class="ckc-price-summary">' +
       '<div class="ckc-price-line"><span>Key</span><span>$' + keyPrice.toFixed(2) + '</span></div>' +
-      (progMode==='full' ? '<div class="ckc-price-line"><span>Mobile programming & cutting</span><span>$' + PROGRAMMING_FEE + '.00</span></div>' : '') +
-      '<div class="ckc-price-total-line"><span class="ckc-price-total-label">Total</span><span class="ckc-price-total-val" id="ckc-s5-total">$' + totalStr + '</span></div>' +
+      '<div class="ckc-price-line"><span>Mobile programming & cutting</span><span>$' + PROGRAMMING_FEE + '.00</span></div>' +
+      '<div class="ckc-price-total-line"><span class="ckc-price-total-label">Total</span><span class="ckc-price-total-val">$' + totalStr + '</span></div>' +
       '</div>' +
       '<div class="ckc-price-tax-note">+ NC sales tax calculated at checkout</div>' +
       '<div style="font-size:0.82rem;color:var(--ckc-text-muted);text-align:center;margin-bottom:16px;">Service available in the Triad, NC area</div>';
@@ -1206,9 +1203,7 @@ function renderScreen5() {
         '<a href="tel:+13365109816" class="ckc-buy-now-btn" style="text-decoration:none;display:block;text-align:center;">📞 Call to Order · (336) 510-9816</a>';
     }
 
-    if (progMode !== 'full') {
-      html += '<div style="margin-top:10px;padding:10px 14px;background:rgba(201,162,39,0.07);border:1px solid rgba(201,162,39,0.2);border-radius:8px;font-size:0.82rem;color:var(--ckc-text-muted);">Key only — call us and we\'ll order it for you and have it shipped directly to you.</div>';
-    }
+
   }
 
   html += '</div>';
@@ -1242,14 +1237,10 @@ function openCheckoutFromS5() {
 function renderCheckout(key) {
   var k = key || _wiz.finalKey;
   var keyPrice  = parseFloat(k.price) || 0;
-  var isKeyOnly = k._progMode === 'keyonly';
-  var total     = isKeyOnly ? keyPrice : keyPrice + PROGRAMMING_FEE;
+  var total = keyPrice + PROGRAMMING_FEE;
   var stockLabel = k.inStock ? '✅ In Stock' : '📦 Ships in 2-3 days';
-  var progLine = isKeyOnly ? '' :
-    '<div class="ckc-checkout-line"><span class="ckc-checkout-line-label">🔧 Mobile Key Programming & Cutting<br><small style="color:var(--ckc-text-muted)">We come to you — includes key cutting + programming</small></span><span class="ckc-checkout-line-price">$'+PROGRAMMING_FEE+'.00</span></div>';
-  var disclaimer = isKeyOnly
-    ? '<div style="background:rgba(201,162,39,0.08);border:1px solid rgba(201,162,39,0.25);border-radius:8px;padding:14px 16px;margin:14px 0;font-size:0.88rem;color:#b8a060;line-height:1.5;">🔑 <strong style="color:var(--ckc-gold);">Key only order.</strong> You\'ve selected to handle programming yourself. We\'ll ship your key — no service call included.</div>'
-    : '<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:14px 16px;margin:14px 0;font-size:0.88rem;color:#d4a054;line-height:1.5;">⚠️ <strong style="color:#f59e0b;">Pricing Notice:</strong> The $'+PROGRAMMING_FEE+' service call fee covers add-a-key programming when you have a working key. All keys lost (AKL), EEPROM, or module programming may require additional cost. We will confirm your exact total before any work begins — no surprises.</div>';
+  var progLine = '<div class="ckc-checkout-line"><span class="ckc-checkout-line-label">🔧 Mobile Key Programming & Cutting<br><small style="color:var(--ckc-text-muted)">We come to you — includes key cutting + programming</small></span><span class="ckc-checkout-line-price">$'+PROGRAMMING_FEE+'.00</span></div>';
+  var disclaimer = '<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:14px 16px;margin:14px 0;font-size:0.88rem;color:#d4a054;line-height:1.5;">⚠️ <strong style="color:#f59e0b;">Pricing Notice:</strong> The $'+PROGRAMMING_FEE+' service call fee covers add-a-key programming when you have a working key. All keys lost (AKL), EEPROM, or module programming may require additional cost. We will confirm your exact total before any work begins — no surprises.</div>';
 
   document.getElementById('ckc-wizard-area').innerHTML =
     '<div class="ckc-checkout-panel"><h3>🛒 Your Order</h3>' +
@@ -1365,22 +1356,20 @@ async function startShopifyCheckout() {
   btn.disabled = true; btn.textContent = 'Opening checkout...';
   try {
     var k = _wiz.finalKey;
-    var isKeyOnly = k._progMode === 'keyonly';
     var handle = (k.handle||k.sku||'').toLowerCase().replace(/[^a-z0-9]+/g,'-');
     var vehicleNote = 'Vehicle: ' + lastSearchParams.year + ' ' + lastSearchParams.make + ' ' + lastSearchParams.model;
-    if (isKeyOnly) vehicleNote += ' | Key only — customer handling programming';
     var shopifyUrl;
     try {
       var prodJson = await fetch('https://'+SHOPIFY_DOMAIN+'/products/'+handle+'.json');
       var prodData = await prodJson.json();
       var keyVariantId = prodData.product.variants[0].id;
-      var cartItems = isKeyOnly ? keyVariantId+':1' : keyVariantId+':1,'+PROGRAMMING_VARIANT+':1';
+      var cartItems = keyVariantId+':1,'+PROGRAMMING_VARIANT+':1';
       shopifyUrl = 'https://'+SHOPIFY_DOMAIN+'/cart/'+cartItems+'?note='+encodeURIComponent(vehicleNote);
     } catch(e) {
       shopifyUrl = 'https://'+SHOPIFY_DOMAIN+'/products/'+handle+'?note='+encodeURIComponent(vehicleNote);
     }
     window.open(shopifyUrl, '_blank');
-    showPostPurchase(isKeyOnly);
+    showPostPurchase();
   } catch(err) {
     btn.disabled = false; btn.textContent = 'Proceed to Checkout →';
     alert('Unable to open checkout. Please call us at (336) 510-9816 to order.');
@@ -1388,18 +1377,11 @@ async function startShopifyCheckout() {
 }
 
 // CHANGE 5: showPostPurchase splits on CKC vs RKS
-function showPostPurchase(isKeyOnly) {
+function showPostPurchase() {
   var key   = _wiz.finalKey;
   var isRKS = key && !key.inStock;
 
-  if (isKeyOnly) {
-    document.getElementById('ckc-wizard-area').innerHTML =
-      '<div class="ckc-post-purchase"><div class="ckc-post-purchase-icon">🛒</div><h3>Checkout Opened</h3>' +
-      '<p>Your checkout tab is open — complete your order there.</p>' +
-      '<div style="background:rgba(201,162,39,0.08);border:1px solid rgba(201,162,39,0.25);border-radius:10px;padding:16px 20px;margin:16px auto;max-width:480px;font-size:0.95rem;color:var(--ckc-text-muted);line-height:1.6;text-align:left;">🔑 <strong style="color:var(--ckc-gold);">Key only order.</strong> No appointment needed — your key will ship to you directly.<br><br>If you need programming help later, call us at <a href="tel:+13365109816" style="color:var(--ckc-gold);">(336) 510-9816</a>.</div>' +
-      '<button class="ckc-new-search-btn" onclick="resetFinder()">Search for another key</button></div>';
-
-  } else if (isRKS) {
+  if (isRKS) {
     // Scenario 2 — RKS: hold at waiting state, grayed-out booking button
     document.getElementById('ckc-wizard-area').innerHTML =
       '<div class="ckc-post-purchase"><div class="ckc-post-purchase-icon">✅</div><h3>Order Received</h3>' +
