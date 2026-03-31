@@ -1,6 +1,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ═══ CKC KEY FINDER v8.76 ═══ */
+/* ═══ CKC KEY FINDER v8.77 ═══ */
 .ckc-finder {
   --ckc-gold: #c9a227;
   --ckc-gold-light: #e0c458;
@@ -341,11 +341,15 @@
 
 <script>
 // ════════════════════════════════════════
-// CKC KEY FINDER v8.76
+// CKC KEY FINDER v8.77
 // ════════════════════════════════════════
-// CHANGE LOG v8.74:
-// - Removed "usually same day or next day" timeline promise from "We'll source it for you" screen
-// - Replaced with accurate copy: source it, come to you, handle cutting and programming on-site
+// CHANGE LOG v8.77:
+// - Buy Now button shown only for blade key types where customer selected
+//   a specific blade on Screen 3 AND the image actually loaded (photo confirmed)
+// - Remotes, Smart Keys, FCC-only paths, and "none match" always show Call to Order
+// - RKS post-purchase: grayed-out booking button + "we'll notify you when key arrives"
+// - CKC post-purchase: unchanged — immediate booking prompt
+// - _wiz gains _bladeImgLoaded flag; lazyLoadCompareImages sets it on successful load
 // ════════════════════════════════════════
 
 const SCRIPT_URL           = 'https://script.google.com/macros/s/AKfycbxDw7dtdohInyx2kqeYM5EYNCpMaBN9Kdg3m_mtPGVKaz1jgw8bW4wZfwrUF3xR1gJW/exec';
@@ -355,7 +359,7 @@ const SHOPIFY_DOMAIN       = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL          = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
 const PROGRAMMING_VARIANT  = '45908511228101';
 const INTERNAL_TOOL_URL    = 'https://carolinakeycutters.com/tools';
-const CKC_VERSION          = 'v8.76';
+const CKC_VERSION          = 'v8.77';
 
 var liveCatalog      = [];
 var isLive           = false;
@@ -365,13 +369,16 @@ var _customerVIN     = '';
 var _cfqCardData     = {};
 var _progToggle      = {};
 
+// CHANGE 1: _wiz gains _bladeImgLoaded flag
 var _wiz = {
   screen: 1,
   typeAnswer: '',
   bladeAnswer: '',
   tierAnswer: '',
   finalKey: null,
-  aklMode: false
+  aklMode: false,
+  _bladeImgLoaded: false,
+  _bladeKeywaySKUs: {}
 };
 
 var _byType       = {};
@@ -398,6 +405,19 @@ function getTierOrder(sku) {
   if (s.endsWith('-NO')) return 2;
   if (s.endsWith('-RF')) return 1;
   return 0;
+}
+
+// CHANGE 2: isBuyNowEligible() — blade type + Screen 3 selection + image loaded
+function isBuyNowEligible() {
+  var type = (_wiz.typeAnswer || '').toLowerCase();
+  var isBladeType = type === 'transponder key' ||
+                    type === 'remote head key' ||
+                    type === 'remote flip key' ||
+                    type === 'flip';
+  if (!isBladeType) return false;
+  if (!_wiz.bladeAnswer || _wiz.bladeAnswer === 'none') return false;
+  if (!_wiz._bladeImgLoaded) return false;
+  return true;
 }
 
 var MODEL_ALIASES = {
@@ -682,7 +702,7 @@ function goBack() {
   pauseResize();
   var s = _wiz.screen;
   if (s === 2) { _wiz.typeAnswer = ''; showScreen(1); document.getElementById('ckc-wizard-area').innerHTML = ''; resumeResize(); }
-  else if (s === 3) { _wiz.bladeAnswer = ''; showScreen(2); renderScreen2(); }
+  else if (s === 3) { _wiz.bladeAnswer = ''; _wiz._bladeImgLoaded = false; showScreen(2); renderScreen2(); }
   else if (s === 4) { _wiz.tierAnswer = ''; _wiz.finalKey = null; showScreen(3); renderScreen3(); }
   else if (s === 5) {
     _wiz.finalKey = null;
@@ -718,7 +738,8 @@ function startWizard() {
   });
 
   lastSearchParams = { year: year, make: make, model: model };
-  _wiz = { screen: 1, typeAnswer: '', bladeAnswer: '', tierAnswer: '', finalKey: null, aklMode: false };
+  // CHANGE 3: reset includes _bladeImgLoaded
+  _wiz = { screen: 1, typeAnswer: '', bladeAnswer: '', tierAnswer: '', finalKey: null, aklMode: false, _bladeImgLoaded: false, _bladeKeywaySKUs: {} };
   _byType = {}; _bladeGroup = []; _fccGroup = []; _buttonsGroup = []; _progToggle = {};
 
   var matches = [];
@@ -903,8 +924,6 @@ function renderScreen3() {
        '📡 Which remote matches yours?')
     : '📡 Which remote matches yours?';
 
-  // Deduplicate by keyway — one card per unique blade profile
-  // showGroup must be built BEFORE s3Sub references it
   _wiz._bladeKeywaySKUs = {};
   var showGroup = [];
   if (isBladeQ) {
@@ -921,7 +940,6 @@ function renderScreen3() {
     showGroup = rawGroup;
   }
 
-  // s3Sub now correctly references showGroup after it is defined
   var s3Sub = isBladeQ
     ? (typeLower.includes('flip') ? 'Your vehicle has two flip key options. Select the one that matches what you currently have.' :
        'Your vehicle has ' + showGroup.length + ' option' + (showGroup.length !== 1 ? 's' : '') + '. Hover to zoom. Select the one that matches what you currently have.')
@@ -979,7 +997,7 @@ function renderScreen3() {
 
   document.getElementById('ckc-wizard-area').innerHTML = html;
   showScreen(3);
-  lazyLoadCompareImages().then(function() {
+  lazyLoadCompareImages(showGroup).then(function() {
     initMagnifiers(showGroup);
     resumeResize();
   });
@@ -1100,6 +1118,7 @@ function onTierSelected(sku) {
   scrollToWizard();
 }
 
+// CHANGE 4: renderScreen5 uses isBuyNowEligible() to choose button
 function renderScreen5() {
   var key = _wiz.finalKey;
   if (!key) return;
@@ -1172,11 +1191,21 @@ function renderScreen5() {
       '<div class="ckc-price-total-line"><span class="ckc-price-total-label">Total</span><span class="ckc-price-total-val" id="ckc-s5-total">$' + totalStr + '</span></div>' +
       '</div>' +
       '<div class="ckc-price-tax-note">+ NC sales tax calculated at checkout</div>' +
-      '<div style="font-size:0.82rem;color:var(--ckc-text-muted);text-align:center;margin-bottom:16px;">Service available in the Triad, NC area</div>' +
-      (key.inStock
+      '<div style="font-size:0.82rem;color:var(--ckc-text-muted);text-align:center;margin-bottom:16px;">Service available in the Triad, NC area</div>';
+
+    // CHANGE 4: Buy Now vs Call to Order based on eligibility
+    if (isBuyNowEligible()) {
+      html += (key.inStock
+        ? '<div style="padding:14px 16px;background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.2);border-radius:10px;font-size:0.88rem;color:var(--ckc-text-muted);line-height:1.6;margin-bottom:16px;text-align:center;">🟢 This key is in stock and ready to order.</div>'
+        : '<div style="padding:14px 16px;background:rgba(201,162,39,0.07);border:1px solid rgba(201,162,39,0.2);border-radius:10px;font-size:0.88rem;color:var(--ckc-text-muted);line-height:1.6;margin-bottom:16px;text-align:center;">📦 We\'ll source this key for you — programming scheduled after it arrives.</div>') +
+        '<button class="ckc-buy-now-btn" onclick="openCheckoutFromS5()">Buy Now →</button>';
+    } else {
+      html += (key.inStock
         ? '<div style="padding:14px 16px;background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.2);border-radius:10px;font-size:0.88rem;color:var(--ckc-text-muted);line-height:1.6;margin-bottom:16px;text-align:center;">🟢 This key is in stock. Call us to place your order and schedule your appointment.</div>'
         : '<div style="padding:14px 16px;background:rgba(201,162,39,0.07);border:1px solid rgba(201,162,39,0.2);border-radius:10px;font-size:0.88rem;color:var(--ckc-text-muted);line-height:1.6;margin-bottom:16px;text-align:center;">📋 Ready to order? Call us with your VIN and we\'ll get everything set up for you — key, cutting, and programming.</div>') +
-      '<a href="tel:+13365109816" class="ckc-buy-now-btn" style="text-decoration:none;display:block;text-align:center;">📞 Call to Order · (336) 510-9816</a>';
+        '<a href="tel:+13365109816" class="ckc-buy-now-btn" style="text-decoration:none;display:block;text-align:center;">📞 Call to Order · (336) 510-9816</a>';
+    }
+
     if (progMode !== 'full') {
       html += '<div style="margin-top:10px;padding:10px 14px;background:rgba(201,162,39,0.07);border:1px solid rgba(201,162,39,0.2);border-radius:8px;font-size:0.82rem;color:var(--ckc-text-muted);">Key only — call us and we\'ll order it for you and have it shipped directly to you.</div>';
     }
@@ -1357,14 +1386,37 @@ async function startShopifyCheckout() {
     alert('Unable to open checkout. Please call us at (336) 510-9816 to order.');
   }
 }
+
+// CHANGE 5: showPostPurchase splits on CKC vs RKS
 function showPostPurchase(isKeyOnly) {
+  var key   = _wiz.finalKey;
+  var isRKS = key && !key.inStock;
+
   if (isKeyOnly) {
     document.getElementById('ckc-wizard-area').innerHTML =
       '<div class="ckc-post-purchase"><div class="ckc-post-purchase-icon">🛒</div><h3>Checkout Opened</h3>' +
       '<p>Your checkout tab is open — complete your order there.</p>' +
       '<div style="background:rgba(201,162,39,0.08);border:1px solid rgba(201,162,39,0.25);border-radius:10px;padding:16px 20px;margin:16px auto;max-width:480px;font-size:0.95rem;color:var(--ckc-text-muted);line-height:1.6;text-align:left;">🔑 <strong style="color:var(--ckc-gold);">Key only order.</strong> No appointment needed — your key will ship to you directly.<br><br>If you need programming help later, call us at <a href="tel:+13365109816" style="color:var(--ckc-gold);">(336) 510-9816</a>.</div>' +
       '<button class="ckc-new-search-btn" onclick="resetFinder()">Search for another key</button></div>';
+
+  } else if (isRKS) {
+    // Scenario 2 — RKS: hold at waiting state, grayed-out booking button
+    document.getElementById('ckc-wizard-area').innerHTML =
+      '<div class="ckc-post-purchase"><div class="ckc-post-purchase-icon">✅</div><h3>Order Received</h3>' +
+      '<p>Your checkout tab is open — complete your payment there.</p>' +
+      '<div class="ckc-email-neon"><div class="ckc-email-neon-inner">' +
+      '<div class="ckc-email-neon-icon">📦</div>' +
+      '<div class="ckc-email-neon-title">WE\'RE SOURCING YOUR KEY</div>' +
+      '<div class="ckc-email-neon-desc">We\'ll notify you by email as soon as your <strong>' + (key ? key.title : 'key') + '</strong> arrives.<br><br>Your notification will include a link to schedule your programming appointment.</div>' +
+      '<div style="margin-top:20px;">' +
+      '<button disabled style="display:block;width:100%;padding:16px;background:#222;color:#555;border:1px solid #333;border-radius:10px;font-family:\'DM Sans\',sans-serif;font-size:1rem;font-weight:600;cursor:not-allowed;letter-spacing:0.5px;">📅 Schedule Appointment — Available After Key Arrives</button>' +
+      '</div>' +
+      '<div style="margin-top:12px;font-size:0.82rem;color:#555;">Questions? Call us at <a href="tel:+13365109816" style="color:var(--ckc-gold);">(336) 510-9816</a></div>' +
+      '</div></div>' +
+      '<button class="ckc-new-search-btn" onclick="resetFinder()">Search for another key</button></div>';
+
   } else {
+    // Scenario 1 — CKC stock: immediate booking prompt
     document.getElementById('ckc-wizard-area').innerHTML =
       '<div class="ckc-post-purchase"><div class="ckc-post-purchase-icon">🛒</div><h3>Checkout Opened</h3>' +
       '<p>Your checkout tab is open — complete your order there before booking an appointment.</p>' +
@@ -1374,6 +1426,7 @@ function showPostPurchase(isKeyOnly) {
       '<div class="ckc-email-neon-arrow">↓ Complete checkout first, then book your appointment ↓</div></div></div>' +
       '<button class="ckc-new-search-btn" onclick="resetFinder()">Search for another key</button></div>';
   }
+
   showScreen(6);
   scrollToWizard();
   resumeResize();
@@ -1389,7 +1442,9 @@ async function lazyLoadTypeImages() {
     if (el2 && url) el2.outerHTML = '<img src="' + url + '" alt="Key" class="ckc-type-card-img" onerror="this.outerHTML=\'<div class=\\\'ckc-type-card-img-placeholder\\\'>🔑</div>\'">';
   }
 }
-async function lazyLoadCompareImages() {
+
+// CHANGE 6: lazyLoadCompareImages now accepts showGroup and sets _bladeImgLoaded
+async function lazyLoadCompareImages(showGroup) {
   var els = document.querySelectorAll('.ckc-mag-ph[data-sku]');
   for (var i = 0; i < els.length; i++) {
     var el = els[i]; var sku = el.dataset.sku; var handle = el.dataset.handle;
@@ -1399,6 +1454,8 @@ async function lazyLoadCompareImages() {
     var el2 = document.getElementById(el.id);
     if (el2 && url) {
       el2.outerHTML = '<img class="ckc-mag-base" id="ckc-cmpimg-' + safeId + '" src="' + url + '" alt="Key" onerror="this.outerHTML=\'<div class=\\\'ckc-mag-ph\\\'>🔑</div>\'">';
+      // Set flag if this image is for the currently selected blade
+      if (sku === _wiz.bladeAnswer) _wiz._bladeImgLoaded = true;
       var lensImg = document.getElementById('ckc-lensimg-' + safeId);
       if (lensImg) lensImg.src = url;
     }
@@ -1438,8 +1495,9 @@ function initMagnifiers(group) {
   });
 }
 
+// CHANGE 3 (continued): resetFinder also resets _bladeImgLoaded
 function resetFinder() {
-  _wiz = { screen: 1, typeAnswer: '', bladeAnswer: '', tierAnswer: '', finalKey: null, aklMode: false };
+  _wiz = { screen: 1, typeAnswer: '', bladeAnswer: '', tierAnswer: '', finalKey: null, aklMode: false, _bladeImgLoaded: false, _bladeKeywaySKUs: {} };
   lastSearchParams = {}; _ckcMatches = []; _progToggle = {}; _customerVIN = ''; _cfqCardData = {};
   _byType = {}; _bladeGroup = []; _fccGroup = []; _buttonsGroup = [];
   document.getElementById('ckc-wizard-area').innerHTML = '';
