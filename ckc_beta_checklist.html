@@ -1,1 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CKC Key Finder — Beta Test Checklist</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c9a227; --gold-light: #e8c547; --gold-pale: #f5eed6;
+    --dark: #111; --card: #fff; --bg: #f7f4ee;
+    --border: #e0d8c4; --muted: #888; --text: #1a1a1a;
+    --green: #166534; --green-bg: #dcfce7; --green-border: #86efac;
+    --red: #991b1b; --red-bg: #fee2e2; --red-border: #fca5a5;
+    --amber: #92400e; --amber-bg: #fffbeb; --amber-border: #fcd34d;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Barlow', sans-serif; font-size: 15px; line-height: 1.6; }
 
+  .header { background: var(--dark); border-bottom: 3px solid var(--gold); padding: 20px 24px 16px; text-align: center; }
+  .header-logo { font-family: 'Barlow Condensed', sans-serif; font-size: 1.6rem; font-weight: 800; color: var(--gold); letter-spacing: 1px; }
+  .header-title { font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: #b0a070; margin-top: 2px; }
+  .header-version { font-size: 0.82rem; color: #666; margin-top: 6px; }
+
+  .container { max-width: 780px; margin: 0 auto; padding: 24px 16px 80px; }
+
+  .tester-bar { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .tester-bar label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); display: block; margin-bottom: 4px; }
+  .tester-bar input { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-family: 'Barlow', sans-serif; font-size: 0.95rem; background: var(--bg); color: var(--text); }
+  .tester-bar input:focus { outline: none; border-color: var(--gold); }
+
+  .progress-bar-wrap { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 20px; margin-bottom: 20px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 0.82rem; color: var(--muted); margin-bottom: 8px; }
+  .progress-track { background: #e5e7eb; border-radius: 999px; height: 8px; overflow: hidden; }
+  .progress-fill { background: linear-gradient(90deg, var(--gold), var(--gold-light)); height: 100%; border-radius: 999px; transition: width 0.3s; width: 0%; }
+  .stat-row { display: flex; gap: 12px; margin-top: 10px; }
+  .stat { flex: 1; text-align: center; padding: 8px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; }
+  .stat.pass { background: var(--green-bg); color: var(--green); }
+  .stat.fail { background: var(--red-bg); color: var(--red); }
+  .stat.skip { background: #f3f4f6; color: var(--muted); }
+
+  .section { margin-bottom: 16px; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .section-header { background: var(--dark); padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; border-top: 3px solid var(--gold); }
+  .section-title { font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
+  .section-meta { font-size: 0.78rem; color: #888; }
+  .section-body { display: block; }
+  .section-body.collapsed { display: none; }
+
+  .check-item { border-bottom: 1px solid var(--border); }
+  .check-item:last-child { border-bottom: none; }
+  .check-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px 8px; }
+  .check-row:nth-child(odd) { background: #fff; }
+  .check-row:nth-child(even) { background: var(--bg); }
+
+  .checkbox-wrap { padding-top: 1px; flex-shrink: 0; }
+  .checkbox-wrap input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: var(--gold); }
+
+  .check-content { flex: 1; min-width: 0; }
+  .check-label { font-weight: 600; font-size: 0.95rem; color: var(--text); margin-bottom: 2px; }
+  .check-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.5; margin-bottom: 8px; }
+
+  .pf-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+  .pf-btn { padding: 4px 16px; border-radius: 6px; border: 1.5px solid; font-size: 0.8rem; font-weight: 600; cursor: pointer; background: transparent; transition: all 0.15s; font-family: 'Barlow', sans-serif; }
+  .pf-btn.pass-btn { border-color: var(--green-border); color: var(--green); }
+  .pf-btn.pass-btn.active { background: var(--green-bg); border-color: var(--green); }
+  .pf-btn.fail-btn { border-color: var(--red-border); color: var(--red); }
+  .pf-btn.fail-btn.active { background: var(--red-bg); border-color: var(--red); }
+  .pf-btn.na-btn { border-color: #d1d5db; color: var(--muted); }
+  .pf-btn.na-btn.active { background: #f3f4f6; border-color: #9ca3af; }
+
+  .notes-field { width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; font-family: 'Barlow', sans-serif; font-size: 0.85rem; color: var(--text); background: #fff; resize: vertical; min-height: 52px; margin-bottom: 4px; }
+  .notes-field:focus { outline: none; border-color: var(--gold); }
+  .notes-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 3px; font-weight: 600; }
+
+  .warn-box { background: var(--amber-bg); border: 1px solid var(--amber-border); border-radius: 8px; padding: 10px 14px; font-size: 0.85rem; color: var(--amber); margin: 8px 16px; }
+
+  .submit-section { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-top: 24px; }
+  .submit-title { font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; }
+
+  .rec-row { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .rec-btn { flex: 1; min-width: 140px; padding: 10px 16px; border-radius: 8px; border: 2px solid; font-family: 'Barlow', sans-serif; font-size: 0.88rem; font-weight: 600; cursor: pointer; background: transparent; transition: all 0.15s; }
+  .rec-btn.approve { border-color: var(--green-border); color: var(--green); }
+  .rec-btn.approve.active { background: var(--green-bg); }
+  .rec-btn.conditional { border-color: var(--amber-border); color: var(--amber); }
+  .rec-btn.conditional.active { background: var(--amber-bg); }
+  .rec-btn.reject { border-color: var(--red-border); color: var(--red); }
+  .rec-btn.reject.active { background: var(--red-bg); }
+
+  .final-notes { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-family: 'Barlow', sans-serif; font-size: 0.9rem; min-height: 80px; resize: vertical; margin-bottom: 14px; color: var(--text); }
+  .final-notes:focus { outline: none; border-color: var(--gold); }
+
+  .submit-btn { width: 100%; padding: 14px; background: var(--gold); color: #111; border: none; border-radius: 8px; font-family: 'Barlow', sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+  .submit-btn:hover { background: var(--gold-light); }
+  .submit-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--dark); color: #fff; padding: 12px 24px; border-radius: 8px; font-size: 0.9rem; font-weight: 500; display: none; z-index: 999; border: 1px solid var(--gold); }
+  .toast.show { display: block; }
+
+  .emailjs-config { background: var(--amber-bg); border: 1px solid var(--amber-border); border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; font-size: 0.85rem; color: var(--amber); }
+  .emailjs-config input { margin-top: 4px; padding: 6px 10px; border: 1px solid var(--amber-border); border-radius: 6px; font-family: 'Barlow', sans-serif; font-size: 0.85rem; background: #fff; color: var(--text); width: 100%; }
+
+  @media (max-width: 520px) {
+    .tester-bar { grid-template-columns: 1fr; }
+    .pf-row { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">Carolina Key Cutters</div>
+  <div class="header-title">Key Finder — Beta Test Checklist</div>
+  <div class="header-version">v8.79 Pre-Release</div>
+</div>
+
+<div class="container">
+
+  <div class="tester-bar">
+    <div>
+      <label>Tester Name</label>
+      <input type="text" id="tester-name" placeholder="Your name">
+    </div>
+    <div>
+      <label>Test Date</label>
+      <input type="date" id="test-date">
+    </div>
+  </div>
+
+  <div class="progress-bar-wrap">
+    <div class="progress-label">
+      <span>Overall Progress</span>
+      <span id="progress-pct">0 / 72 items tested</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+    <div class="stat-row">
+      <div class="stat pass" id="stat-pass">0 Pass</div>
+      <div class="stat fail" id="stat-fail">0 Fail</div>
+      <div class="stat skip" id="stat-skip">72 Untested</div>
+    </div>
+  </div>
+
+  <div id="sections-container"></div>
+
+  <div class="submit-section">
+    <div class="submit-title">Overall Recommendation</div>
+    <div class="rec-row">
+      <button class="rec-btn approve" onclick="setRec('approve', this)">Approve for Release</button>
+      <button class="rec-btn conditional" onclick="setRec('conditional', this)">Conditional Release</button>
+      <button class="rec-btn reject" onclick="setRec('reject', this)">Do Not Release</button>
+    </div>
+    <div class="notes-label">Blocking Issues / Final Notes</div>
+    <textarea class="final-notes" id="final-notes" placeholder="List any blocking issues or overall observations..."></textarea>
+
+    <div class="emailjs-config" id="emailjs-config-box">
+      <strong>EmailJS Setup Required</strong> — enter your credentials below to enable email submission.
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;">
+        <div><div style="font-size:0.75rem;font-weight:600;margin-bottom:2px;">Public Key</div><input type="text" id="ejs-pubkey" placeholder="xxxxxxxxxxx"></div>
+        <div><div style="font-size:0.75rem;font-weight:600;margin-bottom:2px;">Service ID</div><input type="text" id="ejs-service" placeholder="service_xxxxxxx"></div>
+        <div><div style="font-size:0.75rem;font-weight:600;margin-bottom:2px;">Template ID</div><input type="text" id="ejs-template" placeholder="template_xxxxxxx"></div>
+      </div>
+    </div>
+
+    <button class="submit-btn" id="submit-btn" onclick="submitChecklist()">Submit Completed Checklist to James</button>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>
+
+var SECTIONS = [
+  { id:'s1', title:'1 — Page Load & Catalog Sync', items:[
+    { label:'Page loads without errors', desc:'Open the Key Finder URL. No broken images, no console errors, no blank screen.' },
+    { label:'Sync status shows "Live · 1785 products"', desc:'Green dot and live product count appear within 5 seconds of page load.' },
+    { label:'All three badge icons render correctly', desc:'Mobile Service, Professional Programming, and Licensed & Certified badges all display.' },
+    { label:'Year dropdown populates (1998–2027)', desc:'Click the Year dropdown — all years should be listed in descending order.' },
+  ]},
+  { id:'s2', title:'2 — Vehicle Search (Screen 1)', items:[
+    { label:'Make dropdown disabled until year is selected', desc:'Year is required before Make activates.' },
+    { label:'Model dropdown disabled until make is selected', desc:'Make is required before Model activates.' },
+    { label:'Find My Key button disabled until all three fields selected', desc:'Button should remain grayed out until year, make, and model are all chosen.' },
+    { label:'Valid vehicle search returns results', desc:'Try: 2019 Ford F-150. Should advance to key type screen.' },
+    { label:'Unknown vehicle shows "No exact match" screen', desc:'Try an obscure combination. Should show call us card, not a blank screen.' },
+    { label:'"Try a different vehicle" resets all dropdowns', desc:'Clicking reset should clear all fields and return to Screen 1.' },
+  ]},
+  { id:'s3', title:'3 — Key Type Selector (Screen 2)', items:[
+    { label:'Key type cards display with images', desc:'Product images should load for each key type option. No broken image placeholders.' },
+    { label:'Vehicle label shows correct year/make/model', desc:'The gold pill above the grid should show the vehicle you searched.' },
+    { label:'Selecting a key type advances the wizard', desc:'Tapping a card should move to Screen 3 or Screen 5 depending on conflicts.' },
+    { label:'"I don\'t see my key type listed" shows source screen', desc:'Clicking the bottom option should show "We\'ll source it for you" screen with call button.' },
+    { label:'"Change vehicle" back button returns to Screen 1', desc:'Clicking ← Change vehicle should reset and return to the search screen.' },
+  ]},
+  { id:'s4', title:'4 — Blade / FCC Qualifier (Screen 3)', subtitle:'Only appears when multiple blade profiles or FCC IDs exist', items:[
+    { label:'Conflict screen appears when multiple blade profiles exist', desc:'Search a vehicle known to have blade conflicts (e.g. 2015 Ford F-150 Remote Head Key).' },
+    { label:'Key comparison cards show images with magnifier', desc:'Hover over a key image — a circular magnifier lens should appear and zoom in.' },
+    { label:'Blade detail shows correct keyway code', desc:'Each card should display "Blade: HU101" or equivalent keyway label.' },
+    { label:'Selecting a blade card advances to next screen', desc:'Clicking a card should highlight it and auto-advance to Screen 4 or 5.' },
+    { label:'"None of these match" routes to Call to Order on Screen 5', desc:'Selecting this option should show the gold Call to Order button, not Buy Now.' },
+    { label:'FCC manual entry field works for remote conflicts', desc:'On a remote conflict screen, type a valid FCC ID — it should auto-select and advance.' },
+  ]},
+  { id:'s5', title:'5 — Quality Tier (Screen 4)', subtitle:'Only appears when Aftermarket, Refurbished OEM, and/or New OEM options exist', items:[
+    { label:'Tier screen appears for vehicles with multiple quality options', desc:'Find a vehicle/key that has both -AM and -NO or -RF SKUs.' },
+    { label:'All tier options display with correct pricing', desc:'Aftermarket, Refurbished OEM, New OEM — each should show its price.' },
+    { label:'Selecting a tier advances to Screen 5', desc:'Clicking a tier option should highlight it and proceed.' },
+    { label:'Back button returns to Screen 3', desc:'← Back should return to blade qualifier, not reset the whole wizard.' },
+  ]},
+  { id:'s6', title:'6 — Your Key (Screen 5)', items:[
+    { label:'Product image loads correctly', desc:'The key image should display — not a placeholder emoji.' },
+    { label:'Stock badge shows correct status', desc:'CKC stock items show green "In Stock". RKS items show gold "Ships in 2–3 days".' },
+    { label:'Blade match badge appears when blade was confirmed', desc:'If customer went through Screen 3 and selected a blade, "✓ Matched to blade: HU101" should appear.' },
+    { label:'FCC, Blade, and SKU details display correctly', desc:'Technical details row at the bottom of the product info should be accurate.' },
+    { label:'Programming & key cutting service info block displays', desc:'"Includes mobile programming & key cutting — We come to you · Triad, NC" with +$75.' },
+    { label:'Price summary shows correct key + programming total', desc:'Key price + $75 = correct total. Tax note appears below.' },
+    { label:'BUY NOW button is GREEN for eligible items', desc:'Transponder keys and remotes with confirmed blade image should show green Buy Now button.' },
+    { label:'CALL TO ORDER button is GOLD for ineligible items', desc:'Smart keys, items without photo confirmation should show gold Call to Order.' },
+    { label:'Buy Now routes to Screen 6 checkout panel', desc:'Clicking Buy Now should show the order review screen, not jump directly to Shopify.' },
+    { label:'Call to Order gold button dials (336) 510-9816', desc:'Tapping the gold button on mobile should initiate a phone call.' },
+    { label:'CFQ path shows for Smart Keys', desc:'Search a Smart Key vehicle — should show amber notice and Call to Order, no price toggle.' },
+  ]},
+  { id:'s7', title:'7 — Checkout Review (Screen 6)', items:[
+    { label:'Order summary shows correct line items', desc:'Key title, type, stock status, key price, and $75 programming fee all listed.' },
+    { label:'Total is correct (key price + $75)', desc:'Verify the math. Tax note should appear below total.' },
+    { label:'Pricing notice disclaimer appears', desc:'Amber warning about AKL/EEPROM pricing should be visible.' },
+    { label:'Guarantee disclaimer appears for remote/flip key orders', desc:'Green "Our guarantee" notice should appear for Remote Head Key and Remote Flip Key orders only.' },
+    { label:'"Proceed to Checkout" opens Shopify in new tab', desc:'Button should open Shopify cart in a new browser tab with correct items.' },
+    { label:'Shopify cart contains key + programming variant', desc:'In Shopify checkout, two items should appear: the key and the $75 programming service.' },
+    { label:'Order note in Shopify contains vehicle information', desc:'Check the Shopify order — note field should show "Vehicle: [year] [make] [model]".' },
+    { label:'Back button returns to Screen 5', desc:'← Back should go back to Your Key screen, not reset the wizard.' },
+  ]},
+  { id:'s8', title:'8 — Post-Purchase Screens', items:[
+    { label:'CKC stock shows booking prompt after checkout', desc:'For a CKC in-stock item, "Book Your Appointment After Checkout" screen appears with gold neon animation.' },
+    { label:'RKS stock shows waiting screen after checkout', desc:'For an RKS item, "We\'re Sourcing Your Key" screen appears with grayed-out booking button.' },
+    { label:'RKS waiting screen shows correct key title', desc:'The product name should appear in the sourcing message.' },
+    { label:'"Search for another key" resets the wizard cleanly', desc:'All dropdowns reset, catalog re-syncs, no stale state.' },
+  ]},
+  { id:'s9', title:'9 — Shopify Checkout Flow (End to End)', warn:'Use test card: 4242 4242 4242 4242 | Exp: 12/26 | CVV: 123 | Any name/ZIP. Store is in TEST MODE — no real charges.', items:[
+    { label:'Shopify checkout loads with correct items', desc:'Cart should contain the key product and the $75 programming service.' },
+    { label:'Customer information fields accept input correctly', desc:'Name, email, phone, address all work.' },
+    { label:'Payment processes with test card', desc:'4242 4242 4242 4242 should succeed. Order confirmation page appears.' },
+    { label:'Order confirmation page shows booking link', desc:'After payment, booking URL should be accessible from the confirmation page.' },
+    { label:'Google Calendar booking page opens correctly', desc:'Booking URL loads, shows available time slots, 2-hour minimum notice enforced.' },
+    { label:'Appointment books and appears on James\'s calendar', desc:'Complete a test booking — confirm the appointment shows on the James Woods calendar.' },
+    { label:'Customer receives confirmation email from Google', desc:'Test customer email should receive booking confirmation.' },
+    { label:'Shopify order appears in admin with vehicle note', desc:'Check Shopify Admin → Orders. Order note should contain vehicle year/make/model.' },
+  ]},
+  { id:'s10', title:'10 — Mobile Experience', items:[
+    { label:'Key Finder is usable on iPhone/Android', desc:'Complete a full search → checkout flow on a mobile device.' },
+    { label:'Dropdowns and buttons are large enough to tap accurately', desc:'No mis-taps required. All interactive elements feel comfortable.' },
+    { label:'Images load and magnifier works on mobile', desc:'Touch and hold on a comparison image — lens should appear.' },
+    { label:'Call to Order button dials correctly on mobile', desc:'Tapping the gold button should prompt to call (336) 510-9816.' },
+    { label:'No horizontal scrolling on any screen', desc:'Nothing should be cut off or require side-scrolling.' },
+    { label:'Shopify checkout is mobile-friendly', desc:'Complete test checkout on phone — all fields usable.' },
+  ]},
+  { id:'s11', title:'11 — Edge Cases & Stress Tests', items:[
+    { label:'Back button navigation never breaks the wizard', desc:'Go forward 4–5 screens, then back all the way. State should be correct at each step.' },
+    { label:'Rapid clicking does not cause duplicate screens', desc:'Click through quickly — no ghost screens or double rendering.' },
+    { label:'Searching a second vehicle after completing a flow works', desc:'Complete a full flow, then click "Search for another key" and do a second search.' },
+    { label:'Offline mode shows correct fallback', desc:'Disconnect internet after page load — search should use fallback database, show "Offline mode".' },
+    { label:'Vehicle with only one key type skips Screen 2', desc:'Some vehicles have only one key type — wizard should skip directly to Screen 3 or 5.' },
+  ]},
+  { id:'s12', title:'12 — Content, Copy & Legal', items:[
+    { label:'Phone number (336) 510-9816 is correct throughout', desc:'Check disclaimer, Call to Order buttons, CFQ screen, no-results screen.' },
+    { label:'Service area says "Triad, NC" consistently', desc:'Winston-Salem, Greensboro, High Point area — not just "NC".' },
+    { label:'Programming fee shows $75 everywhere', desc:'Price summary, service info block, checkout line item, disclaimer.' },
+    { label:'Disclaimer text is accurate and complete', desc:'Bottom disclaimer covers key pricing, $75 service call, AKL caveat, call to order.' },
+    { label:'No placeholder or test text visible to customer', desc:'No "Lorem ipsum", "SKU: TEST", or developer notes visible.' },
+    { label:'Licensed & Certified badge is accurate', desc:'CKC holds NC locksmith license and NASTF VSP certification.' },
+  ]},
+];
+
+var state = {};
+var recommendation = '';
+var totalItems = 0;
+
+SECTIONS.forEach(function(sec) { totalItems += sec.items.length; });
+
+function buildSections() {
+  var container = document.getElementById('sections-container');
+  SECTIONS.forEach(function(sec) {
+    var div = document.createElement('div');
+    div.className = 'section';
+    var headerHTML = '<div class="section-header" onclick="toggleSection(\'' + sec.id + '\')">' +
+      '<span class="section-title">' + sec.title + '</span>' +
+      '<span class="section-meta" id="' + sec.id + '-meta">0/' + sec.items.length + '</span>' +
+      '</div>';
+    var bodyHTML = '<div class="section-body" id="' + sec.id + '-body">';
+    if (sec.warn) {
+      bodyHTML += '<div class="warn-box">' + sec.warn + '</div>';
+    }
+    sec.items.forEach(function(item, idx) {
+      var key = sec.id + '_' + idx;
+      state[key] = { checked: false, result: '', notes: '' };
+      bodyHTML += '<div class="check-item">' +
+        '<div class="check-row">' +
+        '<div class="checkbox-wrap"><input type="checkbox" id="cb_' + key + '" onchange="onCheck(\'' + key + '\', this.checked)"></div>' +
+        '<div class="check-content">' +
+        '<div class="check-label">' + item.label + '</div>' +
+        '<div class="check-desc">' + item.desc + '</div>' +
+        '<div class="pf-row">' +
+        '<button class="pf-btn pass-btn" id="pass_' + key + '" onclick="setResult(\'' + key + '\', \'pass\')">Pass</button>' +
+        '<button class="pf-btn fail-btn" id="fail_' + key + '" onclick="setResult(\'' + key + '\', \'fail\')">Fail</button>' +
+        '<button class="pf-btn na-btn" id="na_' + key + '" onclick="setResult(\'' + key + '\', \'n/a\')">N/A</button>' +
+        '</div>' +
+        '<div class="notes-label">Notes</div>' +
+        '<textarea class="notes-field" id="notes_' + key + '" placeholder="Optional notes..." onchange="onNotes(\'' + key + '\', this.value)"></textarea>' +
+        '</div></div></div>';
+    });
+    bodyHTML += '</div>';
+    div.innerHTML = headerHTML + bodyHTML;
+    container.appendChild(div);
+  });
+}
+
+function toggleSection(id) {
+  var body = document.getElementById(id + '-body');
+  body.classList.toggle('collapsed');
+}
+
+function onCheck(key, checked) {
+  state[key].checked = checked;
+  updateProgress();
+  updateSectionMeta(key.split('_')[0] + '_' + key.split('_')[1]);
+}
+
+function setResult(key, result) {
+  state[key].result = result;
+  state[key].checked = true;
+  document.getElementById('cb_' + key).checked = true;
+  ['pass','fail','na'].forEach(function(r) {
+    var btn = document.getElementById(r + '_' + key);
+    if (btn) btn.classList.remove('active');
+  });
+  var activeId = result === 'n/a' ? 'na_' + key : result + '_' + key;
+  var activeBtn = document.getElementById(activeId);
+  if (activeBtn) activeBtn.classList.add('active');
+  updateProgress();
+  var secId = getSectionId(key);
+  updateSectionMeta(secId);
+}
+
+function onNotes(key, val) {
+  state[key].notes = val;
+}
+
+function getSectionId(key) {
+  var parts = key.split('_');
+  return parts[0] + '_' + parts[1];
+}
+
+function updateSectionMeta(secId) {
+  var sec = SECTIONS.find(function(s) { return s.id === secId.replace('_',''); });
+  if (!sec) {
+    sec = SECTIONS.find(function(s) { return s.id === secId; });
+  }
+  if (!sec) return;
+  var tested = 0;
+  sec.items.forEach(function(item, idx) {
+    var key = sec.id + '_' + idx;
+    if (state[key] && state[key].checked) tested++;
+  });
+  var meta = document.getElementById(sec.id + '-meta');
+  if (meta) meta.textContent = tested + '/' + sec.items.length;
+}
+
+function updateProgress() {
+  var tested = 0, pass = 0, fail = 0;
+  Object.keys(state).forEach(function(key) {
+    if (state[key].checked) {
+      tested++;
+      if (state[key].result === 'pass') pass++;
+      if (state[key].result === 'fail') fail++;
+    }
+  });
+  var pct = Math.round((tested / totalItems) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent = tested + ' / ' + totalItems + ' items tested';
+  document.getElementById('stat-pass').textContent = pass + ' Pass';
+  document.getElementById('stat-fail').textContent = fail + ' Fail';
+  document.getElementById('stat-skip').textContent = (totalItems - tested) + ' Untested';
+}
+
+function setRec(val, btn) {
+  recommendation = val;
+  document.querySelectorAll('.rec-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+}
+
+function buildEmailBody() {
+  var name = document.getElementById('tester-name').value || 'Unknown';
+  var date = document.getElementById('test-date').value || 'Not set';
+  var finalNotes = document.getElementById('final-notes').value || 'None';
+  var recLabel = { approve: 'APPROVE FOR RELEASE', conditional: 'CONDITIONAL RELEASE', reject: 'DO NOT RELEASE' }[recommendation] || 'Not selected';
+
+  var pass = 0, fail = 0, na = 0, untested = 0;
+  Object.keys(state).forEach(function(k) {
+    if (!state[k].checked) { untested++; return; }
+    if (state[k].result === 'pass') pass++;
+    else if (state[k].result === 'fail') fail++;
+    else if (state[k].result === 'n/a') na++;
+  });
+
+  var lines = [];
+  lines.push('CKC KEY FINDER BETA TEST RESULTS');
+  lines.push('=================================');
+  lines.push('Tester: ' + name);
+  lines.push('Date: ' + date);
+  lines.push('Recommendation: ' + recLabel);
+  lines.push('');
+  lines.push('SUMMARY');
+  lines.push('Pass: ' + pass + ' | Fail: ' + fail + ' | N/A: ' + na + ' | Untested: ' + untested);
+  lines.push('');
+  lines.push('BLOCKING ISSUES / FINAL NOTES');
+  lines.push(finalNotes);
+  lines.push('');
+  lines.push('=================================');
+  lines.push('DETAILED RESULTS');
+  lines.push('=================================');
+
+  SECTIONS.forEach(function(sec) {
+    lines.push('');
+    lines.push(sec.title.toUpperCase());
+    lines.push('-'.repeat(40));
+    sec.items.forEach(function(item, idx) {
+      var key = sec.id + '_' + idx;
+      var s = state[key];
+      var result = s.checked ? (s.result || 'tested').toUpperCase() : 'UNTESTED';
+      lines.push('[' + result + '] ' + item.label);
+      if (s.notes) lines.push('  Notes: ' + s.notes);
+    });
+  });
+
+  return lines.join('\n');
+}
+
+function submitChecklist() {
+  var name = document.getElementById('tester-name').value;
+  var pubkey = document.getElementById('ejs-pubkey').value;
+  var serviceId = document.getElementById('ejs-service').value;
+  var templateId = document.getElementById('ejs-template').value;
+
+  if (!name) { showToast('Please enter your name before submitting.'); return; }
+  if (!pubkey || !serviceId || !templateId) {
+    showToast('Please enter your EmailJS credentials to submit.'); return; }
+  if (!recommendation) { showToast('Please select a recommendation before submitting.'); return; }
+
+  var btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+
+  emailjs.init(pubkey);
+  emailjs.send(serviceId, templateId, {
+    from_name: name + ' (Beta Tester)',
+    subject: 'CKC Beta Test Results — ' + name + ' — ' + (document.getElementById('test-date').value || 'No date'),
+    message: buildEmailBody()
+  }).then(function() {
+    btn.textContent = 'Submitted Successfully!';
+    btn.style.background = '#166534';
+    btn.style.color = '#fff';
+    showToast('Results sent to noloindie@gmail.com');
+  }, function(err) {
+    btn.disabled = false;
+    btn.textContent = 'Submit Completed Checklist to James';
+    showToast('Send failed: ' + JSON.stringify(err));
+  });
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 3500);
+}
+
+document.getElementById('test-date').value = new Date().toISOString().split('T')[0];
+buildSections();
+updateProgress();
+</script>
+</body>
+</html>
