@@ -152,7 +152,7 @@
     <div class="notes-label">Blocking Issues / Final Notes</div>
     <textarea class="final-notes" id="final-notes" placeholder="List any blocking issues or overall observations..."></textarea>
 
-    <div class="emailjs-config" id="emailjs-config-box">
+    <div class="emailjs-config" id="emailjs-config-box" style="display:none;">
       <strong>EmailJS Setup Required</strong> — enter your credentials below to enable email submission.
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;">
         <div><div style="font-size:0.75rem;font-weight:600;margin-bottom:2px;">Public Key</div><input type="text" id="ejs-pubkey" placeholder="xxxxxxxxxxx"></div>
@@ -437,13 +437,12 @@ function buildEmailBody() {
 
 function submitChecklist() {
   var name = document.getElementById('tester-name').value;
-  var pubkey = document.getElementById('ejs-pubkey').value;
-  var serviceId = document.getElementById('ejs-service').value;
-  var templateId = document.getElementById('ejs-template').value;
+  var pubkey = 'xnZyuYp9X4dIvLJBQ';
+  var serviceId = 'service_wkljx8t';
+  var templateId = 'a8dpj1y';
 
   if (!name) { showToast('Please enter your name before submitting.'); return; }
-  if (!pubkey || !serviceId || !templateId) {
-    showToast('Please enter your EmailJS credentials to submit.'); return; }
+  
   if (!recommendation) { showToast('Please select a recommendation before submitting.'); return; }
 
   var btn = document.getElementById('submit-btn');
