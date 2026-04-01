@@ -1,6 +1,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ═══ CKC KEY FINDER v8.79 ═══ */
+/* ═══ CKC KEY FINDER v8.80 ═══ */
 .ckc-finder {
   --ckc-gold: #c9a227;
   --ckc-gold-light: #e0c458;
@@ -343,15 +343,10 @@
 
 <script>
 // ════════════════════════════════════════
-// CKC KEY FINDER v8.79
+// CKC KEY FINDER v8.80
 // ════════════════════════════════════════
-// CHANGE LOG v8.77:
-// - Buy Now button shown only for blade key types where customer selected
-//   a specific blade on Screen 3 AND the image actually loaded (photo confirmed)
-// - Remotes, Smart Keys, FCC-only paths, and "none match" always show Call to Order
-// - RKS post-purchase: grayed-out booking button + "we'll notify you when key arrives"
-// - CKC post-purchase: unchanged — immediate booking prompt
-// - _wiz gains _bladeImgLoaded flag; lazyLoadCompareImages sets it on successful load
+// FIX v8.80: Escaped apostrophe in guaranteeNote string inside renderCheckout()
+// "we'll" was breaking the single-quoted JS string causing SyntaxError at line 1253
 // ════════════════════════════════════════
 
 const SCRIPT_URL           = 'https://script.google.com/macros/s/AKfycbxDw7dtdohInyx2kqeYM5EYNCpMaBN9Kdg3m_mtPGVKaz1jgw8bW4wZfwrUF3xR1gJW/exec';
@@ -361,7 +356,7 @@ const SHOPIFY_DOMAIN       = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL          = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
 const PROGRAMMING_VARIANT  = '45908511228101';
 const INTERNAL_TOOL_URL    = 'https://carolinakeycutters.com/tools';
-const CKC_VERSION          = 'v8.79';
+const CKC_VERSION          = 'v8.80';
 
 var liveCatalog      = [];
 var isLive           = false;
@@ -371,7 +366,6 @@ var _customerVIN     = '';
 var _cfqCardData     = {};
 var _progToggle      = {};
 
-// CHANGE 1: _wiz gains _bladeImgLoaded flag
 var _wiz = {
   screen: 1,
   typeAnswer: '',
@@ -409,7 +403,6 @@ function getTierOrder(sku) {
   return 0;
 }
 
-// CHANGE 2: isBuyNowEligible() — blade type + Screen 3 selection + image loaded
 function isBuyNowEligible() {
   var type = (_wiz.typeAnswer || '').toLowerCase();
   var isBladeType = type === 'transponder key' ||
@@ -418,12 +411,9 @@ function isBuyNowEligible() {
                     type === 'flip';
   if (!isBladeType) return false;
   if (!_wiz.bladeAnswer || _wiz.bladeAnswer === 'none') return false;
-  // Image must be confirmed
   var key = _wiz.finalKey;
   var hasInlineImage = key && key.image && key.image.startsWith('http');
   if (!_wiz._bladeImgLoaded && !hasInlineImage) return false;
-  // All eligible blade types pass — transponder keys and remotes/flip keys
-  // Remote/flip key orders get the guarantee disclaimer in checkout
   return true;
 }
 
@@ -750,7 +740,6 @@ function startWizard() {
   });
 
   lastSearchParams = { year: year, make: make, model: model };
-  // CHANGE 3: reset includes _bladeImgLoaded
   _wiz = { screen: 1, typeAnswer: '', bladeAnswer: '', tierAnswer: '', finalKey: null, aklMode: false, _bladeImgLoaded: false, _bladeKeywaySKUs: {} };
   _byType = {}; _bladeGroup = []; _fccGroup = []; _buttonsGroup = []; _progToggle = {};
 
@@ -918,7 +907,6 @@ function _getFCCConflictGroup(group) {
   return [];
 }
 
-// ══ SCREEN 3: BLADE / FCC QUALIFIER ══
 // FIX v8.73: moved s3Sub definition after showGroup is built to prevent undefined reference crash
 function renderScreen3() {
   var type  = _wiz.typeAnswer;
@@ -1130,13 +1118,12 @@ function onTierSelected(sku) {
   scrollToWizard();
 }
 
-// CHANGE 4: renderScreen5 uses isBuyNowEligible() to choose button
 function renderScreen5() {
   var key = _wiz.finalKey;
   if (!key) return;
 
   var sku = key.sku;
-  _progToggle[sku] = 'full'; // Key only removed — always full service
+  _progToggle[sku] = 'full';
   var progMode = 'full';
   var keyPrice  = parseFloat(key.price) || 0;
   var total     = progMode === 'full' ? keyPrice + PROGRAMMING_FEE : keyPrice;
@@ -1199,7 +1186,6 @@ function renderScreen5() {
       '<div class="ckc-price-tax-note">+ NC sales tax calculated at checkout</div>' +
       '<div style="font-size:0.82rem;color:var(--ckc-text-muted);text-align:center;margin-bottom:16px;">Service available in the Triad, NC area</div>';
 
-    // CHANGE 4: Buy Now vs Call to Order based on eligibility
     if (isBuyNowEligible()) {
       html += (key.inStock
         ? '<div style="padding:14px 16px;background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.2);border-radius:10px;font-size:0.88rem;color:var(--ckc-text-muted);line-height:1.6;margin-bottom:16px;text-align:center;">🟢 This key is in stock and ready to order.</div>'
@@ -1211,8 +1197,6 @@ function renderScreen5() {
         : '<div style="padding:14px 16px;background:rgba(201,162,39,0.07);border:1px solid rgba(201,162,39,0.2);border-radius:10px;font-size:0.88rem;color:var(--ckc-text-muted);line-height:1.6;margin-bottom:16px;text-align:center;">📋 Ready to order? Call us with your VIN and we\'ll get everything set up for you — key, cutting, and programming.</div>') +
         '<a href="tel:+13365109816" class="ckc-call-to-order-btn">📞 Call to Order · (336) 510-9816</a>';
     }
-
-
   }
 
   html += '</div>';
@@ -1249,8 +1233,9 @@ function renderCheckout(key) {
   var total = keyPrice + PROGRAMMING_FEE;
   var stockLabel = k.inStock ? '✅ In Stock' : '📦 Ships in 2-3 days';
   var progLine = '<div class="ckc-checkout-line"><span class="ckc-checkout-line-label">🔧 Mobile Key Programming & Cutting<br><small style="color:var(--ckc-text-muted)">We come to you — includes key cutting + programming</small></span><span class="ckc-checkout-line-price">$'+PROGRAMMING_FEE+'.00</span></div>';
+  // FIX v8.80: escaped apostrophe in we\'ll to prevent SyntaxError
   var guaranteeNote = needsGuaranteeDisclaimer()
-    ? '<div style="background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2);border-radius:8px;padding:12px 16px;margin:0 0 10px;font-size:0.86rem;color:#4ade80;line-height:1.6;">✅ <strong>Our guarantee:</strong> We matched this remote to your vehicle by FCC ID. In the rare case of a mid-production variant, we'll source the correct remote at no additional key charge.</div>'
+    ? '<div style="background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2);border-radius:8px;padding:12px 16px;margin:0 0 10px;font-size:0.86rem;color:#4ade80;line-height:1.6;">✅ <strong>Our guarantee:</strong> We matched this remote to your vehicle by FCC ID. In the rare case of a mid-production variant, we\'ll source the correct remote at no additional key charge.</div>'
     : '';
   var disclaimer = guaranteeNote + '<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:14px 16px;margin:14px 0;font-size:0.88rem;color:#d4a054;line-height:1.5;">⚠️ <strong style="color:#f59e0b;">Pricing Notice:</strong> The $'+PROGRAMMING_FEE+' service call fee covers add-a-key programming when you have a working key. All keys lost (AKL), EEPROM, or module programming may require additional cost. We will confirm your exact total before any work begins — no surprises.</div>';
 
@@ -1388,13 +1373,11 @@ async function startShopifyCheckout() {
   }
 }
 
-// CHANGE 5: showPostPurchase splits on CKC vs RKS
 function showPostPurchase() {
   var key   = _wiz.finalKey;
   var isRKS = key && !key.inStock;
 
   if (isRKS) {
-    // Scenario 2 — RKS: hold at waiting state, grayed-out booking button
     document.getElementById('ckc-wizard-area').innerHTML =
       '<div class="ckc-post-purchase"><div class="ckc-post-purchase-icon">✅</div><h3>Order Received</h3>' +
       '<p>Your checkout tab is open — complete your payment there.</p>' +
@@ -1408,9 +1391,7 @@ function showPostPurchase() {
       '<div style="margin-top:12px;font-size:0.82rem;color:#555;">Questions? Call us at <a href="tel:+13365109816" style="color:var(--ckc-gold);">(336) 510-9816</a></div>' +
       '</div></div>' +
       '<button class="ckc-new-search-btn" onclick="resetFinder()">Search for another key</button></div>';
-
   } else {
-    // Scenario 1 — CKC stock: immediate booking prompt
     document.getElementById('ckc-wizard-area').innerHTML =
       '<div class="ckc-post-purchase"><div class="ckc-post-purchase-icon">🛒</div><h3>Checkout Opened</h3>' +
       '<p>Your checkout tab is open — complete your order there before booking an appointment.</p>' +
@@ -1437,7 +1418,6 @@ async function lazyLoadTypeImages() {
   }
 }
 
-// CHANGE 6: lazyLoadCompareImages now accepts showGroup and sets _bladeImgLoaded
 async function lazyLoadCompareImages(showGroup) {
   var els = document.querySelectorAll('.ckc-mag-ph[data-sku]');
   for (var i = 0; i < els.length; i++) {
@@ -1448,7 +1428,6 @@ async function lazyLoadCompareImages(showGroup) {
     var el2 = document.getElementById(el.id);
     if (el2 && url) {
       el2.outerHTML = '<img class="ckc-mag-base" id="ckc-cmpimg-' + safeId + '" src="' + url + '" alt="Key" onerror="this.outerHTML=\'<div class=\\\'ckc-mag-ph\\\'>🔑</div>\'">';
-      // Set flag if this image is for the currently selected blade
       if (sku === _wiz.bladeAnswer) _wiz._bladeImgLoaded = true;
       var lensImg = document.getElementById('ckc-lensimg-' + safeId);
       if (lensImg) lensImg.src = url;
@@ -1489,7 +1468,6 @@ function initMagnifiers(group) {
   });
 }
 
-// CHANGE 3 (continued): resetFinder also resets _bladeImgLoaded
 function resetFinder() {
   _wiz = { screen: 1, typeAnswer: '', bladeAnswer: '', tierAnswer: '', finalKey: null, aklMode: false, _bladeImgLoaded: false, _bladeKeywaySKUs: {} };
   lastSearchParams = {}; _ckcMatches = []; _progToggle = {}; _customerVIN = ''; _cfqCardData = {};
