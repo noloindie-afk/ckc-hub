@@ -336,7 +336,7 @@ a.ckc-badge:hover { background: rgba(201,162,39,0.22); border-color: rgba(201,16
 // CKC KEY FINDER v8.81
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 // v8.81: City badges replace old credential badges; each links to its landing page.
-//        "Serving the Triad" subtitle added. Live pill -> "Loading \u00b7 X keys".
+//        "Serving the Triad" subtitle added. Live pill -> "Loading · X keys".
 // v8.80: Escaped apostrophe in guaranteeNote string inside renderCheckout()
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
@@ -509,13 +509,13 @@ async function syncFromSheet() {
         liveCatalog = data.products.map(normalizeProduct);
         isLive      = true;
         statusEl.className     = 'ckc-sync-status live';
-        statusText.textContent = 'Loading \u00b7 ' + liveCatalog.length + ' keys';
+        statusText.textContent = 'Loading · ' + liveCatalog.length + ' keys';
         loadingBar.classList.remove('active');
         initDropdowns();
         return;
       } else { throw new Error('Empty or invalid catalog response'); }
     } catch (e) {
-      if (attempt < maxAttempts) { statusText.textContent = 'Retrying\u2026'; await new Promise(function(r) { setTimeout(r, 2000); }); }
+      if (attempt < maxAttempts) { statusText.textContent = 'Retrying…'; await new Promise(function(r) { setTimeout(r, 2000); }); }
     }
   }
   isLive = false;
@@ -784,7 +784,7 @@ function renderScreen2() {
   var ymm = lastSearchParams.year + ' ' + lastSearchParams.make + ' ' + lastSearchParams.model;
   var html = '<div class="ckc-type-screen">' +
     '<div class="ckc-screen-header"><button class="ckc-back-btn-wiz" onclick="goBack()">← Change vehicle</button><div class="ckc-screen-title">Select Key Type</div></div>' +
-    '<div class="ckc-vehicle-label">\U0001f697 ' + ymm + '</div>' +
+    '<div class="ckc-vehicle-label">🚗 ' + ymm + '</div>' +
     '<div class="ckc-type-screen-q">Which of these matches your current key or remote?</div>' +
     '<div class="ckc-type-screen-sub">Select the option that matches your current key.</div>' +
     '<div class="ckc-type-grid">';
@@ -805,9 +805,9 @@ function renderScreen2() {
   });
 
   html += '</div>' +
-    '<div style="margin-top:20px;padding:12px 14px;background:rgba(201,162,39,0.06);border:1px solid rgba(201,162,39,0.15);border-radius:8px;font-size:0.82rem;color:var(--ckc-text-muted);">\U0001f511 <strong style="color:var(--ckc-text);">Need a plain metal key with no chip or remote?</strong> We cut those too \u2014 <a href="tel:+13365109816" style="color:var(--ckc-gold);">call us at (336) 510-9816</a>.</div>' +
+    '<div style="margin-top:20px;padding:12px 14px;background:rgba(201,162,39,0.06);border:1px solid rgba(201,162,39,0.15);border-radius:8px;font-size:0.82rem;color:var(--ckc-text-muted);">🔑 <strong style="color:var(--ckc-text);">Need a plain metal key with no chip or remote?</strong> We cut those too — <a href="tel:+13365109816" style="color:var(--ckc-gold);">call us at (336) 510-9816</a>.</div>' +
     '<div class="ckc-none-match-opt" style="margin-top:12px;" onclick="onKeyNotShown()">' +
-    '<span style="font-size:1.2rem;">\U0001f50d</span>' +
+    '<span style="font-size:1.2rem;">🔍</span>' +
     '<div><strong style="color:var(--ckc-text);font-size:0.9rem;">I don\'t see my key type listed</strong><div style="font-size:0.78rem;margin-top:2px;">We\'ll source the right key for your vehicle</div></div>' +
     '</div>' +
     '</div>';
@@ -819,12 +819,12 @@ function renderScreen2() {
 
 function _typeIcon(type) {
   var t = (type||'').toLowerCase();
-  if (t.includes('transponder')) return '\U0001f511';
-  if (t.includes('remote head')) return '\U0001f511';
-  if (t.includes('flip')) return '\U0001f511';
-  if (t.includes('smart') || t.includes('fobik')) return '\U0001f4f1';
-  if (t.includes('remote')) return '\U0001f4e1';
-  return '\U0001f511';
+  if (t.includes('transponder')) return '🔑';
+  if (t.includes('remote head')) return '🔑';
+  if (t.includes('flip')) return '🔑';
+  if (t.includes('smart') || t.includes('fobik')) return '📱';
+  if (t.includes('remote')) return '📡';
+  return '🔑';
 }
 function _typeSubLabel(type) {
   var t = (type||'').toLowerCase();
@@ -847,14 +847,14 @@ function onKeyNotShown() {
   var ymm = lastSearchParams.year + ' ' + lastSearchParams.make + ' ' + lastSearchParams.model;
   document.getElementById('ckc-wizard-area').innerHTML =
     '<div style="background:var(--ckc-card);border-radius:var(--ckc-radius);border:1px solid var(--ckc-border);padding:40px 36px;text-align:center;">' +
-    '<div style="font-size:3rem;margin-bottom:16px;">\U0001f50d</div>' +
+    '<div style="font-size:3rem;margin-bottom:16px;">🔍</div>' +
     '<div style="font-family:\'Outfit\',sans-serif;font-size:1.5rem;font-weight:700;color:var(--ckc-text);margin-bottom:12px;">We\'ll source it for you</div>' +
     '<p style="font-size:1rem;color:var(--ckc-text-muted);line-height:1.7;margin-bottom:8px;">We don\'t currently have that key in our catalog for your <strong style="color:var(--ckc-text);">' + ymm + '</strong>, but that doesn\'t mean we can\'t get it.</p>' +
     '<p style="font-size:1rem;color:var(--ckc-text-muted);line-height:1.7;margin-bottom:28px;">Give us a call with your VIN and we\'ll identify the exact key you need, source it, come to you, and handle all the cutting and programming on-site.</p>' +
     '<a href="tel:+13365109816" class="ckc-call-btn" style="display:inline-flex;margin-bottom:16px;">' +
     '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>' +
     'Call (336) 510-9816</a>' +
-    '<div style="font-size:0.82rem;color:#555;margin-bottom:24px;">Have your VIN ready \u2014 found on your dashboard lower-left or driver door jamb sticker</div>' +
+    '<div style="font-size:0.82rem;color:#555;margin-bottom:24px;">Have your VIN ready — found on your dashboard lower-left or driver door jamb sticker</div>' +
     '<button class="ckc-back-btn" onclick="goBack()">← Back to key types</button>' +
     '</div>';
   showScreen(2);
@@ -909,17 +909,17 @@ function renderScreen3() {
   var isBladeQ   = bladeGroup.length > 1;
   var typeLower  = _wiz.typeAnswer.toLowerCase();
   var s3Question = isBladeQ
-    ? (typeLower.includes('flip') ? '\U0001f511 Which key matches yours?' :
-       typeLower.includes('remote head') ? '\U0001f511 Which blade matches your key?' :
-       typeLower.includes('transponder') ? '\U0001f511 Which blade matches your key?' :
-       '\U0001f4e1 Which remote matches yours?')
-    : '\U0001f4e1 Which remote matches yours?';
+    ? (typeLower.includes('flip') ? '🔑 Which key matches yours?' :
+       typeLower.includes('remote head') ? '🔑 Which blade matches your key?' :
+       typeLower.includes('transponder') ? '🔑 Which blade matches your key?' :
+       '📡 Which remote matches yours?')
+    : '📡 Which remote matches yours?';
 
   _wiz._bladeKeywaySKUs = {};
   var showGroup = [];
   if (isBladeQ) {
     rawGroup.forEach(function(key) {
-      var kw = (key.keyway || '\u2014').toUpperCase();
+      var kw = (key.keyway || '—').toUpperCase();
       if (kw === 'UNIVERSAL' || kw === 'N/A' || kw === '') return;
       if (!_wiz._bladeKeywaySKUs[kw]) {
         _wiz._bladeKeywaySKUs[kw] = [];
@@ -948,12 +948,12 @@ function renderScreen3() {
     var imgSrc = (key.image && key.image.startsWith('http')) ? key.image : '';
 
     var innerImg = imgSrc
-      ? '<img class="ckc-mag-base" id="ckc-cmpimg-' + safeId + '" src="' + imgSrc + '" alt="' + key.title + '" onerror="this.outerHTML=\'<div class=\\\'ckc-mag-ph\\\'>\U0001f511</div>\'">'
-      : '<div class="ckc-mag-ph" id="ckc-cmpimg-' + safeId + '" data-sku="' + key.sku + '" data-handle="' + (key.handle||'') + '">\U0001f511</div>';
+      ? '<img class="ckc-mag-base" id="ckc-cmpimg-' + safeId + '" src="' + imgSrc + '" alt="' + key.title + '" onerror="this.outerHTML=\'<div class=\\\'ckc-mag-ph\\\'>🔑</div>\'">'
+      : '<div class="ckc-mag-ph" id="ckc-cmpimg-' + safeId + '" data-sku="' + key.sku + '" data-handle="' + (key.handle||'') + '">🔑</div>';
 
     var lensInnerSrc = imgSrc ? imgSrc : '';
     var detail = isBladeQ
-      ? '<div class="ckc-compare-card-blade">Blade: ' + (key.keyway || '\u2014') + '</div>'
+      ? '<div class="ckc-compare-card-blade">Blade: ' + (key.keyway || '—') + '</div>'
       : (key.fcc && key.fcc !== 'N/A' ? '<div class="ckc-compare-card-blade">FCC: ' + key.fcc + '</div>' : '') +
         (key.buttonCount > 0 ? '<div class="ckc-compare-card-blade">' + key.buttonCount + ' Button' + (key.buttonCount > 1 ? 's' : '') + '</div>' : '');
 
@@ -973,7 +973,7 @@ function renderScreen3() {
 
   html += '</div>' +
     '<div class="ckc-none-match-opt" onclick="onNoneMatch()">' +
-    '<span style="font-size:1.2rem;">\u2753</span>' +
+    '<span style="font-size:1.2rem;">❓</span>' +
     '<div><strong style="color:var(--ckc-text);font-size:0.9rem;">None of these match my key</strong><div style="font-size:0.78rem;margin-top:2px;">We\'ll confirm the right key when we arrive</div></div>' +
     '</div>' +
     '</div>';
@@ -981,7 +981,7 @@ function renderScreen3() {
   if (!isBladeQ) {
     html += '<div style="background:var(--ckc-card);border:1px solid var(--ckc-border);border-radius:var(--ckc-radius);padding:24px 28px;margin-top:16px;">' +
       '<div style="font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--ckc-text-muted);margin-bottom:12px;">Can\'t find an FCC ID on your remote?</div>' +
-      '<div style="font-size:0.88rem;color:var(--ckc-text-muted);margin-bottom:14px;line-height:1.5;">The FCC ID is printed on the back of your existing remote \u2014 usually a small alphanumeric code like <strong style="color:var(--ckc-text);">GQ4-53T</strong> or <strong style="color:var(--ckc-text);">OUC60270</strong>. If worn or missing, type it below or call us.</div>' +
+      '<div style="font-size:0.88rem;color:var(--ckc-text-muted);margin-bottom:14px;line-height:1.5;">The FCC ID is printed on the back of your existing remote — usually a small alphanumeric code like <strong style="color:var(--ckc-text);">GQ4-53T</strong> or <strong style="color:var(--ckc-text);">OUC60270</strong>. If worn or missing, type it below or call us.</div>' +
       '<input class="ckc-fcc-input" id="ckc-fcc-manual" type="text" placeholder="e.g. GQ4-53T" oninput="onFCCManual()" />' +
       '</div>';
   }
@@ -1072,18 +1072,18 @@ function renderScreen4(candidates) {
   var html = '<div class="ckc-tier-screen">' +
     '<div class="ckc-screen-header"><button class="ckc-back-btn-wiz" onclick="goBack()">← Back</button><div class="ckc-screen-title">Choose Quality</div></div>' +
     '<div class="ckc-tier-screen-q">Which quality level would you prefer?</div>' +
-    '<div class="ckc-tier-screen-sub">All options work the same \u2014 the difference is manufacturer and price.</div>' +
+    '<div class="ckc-tier-screen-sub">All options work the same — the difference is manufacturer and price.</div>' +
     '<div class="ckc-tier-options">';
 
   candidates.forEach(function(key) {
     var tier = getTierLabel(key.sku);
-    var desc = tier === 'Aftermarket' ? 'New aftermarket key \u2014 cuts and programs to OEM spec' :
+    var desc = tier === 'Aftermarket' ? 'New aftermarket key — cuts and programs to OEM spec' :
                tier === 'Refurbished OEM' ? 'Original manufacturer key, professionally refurbished' :
                'Brand new key from the original manufacturer';
     var sel = _wiz.tierAnswer === key.sku ? ' selected' : '';
     var imgHTML = (key.image && key.image.startsWith('http'))
-      ? '<img src="' + key.image + '" alt="' + tier + '" class="ckc-tier-opt-img" onerror="this.outerHTML=\'<div class=\\\'ckc-tier-opt-img-ph\\\'>\U0001f511</div>\'">'
-      : '<div class="ckc-tier-opt-img-ph">\U0001f511</div>';
+      ? '<img src="' + key.image + '" alt="' + tier + '" class="ckc-tier-opt-img" onerror="this.outerHTML=\'<div class=\\\'ckc-tier-opt-img-ph\\\'>🔑</div>\'">'
+      : '<div class="ckc-tier-opt-img-ph">🔑</div>';
 
     html += '<div class="ckc-tier-opt' + sel + '" onclick="onTierSelected(\'' + _escAttr(key.sku) + '\')">' +
       imgHTML +
@@ -1119,20 +1119,20 @@ function renderScreen5() {
   var keyPrice  = parseFloat(key.price) || 0;
   var total     = progMode === 'full' ? keyPrice + PROGRAMMING_FEE : keyPrice;
   var totalStr  = total.toFixed(2);
-  var compatList = key.vehicles.map(function(v){return v.years+' '+v.make+' '+v.model;}).join(' \u00b7 ');
+  var compatList = key.vehicles.map(function(v){return v.years+' '+v.make+' '+v.model;}).join(' · ');
   var isSmart = isSmartKeyType(key.type);
   var isCFQ   = isSmart || _wiz.bladeAnswer === 'none';
 
   var imgHTML = (key.image && key.image.startsWith('http'))
-    ? '<img src="' + key.image + '" alt="' + key.title + '" class="ckc-buynow-img" onerror="this.outerHTML=\'<div class=\\\'ckc-buynow-img-ph\\\'>\U0001f511</div>\'">'
-    : '<div class="ckc-buynow-img-ph" id="ckc-buynow-img-' + sku.replace(/[^a-z0-9]/gi,'') + '" data-sku="' + sku + '" data-handle="' + (key.handle||'') + '">\U0001f511</div>';
+    ? '<img src="' + key.image + '" alt="' + key.title + '" class="ckc-buynow-img" onerror="this.outerHTML=\'<div class=\\\'ckc-buynow-img-ph\\\'>🔑</div>\'">'
+    : '<div class="ckc-buynow-img-ph" id="ckc-buynow-img-' + sku.replace(/[^a-z0-9]/gi,'') + '" data-sku="' + sku + '" data-handle="' + (key.handle||'') + '">🔑</div>';
 
   var stockHTML = key.inStock
-    ? '<div class="ckc-stock-badge in-stock"><span class="ckc-stock-dot"></span>\U0001f7e2 In Stock \u2014 Schedule appointment after checkout</div>'
-    : '<div class="ckc-stock-badge ships"><span class="ckc-stock-dot"></span>\U0001f4e6 Ships in 2-3 days \u2014 Schedule programming when key arrives</div>';
+    ? '<div class="ckc-stock-badge in-stock"><span class="ckc-stock-dot"></span>🟢 In Stock — Schedule appointment after checkout</div>'
+    : '<div class="ckc-stock-badge ships"><span class="ckc-stock-dot"></span>📦 Ships in 2-3 days — Schedule programming when key arrives</div>';
 
   var matchBadge = (_wiz.bladeAnswer && _wiz.bladeAnswer !== 'none' && key.keyway)
-    ? '<div class="ckc-buynow-match-badge">\u2713 Matched to blade: ' + key.keyway + '</div>' : '';
+    ? '<div class="ckc-buynow-match-badge">✓ Matched to blade: ' + key.keyway + '</div>' : '';
 
   var detailParts = [];
   if (key.fcc && key.fcc !== 'N/A' && key.fcc !== '') detailParts.push('FCC: ' + key.fcc);
@@ -1148,25 +1148,25 @@ function renderScreen5() {
     '<div class="ckc-buynow-info-title">' + key.title + '</div>' +
     stockHTML +
     '<div class="ckc-buynow-info-compat">' + compatList + '</div>' +
-    '<div class="ckc-buynow-info-details">' + detailParts.join(' \u00b7 ') + '</div>' +
+    '<div class="ckc-buynow-info-details">' + detailParts.join(' · ') + '</div>' +
     matchBadge +
     '</div></div>';
 
   if (isCFQ) {
     var cfqMsg = isSmart
-      ? 'Smart Key programming requires module-level work on most vehicles. Pricing varies by year, make, and model \u2014 call us for an exact quote before we arrive.'
+      ? 'Smart Key programming requires module-level work on most vehicles. Pricing varies by year, make, and model — call us for an exact quote before we arrive.'
       : 'We\'ll identify the exact key for your vehicle using your VIN. Call us and we\'ll have everything ready before we arrive.';
     html += '<div class="ckc-cfq-notice">' + cfqMsg + '</div>' +
       '<div class="ckc-price-summary" style="margin-bottom:16px;">' +
       '<div class="ckc-price-line"><span>Key price</span><span>$' + keyPrice.toFixed(2) + '</span></div>' +
       '<div class="ckc-price-line"><span>Programming</span><span style="color:var(--ckc-gold);">Quoted on call</span></div>' +
       '</div>' +
-      '<div class="ckc-cfq-vin-hint">\U0001f4cb Have your VIN ready \u2014 found on your dashboard lower-left or driver door jamb sticker.</div>' +
-      '<a href="tel:+13365109816" class="ckc-call-to-order-btn">\U0001f4de Call to Order \u00b7 (336) 510-9816</a>';
+      '<div class="ckc-cfq-vin-hint">📋 Have your VIN ready — found on your dashboard lower-left or driver door jamb sticker.</div>' +
+      '<a href="tel:+13365109816" class="ckc-call-to-order-btn">📞 Call to Order · (336) 510-9816</a>';
   } else {
     html += '<div style="background:rgba(201,162,39,0.06);border:1px solid rgba(201,162,39,0.15);border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px;">' +
-      '<span style="font-size:1.1rem;">\U0001f527</span>' +
-      '<div><strong style="color:var(--ckc-text);font-size:0.95rem;">Includes mobile programming & key cutting</strong><div style="font-size:0.82rem;color:var(--ckc-text-muted);margin-top:2px;">We come to you \u00b7 Triad, NC area</div></div>' +
+      '<span style="font-size:1.1rem;">🔧</span>' +
+      '<div><strong style="color:var(--ckc-text);font-size:0.95rem;">Includes mobile programming & key cutting</strong><div style="font-size:0.82rem;color:var(--ckc-text-muted);margin-top:2px;">We come to you · Triad, NC area</div></div>' +
       '<div style="margin-left:auto;font-family:\'Outfit\',sans-serif;font-weight:800;font-size:1.15rem;color:var(--ckc-gold);white-space:nowrap;">+$' + PROGRAMMING_FEE + '</div>' +
       '</div>' +
       '<div class="ckc-price-summary">' +
@@ -1179,14 +1179,14 @@ function renderScreen5() {
 
     if (isBuyNowEligible()) {
       html += (key.inStock
-        ? '<div style="padding:14px 16px;background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.2);border-radius:10px;font-size:0.88rem;color:var(--ckc-text-muted);line-height:1.6;margin-bottom:16px;text-align:center;">\U0001f7e2 This key is in stock and ready to order.</div>'
-        : '<div style="padding:14px 16px;background:rgba(201,162,39,0.07);border:1px solid rgba(201,162,39,0.2);border-radius:10px;font-size:0.88rem;color:var(--ckc-text-muted);line-height:1.6;margin-bottom:16px;text-align:center;">\U0001f4e6 We\'ll source this key for you \u2014 programming scheduled after it arrives.</div>') +
-        '<button class="ckc-buy-now-btn" onclick="openCheckoutFromS5()">Buy Now \u2192</button>';
+        ? '<div style="padding:14px 16px;background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.2);border-radius:10px;font-size:0.88rem;color:var(--ckc-text-muted);line-height:1.6;margin-bottom:16px;text-align:center;">🟢 This key is in stock and ready to order.</div>'
+        : '<div style="padding:14px 16px;background:rgba(201,162,39,0.07);border:1px solid rgba(201,162,39,0.2);border-radius:10px;font-size:0.88rem;color:var(--ckc-text-muted);line-height:1.6;margin-bottom:16px;text-align:center;">📦 We\'ll source this key for you — programming scheduled after it arrives.</div>') +
+        '<button class="ckc-buy-now-btn" onclick="openCheckoutFromS5()">Buy Now →</button>';
     } else {
       html += (key.inStock
-        ? '<div style="padding:14px 16px;background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.2);border-radius:10px;font-size:0.88rem;color:var(--ckc-text-muted);line-height:1.6;margin-bottom:16px;text-align:center;">\U0001f7e2 This key is in stock. Call us to place your order and schedule your appointment.</div>'
-        : '<div style="padding:14px 16px;background:rgba(201,162,39,0.07);border:1px solid rgba(201,162,39,0.2);border-radius:10px;font-size:0.88rem;color:var(--ckc-text-muted);line-height:1.6;margin-bottom:16px;text-align:center;">\U0001f4cb Ready to order? Call us with your VIN and we\'ll get everything set up for you \u2014 key, cutting, and programming.</div>') +
-        '<a href="tel:+13365109816" class="ckc-call-to-order-btn">\U0001f4de Call to Order \u00b7 (336) 510-9816</a>';
+        ? '<div style="padding:14px 16px;background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.2);border-radius:10px;font-size:0.88rem;color:var(--ckc-text-muted);line-height:1.6;margin-bottom:16px;text-align:center;">🟢 This key is in stock. Call us to place your order and schedule your appointment.</div>'
+        : '<div style="padding:14px 16px;background:rgba(201,162,39,0.07);border:1px solid rgba(201,162,39,0.2);border-radius:10px;font-size:0.88rem;color:var(--ckc-text-muted);line-height:1.6;margin-bottom:16px;text-align:center;">📋 Ready to order? Call us with your VIN and we\'ll get everything set up for you — key, cutting, and programming.</div>') +
+        '<a href="tel:+13365109816" class="ckc-call-to-order-btn">📞 Call to Order · (336) 510-9816</a>';
     }
   }
 
@@ -1197,7 +1197,7 @@ function renderScreen5() {
   if (phEl && phEl.dataset.sku) {
     tryFetchRKSImage(phEl.dataset.handle, phEl.dataset.sku).then(function(url) {
       var el2 = document.getElementById('ckc-buynow-img-' + sku.replace(/[^a-z0-9]/gi,''));
-      if (el2 && url) el2.outerHTML = '<img src="' + url + '" alt="Key" class="ckc-buynow-img" onerror="this.outerHTML=\'<div class=\\\'ckc-buynow-img-ph\\\'>\U0001f511</div>\'">';
+      if (el2 && url) el2.outerHTML = '<img src="' + url + '" alt="Key" class="ckc-buynow-img" onerror="this.outerHTML=\'<div class=\\\'ckc-buynow-img-ph\\\'>🔑</div>\'">';
     });
   }
   resumeResize();
@@ -1222,22 +1222,22 @@ function renderCheckout(key) {
   var k = key || _wiz.finalKey;
   var keyPrice  = parseFloat(k.price) || 0;
   var total = keyPrice + PROGRAMMING_FEE;
-  var stockLabel = k.inStock ? '\u2705 In Stock' : '\U0001f4e6 Ships in 2-3 days';
-  var progLine = '<div class="ckc-checkout-line"><span class="ckc-checkout-line-label">\U0001f527 Mobile Key Programming & Cutting<br><small style="color:var(--ckc-text-muted)">We come to you \u2014 includes key cutting + programming</small></span><span class="ckc-checkout-line-price">$'+PROGRAMMING_FEE+'.00</span></div>';
+  var stockLabel = k.inStock ? '✅ In Stock' : '📦 Ships in 2-3 days';
+  var progLine = '<div class="ckc-checkout-line"><span class="ckc-checkout-line-label">🔧 Mobile Key Programming & Cutting<br><small style="color:var(--ckc-text-muted)">We come to you — includes key cutting + programming</small></span><span class="ckc-checkout-line-price">$'+PROGRAMMING_FEE+'.00</span></div>';
   // FIX v8.80: escaped apostrophe in we\'ll to prevent SyntaxError
   var guaranteeNote = needsGuaranteeDisclaimer()
-    ? '<div style="background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2);border-radius:8px;padding:12px 16px;margin:0 0 10px;font-size:0.86rem;color:#4ade80;line-height:1.6;">\u2705 <strong>Our guarantee:</strong> We matched this remote to your vehicle by FCC ID. In the rare case of a mid-production variant, we\'ll source the correct remote at no additional key charge.</div>'
+    ? '<div style="background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2);border-radius:8px;padding:12px 16px;margin:0 0 10px;font-size:0.86rem;color:#4ade80;line-height:1.6;">✅ <strong>Our guarantee:</strong> We matched this remote to your vehicle by FCC ID. In the rare case of a mid-production variant, we\'ll source the correct remote at no additional key charge.</div>'
     : '';
-  var disclaimer = guaranteeNote + '<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:14px 16px;margin:14px 0;font-size:0.88rem;color:#d4a054;line-height:1.5;">\u26a0\ufe0f <strong style="color:#f59e0b;">Pricing Notice:</strong> The $'+PROGRAMMING_FEE+' service call fee covers add-a-key programming when you have a working key. All keys lost (AKL), EEPROM, or module programming may require additional cost. We will confirm your exact total before any work begins \u2014 no surprises.</div>';
+  var disclaimer = guaranteeNote + '<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:14px 16px;margin:14px 0;font-size:0.88rem;color:#d4a054;line-height:1.5;">⚠️ <strong style="color:#f59e0b;">Pricing Notice:</strong> The $'+PROGRAMMING_FEE+' service call fee covers add-a-key programming when you have a working key. All keys lost (AKL), EEPROM, or module programming may require additional cost. We will confirm your exact total before any work begins — no surprises.</div>';
 
   document.getElementById('ckc-wizard-area').innerHTML =
-    '<div class="ckc-checkout-panel"><h3>\U0001f6d2 Your Order</h3>' +
-    '<div class="ckc-checkout-line"><span class="ckc-checkout-line-label">'+k.title+'<br><small style="color:var(--ckc-text-muted)">'+k.type+' \u00b7 '+stockLabel+'</small></span><span class="ckc-checkout-line-price">$'+keyPrice.toFixed(2)+'</span></div>' +
+    '<div class="ckc-checkout-panel"><h3>🛒 Your Order</h3>' +
+    '<div class="ckc-checkout-line"><span class="ckc-checkout-line-label">'+k.title+'<br><small style="color:var(--ckc-text-muted)">'+k.type+' · '+stockLabel+'</small></span><span class="ckc-checkout-line-price">$'+keyPrice.toFixed(2)+'</span></div>' +
     progLine + disclaimer +
     '<div class="ckc-checkout-total"><span class="ckc-checkout-total-label">Total</span><span class="ckc-checkout-total-price">$'+total.toFixed(2)+'</span></div>' +
     '<div class="ckc-checkout-tax">+ NC sales tax calculated at checkout</div>' +
     '<div style="font-size:0.85rem;color:var(--ckc-text-muted);text-align:center;margin-bottom:14px;">Service available in the Triad, NC area</div>' +
-    '<button class="ckc-checkout-btn" id="ckc-checkout-btn" onclick="startShopifyCheckout()">Proceed to Checkout \u2192</button>' +
+    '<button class="ckc-checkout-btn" id="ckc-checkout-btn" onclick="startShopifyCheckout()">Proceed to Checkout →</button>' +
     '<button class="ckc-back-btn" onclick="goBack()">← Back</button></div>';
   resumeResize();
 }
@@ -1248,7 +1248,7 @@ function openVINModal(cardData) {
   var overlay = document.createElement('div');
   overlay.className = 'ckc-vin-modal-overlay'; overlay.id = 'ckc-vin-overlay';
   overlay.innerHTML = '<div class="ckc-vin-modal">' +
-    '<h3>\U0001f4cb One Last Step Before We Connect</h3>' +
+    '<h3>📋 One Last Step Before We Connect</h3>' +
     '<p>Enter your VIN so we can prepare your quote before the call. This saves time and helps us give you an accurate price immediately.</p>' +
     '<div class="ckc-vin-modal-field">' +
     '<input type="text" class="ckc-vin-modal-input" id="ckc-vin-modal-inp" maxlength="17" placeholder="17-DIGIT VIN" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" oninput="onVINModalInput(this)" onkeydown="if(event.key===\'Enter\')submitVINModal()">' +
@@ -1257,7 +1257,7 @@ function openVINModal(cardData) {
     '<div class="ckc-vin-hint">Found on your <strong>dashboard lower-left</strong> (visible through windshield) or <strong>driver door jamb sticker</strong>.</div>' +
     '<div class="ckc-vin-modal-btns">' +
     '<button class="ckc-vin-cancel-btn" onclick="closeVINModal()">Cancel</button>' +
-    '<button class="ckc-vin-call-btn" id="ckc-vin-submit-btn" disabled onclick="submitVINModal()">\U0001f4de Connect & Call (336) 510-9816</button>' +
+    '<button class="ckc-vin-call-btn" id="ckc-vin-submit-btn" disabled onclick="submitVINModal()">📞 Connect & Call (336) 510-9816</button>' +
     '</div></div>';
   document.body.appendChild(overlay);
   setTimeout(function(){ var inp = document.getElementById('ckc-vin-modal-inp'); if(inp) inp.focus(); }, 100);
@@ -1293,7 +1293,7 @@ function onVINModalInput(el) {
       submitBtn.disabled = false; if(errorEl){errorEl.style.display='none';}
     } else {
       counter.className = 'ckc-vin-counter error'; el.classList.remove('valid'); el.classList.add('invalid');
-      submitBtn.disabled = true; if(errorEl){errorEl.textContent='\u26a0\ufe0f That VIN doesn\'t look right. Check the number on your dashboard or door jamb.';errorEl.style.display='block';}
+      submitBtn.disabled = true; if(errorEl){errorEl.textContent='⚠️ That VIN doesn\'t look right. Check the number on your dashboard or door jamb.';errorEl.style.display='block';}
     }
   } else {
     counter.className = 'ckc-vin-counter'; el.classList.remove('valid','invalid');
@@ -1310,10 +1310,10 @@ async function submitVINModal() {
   submitBtn.disabled = true; submitBtn.textContent = 'Verifying VIN...';
   var valid = await verifyVINWithNHTSA(vin);
   if (!valid) {
-    submitBtn.disabled = false; submitBtn.innerHTML = '\U0001f4de Connect & Call (336) 510-9816';
+    submitBtn.disabled = false; submitBtn.innerHTML = '📞 Connect & Call (336) 510-9816';
     inp.classList.remove('valid'); inp.classList.add('invalid');
     document.getElementById('ckc-vin-counter').className = 'ckc-vin-counter error';
-    if(errorEl){errorEl.textContent='\u26a0\ufe0f That VIN couldn\'t be verified. Double-check the number on your dashboard or door jamb sticker.';errorEl.style.display='block';}
+    if(errorEl){errorEl.textContent='⚠️ That VIN couldn\'t be verified. Double-check the number on your dashboard or door jamb sticker.';errorEl.style.display='block';}
     return;
   }
   _customerVIN = vin; closeVINModal(); placeCallAndOpenTool();
@@ -1324,7 +1324,7 @@ function placeCallAndOpenTool() {
   var cardSku   = _cfqCardData.sku || '';
   if (cardSku) {
     var toolUrlEl = document.getElementById('ckc-tool-url-' + cardSku);
-    if (toolUrlEl) { toolUrlEl.innerHTML = '<span class="ckc-tool-url-label">\U0001f527 Tap when you answer the call:</span>' + toolURL; toolUrlEl.classList.add('show'); }
+    if (toolUrlEl) { toolUrlEl.innerHTML = '<span class="ckc-tool-url-label">🔧 Tap when you answer the call:</span>' + toolURL; toolUrlEl.classList.add('show'); }
   }
   window.location.href = 'tel:+13365109816';
 }
@@ -1359,7 +1359,7 @@ async function startShopifyCheckout() {
     window.open(shopifyUrl, '_blank');
     showPostPurchase();
   } catch(err) {
-    btn.disabled = false; btn.textContent = 'Proceed to Checkout \u2192';
+    btn.disabled = false; btn.textContent = 'Proceed to Checkout →';
     alert('Unable to open checkout. Please call us at (336) 510-9816 to order.');
   }
 }
@@ -1370,26 +1370,26 @@ function showPostPurchase() {
 
   if (isRKS) {
     document.getElementById('ckc-wizard-area').innerHTML =
-      '<div class="ckc-post-purchase"><div class="ckc-post-purchase-icon">\u2705</div><h3>Order Received</h3>' +
-      '<p>Your checkout tab is open \u2014 complete your payment there.</p>' +
+      '<div class="ckc-post-purchase"><div class="ckc-post-purchase-icon">✅</div><h3>Order Received</h3>' +
+      '<p>Your checkout tab is open — complete your payment there.</p>' +
       '<div class="ckc-email-neon"><div class="ckc-email-neon-inner">' +
-      '<div class="ckc-email-neon-icon">\U0001f4e6</div>' +
+      '<div class="ckc-email-neon-icon">📦</div>' +
       '<div class="ckc-email-neon-title">WE\'RE SOURCING YOUR KEY</div>' +
       '<div class="ckc-email-neon-desc">We\'ll notify you by email as soon as your <strong>' + (key ? key.title : 'key') + '</strong> arrives.<br><br>Your notification will include a link to schedule your programming appointment.</div>' +
       '<div style="margin-top:20px;">' +
-      '<button disabled style="display:block;width:100%;padding:16px;background:#222;color:#555;border:1px solid #333;border-radius:10px;font-family:\'DM Sans\',sans-serif;font-size:1rem;font-weight:600;cursor:not-allowed;letter-spacing:0.5px;">\U0001f4c5 Schedule Appointment \u2014 Available After Key Arrives</button>' +
+      '<button disabled style="display:block;width:100%;padding:16px;background:#222;color:#555;border:1px solid #333;border-radius:10px;font-family:\'DM Sans\',sans-serif;font-size:1rem;font-weight:600;cursor:not-allowed;letter-spacing:0.5px;">📅 Schedule Appointment — Available After Key Arrives</button>' +
       '</div>' +
       '<div style="margin-top:12px;font-size:0.82rem;color:#555;">Questions? Call us at <a href="tel:+13365109816" style="color:var(--ckc-gold);">(336) 510-9816</a></div>' +
       '</div></div>' +
       '<button class="ckc-new-search-btn" onclick="resetFinder()">Search for another key</button></div>';
   } else {
     document.getElementById('ckc-wizard-area').innerHTML =
-      '<div class="ckc-post-purchase"><div class="ckc-post-purchase-icon">\U0001f6d2</div><h3>Checkout Opened</h3>' +
-      '<p>Your checkout tab is open \u2014 complete your order there before booking an appointment.</p>' +
-      '<div class="ckc-email-neon"><div class="ckc-email-neon-inner"><div class="ckc-email-neon-icon">\U0001f4c5</div>' +
+      '<div class="ckc-post-purchase"><div class="ckc-post-purchase-icon">🛒</div><h3>Checkout Opened</h3>' +
+      '<p>Your checkout tab is open — complete your order there before booking an appointment.</p>' +
+      '<div class="ckc-email-neon"><div class="ckc-email-neon-inner"><div class="ckc-email-neon-icon">📅</div>' +
       '<div class="ckc-email-neon-title">BOOK YOUR APPOINTMENT AFTER CHECKOUT</div>' +
       '<div class="ckc-email-neon-desc">After completing payment, you\'ll see a<br><strong>"Schedule My Appointment"</strong> button on the confirmation page.<br>Click it to choose your date and time!</div>' +
-      '<div class="ckc-email-neon-arrow">\u2193 Complete checkout first, then book your appointment \u2193</div></div></div>' +
+      '<div class="ckc-email-neon-arrow">↓ Complete checkout first, then book your appointment ↓</div></div></div>' +
       '<button class="ckc-new-search-btn" onclick="resetFinder()">Search for another key</button></div>';
   }
 
@@ -1405,7 +1405,7 @@ async function lazyLoadTypeImages() {
     if (!sku || !el.id) continue;
     var url = await tryFetchRKSImage(handle, sku);
     var el2 = document.getElementById(el.id);
-    if (el2 && url) el2.outerHTML = '<img src="' + url + '" alt="Key" class="ckc-type-card-img" onerror="this.outerHTML=\'<div class=\\\'ckc-type-card-img-placeholder\\\'>\U0001f511</div>\'">';
+    if (el2 && url) el2.outerHTML = '<img src="' + url + '" alt="Key" class="ckc-type-card-img" onerror="this.outerHTML=\'<div class=\\\'ckc-type-card-img-placeholder\\\'>🔑</div>\'">';
   }
 }
 
@@ -1418,7 +1418,7 @@ async function lazyLoadCompareImages(showGroup) {
     var safeId = sku.replace(/[^a-z0-9]/gi,'');
     var el2 = document.getElementById(el.id);
     if (el2 && url) {
-      el2.outerHTML = '<img class="ckc-mag-base" id="ckc-cmpimg-' + safeId + '" src="' + url + '" alt="Key" onerror="this.outerHTML=\'<div class=\\\'ckc-mag-ph\\\'>\U0001f511</div>\'">';
+      el2.outerHTML = '<img class="ckc-mag-base" id="ckc-cmpimg-' + safeId + '" src="' + url + '" alt="Key" onerror="this.outerHTML=\'<div class=\\\'ckc-mag-ph\\\'>🔑</div>\'">';
       if (sku === _wiz.bladeAnswer) _wiz._bladeImgLoaded = true;
       var lensImg = document.getElementById('ckc-lensimg-' + safeId);
       if (lensImg) lensImg.src = url;
@@ -1498,7 +1498,7 @@ function resumeResize() {
 }
 
 function initResizeObserver() {
-  // Intentionally empty \u2014 ResizeObserver removed to eliminate shake feedback loop.
+  // Intentionally empty — ResizeObserver removed to eliminate shake feedback loop.
 }
 
 (async function init() {
