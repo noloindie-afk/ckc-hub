@@ -317,7 +317,7 @@ const SHOPIFY_DOMAIN       = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL          = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
 const PROGRAMMING_VARIANT  = '45908511228101';
 const INTERNAL_TOOL_URL    = 'https://carolinakeycutters.com/tools';
-const CKC_VERSION          = 'v8.85-mobile';
+const CKC_VERSION          = 'v8.86-mobile';
 
 var liveCatalog      = [];
 var isLive           = false;
@@ -1264,26 +1264,47 @@ function buildInternalToolURL() {
 async function startShopifyCheckout() {
   var btn = document.getElementById('ckc-checkout-btn');
   btn.disabled = true; btn.textContent = 'Opening checkout...';
+
+  var k = _wiz.finalKey;
+  var vehicleNote = 'Vehicle: ' + lastSearchParams.year + ' ' + lastSearchParams.make + ' ' + lastSearchParams.model;
+
+  // Open the window immediately in the user gesture context — before any async work.
+  // Safari blocks window.open() called after an await, even with popup blocker off.
+  var checkoutWin = window.open('', '_blank');
+
+  if (!checkoutWin) {
+    // Window was blocked — fall back to same-tab navigation
+    btn.disabled = false; btn.textContent = 'Proceed to Checkout →';
+    document.getElementById('ckc-wizard-area').innerHTML +=
+      '<div style="margin-top:16px;padding:14px;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.3);border-radius:10px;font-size:0.88rem;color:#f87171;line-height:1.5;">' +
+      '⚠️ Checkout could not open. Tap below to go directly to our store, or call us.<br><br>' +
+      '<a href="https://'+SHOPIFY_DOMAIN+'/search?q='+encodeURIComponent(k.sku)+'" target="_blank" style="color:var(--ckc-gold);font-weight:700;">Open Store →</a>' +
+      '&nbsp;&nbsp;or&nbsp;&nbsp;<a href="tel:+13365109816" style="color:var(--ckc-gold);font-weight:700;">Call (336) 510-9816</a>' +
+      '</div>';
+    return;
+  }
+
+  // Now do the async work to build the best possible URL
+  var shopifyUrl;
   try {
-    var k = _wiz.finalKey;
     var handle = (k.handle||k.sku||'').toLowerCase().replace(/[^a-z0-9]+/g,'-');
-    var vehicleNote = 'Vehicle: ' + lastSearchParams.year + ' ' + lastSearchParams.make + ' ' + lastSearchParams.model;
-    var shopifyUrl;
-    try {
-      var prodJson = await fetch('https://'+SHOPIFY_DOMAIN+'/products/'+handle+'.json');
+    var prodJson = await fetch('https://'+SHOPIFY_DOMAIN+'/products/'+handle+'.json');
+    if (prodJson.ok) {
       var prodData = await prodJson.json();
       var keyVariantId = prodData.product.variants[0].id;
       var cartItems = keyVariantId+':1,'+PROGRAMMING_VARIANT+':1';
       shopifyUrl = 'https://'+SHOPIFY_DOMAIN+'/cart/'+cartItems+'?note='+encodeURIComponent(vehicleNote);
-    } catch(e) {
-      shopifyUrl = 'https://'+SHOPIFY_DOMAIN+'/products/'+handle+'?note='+encodeURIComponent(vehicleNote);
+    } else {
+      throw new Error('Product not found');
     }
-    window.open(shopifyUrl, '_blank');
-    showPostPurchase();
-  } catch(err) {
-    btn.disabled = false; btn.textContent = 'Proceed to Checkout →';
-    alert('Unable to open checkout. Please call (336) 510-9816.');
+  } catch(e) {
+    // Reliable SKU-based search fallback — works for every product regardless of handle
+    shopifyUrl = 'https://'+SHOPIFY_DOMAIN+'/search?q='+encodeURIComponent(k.sku)+'&note='+encodeURIComponent(vehicleNote);
   }
+
+  // Navigate the already-open window to the resolved URL
+  checkoutWin.location.href = shopifyUrl;
+  showPostPurchase();
 }
 
 function showPostPurchase() {
