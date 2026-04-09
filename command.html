@@ -179,6 +179,8 @@
     .ckc-price-tax-note { font-size: 0.78rem; color: #555; text-align: right; margin-bottom: 16px; }
     .ckc-buy-now-btn { display: block; width: 100%; padding: 18px 24px; background: var(--ckc-success); color: #111; border: none; border-radius: 12px; font-family: 'DM Sans', sans-serif; font-size: 1.15rem; font-weight: 700; cursor: pointer; text-align: center; -webkit-tap-highlight-color: transparent; }
     .ckc-buy-now-btn:active { transform: scale(0.98); }
+    .ckc-send-customer-btn { display: block; width: 100%; padding: 16px 24px; background: #1a1a1a; color: var(--ckc-gold); border: 2px solid var(--ckc-gold); border-radius: 12px; font-family: 'DM Sans', sans-serif; font-size: 1.05rem; font-weight: 700; cursor: pointer; text-align: center; margin-top: 12px; -webkit-tap-highlight-color: transparent; }
+    .ckc-send-customer-btn:active { background: rgba(201,162,39,0.1); transform: scale(0.98); }
     .ckc-call-to-order-btn { display: block; width: 100%; padding: 18px 24px; background: var(--ckc-gold); color: #111; border: none; border-radius: 12px; font-family: 'DM Sans', sans-serif; font-size: 1.15rem; font-weight: 700; cursor: pointer; text-align: center; text-decoration: none; -webkit-tap-highlight-color: transparent; }
     .ckc-call-to-order-btn:active { background: var(--ckc-primary-light); transform: scale(0.98); }
     .ckc-cfq-notice { padding: 12px 14px; background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.2); border-radius: 8px; font-size: 0.85rem; color: #f59e0b; line-height: 1.5; margin-bottom: 12px; }
@@ -404,7 +406,7 @@ const SHOPIFY_DOMAIN       = 'carolina-key-cutters.myshopify.com';
 const BOOKING_URL          = 'https://calendar.app.google/xqirB3Dpfmub5rAb6';
 const PROGRAMMING_VARIANT  = '45908511228101';
 const INTERNAL_TOOL_URL    = 'https://carolinakeycutters.com/tools';
-const CKC_VERSION          = 'v8.91-command';
+const CKC_VERSION          = 'v8.92-command';
 
 var liveCatalog      = [];
 var isLive           = false;
@@ -1205,12 +1207,14 @@ function renderScreen5() {
       html += (key.inStock
         ? '<div style="padding:12px;background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.2);border-radius:10px;font-size:0.85rem;color:var(--ckc-text-muted);margin-bottom:14px;text-align:center;">🟢 In stock and ready to order.</div>'
         : '<div style="padding:12px;background:rgba(201,162,39,0.07);border:1px solid rgba(201,162,39,0.2);border-radius:10px;font-size:0.85rem;color:var(--ckc-text-muted);margin-bottom:14px;text-align:center;">📦 We\'ll source this key — programming after it arrives.</div>') +
-        '<button class="ckc-buy-now-btn" onclick="openCheckoutFromS5()">Buy Now →</button>';
+        '<button class="ckc-buy-now-btn" onclick="openCheckoutFromS5()">Buy Now →</button>' +
+        '<button class="ckc-send-customer-btn" onclick="sendToCustomer()">📲 Send to Customer</button>';
     } else {
       html += (key.inStock
         ? '<div style="padding:12px;background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.2);border-radius:10px;font-size:0.85rem;color:var(--ckc-text-muted);margin-bottom:14px;text-align:center;">🟢 In stock. Call to place your order.</div>'
         : '<div style="padding:12px;background:rgba(201,162,39,0.07);border:1px solid rgba(201,162,39,0.2);border-radius:10px;font-size:0.85rem;color:var(--ckc-text-muted);margin-bottom:14px;text-align:center;">📋 Call with your VIN and we\'ll get everything set up.</div>') +
-        '<a href="tel:+13365109816" class="ckc-call-to-order-btn">📞 Call to Order · (336) 510-9816</a>';
+        '<a href="tel:+13365109816" class="ckc-call-to-order-btn">📞 Call to Order · (336) 510-9816</a>' +
+        '<button class="ckc-send-customer-btn" onclick="sendToCustomer()">📲 Send to Customer</button>';
     }
   }
 
@@ -1224,6 +1228,15 @@ function renderScreen5() {
       if (el2 && url) el2.outerHTML = '<img src="' + url + '" alt="Key" class="ckc-buynow-img">';
     });
   }
+}
+
+function sendToCustomer() {
+  var key = _wiz.finalKey;
+  if (!key) return;
+  var ymm = lastSearchParams.year + ' ' + lastSearchParams.make + ' ' + lastSearchParams.model;
+  var shopifyURL = 'https://' + SHOPIFY_DOMAIN + '/search?q=' + encodeURIComponent(key.sku);
+  var msg = 'SAVE THIS TEXT!\n\nHere\'s the key I found for your ' + ymm + ':\n\n' + key.title + '\n\n' + shopifyURL + '\n\nTap the link to order. After checkout your confirmation will include a link to schedule your programming & cutting appointment.\n\n— Carolina Key Cutters';
+  window.location.href = 'sms:&body=' + encodeURIComponent(msg);
 }
 
 function openCheckoutFromS5() {
