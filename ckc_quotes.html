@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CKC Pricing Lookup — James</title>
+<title>CKC Quotes — James</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -19,56 +19,46 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--dark); color: var(--text); font-family: 'Barlow', sans-serif; font-size: 15px; line-height: 1.5; min-height: 100vh; }
 
-  /* ── HEADER ── */
   .header { background: #0f0f0f; border-bottom: 2px solid var(--gold); padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
   .header-logo { font-family: 'Barlow Condensed', sans-serif; font-size: 1.4rem; font-weight: 900; color: var(--gold); letter-spacing: 1px; }
   .header-sub { font-family: 'Barlow Condensed', sans-serif; font-size: 0.68rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); margin-top: 1px; }
   .header-phone { font-family: 'Barlow Condensed', sans-serif; font-size: 1.15rem; font-weight: 700; color: var(--gold-light); }
 
-  /* ── LAYOUT ── */
   .body { max-width: 740px; margin: 0 auto; padding: 28px 20px 80px; }
 
-  /* ── TABS ── */
   .tabs { display: flex; gap: 4px; background: #111; border: 1px solid var(--border); border-radius: 10px; padding: 4px; margin-bottom: 20px; }
   .tab { flex: 1; padding: 10px 16px; border: none; background: transparent; color: var(--muted2); font-family: 'Barlow Condensed', sans-serif; font-size: 0.9rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; border-radius: 7px; transition: all 0.18s; }
   .tab.active { background: var(--gold); color: #111; }
   .tab:not(.active):hover { color: var(--text); background: rgba(255,255,255,0.05); }
 
-  /* ── SEARCH PANELS ── */
   .panel { display: none; }
   .panel.active { display: block; }
   .search-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 24px 24px 20px; margin-bottom: 16px; }
   .field-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.68rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; display: block; }
 
-  /* VIN input */
   .vin-row { display: flex; gap: 10px; margin-bottom: 14px; }
   .vin-input { flex: 1; background: #1e1e1e; border: 2px solid var(--border); border-radius: 10px; padding: 13px 18px; font-family: 'Barlow Semi Condensed', monospace; font-size: 1.25rem; font-weight: 600; color: var(--text); letter-spacing: 3px; text-transform: uppercase; outline: none; transition: border-color 0.2s; }
   .vin-input:focus { border-color: var(--gold); }
   .vin-input::placeholder { color: #3a3a3a; letter-spacing: 1px; font-size: 0.95rem; font-weight: 400; }
 
-  /* YMM selects */
   .ymm-row { display: grid; grid-template-columns: 120px 1fr 1fr; gap: 10px; margin-bottom: 14px; }
   .ymm-select { background: #1e1e1e; border: 2px solid var(--border); border-radius: 10px; padding: 13px 16px; font-family: 'Barlow', sans-serif; font-size: 0.95rem; color: var(--text); outline: none; transition: border-color 0.2s; appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' fill='none' stroke='%23666' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
   .ymm-select:focus { border-color: var(--gold); }
   .ymm-select:disabled { color: #3a3a3a; cursor: not-allowed; }
 
-  /* Search button */
   .search-btn { padding: 13px 28px; background: var(--gold); color: #111; border: none; border-radius: 10px; font-family: 'Barlow', sans-serif; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
   .search-btn:hover { background: var(--gold-light); transform: translateY(-1px); }
   .search-btn:disabled { background: #333; color: #555; cursor: not-allowed; transform: none; }
 
-  /* Examples */
   .examples-row { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
   .ex-label { font-size: 0.78rem; color: var(--muted); margin-right: 2px; }
   .ex-btn { background: #1a1a1a; border: 1px solid var(--border); color: var(--muted2); padding: 4px 11px; border-radius: 6px; font-size: 0.78rem; font-family: 'Barlow', sans-serif; cursor: pointer; transition: all 0.15s; }
   .ex-btn:hover { border-color: var(--gold); color: var(--gold-light); background: #1a1a1a; }
 
-  /* ── FEEDBACK BARS ── */
   .error-bar { background: var(--red-bg); border: 1px solid rgba(248,113,113,0.25); border-radius: 8px; padding: 10px 16px; font-size: 0.88rem; color: var(--red); margin-bottom: 14px; display: none; }
   .decoded-pill { background: rgba(201,162,39,0.07); border: 1px solid rgba(201,162,39,0.2); border-radius: 8px; padding: 10px 16px; font-size: 0.88rem; color: #b8a060; margin-bottom: 18px; display: none; }
   .decoded-pill strong { color: var(--gold-light); font-size: 1rem; }
 
-  /* ── RESULT CARD ── */
   .result-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; display: none; }
 
   .tier-bar { padding: 18px 22px 14px; border-bottom: 1px solid var(--border); }
@@ -107,7 +97,6 @@
   .script-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.68rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
   .script-text { font-size: 0.93rem; color: #c8b87a; font-style: italic; line-height: 1.7; padding: 13px 16px; background: rgba(201,162,39,0.05); border-left: 3px solid var(--gold); border-radius: 0 8px 8px 0; }
 
-  /* ── RESPONSIVE ── */
   @media (max-width: 520px) {
     .price-grid, .info-grid { grid-template-columns: 1fr; }
     .info-cell { border-right: none; border-bottom: 1px solid var(--border); }
@@ -121,20 +110,18 @@
 <div class="header">
   <div>
     <div class="header-logo">Carolina Key Cutters</div>
-    <div class="header-sub">Pricing Lookup — James</div>
+    <div class="header-sub">CKC Quotes — James</div>
   </div>
   <div class="header-phone">(336) 510-9816</div>
 </div>
 
 <div class="body">
 
-  <!-- TABS -->
   <div class="tabs">
     <button class="tab active" id="tab-vin" onclick="switchTab('vin')">🔢 VIN Lookup</button>
     <button class="tab" id="tab-ymm" onclick="switchTab('ymm')">🚗 Year / Make / Model</button>
   </div>
 
-  <!-- VIN PANEL -->
   <div class="panel active" id="panel-vin">
     <div class="search-card">
       <label class="field-label">VIN Number</label>
@@ -159,7 +146,6 @@
     </div>
   </div>
 
-  <!-- YMM PANEL -->
   <div class="panel" id="panel-ymm">
     <div class="search-card">
       <label class="field-label">Year / Make / Model</label>
@@ -178,7 +164,6 @@
     </div>
   </div>
 
-  <!-- SHARED OUTPUT -->
   <div class="error-bar" id="error-bar"></div>
   <div class="decoded-pill" id="decoded-pill"></div>
   <div class="result-card" id="result-card"></div>
@@ -186,10 +171,6 @@
 </div>
 
 <script>
-// ══════════════════════════════════════════
-// DATA
-// ══════════════════════════════════════════
-
 const WMI_MAP = {
   '1FA':'FORD','1FB':'FORD','1FC':'FORD','1FD':'FORD','1FE':'FORD','1FF':'FORD',
   '1FM':'FORD','1FP':'FORD','1FT':'FORD','2FA':'FORD','2FB':'FORD','2FC':'FORD',
@@ -242,43 +223,41 @@ const YEAR_MAP2 = {
   'J':2018,'K':2019,'L':2020,'M':2021,'N':2022,'P':2023,'R':2024,'S':2025,'T':2026
 };
 
-// YMM data: make → models (for dropdowns)
 const YMM_DATA = {
-  'Ford':        ['Bronco','Edge','Escape','Expedition','Explorer','F-150','F-250','F-350','Focus','Fusion','Maverick','Mustang','Ranger','Transit'],
-  'Lincoln':     ['Aviator','Corsair','MKZ','Nautilus','Navigator'],
-  'Chevrolet':   ['Blazer','Colorado','Corvette','Equinox','Express','Impala','Malibu','Silverado 1500','Silverado 2500HD','Suburban','Tahoe','Trailblazer','Traverse'],
-  'GMC':         ['Acadia','Canyon','Envoy','Sierra 1500','Sierra 2500HD','Terrain','Yukon','Yukon XL'],
-  'Buick':       ['Enclave','Encore','Envision','LaCrosse','Regal'],
-  'Cadillac':    ['CT4','CT5','Escalade','XT4','XT5','XT6'],
-  'Pontiac':     ['G6','Grand Prix','Solstice','Vibe'],
-  'Saturn':      ['Aura','Outlook','Vue'],
-  'Oldsmobile':  ['Alero','Aurora','Bravada','Silhouette'],
-  'Dodge':       ['Challenger','Charger','Dart','Durango','Grand Caravan','Journey','Ram 1500','Ram 2500','Viper'],
-  'RAM':         ['1500','2500','3500','ProMaster'],
-  'Chrysler':    ['200','300','Pacifica','Town & Country','Voyager'],
-  'Jeep':        ['Cherokee','Compass','Gladiator','Grand Cherokee','Renegade','Wrangler'],
-  'Toyota':      ['4Runner','Avalon','Camry','Corolla','FJ Cruiser','Highlander','Land Cruiser','Prius','RAV4','Sequoia','Sienna','Tacoma','Tundra','Venza'],
-  'Lexus':       ['ES 300h','ES 350','GS 350','GX 460','IS 300','IS 350','LX 570','NX 200t','NX 300','RX 350','RX 450h','UX 200'],
-  'Scion':       ['FR-S','iA','iM','tC','xA','xB','xD'],
-  'Honda':       ['Accord','Civic','CR-V','HR-V','Insight','Odyssey','Passport','Pilot','Ridgeline'],
-  'Acura':       ['ILX','MDX','RDX','RLX','TLX'],
-  'Nissan':      ['Altima','Armada','Frontier','GT-R','Maxima','Murano','Pathfinder','Quest','Rogue','Rogue Sport','Sentra','Titan','Versa','370Z'],
-  'Infiniti':    ['G37','Q50','Q60','Q70','QX50','QX60','QX80'],
-  'Hyundai':     ['Accent','Elantra','IONIQ 5','IONIQ 6','Kona','Palisade','Santa Cruz','Santa Fe','Sonata','Tucson','Veloster'],
-  'Kia':         ['Carnival','EV6','Forte','K5','Niro','Seltos','Sorento','Soul','Sportage','Stinger','Telluride'],
-  'Genesis':     ['G70','G80','G90','GV70','GV80'],
-  'Subaru':      ['Ascent','BRZ','Crosstrek','Forester','Impreza','Legacy','Outback','WRX'],
-  'Mazda':       ['CX-30','CX-5','CX-50','CX-9','Mazda3','Mazda6','MX-5 Miata'],
-  'Mitsubishi':  ['Eclipse Cross','Galant','Outlander','Outlander Sport'],
-  'BMW':         ['1 Series','2 Series','3 Series','4 Series','5 Series','7 Series','M3','M5','X1','X3','X5','X7','Z4'],
-  'MINI':        ['Clubman','Convertible','Cooper','Cooper S','Countryman','Paceman'],
+  'Ford':['Bronco','Edge','Escape','Expedition','Explorer','F-150','F-250','F-350','Focus','Fusion','Maverick','Mustang','Ranger','Transit'],
+  'Lincoln':['Aviator','Corsair','MKZ','Nautilus','Navigator'],
+  'Chevrolet':['Blazer','Colorado','Corvette','Equinox','Express','Impala','Malibu','Silverado 1500','Silverado 2500HD','Suburban','Tahoe','Trailblazer','Traverse'],
+  'GMC':['Acadia','Canyon','Envoy','Sierra 1500','Sierra 2500HD','Terrain','Yukon','Yukon XL'],
+  'Buick':['Enclave','Encore','Envision','LaCrosse','Regal'],
+  'Cadillac':['CT4','CT5','Escalade','XT4','XT5','XT6'],
+  'Pontiac':['G6','Grand Prix','Solstice','Vibe'],
+  'Saturn':['Aura','Outlook','Vue'],
+  'Oldsmobile':['Alero','Aurora','Bravada','Silhouette'],
+  'Dodge':['Challenger','Charger','Dart','Durango','Grand Caravan','Journey','Ram 1500','Ram 2500','Viper'],
+  'RAM':['1500','2500','3500','ProMaster'],
+  'Chrysler':['200','300','Pacifica','Town & Country','Voyager'],
+  'Jeep':['Cherokee','Compass','Gladiator','Grand Cherokee','Renegade','Wrangler'],
+  'Toyota':['4Runner','Avalon','Camry','Corolla','FJ Cruiser','Highlander','Land Cruiser','Prius','RAV4','Sequoia','Sienna','Tacoma','Tundra','Venza'],
+  'Lexus':['ES 300h','ES 350','GS 350','GX 460','IS 300','IS 350','LX 570','NX 200t','NX 300','RX 350','RX 450h','UX 200'],
+  'Scion':['FR-S','iA','iM','tC','xA','xB','xD'],
+  'Honda':['Accord','Civic','CR-V','HR-V','Insight','Odyssey','Passport','Pilot','Ridgeline'],
+  'Acura':['ILX','MDX','RDX','RLX','TLX'],
+  'Nissan':['Altima','Armada','Frontier','GT-R','Maxima','Murano','Pathfinder','Quest','Rogue','Rogue Sport','Sentra','Titan','Versa','370Z'],
+  'Infiniti':['G37','Q50','Q60','Q70','QX50','QX60','QX80'],
+  'Hyundai':['Accent','Elantra','IONIQ 5','IONIQ 6','Kona','Palisade','Santa Cruz','Santa Fe','Sonata','Tucson','Veloster'],
+  'Kia':['Carnival','EV6','Forte','K5','Niro','Seltos','Sorento','Soul','Sportage','Stinger','Telluride'],
+  'Genesis':['G70','G80','G90','GV70','GV80'],
+  'Subaru':['Ascent','BRZ','Crosstrek','Forester','Impreza','Legacy','Outback','WRX'],
+  'Mazda':['CX-30','CX-5','CX-50','CX-9','Mazda3','Mazda6','MX-5 Miata'],
+  'Mitsubishi':['Eclipse Cross','Galant','Outlander','Outlander Sport'],
+  'BMW':['1 Series','2 Series','3 Series','4 Series','5 Series','7 Series','M3','M5','X1','X3','X5','X7','Z4'],
+  'MINI':['Clubman','Convertible','Cooper','Cooper S','Countryman','Paceman'],
   'Mercedes-Benz':['A-Class','C-Class','E-Class','GLC','GLE','GLS','S-Class','SL'],
-  'Audi':        ['A3','A4','A5','A6','A7','A8','Q3','Q5','Q7','Q8','TT'],
-  'Volkswagen':  ['Atlas','Golf','Jetta','Passat','Taos','Tiguan'],
-  'Volvo':       ['S60','S90','V60','V90','XC40','XC60','XC90']
+  'Audi':['A3','A4','A5','A6','A7','A8','Q3','Q5','Q7','Q8','TT'],
+  'Volkswagen':['Atlas','Golf','Jetta','Passat','Taos','Tiguan'],
+  'Volvo':['S60','S90','V60','V90','XC40','XC60','XC90']
 };
 
-// Matrix: pricing & info by make group + year rule
 const MATRIX = [
   { group:'Ford / Lincoln', makes:['FORD','LINCOLN'], rules:[
     { test:v=>v.year>=2018, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'Autel IM508',
@@ -382,7 +361,6 @@ const MATRIX = [
   ]}
 ];
 
-// Make → internal matrix make name
 const MAKE_NORMALIZE = {
   'Ford':'FORD','Lincoln':'LINCOLN','Chevrolet':'CHEVROLET','GMC':'GMC','Buick':'BUICK',
   'Cadillac':'CADILLAC','Pontiac':'PONTIAC','Saturn':'SATURN','Oldsmobile':'OLDSMOBILE',
@@ -398,13 +376,9 @@ const MAKE_NORMALIZE = {
 const TIER_LABELS = ['','Tier 1 — Standard OBD','Tier 2 — Advanced / BCM','Tier 3 — EEPROM / Module','Tier 4 — Quote by VIN'];
 const TIER_CLASS  = ['','t1','t2','t3','t4'];
 
-// ══════════════════════════════════════════
-// VIN DECODE
-// ══════════════════════════════════════════
 function decodeYear(vin) {
   const c = vin[9];
-  const yr1 = YEAR_MAP[c];
-  const yr2 = YEAR_MAP2[c];
+  const yr1 = YEAR_MAP[c]; const yr2 = YEAR_MAP2[c];
   if (!yr1 && !yr2) return null;
   if (yr1 && !yr2) return yr1;
   if (!yr1 && yr2) return yr2;
@@ -418,10 +392,6 @@ function decodeVin(vin) {
   if (!make || !year) return null;
   return { make, year, wmi, yearChar: vin[9] };
 }
-
-// ══════════════════════════════════════════
-// MATRIX LOOKUP
-// ══════════════════════════════════════════
 function findInMatrix(make, year) {
   for (const g of MATRIX) {
     if (g.makes.includes(make)) {
@@ -437,34 +407,20 @@ function findInMatrix(make, year) {
     script:'I need to look up your exact vehicle in my system before I can give you a price — can you confirm the full VIN so I can verify coverage?'
   }};
 }
-
-// ══════════════════════════════════════════
-// RENDER RESULT
-// ══════════════════════════════════════════
 function flagClass(t) { return {warn:'flag-warn',info:'flag-info',danger:'flag-danger',success:'flag-success'}[t]||'flag-info'; }
 
 function renderResult(make, year, label, sourceNote) {
   const err = document.getElementById('error-bar');
   const pill = document.getElementById('decoded-pill');
   const card = document.getElementById('result-card');
-
-  err.style.display = 'none';
-  pill.style.display = 'none';
-  card.style.display = 'none';
-
+  err.style.display = 'none'; pill.style.display = 'none'; card.style.display = 'none';
   const matched = findInMatrix(make, year);
   const r = matched.rule;
-
-  // Pill
-  pill.innerHTML = sourceNote;
-  pill.style.display = 'block';
-
-  // Flags
+  pill.innerHTML = sourceNote; pill.style.display = 'block';
   const flagsHTML = r.flags.map(f => {
     const i = f.indexOf(':'); const type = f.slice(0,i); const text = f.slice(i+1);
     return '<div class="flag-item ' + flagClass(type) + '"><div class="flag-dot"></div><span>' + text + '</span></div>';
   }).join('');
-
   card.innerHTML =
     '<div class="tier-bar">' +
       '<span class="tier-badge ' + TIER_CLASS[r.tier] + '">' + TIER_LABELS[r.tier] + '</span>' +
@@ -481,57 +437,33 @@ function renderResult(make, year, label, sourceNote) {
     '</div>' +
     (flagsHTML ? '<div class="flags-section">' + flagsHTML + '</div>' : '') +
     '<div class="script-section"><div class="script-label">Suggested phone line</div><div class="script-text">"' + r.script + '"</div></div>';
-
   card.style.display = 'block';
   card.scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
-// ══════════════════════════════════════════
-// LOOKUP HANDLERS
-// ══════════════════════════════════════════
 function runLookup(mode) {
   const err = document.getElementById('error-bar');
   err.style.display = 'none';
   document.getElementById('decoded-pill').style.display = 'none';
   document.getElementById('result-card').style.display = 'none';
-
   if (mode === 'vin') {
     const raw = document.getElementById('vin-input').value.trim().toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g,'');
-    if (raw.length !== 17) {
-      err.textContent = 'VIN must be exactly 17 characters. Check the number and try again.';
-      err.style.display = 'block'; return;
-    }
+    if (raw.length !== 17) { err.textContent = 'VIN must be exactly 17 characters.'; err.style.display = 'block'; return; }
     const v = decodeVin(raw);
-    if (!v) {
-      err.textContent = 'Could not identify make or year from that VIN. The WMI code (' + raw.slice(0,3) + ') is not in the current database. You can verify at vpic.nhtsa.dot.gov.';
-      err.style.display = 'block'; return;
-    }
-    const sourceNote = 'Decoded: <strong>' + v.year + ' ' + v.make + '</strong> &nbsp;&middot;&nbsp; WMI: ' + v.wmi + ' &nbsp;&middot;&nbsp; Year code: ' + v.yearChar;
-    renderResult(v.make, v.year, v.year + ' ' + v.make, sourceNote);
-
+    if (!v) { err.textContent = 'Could not identify make or year from that VIN. WMI: ' + raw.slice(0,3) + ' — verify at vpic.nhtsa.dot.gov.'; err.style.display = 'block'; return; }
+    renderResult(v.make, v.year, v.year + ' ' + v.make, 'Decoded: <strong>' + v.year + ' ' + v.make + '</strong> &nbsp;&middot;&nbsp; WMI: ' + v.wmi + ' &nbsp;&middot;&nbsp; Year code: ' + v.yearChar);
   } else {
     const yearVal = parseInt(document.getElementById('ymm-year').value);
     const makeVal = document.getElementById('ymm-make').value;
     const modelVal = document.getElementById('ymm-model').value;
-    if (!yearVal || !makeVal || !modelVal) {
-      err.textContent = 'Please select a year, make, and model.';
-      err.style.display = 'block'; return;
-    }
+    if (!yearVal || !makeVal || !modelVal) { err.textContent = 'Please select a year, make, and model.'; err.style.display = 'block'; return; }
     const internalMake = MAKE_NORMALIZE[makeVal] || makeVal.toUpperCase();
-    const sourceNote = 'Looking up: <strong>' + yearVal + ' ' + makeVal + ' ' + modelVal + '</strong> &nbsp;&middot;&nbsp; Year/Make/Model search';
-    renderResult(internalMake, yearVal, yearVal + ' ' + makeVal + ' ' + modelVal, sourceNote);
+    renderResult(internalMake, yearVal, yearVal + ' ' + makeVal + ' ' + modelVal, 'Looking up: <strong>' + yearVal + ' ' + makeVal + ' ' + modelVal + '</strong>');
   }
 }
 
-function setVin(v) {
-  switchTab('vin');
-  document.getElementById('vin-input').value = v;
-  runLookup('vin');
-}
+function setVin(v) { switchTab('vin'); document.getElementById('vin-input').value = v; runLookup('vin'); }
 
-// ══════════════════════════════════════════
-// TAB SWITCHING
-// ══════════════════════════════════════════
 function switchTab(tab) {
   document.getElementById('tab-vin').classList.toggle('active', tab === 'vin');
   document.getElementById('tab-ymm').classList.toggle('active', tab === 'ymm');
@@ -542,61 +474,83 @@ function switchTab(tab) {
   document.getElementById('result-card').style.display = 'none';
 }
 
-// ══════════════════════════════════════════
-// YMM DROPDOWNS
-// ══════════════════════════════════════════
 function initYearDropdown() {
   const sel = document.getElementById('ymm-year');
-  for (let y = 2026; y >= 1998; y--) {
-    const o = document.createElement('option');
-    o.value = y; o.textContent = y; sel.appendChild(o);
-  }
+  for (let y = 2026; y >= 1998; y--) { const o = document.createElement('option'); o.value = y; o.textContent = y; sel.appendChild(o); }
 }
-
 function onYearChange() {
   const makeEl = document.getElementById('ymm-make');
   const modelEl = document.getElementById('ymm-model');
   makeEl.innerHTML = '<option value="">Make</option>';
   modelEl.innerHTML = '<option value="">Model</option>';
-  makeEl.disabled = false;
-  modelEl.disabled = true;
+  makeEl.disabled = false; modelEl.disabled = true;
   document.getElementById('ymm-btn').disabled = true;
-
-  // Populate all makes
-  Object.keys(YMM_DATA).sort().forEach(make => {
-    const o = document.createElement('option');
-    o.value = make; o.textContent = make; makeEl.appendChild(o);
-  });
+  Object.keys(YMM_DATA).sort().forEach(make => { const o = document.createElement('option'); o.value = make; o.textContent = make; makeEl.appendChild(o); });
 }
-
 function onMakeChange() {
   const makeVal = document.getElementById('ymm-make').value;
   const modelEl = document.getElementById('ymm-model');
   modelEl.innerHTML = '<option value="">Model</option>';
   document.getElementById('ymm-btn').disabled = true;
-
   if (!makeVal) { modelEl.disabled = true; return; }
   modelEl.disabled = false;
-  const models = YMM_DATA[makeVal] || [];
-  models.sort().forEach(m => {
-    const o = document.createElement('option');
-    o.value = m; o.textContent = m; modelEl.appendChild(o);
-  });
-  modelEl.addEventListener('change', checkYMMReady, { once: false });
+  (YMM_DATA[makeVal] || []).sort().forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = m; modelEl.appendChild(o); });
 }
-
 function checkYMMReady() {
   const y = document.getElementById('ymm-year').value;
   const mk = document.getElementById('ymm-make').value;
   const mo = document.getElementById('ymm-model').value;
   document.getElementById('ymm-btn').disabled = !(y && mk && mo);
 }
-
 document.getElementById('ymm-model').addEventListener('change', checkYMMReady);
 document.getElementById('ymm-year').addEventListener('change', checkYMMReady);
 document.getElementById('ymm-make').addEventListener('change', checkYMMReady);
-
 initYearDropdown();
+
+// ═══ AUTO-POPULATE FROM URL PARAMS ═══
+(function autoPopulate() {
+  var params = new URLSearchParams(window.location.search);
+  var year  = params.get('year');
+  var make  = params.get('make');
+  var model = params.get('model');
+  if (!year && !make) return;
+
+  if (year && make) {
+    // Switch to YMM tab
+    switchTab('ymm');
+
+    // Set year
+    var yearSel = document.getElementById('ymm-year');
+    yearSel.value = year;
+    onYearChange();
+
+    // Set make after a tick (onYearChange populates makes)
+    setTimeout(function() {
+      var makeSel = document.getElementById('ymm-make');
+      makeSel.value = make;
+      onMakeChange();
+
+      // Set model and run lookup after another tick
+      setTimeout(function() {
+        if (model) {
+          var modelSel = document.getElementById('ymm-model');
+          // Find closest match
+          var opts = Array.from(modelSel.options);
+          var match = opts.find(function(o) { return o.value.toLowerCase() === model.toLowerCase(); });
+          if (match) modelSel.value = match.value;
+        }
+        checkYMMReady();
+        // Auto-run if all three set
+        var y = document.getElementById('ymm-year').value;
+        var mk = document.getElementById('ymm-make').value;
+        var mo = document.getElementById('ymm-model').value;
+        if (y && mk && mo) runLookup('ymm');
+        else if (y && mk) runLookup('ymm');
+      }, 50);
+    }, 50);
+  }
+})();
+
 </script>
 </body>
 </html>
