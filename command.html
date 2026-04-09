@@ -243,6 +243,32 @@
     .ckc-disclaimer { background: var(--ckc-card); border-radius: var(--ckc-radius); border: 1px solid var(--ckc-border); padding: 20px 16px; margin-top: 24px; font-size: 0.88rem; color: var(--ckc-text-muted); line-height: 1.6; }
     .ckc-disclaimer strong { color: var(--ckc-text); }
 
+
+    /* ═══ NO RESULTS WITH RKS + CALC ═══ */
+    .ckc-no-results { background: var(--ckc-card); border-radius: var(--ckc-radius); border: 1px solid var(--ckc-border); overflow: hidden; }
+    .ckc-no-results-header { padding: 28px 20px 20px; text-align: center; border-bottom: 1px solid var(--ckc-border); }
+    .ckc-no-results-header h3 { font-family: 'Outfit', sans-serif; font-size: 1.35rem; font-weight: 700; margin-bottom: 8px; }
+    .ckc-no-results-header p { color: var(--ckc-text-muted); font-size: 0.95rem; line-height: 1.6; }
+    .ckc-rks-section { padding: 20px; border-bottom: 1px solid var(--ckc-border); }
+    .ckc-rks-section-label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--ckc-text-muted); margin-bottom: 12px; }
+    .ckc-rks-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 16px; background: #1f1f1f; border: 2px solid #3a3a3a; border-radius: 10px; color: var(--ckc-text); font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 600; cursor: pointer; text-decoration: none; -webkit-tap-highlight-color: transparent; }
+    .ckc-rks-btn:active { border-color: var(--ckc-gold); background: rgba(201,162,39,0.08); transform: scale(0.98); }
+    .ckc-rks-logo { font-size: 1.1rem; font-weight: 800; color: var(--ckc-gold); }
+    .ckc-calc-section { padding: 20px; border-bottom: 1px solid var(--ckc-border); }
+    .ckc-calc-label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--ckc-text-muted); margin-bottom: 12px; }
+    .ckc-calc-input-row { display: flex; gap: 10px; align-items: stretch; margin-bottom: 12px; }
+    .ckc-calc-input-wrap { position: relative; flex: 1; }
+    .ckc-calc-prefix { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 1.1rem; font-weight: 700; color: var(--ckc-text-muted); pointer-events: none; }
+    .ckc-calc-input { width: 100%; padding: 16px 16px 16px 32px; background: #222; border: 2px solid var(--ckc-border); border-radius: 10px; color: var(--ckc-text); font-family: 'DM Sans', sans-serif; font-size: 1.2rem; font-weight: 600; }
+    .ckc-calc-input:focus { outline: none; border-color: var(--ckc-gold); }
+    .ckc-calc-input::placeholder { color: #444; }
+    .ckc-calc-result { background: linear-gradient(135deg, #1a1505, #1c1c08); border: 2px solid var(--ckc-gold); border-radius: 12px; padding: 16px 18px; display: none; }
+    .ckc-calc-result.visible { display: block; animation: ckc-fadeUp 0.2s ease; }
+    .ckc-calc-result-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; font-size: 0.88rem; color: var(--ckc-text-muted); }
+    .ckc-calc-result-row.total { border-top: 1px solid rgba(201,162,39,0.2); margin-top: 8px; padding-top: 12px; }
+    .ckc-calc-result-price { font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 800; color: var(--ckc-gold); }
+    .ckc-calc-clear-btn { padding: 16px 14px; background: #222; border: 2px solid var(--ckc-border); border-radius: 10px; color: var(--ckc-text-muted); font-size: 1rem; cursor: pointer; flex-shrink: 0; }
+    .ckc-calc-clear-btn:active { border-color: #f87171; color: #f87171; }
     /* ═══ SPINNER ═══ */
     .ckc-spinner { width: 14px; height: 14px; border: 2px solid rgba(201,162,39,0.25); border-top-color: var(--ckc-gold); border-radius: 50%; animation: ckc-spin 0.8s linear infinite; flex-shrink: 0; }
     @keyframes ckc-spin { to { transform: rotate(360deg); } }
@@ -256,21 +282,21 @@
 
     /* ═══ PRICE A KEY CALCULATOR ═══ */
     .ckc-pak-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: flex-end; justify-content: center; z-index: 9999; }
-    .ckc-pak-sheet { background: #1a1a1a; border-top: 3px solid var(--ckc-gold); border-radius: 20px 20px 0 0; padding: 28px 20px 40px; width: 100%; box-shadow: 0 -8px 40px rgba(0,0,0,0.6); }
-    .ckc-pak-handle { width: 40px; height: 4px; background: #444; border-radius: 2px; margin: 0 auto 20px; }
-    .ckc-pak-title { font-family: 'Outfit', sans-serif; font-size: 1.2rem; font-weight: 700; color: var(--ckc-gold); margin-bottom: 6px; }
-    .ckc-pak-sub { font-size: 0.82rem; color: var(--ckc-text-muted); margin-bottom: 20px; line-height: 1.5; }
-    .ckc-pak-label { font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ckc-text-muted); margin-bottom: 8px; display: block; }
-    .ckc-pak-input { width: 100%; padding: 16px 20px; border: 2px solid #2d2d2d; border-radius: 10px; background: #222; color: var(--ckc-text); font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 700; text-align: center; margin-bottom: 20px; }
+    .ckc-pak-sheet { background: #1f1f1f; border-top: 3px solid var(--ckc-gold); border-radius: 20px 20px 0 0; padding: 28px 20px 40px; width: 100%; box-shadow: 0 -8px 40px rgba(0,0,0,0.6); }
+    .ckc-pak-handle { width: 40px; height: 4px; background: #555; border-radius: 2px; margin: 0 auto 20px; }
+    .ckc-pak-title { font-family: 'Outfit', sans-serif; font-size: 1.3rem; font-weight: 800; color: #ffffff; margin-bottom: 6px; }
+    .ckc-pak-sub { font-size: 0.85rem; color: #aaa; margin-bottom: 20px; line-height: 1.5; }
+    .ckc-pak-label { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #bbb; margin-bottom: 8px; display: block; }
+    .ckc-pak-input { width: 100%; padding: 16px 20px; border: 2px solid #444; border-radius: 10px; background: #2a2a2a; color: #ffffff; font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 700; text-align: center; margin-bottom: 20px; }
     .ckc-pak-input:focus { outline: none; border-color: var(--ckc-gold); }
-    .ckc-pak-result { background: #111; border-radius: 12px; padding: 20px; margin-bottom: 20px; display: none; }
+    .ckc-pak-result { background: #222; border: 1px solid #333; border-radius: 12px; padding: 20px; margin-bottom: 20px; display: none; }
     .ckc-pak-result.show { display: block; }
-    .ckc-pak-result-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #2d2d2d; font-size: 0.9rem; color: var(--ckc-text-muted); }
-    .ckc-pak-result-row:last-child { border-bottom: none; padding-top: 14px; }
-    .ckc-pak-result-row:last-child .ckc-pak-result-val { font-family: 'Outfit', sans-serif; font-size: 1.8rem; font-weight: 800; color: var(--ckc-gold); }
-    .ckc-pak-result-val { font-weight: 700; color: var(--ckc-text); }
-    .ckc-pak-bracket { display: inline-block; font-size: 0.72rem; padding: 2px 8px; background: rgba(201,162,39,0.12); border-radius: 100px; color: var(--ckc-gold); font-weight: 700; margin-left: 6px; }
-    .ckc-pak-close { display: block; width: 100%; padding: 14px; background: none; border: 1px solid #2d2d2d; border-radius: 10px; color: var(--ckc-text-muted); font-family: 'DM Sans', sans-serif; font-size: 0.95rem; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .ckc-pak-result-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #333; font-size: 0.95rem; color: #d4d4d4; }
+    .ckc-pak-result-row:last-child { border-bottom: none; padding-top: 16px; }
+    .ckc-pak-result-row:last-child .ckc-pak-result-val { font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 800; color: var(--ckc-gold); }
+    .ckc-pak-result-val { font-weight: 700; color: #ffffff; font-size: 1rem; }
+    .ckc-pak-bracket { display: inline-block; font-size: 0.78rem; padding: 3px 10px; background: rgba(201,162,39,0.2); border-radius: 100px; color: var(--ckc-gold); font-weight: 700; margin-left: 6px; border: 1px solid rgba(201,162,39,0.4); }
+    .ckc-pak-close { display: block; width: 100%; padding: 16px; background: #2a2a2a; border: 2px solid #555; border-radius: 10px; color: #ffffff; font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; -webkit-tap-highlight-color: transparent; }
   </style>
 </head>
 <body>
@@ -307,15 +333,15 @@
 
 <!-- ═══ CKC COMMAND CENTER TOOLBAR ═══ -->
 <div class="ckc-toolbar">
-  <a class="ckc-toolbar-btn" href="https://app.myautosmart.com" target="_blank" rel="noopener">
+  <a class="ckc-toolbar-btn" href="itms-apps://itunes.apple.com/app/id1459540790">
     <span class="ckc-toolbar-btn-icon">🚗</span>
     AutoSmart
   </a>
-  <a class="ckc-toolbar-btn" href="https://royalkeysupply.com/pages/inventory" target="_blank" rel="noopener">
+  <a class="ckc-toolbar-btn" id="ckc-rks-toolbar-btn" href="https://www.royalkeysupply.com" target="_blank" rel="noopener">
     <span class="ckc-toolbar-btn-icon">🔑</span>
     RKS
   </a>
-  <a class="ckc-toolbar-btn" href="https://noloindie-afk.github.io/ckc-hub/ckc_quotes.html" target="_blank" rel="noopener">
+  <a class="ckc-toolbar-btn" id="ckc-quotes-toolbar-btn" href="https://noloindie-afk.github.io/ckc-hub/ckc_quotes.html" target="_blank" rel="noopener">
     <span class="ckc-toolbar-btn-icon">💰</span>
     CKC Quotes
   </a>
@@ -375,10 +401,10 @@ const SCRIPT_URL           = 'https://script.google.com/macros/s/AKfycbxDw7dtdoh
 const BLADE_PROXY_URL      = 'https://ckc-blade-proxy.noloindie.workers.dev';
 const PROGRAMMING_FEE      = 75;
 const SHOPIFY_DOMAIN       = 'carolina-key-cutters.myshopify.com';
-const BOOKING_URL          = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
+const BOOKING_URL          = 'https://calendar.app.google/xqirB3Dpfmub5rAb6';
 const PROGRAMMING_VARIANT  = '45908511228101';
 const INTERNAL_TOOL_URL    = 'https://carolinakeycutters.com/tools';
-const CKC_VERSION          = 'v8.86-command';
+const CKC_VERSION          = 'v8.91-command';
 
 var liveCatalog      = [];
 var isLive           = false;
@@ -673,7 +699,7 @@ function initDropdowns() {
   }
 }
 
-document.getElementById('ckc-year').addEventListener('change', function() {
+document.getElementById('ckc-year').addEventListener('change', function() { updateToolbarLinks();
   var year = parseInt(this.value);
   var makeSelect = document.getElementById('ckc-make');
   var modelSelect = document.getElementById('ckc-model');
@@ -686,7 +712,7 @@ document.getElementById('ckc-year').addEventListener('change', function() {
   });
   makeSelect.disabled = false;
 });
-document.getElementById('ckc-make').addEventListener('change', function() {
+document.getElementById('ckc-make').addEventListener('change', function() { updateToolbarLinks();
   var year = parseInt(document.getElementById('ckc-year').value);
   var modelSelect = document.getElementById('ckc-model');
   modelSelect.innerHTML = '<option value="">Select Model</option>'; document.getElementById('ckc-search-btn').disabled = true;
@@ -696,7 +722,7 @@ document.getElementById('ckc-make').addEventListener('change', function() {
   });
   modelSelect.disabled = false;
 });
-document.getElementById('ckc-model').addEventListener('change', function() {
+document.getElementById('ckc-model').addEventListener('change', function() { updateToolbarLinks();
   document.getElementById('ckc-search-btn').disabled = !this.value;
 });
 
@@ -785,10 +811,7 @@ function startWizard() {
 
   if (matches.length === 0) {
     document.getElementById('ckc-screen-1').classList.remove('active');
-    document.getElementById('ckc-wizard-area').innerHTML =
-      '<div class="ckc-no-results"><h3>No exact match found</h3><p>We may still have a key for your ' + year + ' ' + make + ' ' + model + '.<br>Give us a call and we\'ll find the right one for you.</p>' +
-      '<a href="tel:+13365109816" class="ckc-call-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>Call Carolina Key Cutters</a>' +
-      '<br><br><button class="ckc-new-search-btn" onclick="resetFinder()">Try a different vehicle</button></div>';
+    renderNoResults(year, make, model);
     scrollToWizard();
     return;
   }
@@ -1478,6 +1501,108 @@ function calcPAK() {
   document.getElementById('ckc-pak-floor').textContent = floorApplied ? '⚠️ Floor applied ($' + minPrice.toFixed(2) + ')' : '✓ Not needed';
   document.getElementById('ckc-pak-sell').textContent = '$' + sell.toFixed(2);
   resultEl.classList.add('show');
+}
+
+
+
+// ═══ PRICE CALCULATOR LOGIC ═══
+function calcSellPrice(cost) {
+  if (!cost || isNaN(cost) || cost <= 0) return null;
+  var multiplier;
+  if (cost < 20)       multiplier = 2.0;
+  else if (cost < 50)  multiplier = 1.75;
+  else if (cost < 100) multiplier = 1.55;
+  else if (cost < 200) multiplier = 1.35;
+  else                 multiplier = 1.20;
+  var raw = cost * multiplier;
+  var profit = raw - cost;
+  if (profit < 20) raw = cost + 20;
+  var rounded = Math.ceil(raw) - 0.01;
+  if (rounded < raw) rounded += 1;
+  return {
+    cost: cost, multiplier: multiplier, sellPrice: rounded, profit: rounded - cost,
+    bracket: cost < 20 ? 'Under $20 (2.0×)' : cost < 50 ? '$20–$50 (1.75×)' :
+             cost < 100 ? '$50–$100 (1.55×)' : cost < 200 ? '$100–$200 (1.35×)' : '$200+ (1.20×)'
+  };
+}
+
+function onCalcInput() {
+  var input = document.getElementById('ckc-price-input');
+  var resultEl = document.getElementById('ckc-calc-result');
+  if (!input || !resultEl) return;
+  var cost = parseFloat(input.value.replace(/[^0-9.]/g, ''));
+  if (!cost || cost <= 0) { resultEl.classList.remove('visible'); return; }
+  var r = calcSellPrice(cost);
+  if (!r) { resultEl.classList.remove('visible'); return; }
+  document.getElementById('ckc-calc-cost-val').textContent = '$' + r.cost.toFixed(2);
+  document.getElementById('ckc-calc-mult-val').textContent = r.bracket;
+  document.getElementById('ckc-calc-profit-val').textContent = '+$' + r.profit.toFixed(2) + ' profit';
+  document.getElementById('ckc-calc-sell-val').textContent = '$' + r.sellPrice.toFixed(2);
+  resultEl.classList.add('visible');
+}
+
+function clearCalc() {
+  var input = document.getElementById('ckc-price-input');
+  var resultEl = document.getElementById('ckc-calc-result');
+  if (input) input.value = '';
+  if (resultEl) resultEl.classList.remove('visible');
+  if (input) input.focus();
+}
+
+function renderNoResults(year, make, model) {
+  var ymm = year + ' ' + make + ' ' + model;
+  var rksSearchURL = 'https://www.royalkeysupply.com/search?q=' + encodeURIComponent(ymm);
+  var html = '<div class="ckc-no-results">' +
+    '<div class="ckc-no-results-header"><h3>No exact match found</h3>' +
+    '<p>No catalog entry for <strong style="color:var(--ckc-text);">' + ymm + '</strong>.<br>Search RKS below, then use the price calculator to quote.</p></div>' +
+    '<div class="ckc-rks-section"><div class="ckc-rks-section-label">Step 1 — Search supplier</div>' +
+    '<a href="' + rksSearchURL + '" target="_blank" rel="noopener" class="ckc-rks-btn">' +
+    '<span class="ckc-rks-logo">RKS</span><span>Search Royal Key Supply for <strong>' + ymm + '</strong></span>' +
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>' +
+    '</a>' +
+    '<div style="margin-top:10px;font-size:0.78rem;color:#555;text-align:center;">Opens RKS in a new tab — find the key and note the price</div>' +
+    '<div style="margin-top:12px;"><a href="itms-apps://itunes.apple.com/app/id1459540790" class="ckc-rks-btn" style="background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.15);">' +
+    '<span>🔑</span><span>Open <strong>MyAutoSmart</strong> to verify key info</span>' +
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>' +
+    '</a></div></div>' +
+    '<div class="ckc-calc-section"><div class="ckc-calc-label">Step 2 — Calculate your sell price</div>' +
+    '<div class="ckc-calc-input-row"><div class="ckc-calc-input-wrap">' +
+    '<span class="ckc-calc-prefix">$</span>' +
+    '<input class="ckc-calc-input" id="ckc-price-input" type="number" min="0" step="0.01" placeholder="RKS cost" oninput="onCalcInput()" />' +
+    '</div><button class="ckc-calc-clear-btn" onclick="clearCalc()" title="Clear">✕</button></div>' +
+    '<div class="ckc-calc-result" id="ckc-calc-result">' +
+    '<div class="ckc-calc-result-row"><span>RKS cost</span><span id="ckc-calc-cost-val"></span></div>' +
+    '<div class="ckc-calc-result-row"><span>Bracket</span><span id="ckc-calc-mult-val" style="color:var(--ckc-gold);font-size:0.78rem;"></span></div>' +
+    '<div class="ckc-calc-result-row"><span>Profit</span><span id="ckc-calc-profit-val" style="color:var(--ckc-success);"></span></div>' +
+    '<div class="ckc-calc-result-row total"><span style="font-weight:700;color:var(--ckc-text);font-size:1rem;">Your sell price</span>' +
+    '<span class="ckc-calc-result-price" id="ckc-calc-sell-val"></span></div></div></div>' +
+    '<div style="padding:20px;text-align:center;">' +
+    '<a href="tel:+13365109816" class="ckc-call-btn" style="margin-bottom:16px;display:inline-flex;">' +
+    '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>' +
+    'Call Carolina Key Cutters</a>' +
+    '<div style="margin-top:16px;"><button class="ckc-new-search-btn" onclick="resetFinder()">← Try a different vehicle</button></div>' +
+    '</div></div>';
+  document.getElementById('ckc-wizard-area').innerHTML = html;
+  setTimeout(function() { var inp = document.getElementById('ckc-price-input'); if (inp) inp.focus(); }, 300);
+}
+
+// ═══ TOOLBAR LINK UPDATER ═══
+function updateToolbarLinks() {
+  var year  = document.getElementById('ckc-year').value;
+  var make  = document.getElementById('ckc-make').value;
+  var model = document.getElementById('ckc-model').value;
+
+  var rksBtn    = document.getElementById('ckc-rks-toolbar-btn');
+  var quotesBtn = document.getElementById('ckc-quotes-toolbar-btn');
+
+  if (year && make) {
+    var q = encodeURIComponent(year + ' ' + make + (model ? ' ' + model : ''));
+    if (rksBtn)    rksBtn.href    = 'https://www.royalkeysupply.com/search?q=' + q;
+    if (quotesBtn) quotesBtn.href = 'https://noloindie-afk.github.io/ckc-hub/ckc_quotes.html?year=' + encodeURIComponent(year) + '&make=' + encodeURIComponent(make) + (model ? '&model=' + encodeURIComponent(model) : '');
+  } else {
+    if (rksBtn)    rksBtn.href    = 'https://www.royalkeysupply.com';
+    if (quotesBtn) quotesBtn.href = 'https://noloindie-afk.github.io/ckc-hub/ckc_quotes.html';
+  }
 }
 
 function postHeight() { /* not needed — standalone page */ }
