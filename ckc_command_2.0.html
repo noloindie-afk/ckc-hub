@@ -1973,16 +1973,16 @@
         }
         
         function getKeyTypePlaceholder(keyType) {
-            // Professional placeholder images by key type
+            // CSS-based placeholder images that always work
             const placeholders = {
-                'Smart Key': 'https://via.placeholder.com/200x150/1a2332/d4af37?text=Smart+Key',
-                'FOBIK': 'https://via.placeholder.com/200x150/1a2332/d4af37?text=FOBIK',
-                'Remote Head Key': 'https://via.placeholder.com/200x150/1a2332/d4af37?text=Remote+Head',
-                'Remote Flip Key': 'https://via.placeholder.com/200x150/1a2332/d4af37?text=Flip+Key',
-                'Transponder Key': 'https://via.placeholder.com/200x150/1a2332/d4af37?text=Transponder',
-                'Remote': 'https://via.placeholder.com/200x150/1a2332/d4af37?text=Remote',
-                'Remote (Keyless Entry)': 'https://via.placeholder.com/200x150/1a2332/d4af37?text=Remote',
-                'Unknown': 'https://via.placeholder.com/200x150/1a2332/d4af37?text=Key'
+                'Smart Key': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMWEyMzMyIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iI2Q0YWYzNyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPlNtYXJ0IEtleTwvdGV4dD48L3N2Zz4=',
+                'FOBIK': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMWEyMzMyIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iI2Q0YWYzNyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPlNtYXJ0IEZPQklLPC90ZXh0Pjwvc3ZnPg==',
+                'Remote Head Key': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMWEyMzMyIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iI2Q0YWYzNyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPlJlbW90ZSBIZWFkPC90ZXh0Pjwvc3ZnPg==',
+                'Remote Flip Key': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMWEyMzMyIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iI2Q0YWYzNyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPlJlbW90ZSBGbGlwPC90ZXh0Pjwvc3ZnPg==',
+                'Transponder Key': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMWEyMzMyIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iI2Q0YWYzNyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPlRyYW5zcG9uZGVyPC90ZXh0Pjwvc3ZnPg==',
+                'Remote': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMWEyMzMyIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iI2Q0YWYzNyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPlJlbW90ZSBPbmx5PC90ZXh0Pjwvc3ZnPg==',
+                'Remote (Keyless Entry)': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMWEyMzMyIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iI2Q0YWYzNyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPlJlbW90ZSBPbmx5PC90ZXh0Pjwvc3ZnPg==',
+                'Unknown': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMWEyMzMyIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iI2Q0YWYzNyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPlZlaGljbGUgS2V5PC90ZXh0Pjwvc3ZnPg=='
             };
             
             return placeholders[keyType] || placeholders['Unknown'];
@@ -2593,8 +2593,8 @@
                             <div style="color: #64748b; margin-bottom: 10px;">
                                 <strong>Type:</strong> ${key.type} • ${key.oem ? 'OEM' : 'Aftermarket'}<br>
                                 <strong>SKU:</strong> ${key.sku}<br>
-                                ${key.fcc !== 'N/A' ? `<strong>FCC ID:</strong> ${key.fcc}<br>` : ''}
-                                <strong>Availability:</strong> ${key.inStock ? 'In Stock - Same Day' : key.leadTime || '2-3 business days'}
+                                ${key.fcc !== 'N/A' && key.fcc !== 'TBD' ? `<strong>FCC ID:</strong> ${key.fcc}<br>` : ''}
+                                <strong>Availability:</strong> ${key.inStock ? 'In Stock - Same Day Service' : key.leadTime || '2-3 business days'}
                             </div>
                             <div style="background: #f8fafc; padding: 10px; border-radius: 6px; font-size: 0.9rem; color: #64748b;">
                                 ${key.description || 'Professional automotive key programming service included.'}
