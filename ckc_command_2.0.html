@@ -734,6 +734,17 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        @keyframes slideIn {
+            from { 
+                transform: translateX(100%); 
+                opacity: 0; 
+            }
+            to { 
+                transform: translateX(0); 
+                opacity: 1; 
+            }
+        }
     </style>
 </head>
 <body>
@@ -743,6 +754,9 @@
             <h1 class="app-title">CKC Command 2.0</h1>
             <p class="app-subtitle">Professional Customer Experience System</p>
             <span class="version-badge">v2.0</span>
+            <div style="margin-top: 20px;">
+                <a href="ckc_job_planner.html" class="btn btn-secondary" style="display: inline-block; text-decoration: none; font-size: 0.9rem; padding: 8px 16px;">📅 View Job Planner</a>
+            </div>
         </div>
 
         <!-- Progress Indicator -->
@@ -968,6 +982,7 @@
 
             <div class="btn-group">
                 <button class="btn btn-primary" onclick="startNewSearch()">Start New Search</button>
+                <a href="ckc_job_planner.html" class="btn btn-success" style="text-decoration: none;">📅 View in Job Planner</a>
                 <button class="btn btn-secondary" onclick="window.print()">Print Summary</button>
             </div>
         </div>
@@ -1060,6 +1075,8 @@
 
             // Button click handlers
             document.getElementById('searchKeysBtn').addEventListener('click', performKeySearch);
+            document.getElementById('proceedBtn').addEventListener('click', () => showScreen('screen4'));
+            document.getElementById('requestDifferentBtn').addEventListener('click', () => handleExtendedDatabaseSearch(appState.vehicle.year || '2020'));
             document.getElementById('generateQrBtn').addEventListener('click', generateVinQR);
             document.getElementById('copyVinBtn').addEventListener('click', copyVinToClipboard);
             document.getElementById('openAutosmart').addEventListener('click', openMyAutoSmart);
@@ -1184,20 +1201,38 @@
         // Mock data for development - in production, this would call your actual data sources
         function populateMakeDropdown(year) {
             const makeSelect = document.getElementById('vehicleMake');
-            const makes = ['Ford', 'Chevrolet', 'Toyota', 'Honda', 'Nissan', 'Hyundai', 'BMW'];
             
-            makes.forEach(make => {
+            // Primary catalog makes (your current inventory)
+            const primaryMakes = ['Ford', 'Chevrolet', 'Toyota', 'Honda', 'Nissan', 'Hyundai', 'BMW'];
+            
+            // Add primary makes
+            primaryMakes.forEach(make => {
                 const option = document.createElement('option');
                 option.value = make;
                 option.textContent = make;
                 makeSelect.appendChild(option);
             });
             
+            // Add "Other/Extended Database" option for missing makes
+            const extendedOption = document.createElement('option');
+            extendedOption.value = 'EXTENDED_SEARCH';
+            extendedOption.textContent = '⚡ Search Extended Database (Genesis, Infiniti, Acura, etc.)';
+            extendedOption.style.background = '#fef3c7';
+            extendedOption.style.fontWeight = '600';
+            makeSelect.appendChild(extendedOption);
+            
             makeSelect.disabled = false;
         }
-
+        
         function populateModelDropdown(year, make) {
             const modelSelect = document.getElementById('vehicleModel');
+            
+            // Handle extended database search
+            if (make === 'EXTENDED_SEARCH') {
+                handleExtendedDatabaseSearch(year);
+                return;
+            }
+            
             // This would be replaced with actual API calls to your catalog
             const models = {
                 'Ford': ['F-150', 'Explorer', 'Escape', 'Mustang'],
@@ -1218,6 +1253,130 @@
             
             modelSelect.disabled = false;
         }
+        
+        // ══════════════════════════════════════════════════════════════════
+        // SEAMLESS EXTENDED DATABASE SEARCH
+        // ══════════════════════════════════════════════════════════════════
+        
+        function handleExtendedDatabaseSearch(year) {
+            // Show extended search modal
+            const modalHtml = `
+                <div id="extendedSearchModal" style="
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                    background: rgba(0,0,0,0.8); z-index: 1000; display: flex; 
+                    align-items: center; justify-content: center;">
+                    <div style="
+                        background: white; border-radius: 8px; padding: 40px; 
+                        max-width: 500px; margin: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
+                        <h3 style="color: var(--ckc-navy); font-family: 'JetBrains Mono', monospace; margin-bottom: 20px;">
+                            ⚡ Extended Database Search
+                        </h3>
+                        <p style="color: var(--ckc-slate); margin-bottom: 25px; line-height: 1.6;">
+                            Enter your vehicle details to search our extended database of 1,700+ keys:
+                        </p>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Make</label>
+                                <input type="text" class="form-input" id="extendedMake" placeholder="Genesis" style="width: 100%;">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Model</label>
+                                <input type="text" class="form-input" id="extendedModel" placeholder="G90" style="width: 100%;">
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 15px; margin-top: 20px;">
+                            <button onclick="performExtendedSearch()" class="btn btn-primary" style="flex: 1;">
+                                🔍 Search Database
+                            </button>
+                            <button onclick="closeExtendedModal()" class="btn btn-secondary" style="flex: 1;">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+        
+        async function performExtendedSearch() {
+            const make = document.getElementById('extendedMake').value.trim();
+            const model = document.getElementById('extendedModel').value.trim();
+            const year = appState.vehicle.year;
+            
+            if (!make || !model) {
+                alert('Please enter both make and model');
+                return;
+            }
+            
+            // Update UI to show searching
+            closeExtendedModal();
+            
+            // Set the vehicle info
+            appState.vehicle.make = make;
+            appState.vehicle.model = model;
+            
+            // Update the dropdowns to show the entered values
+            const makeSelect = document.getElementById('vehicleMake');
+            const modelSelect = document.getElementById('vehicleModel');
+            
+            // Add the custom options
+            let customMakeOption = Array.from(makeSelect.options).find(opt => opt.value === make);
+            if (!customMakeOption) {
+                const option = document.createElement('option');
+                option.value = make;
+                option.textContent = `${make} (Extended Database)`;
+                option.selected = true;
+                makeSelect.appendChild(option);
+            } else {
+                customMakeOption.selected = true;
+            }
+            
+            modelSelect.innerHTML = `<option value="${model}" selected>${model} (Extended Database)</option>`;
+            modelSelect.disabled = false;
+            
+            // Enable search button
+            updateSearchButton();
+            
+            // Show message that extended search will be performed
+            showExtendedSearchNotification();
+        }
+        
+        function showExtendedSearchNotification() {
+            // Show a brief notification that extended search will be used
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed; top: 20px; right: 20px; z-index: 1001;
+                background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                color: white; padding: 15px 25px; border-radius: 8px;
+                font-family: 'JetBrains Mono', monospace; font-weight: 600;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+                animation: slideIn 0.3s ease-out;
+            `;
+            notification.innerHTML = '✅ Extended database search enabled!';
+            
+            document.body.appendChild(notification);
+            
+            // Remove notification after 3 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+        
+        function closeExtendedModal() {
+            const modal = document.getElementById('extendedSearchModal');
+            if (modal) {
+                modal.remove();
+            }
+            
+            // Reset make selection to empty
+            const makeSelect = document.getElementById('vehicleMake');
+            makeSelect.value = '';
+            appState.vehicle.make = '';
+            updateSearchButton();
+        }
+
+
 
         // ══════════════════════════════════════════════════════════════════
         // KEY SEARCH LOGIC
@@ -1262,45 +1421,167 @@
             // Simulate API delay
             await new Promise(resolve => setTimeout(resolve, 2000));
             
-            // Mock search results - replace with actual API call
-            appState.searchResults = [
-                {
-                    sku: 'FOR-94-SM',
-                    title: '2015 Ford F-150 Smart Key',
-                    type: 'Smart Key',
-                    price: 189.99,
-                    inStock: true,
-                    vendor: 'CKC',
-                    fcc: 'M3N-A2C31243300',
-                    keyway: 'HU101',
-                    oem: false,
-                    image: ''
-                },
-                {
-                    sku: 'FOR-94-SM-OEM',
-                    title: '2015 Ford F-150 OEM Smart Key',
-                    type: 'Smart Key',
-                    price: 289.99,
+            // Check if this is an extended database search
+            const isExtendedSearch = isExtendedDatabaseVehicle();
+            
+            if (isExtendedSearch) {
+                // Generate RKS-based results with Price-a-Key pricing
+                appState.searchResults = await generateExtendedDatabaseResults();
+            } else {
+                // Use standard catalog results
+                appState.searchResults = [
+                    {
+                        sku: 'FOR-94-SM',
+                        title: '2015 Ford F-150 Smart Key',
+                        type: 'Smart Key',
+                        price: 189.99,
+                        inStock: true,
+                        vendor: 'CKC',
+                        fcc: 'M3N-A2C31243300',
+                        keyway: 'HU101',
+                        oem: false,
+                        image: ''
+                    },
+                    {
+                        sku: 'FOR-94-SM-OEM',
+                        title: '2015 Ford F-150 OEM Smart Key',
+                        type: 'Smart Key',
+                        price: 289.99,
+                        inStock: false,
+                        vendor: 'RKS',
+                        fcc: 'M3N-A2C31243300',
+                        keyway: 'HU101',
+                        oem: true,
+                        image: ''
+                    },
+                    {
+                        sku: 'FOR-94-TR',
+                        title: '2015 Ford F-150 Transponder Key',
+                        type: 'Transponder Key',
+                        price: 34.99,
+                        inStock: true,
+                        vendor: 'CKC',
+                        fcc: 'N/A',
+                        keyway: 'HU101',
+                        oem: false,
+                        image: ''
+                    }
+                ];
+            }
+        }
+        
+        function isExtendedDatabaseVehicle() {
+            const makeSelect = document.getElementById('vehicleMake');
+            const selectedOption = makeSelect.options[makeSelect.selectedIndex];
+            return selectedOption && selectedOption.textContent.includes('Extended Database');
+        }
+        
+        async function generateExtendedDatabaseResults() {
+            // Simulate extended database lookup with intelligent key type detection
+            const vehicle = appState.vehicle;
+            const keyTypes = detectLikelyKeyTypes(vehicle.year, vehicle.make, vehicle.model);
+            
+            return keyTypes.map(keyType => {
+                const baseCost = estimateRKSCost(keyType);
+                const retailPrice = priceCalculator.calculateMarkup(baseCost);
+                
+                return {
+                    sku: `RKS-${keyType.type.replace(/\s+/g, '').toUpperCase()}`,
+                    title: `${vehicle.year} ${vehicle.make} ${vehicle.model} ${keyType.type}`,
+                    type: keyType.type,
+                    price: retailPrice,
                     inStock: false,
                     vendor: 'RKS',
-                    fcc: 'M3N-A2C31243300',
-                    keyway: 'HU101',
+                    fcc: keyType.fcc || 'To Be Determined',
+                    keyway: keyType.keyway || 'To Be Determined',
+                    oem: keyType.oem,
+                    image: '',
+                    isExtended: true,
+                    leadTime: '2-3 business days'
+                };
+            });
+        }
+        
+        function detectLikelyKeyTypes(year, make, model) {
+            // Intelligent key type detection based on vehicle characteristics
+            const yearNum = parseInt(year);
+            const results = [];
+            
+            // Luxury brands typically have smart keys
+            const luxuryBrands = ['BMW', 'Mercedes', 'Audi', 'Lexus', 'Infiniti', 'Genesis', 'Cadillac'];
+            const isLuxury = luxuryBrands.some(brand => 
+                make.toLowerCase().includes(brand.toLowerCase())
+            );
+            
+            if (yearNum >= 2015 && isLuxury) {
+                // Modern luxury vehicles
+                results.push({
+                    type: 'Smart Key',
+                    fcc: 'TBD',
+                    keyway: 'TBD', 
                     oem: true,
-                    image: ''
-                },
-                {
-                    sku: 'FOR-94-TR',
-                    title: '2015 Ford F-150 Transponder Key',
-                    type: 'Transponder Key',
-                    price: 34.99,
-                    inStock: true,
-                    vendor: 'CKC',
-                    fcc: 'N/A',
-                    keyway: 'HU101',
+                    priority: 1
+                });
+                results.push({
+                    type: 'Smart Key',
+                    fcc: 'TBD',
+                    keyway: 'TBD',
                     oem: false,
-                    image: ''
-                }
-            ];
+                    priority: 2
+                });
+            } else if (yearNum >= 2010) {
+                // Modern non-luxury vehicles
+                results.push({
+                    type: 'Remote Head Key',
+                    fcc: 'TBD',
+                    keyway: 'TBD',
+                    oem: false,
+                    priority: 1
+                });
+                results.push({
+                    type: 'Transponder Key',
+                    fcc: 'N/A',
+                    keyway: 'TBD',
+                    oem: false,
+                    priority: 2
+                });
+            } else {
+                // Older vehicles
+                results.push({
+                    type: 'Transponder Key',
+                    fcc: 'N/A',
+                    keyway: 'TBD',
+                    oem: false,
+                    priority: 1
+                });
+            }
+            
+            // Add remote option for most vehicles 2000+
+            if (yearNum >= 2000) {
+                results.push({
+                    type: 'Remote (Keyless Entry)',
+                    fcc: 'TBD',
+                    keyway: 'N/A',
+                    oem: false,
+                    priority: 3
+                });
+            }
+            
+            return results.sort((a, b) => a.priority - b.priority);
+        }
+        
+        function estimateRKSCost(keyType) {
+            // Estimate RKS costs based on key type complexity
+            const costMap = {
+                'Smart Key': keyType.oem ? 200 : 120,
+                'FOBIK': keyType.oem ? 180 : 100,
+                'Remote Head Key': 40,
+                'Remote Flip Key': 35,
+                'Transponder Key': 20,
+                'Remote (Keyless Entry)': 25
+            };
+            
+            return costMap[keyType.type] || 50;
         }
 
         function detectConflicts(results) {
@@ -1375,20 +1656,23 @@
         function renderKeyCard(key) {
             const pricing = calculatePricing(key);
             const statusClass = key.inStock ? 'status-in-stock' : 'status-rks';
-            const statusText = key.inStock ? 'In Stock — Same Day' : 'Available to Order (2-3 days)';
+            const statusText = key.inStock ? 'In Stock — Same Day' : 
+                              (key.isExtended ? `Extended Database — ${key.leadTime || '2-3 days'}` : 'Available to Order (2-3 days)');
             const oemLabel = key.oem ? 'OEM' : 'Aftermarket';
+            const extendedBadge = key.isExtended ? ' • Extended DB' : '';
             
             return `
                 <div class="key-card" data-sku="${key.sku}">
                     <div class="key-header">
                         <div>
                             <div class="key-title">${key.title}</div>
-                            <div class="key-type">${key.type} • ${oemLabel}</div>
+                            <div class="key-type">${key.type} • ${oemLabel}${extendedBadge}</div>
                         </div>
                         <div class="key-price">
                             <div class="key-price-amount">$${pricing.total.toFixed(2)}</div>
                             <div class="key-price-breakdown">
                                 Key: $${key.price} + Programming: $${pricing.programming}
+                                ${key.isExtended ? '<br><small>Price-a-Key calculated</small>' : ''}
                             </div>
                         </div>
                     </div>
@@ -1407,6 +1691,11 @@
                             <span class="key-detail-label">Status:</span>
                             <span class="status-indicator ${statusClass}">${statusText}</span>
                         </div>
+                        ${key.isExtended ? `
+                        <div class="key-detail-row">
+                            <span class="key-detail-label">Source:</span>
+                            <span class="key-detail-value">Extended Database via RKS</span>
+                        </div>` : ''}
                     </div>
                     
                     ${renderToolRequirements(key)}
