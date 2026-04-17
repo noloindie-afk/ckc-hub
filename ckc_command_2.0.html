@@ -1,0 +1,1744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CKC Command 2.0 — Professional Customer Experience</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Crimson+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ══════════════════════════════════════════════════════════════════
+           CKC COMMAND 2.0 — PROFESSIONAL CUSTOMER EXPERIENCE SYSTEM
+           ══════════════════════════════════════════════════════════════════ */
+        
+        :root {
+            /* Professional color system */
+            --ckc-gold: #d4af37;
+            --ckc-gold-dark: #b8941f;
+            --ckc-gold-light: #e8c75a;
+            --ckc-navy: #1a2332;
+            --ckc-navy-light: #2a3442;
+            --ckc-slate: #64748b;
+            --ckc-slate-light: #94a3b8;
+            --ckc-white: #ffffff;
+            --ckc-gray-50: #f8fafc;
+            --ckc-gray-100: #f1f5f9;
+            --ckc-gray-200: #e2e8f0;
+            --ckc-gray-800: #1e293b;
+            --ckc-gray-900: #0f172a;
+            
+            /* Status colors */
+            --ckc-success: #10b981;
+            --ckc-warning: #f59e0b;
+            --ckc-error: #ef4444;
+            --ckc-info: #3b82f6;
+            
+            /* Shadows and effects */
+            --ckc-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            --ckc-shadow-lg: 0 10px 25px rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.1);
+            --ckc-border-radius: 8px;
+            --ckc-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Crimson Pro', serif;
+            background: linear-gradient(135deg, var(--ckc-navy) 0%, var(--ckc-navy-light) 100%);
+            color: var(--ckc-white);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .app-header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px 0;
+            background: rgba(212, 175, 55, 0.1);
+            border-radius: var(--ckc-border-radius);
+            border: 2px solid var(--ckc-gold);
+        }
+
+        .app-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--ckc-gold);
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+        }
+
+        .app-subtitle {
+            font-size: 1.2rem;
+            color: var(--ckc-slate-light);
+            font-weight: 500;
+        }
+
+        .version-badge {
+            display: inline-block;
+            background: var(--ckc-gold);
+            color: var(--ckc-navy);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 15px;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           SCREEN SYSTEM
+           ═══════════════════════════════════════════════════════════════════ */
+
+        .screen {
+            display: none;
+            background: var(--ckc-white);
+            color: var(--ckc-gray-800);
+            border-radius: var(--ckc-border-radius);
+            box-shadow: var(--ckc-shadow-lg);
+            padding: 40px;
+            margin: 20px 0;
+            animation: slideInUp 0.4s ease-out;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .screen-header {
+            border-bottom: 3px solid var(--ckc-gold);
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+        }
+
+        .screen-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--ckc-navy);
+            margin-bottom: 10px;
+        }
+
+        .screen-description {
+            color: var(--ckc-slate);
+            font-size: 1.1rem;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           PHONE SCRIPT SYSTEM
+           ═══════════════════════════════════════════════════════════════════ */
+
+        .phone-script {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border: 2px solid var(--ckc-info);
+            border-radius: var(--ckc-border-radius);
+            padding: 25px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .phone-script::before {
+            content: "📞";
+            position: absolute;
+            top: -15px;
+            left: 25px;
+            background: var(--ckc-white);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 1.2rem;
+        }
+
+        .phone-script-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--ckc-info);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .phone-script-text {
+            font-size: 1.1rem;
+            color: var(--ckc-gray-800);
+            line-height: 1.6;
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+
+        .phone-script-text:last-child {
+            margin-bottom: 0;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           FORM CONTROLS
+           ═══════════════════════════════════════════════════════════════════ */
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--ckc-gray-800);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-select,
+        .form-input {
+            padding: 15px;
+            border: 2px solid var(--ckc-gray-200);
+            border-radius: var(--ckc-border-radius);
+            font-family: 'Crimson Pro', serif;
+            font-size: 1.1rem;
+            color: var(--ckc-gray-800);
+            background: var(--ckc-white);
+            transition: var(--ckc-transition);
+        }
+
+        .form-select:focus,
+        .form-input:focus {
+            outline: none;
+            border-color: var(--ckc-gold);
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+        }
+
+        .form-select:disabled {
+            background: var(--ckc-gray-100);
+            color: var(--ckc-slate);
+            cursor: not-allowed;
+        }
+
+        /* Radio button styling */
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .radio-option input[type="radio"] {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+
+        .radio-option label {
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           BUTTON SYSTEM
+           ═══════════════════════════════════════════════════════════════════ */
+
+        .btn {
+            display: inline-block;
+            padding: 15px 30px;
+            border: none;
+            border-radius: var(--ckc-border-radius);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--ckc-transition);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: var(--ckc-gold);
+            color: var(--ckc-navy);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--ckc-gold-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--ckc-shadow-lg);
+        }
+
+        .btn-secondary {
+            background: var(--ckc-gray-100);
+            color: var(--ckc-gray-800);
+            border: 2px solid var(--ckc-gray-200);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--ckc-gray-200);
+        }
+
+        .btn-warning {
+            background: var(--ckc-warning);
+            color: var(--ckc-white);
+        }
+
+        .btn-success {
+            background: var(--ckc-success);
+            color: var(--ckc-white);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           RESULTS & CARDS SYSTEM
+           ═══════════════════════════════════════════════════════════════════ */
+
+        .results-container {
+            margin-top: 30px;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--ckc-gray-200);
+        }
+
+        .results-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--ckc-navy);
+        }
+
+        .results-count {
+            color: var(--ckc-slate);
+            font-size: 1rem;
+        }
+
+        .key-card {
+            background: var(--ckc-white);
+            border: 2px solid var(--ckc-gray-200);
+            border-radius: var(--ckc-border-radius);
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: var(--ckc-shadow);
+            transition: var(--ckc-transition);
+            position: relative;
+        }
+
+        .key-card:hover {
+            border-color: var(--ckc-gold);
+            transform: translateY(-2px);
+            box-shadow: var(--ckc-shadow-lg);
+        }
+
+        .key-card.selected {
+            border-color: var(--ckc-success);
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+        }
+
+        .key-card.excluded {
+            opacity: 0.5;
+            border-color: var(--ckc-error);
+        }
+
+        .key-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .key-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--ckc-navy);
+            margin-bottom: 5px;
+        }
+
+        .key-type {
+            background: var(--ckc-gold);
+            color: var(--ckc-navy);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .key-price {
+            text-align: right;
+        }
+
+        .key-price-amount {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--ckc-navy);
+        }
+
+        .key-price-breakdown {
+            color: var(--ckc-slate);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .key-details {
+            margin-bottom: 15px;
+        }
+
+        .key-detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .key-detail-label {
+            font-weight: 600;
+            color: var(--ckc-slate);
+        }
+
+        .key-detail-value {
+            color: var(--ckc-gray-800);
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           STATUS & ALERTS SYSTEM
+           ═══════════════════════════════════════════════════════════════════ */
+
+        .alert {
+            padding: 20px 25px;
+            border-radius: var(--ckc-border-radius);
+            margin-bottom: 25px;
+            border-left: 4px solid;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .alert-warning {
+            background: linear-gradient(135deg, #fefce8 0%, #fef3c7 100%);
+            border-left-color: var(--ckc-warning);
+            color: #92400e;
+        }
+
+        .alert-error {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            border-left-color: var(--ckc-error);
+            color: #991b1b;
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border-left-color: var(--ckc-success);
+            color: #14532d;
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-left-color: var(--ckc-info);
+            color: #1e3a8a;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .status-in-stock {
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+            color: var(--ckc-success);
+        }
+
+        .status-rks {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #92400e;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           VIN & QR CODE SYSTEM
+           ═══════════════════════════════════════════════════════════════════ */
+
+        .vin-container {
+            background: var(--ckc-gray-50);
+            border: 2px solid var(--ckc-gray-200);
+            border-radius: var(--ckc-border-radius);
+            padding: 25px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .vin-input {
+            width: 100%;
+            max-width: 300px;
+            padding: 15px;
+            border: 2px solid var(--ckc-gray-300);
+            border-radius: var(--ckc-border-radius);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .vin-display {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--ckc-navy);
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+            padding: 15px;
+            background: var(--ckc-white);
+            border-radius: var(--ckc-border-radius);
+            border: 2px dashed var(--ckc-gold);
+        }
+
+        .qr-container {
+            background: var(--ckc-white);
+            padding: 20px;
+            border-radius: var(--ckc-border-radius);
+            margin: 20px auto;
+            max-width: 250px;
+            box-shadow: var(--ckc-shadow);
+        }
+
+        .vin-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           TOOL REQUIREMENTS SYSTEM
+           ═══════════════════════════════════════════════════════════════════ */
+
+        .tool-requirements {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 2px solid var(--ckc-slate-light);
+            border-radius: var(--ckc-border-radius);
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .tool-requirements-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--ckc-navy);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tool-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .tool-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            background: var(--ckc-white);
+            border-radius: var(--ckc-border-radius);
+            border: 1px solid var(--ckc-gray-200);
+        }
+
+        .tool-icon {
+            width: 20px;
+            height: 20px;
+            background: var(--ckc-gold);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--ckc-navy);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .time-estimate {
+            background: linear-gradient(135deg, #e0f2fe 0%, #b3e5fc 100%);
+            color: #0c4a6e;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           CUSTOMER INFO SYSTEM
+           ═══════════════════════════════════════════════════════════════════ */
+
+        .customer-form {
+            background: var(--ckc-gray-50);
+            border: 2px solid var(--ckc-gray-200);
+            border-radius: var(--ckc-border-radius);
+            padding: 30px;
+            margin: 20px 0;
+        }
+
+        .customer-form-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--ckc-navy);
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           PROGRESS INDICATOR
+           ═══════════════════════════════════════════════════════════════════ */
+
+        .progress-bar {
+            background: var(--ckc-gray-200);
+            height: 6px;
+            border-radius: 3px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--ckc-gold) 0%, var(--ckc-gold-light) 100%);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0 30px;
+            font-size: 0.9rem;
+            color: var(--ckc-slate);
+        }
+
+        .step-indicator .step.active {
+            color: var(--ckc-gold);
+            font-weight: 600;
+        }
+
+        .step-indicator .step.completed {
+            color: var(--ckc-success);
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           RESPONSIVE DESIGN
+           ═══════════════════════════════════════════════════════════════════ */
+
+        @media (max-width: 768px) {
+            .app-title {
+                font-size: 2rem;
+            }
+
+            .screen {
+                padding: 25px;
+                margin: 10px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .key-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .key-price {
+                text-align: left;
+            }
+
+            .vin-actions {
+                flex-direction: column;
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           LOADING STATES
+           ═══════════════════════════════════════════════════════════════════ */
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--ckc-gray-200);
+            border-top: 4px solid var(--ckc-gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- App Header -->
+        <div class="app-header">
+            <h1 class="app-title">CKC Command 2.0</h1>
+            <p class="app-subtitle">Professional Customer Experience System</p>
+            <span class="version-badge">v2.0</span>
+        </div>
+
+        <!-- Progress Indicator -->
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill" style="width: 16.67%"></div>
+        </div>
+        <div class="step-indicator">
+            <span class="step active" id="step1">Setup</span>
+            <span class="step" id="step2">Search</span>
+            <span class="step" id="step3">Resolve</span>
+            <span class="step" id="step4">Select</span>
+            <span class="step" id="step5">Customer</span>
+            <span class="step" id="step6">Complete</span>
+        </div>
+
+        <!-- Screen 1: Initial Setup -->
+        <div class="screen active" id="screen1">
+            <div class="screen-header">
+                <h2 class="screen-title">Customer Call Setup</h2>
+                <p class="screen-description">Capture essential information to drive the entire workflow</p>
+            </div>
+
+            <div class="phone-script">
+                <div class="phone-script-title">Phone Script</div>
+                <div class="phone-script-text">"Carolina Key Cutters, how can I help you?"</div>
+                <div class="phone-script-text">"What's your year, make, and model?"</div>
+                <div class="phone-script-text">"Do you have a working key, or are all keys lost?"</div>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Year</label>
+                    <select class="form-select" id="vehicleYear">
+                        <option value="">Select Year</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Make</label>
+                    <select class="form-select" id="vehicleMake" disabled>
+                        <option value="">Select Make</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Model</label>
+                    <select class="form-select" id="vehicleModel" disabled>
+                        <option value="">Select Model</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Service Type</label>
+                <div class="radio-group">
+                    <div class="radio-option">
+                        <input type="radio" id="aak" name="serviceType" value="AAK">
+                        <label for="aak">AAK (Add-A-Key) - Customer has working key</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="akl" name="serviceType" value="AKL">
+                        <label for="akl">AKL (All Keys Lost) - No working keys</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-primary" id="searchKeysBtn" disabled>Search Keys</button>
+            </div>
+        </div>
+
+        <!-- Screen 2: Search Results -->
+        <div class="screen" id="screen2">
+            <div class="screen-header">
+                <h2 class="screen-title">Key Search Results</h2>
+                <p class="screen-description">Available options for your vehicle</p>
+            </div>
+
+            <div class="phone-script">
+                <div class="phone-script-title">Say to Customer</div>
+                <div class="phone-script-text">"I found several options for your <span id="vehicleDisplay"></span>. Let me check what we have available..."</div>
+            </div>
+
+            <div class="results-container" id="resultsContainer">
+                <div class="loading" id="searchLoading">
+                    <div class="loading-spinner"></div>
+                    <p>Searching catalog...</p>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="showScreen('screen1')">← Back</button>
+                <button class="btn btn-warning" id="showRksBtn" style="display: none;">Show RKS Options</button>
+                <button class="btn btn-warning" id="requestDifferentBtn">Request Different Key Type</button>
+                <button class="btn btn-primary" id="proceedBtn" style="display: none;">Proceed to Selection →</button>
+            </div>
+        </div>
+
+        <!-- Screen 3: VIN Conflict Resolution -->
+        <div class="screen" id="screen3">
+            <div class="screen-header">
+                <h2 class="screen-title">VIN Verification Required</h2>
+                <p class="screen-description">Multiple specifications detected - VIN verification needed</p>
+            </div>
+
+            <div class="phone-script">
+                <div class="phone-script-title">Say to Customer</div>
+                <div class="phone-script-text">"I need your VIN to verify the exact key you need. You can find it on your dashboard or door frame. Hold on 30 seconds while I verify..."</div>
+            </div>
+
+            <div class="alert alert-warning">
+                <strong>⚠️ Conflict Detected:</strong> Multiple FCC IDs or blade types found for this vehicle. VIN verification required to ensure correct key selection.
+            </div>
+
+            <div class="vin-container">
+                <div class="form-group">
+                    <label class="form-label">Enter 17-Character VIN</label>
+                    <input type="text" class="vin-input" id="vinInput" maxlength="17" placeholder="1HGCM82633A123456">
+                </div>
+                
+                <div id="vinDisplay" style="display: none;">
+                    <div class="vin-display" id="vinDisplayText"></div>
+                    <div class="qr-container" id="qrContainer"></div>
+                    <div class="vin-actions">
+                        <button class="btn btn-primary" id="copyVinBtn">📋 Copy VIN</button>
+                        <button class="btn btn-secondary" id="openAutosmart">🔗 Open MyAutoSmart</button>
+                    </div>
+                    <p style="margin-top: 20px; color: var(--ckc-slate);">
+                        <strong>Instructions:</strong><br>
+                        Mobile: Tap "Copy VIN" → open MyAutoSmart app → paste<br>
+                        Desktop: Scan QR with phone → VIN auto-copies → open MyAutoSmart app
+                    </p>
+                </div>
+
+                <button class="btn btn-primary" id="generateQrBtn">Generate VIN QR Code</button>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="showScreen('screen2')">← Back to Results</button>
+                <button class="btn btn-success" id="conflictResolvedBtn" style="display: none;">Conflict Resolved - Continue →</button>
+            </div>
+        </div>
+
+        <!-- Screen 4: Key Selection & Curation -->
+        <div class="screen" id="screen4">
+            <div class="screen-header">
+                <h2 class="screen-title">Key Selection & Curation</h2>
+                <p class="screen-description">Select keys to include in customer invoice</p>
+            </div>
+
+            <div class="phone-script">
+                <div class="phone-script-title">After VIN Verification</div>
+                <div class="phone-script-text">"Based on your VIN, here are the keys that work for your vehicle. I'll email you an invoice with your options..."</div>
+            </div>
+
+            <div class="results-container" id="curationContainer">
+                <!-- Key cards with include/exclude checkboxes will be populated here -->
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="showScreen('screen3')">← Back to VIN</button>
+                <button class="btn btn-primary" id="sendInvoiceBtn">Send Invoice to Customer →</button>
+            </div>
+        </div>
+
+        <!-- Screen 5: Customer Information -->
+        <div class="screen" id="screen5">
+            <div class="screen-header">
+                <h2 class="screen-title">Customer Information</h2>
+                <p class="screen-description">Capture customer details for invoice delivery</p>
+            </div>
+
+            <div class="customer-form">
+                <h3 class="customer-form-title">📧 Invoice Delivery Information</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Full Name *</label>
+                        <input type="text" class="form-input" id="customerName" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email Address *</label>
+                        <input type="email" class="form-input" id="customerEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone Number *</label>
+                        <input type="tel" class="form-input" id="customerPhone" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invoice Preview -->
+            <div class="tool-requirements">
+                <div class="tool-requirements-title">🔧 Job Requirements Summary</div>
+                <div id="jobSummary">
+                    <!-- Will be populated with selected keys, tools needed, time estimates -->
+                </div>
+                <div class="time-estimate">
+                    ⏱️ Estimated Time: <span id="totalTimeEstimate">30-45 minutes</span>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="showScreen('screen4')">← Back to Selection</button>
+                <button class="btn btn-success" id="generateInvoiceBtn" disabled>Generate & Send Invoice</button>
+            </div>
+        </div>
+
+        <!-- Screen 6: Completion -->
+        <div class="screen" id="screen6">
+            <div class="screen-header">
+                <h2 class="screen-title">Invoice Sent Successfully</h2>
+                <p class="screen-description">Customer workflow complete</p>
+            </div>
+
+            <div class="alert alert-success">
+                <strong>✅ Invoice Delivered:</strong> Customer will receive email invoice with payment options and appointment booking information.
+            </div>
+
+            <div class="customer-form">
+                <h3 class="customer-form-title">📋 Order Summary</h3>
+                <div id="completionSummary">
+                    <!-- Will show final order details, customer info, next steps -->
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="startNewSearch()">Start New Search</button>
+                <button class="btn btn-secondary" onclick="window.print()">Print Summary</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR Code Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
+    
+    <script>
+        // ════════════════════════════════════════════════════════════════════
+        // CKC COMMAND 2.0 — APPLICATION LOGIC
+        // ════════════════════════════════════════════════════════════════════
+
+        const CKC_VERSION = 'v2.0';
+        
+        // Constants from your existing infrastructure
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxDw7dtdohInyx2kqeYM5EYNCpMaBN9Kdg3m_mtPGVKaz1jgw8bW4wZfwrUf3xR1gJW/exec';
+        const PROGRAMMING_FEE = 75;
+        const PROGRAMMING_VARIANT = '45908511228101';
+        const BOOKING_URL = 'https://calendar.app.google/xqirB3Dpfmub5rAb6';
+        const SHOPIFY_DOMAIN = 'carolina-key-cutters.myshopify.com';
+
+        // Application state
+        let appState = {
+            currentScreen: 1,
+            vehicle: { year: '', make: '', model: '' },
+            serviceType: '',
+            searchResults: [],
+            selectedKeys: [],
+            conflictDetected: false,
+            vinNumber: '',
+            customer: { name: '', email: '', phone: '' },
+            toolRequirements: [],
+            timeEstimate: '',
+            invoiceData: null
+        };
+
+        // Equipment database for tool requirements
+        const equipmentDatabase = {
+            'Smart Key': { tools: ['IM508', 'XP400Pro'], time: '1-2 hours', complexity: 'high' },
+            'FOBIK': { tools: ['IM508', 'XP400Pro', 'EEPROM kit'], time: '2-3 hours', complexity: 'high' },
+            'Remote Head Key': { tools: ['IM508'], time: '45 minutes', complexity: 'medium' },
+            'Remote Flip Key': { tools: ['IM508'], time: '45 minutes', complexity: 'medium' },
+            'Transponder Key': { tools: ['IM508'], time: '30 minutes', complexity: 'low' },
+            'Remote (Keyless Entry)': { tools: ['IM508'], time: '30 minutes', complexity: 'low' }
+        };
+
+        // Price-a-Key calculator brackets
+        const priceCalculator = {
+            calculateMarkup: (cost) => {
+                cost = parseFloat(cost);
+                let markup;
+                if (cost < 20) markup = cost * 2.0;
+                else if (cost < 50) markup = cost * 1.75;
+                else if (cost < 100) markup = cost * 1.55;
+                else if (cost < 200) markup = cost * 1.35;
+                else markup = cost * 1.20;
+                
+                if (markup < 20) markup = 20; // Minimum profit floor
+                return Math.round(markup * 100) / 100; // Round to .99
+            }
+        };
+
+        // ══════════════════════════════════════════════════════════════════
+        // INITIALIZATION
+        // ══════════════════════════════════════════════════════════════════
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+            setupEventListeners();
+            populateYearDropdown();
+        });
+
+        function initializeApp() {
+            console.log(`CKC Command 2.0 ${CKC_VERSION} initialized`);
+            showScreen('screen1');
+            updateProgress(1);
+        }
+
+        function setupEventListeners() {
+            // Year/Make/Model cascading dropdowns
+            document.getElementById('vehicleYear').addEventListener('change', handleYearChange);
+            document.getElementById('vehicleMake').addEventListener('change', handleMakeChange);
+            document.getElementById('vehicleModel').addEventListener('change', handleModelChange);
+
+            // Service type radio buttons
+            document.querySelectorAll('input[name="serviceType"]').forEach(radio => {
+                radio.addEventListener('change', handleServiceTypeChange);
+            });
+
+            // Button click handlers
+            document.getElementById('searchKeysBtn').addEventListener('click', performKeySearch);
+            document.getElementById('generateQrBtn').addEventListener('click', generateVinQR);
+            document.getElementById('copyVinBtn').addEventListener('click', copyVinToClipboard);
+            document.getElementById('openAutosmart').addEventListener('click', openMyAutoSmart);
+            document.getElementById('conflictResolvedBtn').addEventListener('click', () => showScreen('screen4'));
+            document.getElementById('sendInvoiceBtn').addEventListener('click', () => showScreen('screen5'));
+            document.getElementById('generateInvoiceBtn').addEventListener('click', generateInvoice);
+
+            // VIN input validation
+            document.getElementById('vinInput').addEventListener('input', validateVinInput);
+
+            // Customer form validation
+            ['customerName', 'customerEmail', 'customerPhone'].forEach(fieldId => {
+                document.getElementById(fieldId).addEventListener('input', validateCustomerForm);
+            });
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        // SCREEN MANAGEMENT
+        // ══════════════════════════════════════════════════════════════════
+
+        function showScreen(screenId) {
+            // Hide all screens
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            
+            // Show target screen
+            document.getElementById(screenId).classList.add('active');
+            
+            // Update progress and step indicators
+            const screenNum = parseInt(screenId.replace('screen', ''));
+            appState.currentScreen = screenNum;
+            updateProgress(screenNum);
+            updateStepIndicators(screenNum);
+        }
+
+        function updateProgress(step) {
+            const progress = (step / 6) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+        }
+
+        function updateStepIndicators(currentStep) {
+            for (let i = 1; i <= 6; i++) {
+                const stepEl = document.getElementById(`step${i}`);
+                stepEl.classList.remove('active', 'completed');
+                
+                if (i === currentStep) {
+                    stepEl.classList.add('active');
+                } else if (i < currentStep) {
+                    stepEl.classList.add('completed');
+                }
+            }
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        // VEHICLE SELECTION LOGIC
+        // ══════════════════════════════════════════════════════════════════
+
+        function populateYearDropdown() {
+            const yearSelect = document.getElementById('vehicleYear');
+            for (let year = 2027; year >= 1998; year--) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearSelect.appendChild(option);
+            }
+        }
+
+        function handleYearChange() {
+            const year = this.value;
+            appState.vehicle.year = year;
+            
+            const makeSelect = document.getElementById('vehicleMake');
+            const modelSelect = document.getElementById('vehicleModel');
+            
+            // Reset downstream selects
+            makeSelect.innerHTML = '<option value="">Select Make</option>';
+            modelSelect.innerHTML = '<option value="">Select Model</option>';
+            makeSelect.disabled = !year;
+            modelSelect.disabled = true;
+            
+            updateSearchButton();
+            
+            if (year) {
+                populateMakeDropdown(year);
+            }
+        }
+
+        function handleMakeChange() {
+            const make = this.value;
+            appState.vehicle.make = make;
+            
+            const modelSelect = document.getElementById('vehicleModel');
+            modelSelect.innerHTML = '<option value="">Select Model</option>';
+            modelSelect.disabled = !make;
+            
+            updateSearchButton();
+            
+            if (make) {
+                populateModelDropdown(appState.vehicle.year, make);
+            }
+        }
+
+        function handleModelChange() {
+            appState.vehicle.model = this.value;
+            updateSearchButton();
+        }
+
+        function handleServiceTypeChange() {
+            appState.serviceType = this.value;
+            updateSearchButton();
+        }
+
+        function updateSearchButton() {
+            const searchBtn = document.getElementById('searchKeysBtn');
+            const canSearch = appState.vehicle.year && appState.vehicle.make && 
+                            appState.vehicle.model && appState.serviceType;
+            
+            searchBtn.disabled = !canSearch;
+        }
+
+        // Mock data for development - in production, this would call your actual data sources
+        function populateMakeDropdown(year) {
+            const makeSelect = document.getElementById('vehicleMake');
+            const makes = ['Ford', 'Chevrolet', 'Toyota', 'Honda', 'Nissan', 'Hyundai', 'BMW'];
+            
+            makes.forEach(make => {
+                const option = document.createElement('option');
+                option.value = make;
+                option.textContent = make;
+                makeSelect.appendChild(option);
+            });
+            
+            makeSelect.disabled = false;
+        }
+
+        function populateModelDropdown(year, make) {
+            const modelSelect = document.getElementById('vehicleModel');
+            // This would be replaced with actual API calls to your catalog
+            const models = {
+                'Ford': ['F-150', 'Explorer', 'Escape', 'Mustang'],
+                'Chevrolet': ['Silverado', 'Malibu', 'Equinox', 'Impala'],
+                'Toyota': ['Camry', 'Corolla', 'RAV4', 'Prius'],
+                'Honda': ['Accord', 'Civic', 'CR-V', 'Pilot'],
+                'Nissan': ['Altima', 'Sentra', 'Rogue', 'Pathfinder'],
+                'Hyundai': ['Elantra', 'Sonata', 'Santa Fe', 'Tucson'],
+                'BMW': ['3 Series', '5 Series', 'X3', 'X5']
+            };
+            
+            (models[make] || []).forEach(model => {
+                const option = document.createElement('option');
+                option.value = model;
+                option.textContent = model;
+                modelSelect.appendChild(option);
+            });
+            
+            modelSelect.disabled = false;
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        // KEY SEARCH LOGIC
+        // ══════════════════════════════════════════════════════════════════
+
+        async function performKeySearch() {
+            showScreen('screen2');
+            
+            // Update vehicle display
+            const vehicleDisplay = `${appState.vehicle.year} ${appState.vehicle.make} ${appState.vehicle.model}`;
+            document.getElementById('vehicleDisplay').textContent = vehicleDisplay;
+            
+            // Show loading
+            document.getElementById('searchLoading').style.display = 'block';
+            
+            try {
+                // Simulate API call - replace with actual SCRIPT_URL call
+                await simulateKeySearch();
+                
+                // Check for conflicts
+                appState.conflictDetected = detectConflicts(appState.searchResults);
+                
+                if (appState.conflictDetected) {
+                    // Show conflict warning and proceed to VIN screen
+                    displayConflictWarning();
+                    setTimeout(() => showScreen('screen3'), 2000);
+                } else {
+                    // Display normal results
+                    displaySearchResults();
+                    document.getElementById('proceedBtn').style.display = 'inline-block';
+                }
+                
+            } catch (error) {
+                console.error('Search failed:', error);
+                displaySearchError();
+            }
+            
+            document.getElementById('searchLoading').style.display = 'none';
+        }
+
+        async function simulateKeySearch() {
+            // Simulate API delay
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Mock search results - replace with actual API call
+            appState.searchResults = [
+                {
+                    sku: 'FOR-94-SM',
+                    title: '2015 Ford F-150 Smart Key',
+                    type: 'Smart Key',
+                    price: 189.99,
+                    inStock: true,
+                    vendor: 'CKC',
+                    fcc: 'M3N-A2C31243300',
+                    keyway: 'HU101',
+                    oem: false,
+                    image: ''
+                },
+                {
+                    sku: 'FOR-94-SM-OEM',
+                    title: '2015 Ford F-150 OEM Smart Key',
+                    type: 'Smart Key',
+                    price: 289.99,
+                    inStock: false,
+                    vendor: 'RKS',
+                    fcc: 'M3N-A2C31243300',
+                    keyway: 'HU101',
+                    oem: true,
+                    image: ''
+                },
+                {
+                    sku: 'FOR-94-TR',
+                    title: '2015 Ford F-150 Transponder Key',
+                    type: 'Transponder Key',
+                    price: 34.99,
+                    inStock: true,
+                    vendor: 'CKC',
+                    fcc: 'N/A',
+                    keyway: 'HU101',
+                    oem: false,
+                    image: ''
+                }
+            ];
+        }
+
+        function detectConflicts(results) {
+            // Group by key type
+            const byType = {};
+            results.forEach(key => {
+                if (!byType[key.type]) byType[key.type] = [];
+                byType[key.type].push(key);
+            });
+            
+            // Check for FCC or keyway conflicts within each type
+            for (const type in byType) {
+                const group = byType[type];
+                if (group.length <= 1) continue;
+                
+                const fccs = new Set(group.filter(k => k.fcc && k.fcc !== 'N/A').map(k => k.fcc));
+                const keyways = new Set(group.filter(k => k.keyway && k.keyway !== 'N/A').map(k => k.keyway));
+                
+                if (fccs.size > 1 || keyways.size > 1) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
+        function displayConflictWarning() {
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = `
+                <div class="alert alert-warning">
+                    <strong>⚠️ Conflict Detected:</strong> Multiple specifications found for this vehicle. 
+                    VIN verification required to ensure correct key selection.
+                </div>
+            `;
+        }
+
+        function displaySearchResults() {
+            const container = document.getElementById('resultsContainer');
+            let html = '';
+            
+            if (appState.searchResults.length === 0) {
+                html = `
+                    <div class="alert alert-info">
+                        <strong>No exact matches found.</strong> Use "Request Different Key Type" to search for special order options.
+                    </div>
+                `;
+            } else {
+                // Separate in-stock and RKS items
+                const inStock = appState.searchResults.filter(key => key.inStock);
+                const rksItems = appState.searchResults.filter(key => !key.inStock);
+                
+                if (inStock.length > 0) {
+                    html += `<div class="results-header">
+                        <div class="results-title">In-Stock Keys</div>
+                        <div class="results-count">${inStock.length} available</div>
+                    </div>`;
+                    html += inStock.map(key => renderKeyCard(key)).join('');
+                }
+                
+                if (rksItems.length > 0) {
+                    html += `<div class="results-header" style="margin-top: 30px;">
+                        <div class="results-title">RKS Options</div>
+                        <div class="results-count">${rksItems.length} available to order</div>
+                    </div>`;
+                    html += rksItems.map(key => renderKeyCard(key)).join('');
+                }
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function renderKeyCard(key) {
+            const pricing = calculatePricing(key);
+            const statusClass = key.inStock ? 'status-in-stock' : 'status-rks';
+            const statusText = key.inStock ? 'In Stock — Same Day' : 'Available to Order (2-3 days)';
+            const oemLabel = key.oem ? 'OEM' : 'Aftermarket';
+            
+            return `
+                <div class="key-card" data-sku="${key.sku}">
+                    <div class="key-header">
+                        <div>
+                            <div class="key-title">${key.title}</div>
+                            <div class="key-type">${key.type} • ${oemLabel}</div>
+                        </div>
+                        <div class="key-price">
+                            <div class="key-price-amount">$${pricing.total.toFixed(2)}</div>
+                            <div class="key-price-breakdown">
+                                Key: $${key.price} + Programming: $${pricing.programming}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="key-details">
+                        <div class="key-detail-row">
+                            <span class="key-detail-label">SKU:</span>
+                            <span class="key-detail-value">${key.sku}</span>
+                        </div>
+                        ${key.fcc !== 'N/A' ? `
+                        <div class="key-detail-row">
+                            <span class="key-detail-label">FCC ID:</span>
+                            <span class="key-detail-value">${key.fcc}</span>
+                        </div>` : ''}
+                        <div class="key-detail-row">
+                            <span class="key-detail-label">Status:</span>
+                            <span class="status-indicator ${statusClass}">${statusText}</span>
+                        </div>
+                    </div>
+                    
+                    ${renderToolRequirements(key)}
+                </div>
+            `;
+        }
+
+        function calculatePricing(key) {
+            let programmingFee = PROGRAMMING_FEE;
+            
+            // Apply CKC Quotes pricing for AKL or complex keys
+            if (appState.serviceType === 'AKL' || ['Smart Key', 'FOBIK'].includes(key.type)) {
+                // Use CKC Quotes middle range - this would come from actual API
+                programmingFee = getCkcQuotesPricing(key.type, appState.serviceType);
+            }
+            
+            return {
+                key: parseFloat(key.price),
+                programming: programmingFee,
+                total: parseFloat(key.price) + programmingFee
+            };
+        }
+
+        function getCkcQuotesPricing(keyType, serviceType) {
+            // Mock CKC Quotes pricing - replace with actual API call
+            const pricing = {
+                'Smart Key': { AAK: 125, AKL: 175 },
+                'FOBIK': { AAK: 125, AKL: 175 },
+                'Remote Head Key': { AAK: 75, AKL: 100 },
+                'Transponder Key': { AAK: 75, AKL: 85 }
+            };
+            
+            return pricing[keyType]?.[serviceType] || PROGRAMMING_FEE;
+        }
+
+        function renderToolRequirements(key) {
+            const equipment = equipmentDatabase[key.type] || { tools: ['IM508'], time: '30 minutes', complexity: 'low' };
+            
+            return `
+                <div class="tool-requirements">
+                    <div class="tool-requirements-title">🔧 Tools Required</div>
+                    <div class="tool-list">
+                        ${equipment.tools.map(tool => `
+                            <div class="tool-item">
+                                <div class="tool-icon">🔧</div>
+                                <span>${tool}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="time-estimate">
+                        ⏱️ Estimated Time: ${equipment.time}
+                    </div>
+                </div>
+            `;
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        // VIN CONFLICT RESOLUTION
+        // ══════════════════════════════════════════════════════════════════
+
+        function validateVinInput() {
+            const vin = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+            this.value = vin;
+            
+            const generateBtn = document.getElementById('generateQrBtn');
+            generateBtn.disabled = vin.length !== 17;
+        }
+
+        async function generateVinQR() {
+            const vin = document.getElementById('vinInput').value;
+            if (vin.length !== 17) return;
+            
+            appState.vinNumber = vin;
+            
+            // Display VIN
+            document.getElementById('vinDisplayText').textContent = vin;
+            
+            // Generate QR code
+            const qrContainer = document.getElementById('qrContainer');
+            qrContainer.innerHTML = '';
+            
+            try {
+                await QRCode.toCanvas(qrContainer, vin, {
+                    width: 200,
+                    margin: 2,
+                    color: {
+                        dark: '#1a2332',
+                        light: '#ffffff'
+                    }
+                });
+            } catch (error) {
+                console.error('QR generation failed:', error);
+                qrContainer.innerHTML = '<p>QR generation failed</p>';
+            }
+            
+            // Show VIN display and actions
+            document.getElementById('vinDisplay').style.display = 'block';
+            document.getElementById('conflictResolvedBtn').style.display = 'inline-block';
+        }
+
+        function copyVinToClipboard() {
+            navigator.clipboard.writeText(appState.vinNumber).then(() => {
+                // Provide user feedback
+                const btn = document.getElementById('copyVinBtn');
+                const originalText = btn.textContent;
+                btn.textContent = '✅ Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            });
+        }
+
+        function openMyAutoSmart() {
+            // Open MyAutoSmart website - user will manually enter VIN
+            window.open('https://myautosmart.com', '_blank');
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        // CUSTOMER FORM VALIDATION
+        // ══════════════════════════════════════════════════════════════════
+
+        function validateCustomerForm() {
+            const name = document.getElementById('customerName').value.trim();
+            const email = document.getElementById('customerEmail').value.trim();
+            const phone = document.getElementById('customerPhone').value.trim();
+            
+            const isValid = name && email && phone && validateEmail(email);
+            document.getElementById('generateInvoiceBtn').disabled = !isValid;
+            
+            if (isValid) {
+                appState.customer = { name, email, phone };
+                updateJobSummary();
+            }
+        }
+
+        function validateEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+
+        function updateJobSummary() {
+            // This would be populated with selected keys and tool requirements
+            const summary = document.getElementById('jobSummary');
+            summary.innerHTML = `
+                <div class="key-detail-row">
+                    <span class="key-detail-label">Vehicle:</span>
+                    <span class="key-detail-value">${appState.vehicle.year} ${appState.vehicle.make} ${appState.vehicle.model}</span>
+                </div>
+                <div class="key-detail-row">
+                    <span class="key-detail-label">Service Type:</span>
+                    <span class="key-detail-value">${appState.serviceType}</span>
+                </div>
+                ${appState.vinNumber ? `
+                <div class="key-detail-row">
+                    <span class="key-detail-label">VIN:</span>
+                    <span class="key-detail-value">${appState.vinNumber}</span>
+                </div>` : ''}
+                <div class="key-detail-row">
+                    <span class="key-detail-label">Customer:</span>
+                    <span class="key-detail-value">${appState.customer.name} (${appState.customer.email})</span>
+                </div>
+            `;
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        // INVOICE GENERATION
+        // ══════════════════════════════════════════════════════════════════
+
+        async function generateInvoice() {
+            const btn = document.getElementById('generateInvoiceBtn');
+            btn.textContent = 'Generating Invoice...';
+            btn.disabled = true;
+            
+            try {
+                // Create Shopify draft order
+                await createShopifyDraftOrder();
+                
+                // Send customer email
+                await sendCustomerInvoiceEmail();
+                
+                // Create calendar entry data for job planning
+                const calendarData = prepareCalendarData();
+                
+                // Show completion screen
+                showCompletionScreen();
+                
+            } catch (error) {
+                console.error('Invoice generation failed:', error);
+                alert('Invoice generation failed. Please try again.');
+                btn.textContent = 'Generate & Send Invoice';
+                btn.disabled = false;
+            }
+        }
+
+        async function createShopifyDraftOrder() {
+            // This would make actual API call to Shopify
+            // Mock implementation for now
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    appState.invoiceData = {
+                        draftOrderId: 'DO123456',
+                        invoiceUrl: `https://${SHOPIFY_DOMAIN}/invoices/draft_order_123456`,
+                        expiresAt: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000) // 10 days
+                    };
+                    resolve();
+                }, 1000);
+            });
+        }
+
+        async function sendCustomerInvoiceEmail() {
+            // Use EmailJS or direct API call
+            // Mock implementation for now
+            return new Promise(resolve => setTimeout(resolve, 500));
+        }
+
+        function prepareCalendarData() {
+            // Prepare data for Google Calendar API
+            return {
+                summary: `${appState.customer.name} - ${appState.vehicle.year} ${appState.vehicle.make} ${appState.vehicle.model}`,
+                description: `
+📋 CUSTOMER INFO:
+Name: ${appState.customer.name}
+Phone: ${appState.customer.phone}
+Email: ${appState.customer.email}
+${appState.vinNumber ? `VIN: ${appState.vinNumber}` : ''}
+
+🚗 VEHICLE & SERVICE:
+Vehicle: ${appState.vehicle.year} ${appState.vehicle.make} ${appState.vehicle.model}
+Service Type: ${appState.serviceType}
+
+🔧 TOOLS REQUIRED:
+${appState.toolRequirements.join(', ')}
+
+⏱️ ESTIMATED TIME: ${appState.timeEstimate}
+
+📝 NOTES:
+${appState.vinNumber ? 'VIN verified via MyAutoSmart' : 'Standard service'}
+                `.trim()
+            };
+        }
+
+        function showCompletionScreen() {
+            showScreen('screen6');
+            
+            const summary = document.getElementById('completionSummary');
+            summary.innerHTML = `
+                <div class="alert alert-success">
+                    <strong>✅ Invoice Sent Successfully</strong><br>
+                    Customer: ${appState.customer.name} (${appState.customer.email})<br>
+                    Vehicle: ${appState.vehicle.year} ${appState.vehicle.make} ${appState.vehicle.model}<br>
+                    Service: ${appState.serviceType}
+                </div>
+                
+                <div class="key-detail-row">
+                    <span class="key-detail-label">Invoice URL:</span>
+                    <span class="key-detail-value">
+                        <a href="${appState.invoiceData?.invoiceUrl}" target="_blank">Open Invoice</a>
+                    </span>
+                </div>
+                
+                <div class="key-detail-row">
+                    <span class="key-detail-label">Expires:</span>
+                    <span class="key-detail-value">${appState.invoiceData?.expiresAt.toLocaleDateString()}</span>
+                </div>
+                
+                <div class="alert alert-info">
+                    <strong>Next Steps:</strong><br>
+                    • Customer will receive email with payment options<br>
+                    • In-stock items → immediate booking link<br>
+                    • RKS items → batch order list for end-of-day ordering
+                </div>
+            `;
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        // UTILITY FUNCTIONS
+        // ══════════════════════════════════════════════════════════════════
+
+        function startNewSearch() {
+            // Reset application state
+            appState = {
+                currentScreen: 1,
+                vehicle: { year: '', make: '', model: '' },
+                serviceType: '',
+                searchResults: [],
+                selectedKeys: [],
+                conflictDetected: false,
+                vinNumber: '',
+                customer: { name: '', email: '', phone: '' },
+                toolRequirements: [],
+                timeEstimate: '',
+                invoiceData: null
+            };
+            
+            // Reset form values
+            document.getElementById('vehicleYear').value = '';
+            document.getElementById('vehicleMake').innerHTML = '<option value="">Select Make</option>';
+            document.getElementById('vehicleModel').innerHTML = '<option value="">Select Model</option>';
+            document.getElementById('vehicleMake').disabled = true;
+            document.getElementById('vehicleModel').disabled = true;
+            document.querySelectorAll('input[name="serviceType"]').forEach(radio => radio.checked = false);
+            
+            // Reset customer form
+            document.getElementById('customerName').value = '';
+            document.getElementById('customerEmail').value = '';
+            document.getElementById('customerPhone').value = '';
+            
+            // Reset VIN form
+            document.getElementById('vinInput').value = '';
+            document.getElementById('vinDisplay').style.display = 'none';
+            
+            // Return to first screen
+            showScreen('screen1');
+        }
+
+        function displaySearchError() {
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = `
+                <div class="alert alert-error">
+                    <strong>Search Failed:</strong> Unable to connect to catalog. Please try again or contact support.
+                </div>
+            `;
+        }
+
+        // Development helpers
+        window.ckcDebug = {
+            state: () => appState,
+            screen: (num) => showScreen(`screen${num}`),
+            reset: startNewSearch
+        };
+
+        console.log('CKC Command 2.0 loaded. Use ckcDebug for development helpers.');
+    </script>
+</body>
+</html>
