@@ -361,6 +361,10 @@
             box-shadow: var(--ckc-shadow);
             transition: var(--ckc-transition);
             position: relative;
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 25px;
+            align-items: start;
         }
 
         .key-card:hover {
@@ -377,6 +381,42 @@
         .key-card.excluded {
             opacity: 0.5;
             border-color: var(--ckc-error);
+        }
+
+        .key-image-container {
+            position: relative;
+            background: var(--ckc-gray-50);
+            border-radius: var(--ckc-border-radius);
+            overflow: hidden;
+            aspect-ratio: 4/3;
+        }
+
+        .key-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: var(--ckc-transition);
+        }
+
+        .key-image:hover {
+            transform: scale(1.05);
+        }
+
+        .key-image-overlay {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(26, 35, 50, 0.8);
+            color: var(--ckc-white);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .key-content {
+            flex: 1;
         }
 
         .key-header {
@@ -439,6 +479,19 @@
 
         .key-detail-value {
             color: var(--ckc-gray-800);
+        }
+
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+            .key-card {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .key-image-container {
+                max-width: 200px;
+                margin: 0 auto;
+            }
         }
 
         /* ═══════════════════════════════════════════════════════════════════
@@ -1017,7 +1070,8 @@
             customer: { name: '', email: '', phone: '' },
             toolRequirements: [],
             timeEstimate: '',
-            invoiceData: null
+            invoiceData: null,
+            pendingCuratedItems: null
         };
 
         // Equipment database for tool requirements
@@ -1080,7 +1134,7 @@
             document.getElementById('generateQrBtn').addEventListener('click', generateVinQR);
             document.getElementById('copyVinBtn').addEventListener('click', copyVinToClipboard);
             document.getElementById('openAutosmart').addEventListener('click', openMyAutoSmart);
-            document.getElementById('conflictResolvedBtn').addEventListener('click', () => showScreen('screen4'));
+            document.getElementById('conflictResolvedBtn').addEventListener('click', resolveConflictAndShowCuratedItems);
             document.getElementById('sendInvoiceBtn').addEventListener('click', () => showScreen('screen5'));
             document.getElementById('generateInvoiceBtn').addEventListener('click', generateInvoice);
 
@@ -1309,41 +1363,543 @@
                 return;
             }
             
-            // Update UI to show searching
+            // Close the extended modal
             closeExtendedModal();
             
             // Set the vehicle info
             appState.vehicle.make = make;
             appState.vehicle.model = model;
             
-            // Update the dropdowns to show the entered values
+            // Show "Researching..." message to customer
+            showResearchingMessage();
+            
+            // Fetch RKS data and show admin curation interface
+            const rksResults = await fetchRKSData(year, make, model);
+            showAdminCurationInterface(rksResults);
+        }
+        
+        function showResearchingMessage() {
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = `
+                <div class="alert alert-info">
+                    <strong>🔍 Researching Your Vehicle</strong><br>
+                    Please wait while we search our extended database for ${appState.vehicle.year} ${appState.vehicle.make} ${appState.vehicle.model} options...
+                </div>
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Checking RKS database for compatible keys...</p>
+                </div>
+            `;
+        }
+        
+        async function fetchRKSData(year, make, model) {
+            // Simulate RKS scraping - in production, this would call real RKS API
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            
+            // Mock RKS results with realistic data
+            const mockResults = [
+                {
+                    sku: `${make.substring(0,3).toUpperCase()}-${model.substring(0,3).toUpperCase()}-SM-OEM`,
+                    title: `${year} ${make} ${model} Smart Key (OEM)`,
+                    type: 'Smart Key',
+                    rksCost: 240.00,
+                    suggestedPrice: 399.99,
+                    fcc: 'TQ8-FOB-4F24',
+                    keyway: 'HY22',
+                    oem: true,
+                    availability: 'In Stock',
+                    leadTime: '2-3 business days',
+                    supplier: 'RKS',
+                    description: 'Original Equipment Manufacturer smart key with full functionality',
+                    buttons: 4
+                },
+                {
+                    sku: `${make.substring(0,3).toUpperCase()}-${model.substring(0,3).toUpperCase()}-SM-AM`,
+                    title: `${year} ${make} ${model} Smart Key (Aftermarket)`,
+                    type: 'Smart Key',
+                    rksCost: 145.00,
+                    suggestedPrice: 249.99,
+                    fcc: 'TQ8-FOB-4F24',
+                    keyway: 'HY22',
+                    oem: false,
+                    availability: 'In Stock',
+                    leadTime: '2-3 business days',
+                    supplier: 'RKS',
+                    description: 'High-quality aftermarket smart key, full functionality',
+                    buttons: 4
+                },
+                {
+                    sku: `${make.substring(0,3).toUpperCase()}-${model.substring(0,3).toUpperCase()}-RH`,
+                    title: `${year} ${make} ${model} Remote Head Key`,
+                    type: 'Remote Head Key',
+                    rksCost: 65.00,
+                    suggestedPrice: 119.99,
+                    fcc: 'OSLOKA-630T',
+                    keyway: 'HY22',
+                    oem: false,
+                    availability: 'In Stock',
+                    leadTime: '2-3 business days',
+                    supplier: 'RKS',
+                    description: 'Remote and transponder built into key head',
+                    buttons: 3
+                },
+                {
+                    sku: `${make.substring(0,3).toUpperCase()}-${model.substring(0,3).toUpperCase()}-TR`,
+                    title: `${year} ${make} ${model} Transponder Key`,
+                    type: 'Transponder Key',
+                    rksCost: 28.00,
+                    suggestedPrice: 59.99,
+                    fcc: 'N/A',
+                    keyway: 'HY22',
+                    oem: false,
+                    availability: 'In Stock',
+                    leadTime: '2-3 business days',
+                    supplier: 'RKS',
+                    description: 'Basic transponder key, no remote functions',
+                    buttons: 0
+                },
+                {
+                    sku: `${make.substring(0,3).toUpperCase()}-${model.substring(0,3).toUpperCase()}-RM`,
+                    title: `${year} ${make} ${model} Remote (Keyless Entry)`,
+                    type: 'Remote',
+                    rksCost: 35.00,
+                    suggestedPrice: 69.99,
+                    fcc: 'OSLOKA-630T',
+                    keyway: 'N/A',
+                    oem: false,
+                    availability: 'In Stock',
+                    leadTime: '2-3 business days',
+                    supplier: 'RKS',
+                    description: 'Keyless entry remote only, no key blade',
+                    buttons: 3
+                }
+            ];
+            
+            return mockResults;
+        }
+        
+        function showAdminCurationInterface(rksResults) {
+            // Create admin overlay for manual curation
+            const modalHtml = `
+                <div id="adminCurationModal" style="
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                    background: rgba(0,0,0,0.95); z-index: 2000; overflow-y: auto; padding: 20px;">
+                    <div style="
+                        background: white; border-radius: 12px; max-width: 1200px; 
+                        margin: 0 auto; box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
+                        
+                        <!-- Header -->
+                        <div style="
+                            background: linear-gradient(135deg, var(--ckc-navy) 0%, var(--ckc-navy-light) 100%);
+                            color: white; padding: 30px; border-radius: 12px 12px 0 0;">
+                            <h2 style="font-family: 'JetBrains Mono', monospace; font-size: 1.8rem; margin-bottom: 10px;">
+                                🔧 Admin Curation: ${appState.vehicle.year} ${appState.vehicle.make} ${appState.vehicle.model}
+                            </h2>
+                            <p style="font-size: 1.1rem; opacity: 0.9;">
+                                Select which RKS options to show your customer. Uncheck items to exclude them.
+                            </p>
+                        </div>
+                        
+                        <!-- Quick Actions -->
+                        <div style="padding: 20px 30px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                                <button onclick="selectAllItems()" class="btn btn-secondary" style="font-size: 0.9rem; padding: 8px 16px;">
+                                    ✅ Select All
+                                </button>
+                                <button onclick="selectNone()" class="btn btn-secondary" style="font-size: 0.9rem; padding: 8px 16px;">
+                                    ❌ Select None
+                                </button>
+                                <button onclick="selectOEMOnly()" class="btn btn-secondary" style="font-size: 0.9rem; padding: 8px 16px;">
+                                    🏭 OEM Only
+                                </button>
+                                <button onclick="selectSmartKeysOnly()" class="btn btn-secondary" style="font-size: 0.9rem; padding: 8px 16px;">
+                                    📱 Smart Keys Only
+                                </button>
+                                <button onclick="selectBudgetOptions()" class="btn btn-secondary" style="font-size: 0.9rem; padding: 8px 16px;">
+                                    💰 Budget Options
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- RKS Results Grid -->
+                        <div style="padding: 30px;" id="curationGrid">
+                            ${renderCurationGrid(rksResults)}
+                        </div>
+                        
+                        <!-- Footer Actions -->
+                        <div style="
+                            padding: 20px 30px; background: #f8fafc; border-radius: 0 0 12px 12px;
+                            display: flex; justify-content: space-between; align-items: center;">
+                            <div style="color: var(--ckc-slate); font-size: 0.9rem;">
+                                <strong id="selectedCount">0</strong> items selected for customer review
+                            </div>
+                            <div style="display: flex; gap: 15px;">
+                                <button onclick="cancelCuration()" class="btn btn-secondary">
+                                    Cancel Research
+                                </button>
+                                <button onclick="sendToCustomer()" class="btn btn-primary" id="sendToCustomerBtn" disabled>
+                                    📤 Send to Customer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // Store RKS results for later use
+            window.currentRKSResults = rksResults;
+            
+            // Initialize with smart defaults (OEM + best aftermarket)
+            selectSmartDefaults();
+        }
+        
+        function renderCurationGrid(results) {
+            return results.map((item, index) => `
+                <div class="curation-item" style="
+                    border: 2px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 20px;
+                    background: white; transition: all 0.2s ease; display: grid; 
+                    grid-template-columns: 150px 1fr; gap: 20px;" data-index="${index}">
+                    
+                    <!-- Key Image -->
+                    <div style="
+                        background: #f8fafc; border-radius: 6px; overflow: hidden; 
+                        aspect-ratio: 4/3; position: relative;">
+                        <img src="${getKeyImage({sku: item.sku, vendor: 'RKS', type: item.type, isExtended: true})}" 
+                             alt="${item.title}" 
+                             style="width: 100%; height: 100%; object-fit: cover;">
+                        <div style="
+                            position: absolute; top: 4px; right: 4px; 
+                            background: rgba(26,35,50,0.8); color: white; 
+                            padding: 2px 6px; border-radius: 3px; font-size: 0.6rem; 
+                            font-weight: 600; text-transform: uppercase;">
+                            ${item.oem ? 'OEM' : 'AM'}
+                        </div>
+                    </div>
+                    
+                    <!-- Item Content -->
+                    <div>
+                        <!-- Selection Header -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                            <label style="
+                                display: flex; align-items: center; gap: 12px; cursor: pointer;
+                                font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 600;">
+                                <input type="checkbox" class="item-checkbox" data-index="${index}" 
+                                       onchange="updateCurationSelection()" 
+                                       style="transform: scale(1.3); margin: 0;">
+                                <span style="color: var(--ckc-navy);">${item.title}</span>
+                            </label>
+                            <div style="
+                                background: ${item.oem ? 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)' : 'linear-gradient(135deg, #e0f2fe 0%, #b3e5fc 100)'};
+                                color: ${item.oem ? '#92400e' : '#0c4a6e'};
+                                padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">
+                                ${item.oem ? 'OEM' : 'Aftermarket'}
+                            </div>
+                        </div>
+                    
+                    <!-- Item Details Grid -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                        <div>
+                            <div style="font-weight: 600; color: var(--ckc-slate); margin-bottom: 4px;">Key Type</div>
+                            <div>${item.type}</div>
+                        </div>
+                        <div>
+                            <div style="font-weight: 600; color: var(--ckc-slate); margin-bottom: 4px;">SKU</div>
+                            <div style="font-family: 'JetBrains Mono', monospace;">${item.sku}</div>
+                        </div>
+                        <div>
+                            <div style="font-weight: 600; color: var(--ckc-slate); margin-bottom: 4px;">RKS Cost</div>
+                            <div style="font-family: 'JetBrains Mono', monospace; color: var(--ckc-error);">$${item.rksCost.toFixed(2)}</div>
+                        </div>
+                        <div>
+                            <div style="font-weight: 600; color: var(--ckc-slate); margin-bottom: 4px;">Your Price</div>
+                            <div style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--ckc-success);">
+                                $<input type="number" value="${item.suggestedPrice.toFixed(2)}" step="0.01" 
+                                        style="width: 80px; border: 1px solid #ccc; padding: 2px 6px; border-radius: 4px;"
+                                        onchange="updateItemPrice(${index}, this.value)">
+                            </div>
+                        </div>
+                        <div>
+                            <div style="font-weight: 600; color: var(--ckc-slate); margin-bottom: 4px;">FCC ID</div>
+                            <div style="font-family: 'JetBrains Mono', monospace;">${item.fcc}</div>
+                        </div>
+                        <div>
+                            <div style="font-weight: 600; color: var(--ckc-slate); margin-bottom: 4px;">Availability</div>
+                            <div style="color: var(--ckc-success);">${item.availability}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Description -->
+                    <div style="
+                        background: #f8fafc; padding: 12px 15px; border-radius: 6px; 
+                        font-size: 0.9rem; color: var(--ckc-slate);">
+                        ${item.description}
+                        ${item.buttons > 0 ? ` • ${item.buttons} button${item.buttons > 1 ? 's' : ''}` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // ══════════════════════════════════════════════════════════════════
+        // ADMIN CURATION INTERFACE CONTROLS
+        // ══════════════════════════════════════════════════════════════════
+        
+        function updateCurationSelection() {
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            const checked = Array.from(checkboxes).filter(cb => cb.checked);
+            
+            document.getElementById('selectedCount').textContent = checked.length;
+            document.getElementById('sendToCustomerBtn').disabled = checked.length === 0;
+            
+            // Update visual styling for selected items
+            checkboxes.forEach((checkbox, index) => {
+                const item = checkbox.closest('.curation-item');
+                if (checkbox.checked) {
+                    item.style.borderColor = 'var(--ckc-success)';
+                    item.style.background = 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)';
+                } else {
+                    item.style.borderColor = '#e2e8f0';
+                    item.style.background = 'white';
+                }
+            });
+        }
+        
+        function selectAllItems() {
+            document.querySelectorAll('.item-checkbox').forEach(cb => cb.checked = true);
+            updateCurationSelection();
+        }
+        
+        function selectNone() {
+            document.querySelectorAll('.item-checkbox').forEach(cb => cb.checked = false);
+            updateCurationSelection();
+        }
+        
+        function selectOEMOnly() {
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            checkboxes.forEach((checkbox, index) => {
+                const item = window.currentRKSResults[index];
+                checkbox.checked = item.oem;
+            });
+            updateCurationSelection();
+        }
+        
+        function selectSmartKeysOnly() {
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            checkboxes.forEach((checkbox, index) => {
+                const item = window.currentRKSResults[index];
+                checkbox.checked = item.type.includes('Smart Key');
+            });
+            updateCurationSelection();
+        }
+        
+        function selectBudgetOptions() {
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            checkboxes.forEach((checkbox, index) => {
+                const item = window.currentRKSResults[index];
+                checkbox.checked = item.rksCost < 100; // Budget under $100 RKS cost
+            });
+            updateCurationSelection();
+        }
+        
+        function selectSmartDefaults() {
+            // Intelligent default selection: OEM smart key + best aftermarket option
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            checkboxes.forEach((checkbox, index) => {
+                const item = window.currentRKSResults[index];
+                // Select OEM smart keys and top aftermarket option
+                checkbox.checked = (item.oem && item.type.includes('Smart Key')) || 
+                                 (!item.oem && item.type.includes('Smart Key') && index <= 1);
+            });
+            updateCurationSelection();
+        }
+        
+        function updateItemPrice(index, newPrice) {
+            if (window.currentRKSResults && window.currentRKSResults[index]) {
+                window.currentRKSResults[index].suggestedPrice = parseFloat(newPrice);
+            }
+        }
+        
+        function cancelCuration() {
+            // Close curation modal and return to search
+            document.getElementById('adminCurationModal').remove();
+            
+            // Show cancelled message
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = `
+                <div class="alert alert-warning">
+                    <strong>Research Cancelled</strong><br>
+                    Extended database search was cancelled. You can try again or proceed with a different search.
+                </div>
+            `;
+            
+            // Reset vehicle selection
+            document.getElementById('vehicleMake').value = '';
+            document.getElementById('vehicleModel').innerHTML = '<option value="">Select Model</option>';
+            appState.vehicle.make = '';
+            appState.vehicle.model = '';
+            updateSearchButton();
+        }
+        
+        function sendToCustomer() {
+            const checkboxes = document.querySelectorAll('.item-checkbox:checked');
+            
+            if (checkboxes.length === 0) {
+                alert('Please select at least one item to send to the customer');
+                return;
+            }
+            
+            // Get selected items
+            const selectedItems = Array.from(checkboxes).map(checkbox => {
+                const index = parseInt(checkbox.dataset.index);
+                return window.currentRKSResults[index];
+            });
+            
+            // Convert to app format
+            const formattedItems = selectedItems.map(item => ({
+                sku: item.sku,
+                title: item.title,
+                type: item.type,
+                price: item.suggestedPrice,
+                inStock: false,
+                vendor: 'RKS',
+                fcc: item.fcc,
+                keyway: item.keyway,
+                oem: item.oem,
+                isExtended: true,
+                leadTime: item.leadTime,
+                description: item.description,
+                rksCost: item.rksCost
+            }));
+            
+            // Close curation modal
+            document.getElementById('adminCurationModal').remove();
+            
+            // Update vehicle display
+            updateExtendedVehicleDisplay();
+            
+            // STEP 3: Run conflict detection on curated selections
+            const conflictsDetected = analyzeSelectedItemsForConflicts(formattedItems);
+            
+            if (conflictsDetected) {
+                // Store curated items for after VIN resolution
+                appState.pendingCuratedItems = formattedItems;
+                
+                // Show conflict detection message and proceed to VIN screen
+                showConflictDetectedMessage(formattedItems);
+                setTimeout(() => showScreen('screen3'), 2000);
+            } else {
+                // No conflicts - show curated options directly to customer
+                appState.searchResults = formattedItems;
+                displaySearchResults();
+                document.getElementById('proceedBtn').style.display = 'inline-block';
+                showExtendedSearchNotification(`✅ ${selectedItems.length} options ready for customer selection!`);
+            }
+        }
+        
+        function analyzeSelectedItemsForConflicts(items) {
+            // Group items by key type for analysis
+            const byType = {};
+            items.forEach(item => {
+                if (!byType[item.type]) byType[item.type] = [];
+                byType[item.type].push(item);
+            });
+            
+            // Check for conflicts within each key type
+            for (const type in byType) {
+                const group = byType[type];
+                if (group.length <= 1) continue;
+                
+                // Check for FCC ID conflicts
+                const fccs = new Set(group.filter(k => k.fcc && k.fcc !== 'N/A' && k.fcc !== 'TBD').map(k => k.fcc));
+                const keyways = new Set(group.filter(k => k.keyway && k.keyway !== 'N/A' && k.keyway !== 'TBD').map(k => k.keyway));
+                
+                // Conflict detected if multiple FCC IDs or keyways within same type
+                if (fccs.size > 1 || keyways.size > 1) {
+                    console.log(`Conflict detected in ${type}: FCCs=${Array.from(fccs)}, Keyways=${Array.from(keyways)}`);
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+        
+        function showConflictDetectedMessage(items) {
+            const container = document.getElementById('resultsContainer');
+            
+            // Build conflict details
+            const conflictDetails = analyzeConflictDetails(items);
+            
+            container.innerHTML = `
+                <div class="alert alert-warning">
+                    <strong>⚠️ Specification Conflicts Detected</strong><br>
+                    Multiple specifications found in your curated selections. VIN verification required to ensure correct key selection.
+                </div>
+                
+                <div class="customer-form" style="margin: 20px 0;">
+                    <h3 style="color: var(--ckc-navy); margin-bottom: 15px;">Conflicting Specifications Found:</h3>
+                    <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        ${conflictDetails}
+                    </div>
+                    <p style="color: var(--ckc-slate);">
+                        <strong>Next:</strong> Customer will be prompted for VIN to resolve these conflicts and select the correct key.
+                    </p>
+                </div>
+            `;
+        }
+        
+        function analyzeConflictDetails(items) {
+            const conflicts = [];
+            
+            // Group by type and analyze conflicts
+            const byType = {};
+            items.forEach(item => {
+                if (!byType[item.type]) byType[item.type] = [];
+                byType[item.type].push(item);
+            });
+            
+            for (const type in byType) {
+                const group = byType[type];
+                if (group.length <= 1) continue;
+                
+                const fccs = [...new Set(group.filter(k => k.fcc && k.fcc !== 'N/A' && k.fcc !== 'TBD').map(k => k.fcc))];
+                const keyways = [...new Set(group.filter(k => k.keyway && k.keyway !== 'N/A' && k.keyway !== 'TBD').map(k => k.keyway))];
+                
+                if (fccs.length > 1) {
+                    conflicts.push(`<strong>${type}:</strong> Multiple FCC IDs (${fccs.join(', ')})`);
+                }
+                if (keyways.length > 1) {
+                    conflicts.push(`<strong>${type}:</strong> Multiple blade types (${keyways.join(', ')})`);
+                }
+            }
+            
+            return conflicts.length > 0 ? conflicts.join('<br>') : 'Multiple specifications detected';
+        }
+        
+        function updateExtendedVehicleDisplay() {
             const makeSelect = document.getElementById('vehicleMake');
             const modelSelect = document.getElementById('vehicleModel');
             
-            // Add the custom options
-            let customMakeOption = Array.from(makeSelect.options).find(opt => opt.value === make);
+            // Add the custom options to dropdowns
+            let customMakeOption = Array.from(makeSelect.options).find(opt => opt.value === appState.vehicle.make);
             if (!customMakeOption) {
                 const option = document.createElement('option');
-                option.value = make;
-                option.textContent = `${make} (Extended Database)`;
+                option.value = appState.vehicle.make;
+                option.textContent = `${appState.vehicle.make} (Extended Database)`;
                 option.selected = true;
                 makeSelect.appendChild(option);
-            } else {
-                customMakeOption.selected = true;
             }
             
-            modelSelect.innerHTML = `<option value="${model}" selected>${model} (Extended Database)</option>`;
+            modelSelect.innerHTML = `<option value="${appState.vehicle.model}" selected>${appState.vehicle.model} (Extended Database)</option>`;
             modelSelect.disabled = false;
             
-            // Enable search button
-            updateSearchButton();
-            
-            // Show message that extended search will be performed
-            showExtendedSearchNotification();
+            // Update vehicle display for customer
+            const vehicleDisplay = `${appState.vehicle.year} ${appState.vehicle.make} ${appState.vehicle.model}`;
+            document.getElementById('vehicleDisplay').textContent = vehicleDisplay;
         }
         
-        function showExtendedSearchNotification() {
-            // Show a brief notification that extended search will be used
+        function showExtendedSearchNotification(message = '✅ Extended database search enabled!') {
+            // Show a brief notification about extended search status
             const notification = document.createElement('div');
             notification.style.cssText = `
                 position: fixed; top: 20px; right: 20px; z-index: 1001;
@@ -1353,7 +1909,7 @@
                 box-shadow: 0 10px 25px rgba(0,0,0,0.2);
                 animation: slideIn 0.3s ease-out;
             `;
-            notification.innerHTML = '✅ Extended database search enabled!';
+            notification.innerHTML = message;
             
             document.body.appendChild(notification);
             
@@ -1379,8 +1935,58 @@
 
 
         // ══════════════════════════════════════════════════════════════════
-        // KEY SEARCH LOGIC
+        // IMAGE MANAGEMENT SYSTEM
         // ══════════════════════════════════════════════════════════════════
+        
+        function getKeyImage(key) {
+            // Priority 1: Your Shopify catalog images (1,785 items)
+            if (key.vendor === 'CKC' || !key.isExtended) {
+                return getShopifyImageUrl(key.sku);
+            }
+            
+            // Priority 2: RKS images (for extended database items)
+            if (key.vendor === 'RKS' && key.isExtended) {
+                return getRKSImageUrl(key.sku) || getKeyTypePlaceholder(key.type);
+            }
+            
+            // Priority 3: Fallback placeholder
+            return getKeyTypePlaceholder(key.type);
+        }
+        
+        function getShopifyImageUrl(sku) {
+            // Map SKUs to your Shopify image URLs
+            // In production, this would query your Shopify API or local image database
+            const shopifyImages = {
+                'FOR-94-SM': 'https://cdn.shopify.com/s/files/1/0123/4567/products/ford-f150-smart-key.jpg',
+                'FOR-94-SM-OEM': 'https://cdn.shopify.com/s/files/1/0123/4567/products/ford-f150-smart-key-oem.jpg',
+                'FOR-94-TR': 'https://cdn.shopify.com/s/files/1/0123/4567/products/ford-f150-transponder.jpg',
+                // Add more mappings as needed
+            };
+            
+            return shopifyImages[sku] || getKeyTypePlaceholder('Unknown');
+        }
+        
+        function getRKSImageUrl(sku) {
+            // For extended database items, attempt to get RKS images
+            // This would be implemented when needed for rare cases
+            return null; // Return null to fall back to placeholder
+        }
+        
+        function getKeyTypePlaceholder(keyType) {
+            // Professional placeholder images by key type
+            const placeholders = {
+                'Smart Key': 'https://via.placeholder.com/200x150/1a2332/d4af37?text=Smart+Key',
+                'FOBIK': 'https://via.placeholder.com/200x150/1a2332/d4af37?text=FOBIK',
+                'Remote Head Key': 'https://via.placeholder.com/200x150/1a2332/d4af37?text=Remote+Head',
+                'Remote Flip Key': 'https://via.placeholder.com/200x150/1a2332/d4af37?text=Flip+Key',
+                'Transponder Key': 'https://via.placeholder.com/200x150/1a2332/d4af37?text=Transponder',
+                'Remote': 'https://via.placeholder.com/200x150/1a2332/d4af37?text=Remote',
+                'Remote (Keyless Entry)': 'https://via.placeholder.com/200x150/1a2332/d4af37?text=Remote',
+                'Unknown': 'https://via.placeholder.com/200x150/1a2332/d4af37?text=Key'
+            };
+            
+            return placeholders[keyType] || placeholders['Unknown'];
+        }
 
         async function performKeySearch() {
             showScreen('screen2');
@@ -1440,7 +2046,7 @@
                         fcc: 'M3N-A2C31243300',
                         keyway: 'HU101',
                         oem: false,
-                        image: ''
+                        image: 'https://cdn.shopify.com/s/files/1/0123/4567/products/ford-f150-smart-key.jpg'
                     },
                     {
                         sku: 'FOR-94-SM-OEM',
@@ -1452,7 +2058,7 @@
                         fcc: 'M3N-A2C31243300',
                         keyway: 'HU101',
                         oem: true,
-                        image: ''
+                        image: 'https://cdn.shopify.com/s/files/1/0123/4567/products/ford-f150-smart-key-oem.jpg'
                     },
                     {
                         sku: 'FOR-94-TR',
@@ -1464,7 +2070,7 @@
                         fcc: 'N/A',
                         keyway: 'HU101',
                         oem: false,
-                        image: ''
+                        image: 'https://cdn.shopify.com/s/files/1/0123/4567/products/ford-f150-transponder.jpg'
                     }
                 ];
             }
@@ -1660,45 +2266,58 @@
                               (key.isExtended ? `Extended Database — ${key.leadTime || '2-3 days'}` : 'Available to Order (2-3 days)');
             const oemLabel = key.oem ? 'OEM' : 'Aftermarket';
             const extendedBadge = key.isExtended ? ' • Extended DB' : '';
+            const imageUrl = getKeyImage(key);
             
             return `
                 <div class="key-card" data-sku="${key.sku}">
-                    <div class="key-header">
-                        <div>
-                            <div class="key-title">${key.title}</div>
-                            <div class="key-type">${key.type} • ${oemLabel}${extendedBadge}</div>
-                        </div>
-                        <div class="key-price">
-                            <div class="key-price-amount">$${pricing.total.toFixed(2)}</div>
-                            <div class="key-price-breakdown">
-                                Key: $${key.price} + Programming: $${pricing.programming}
-                                ${key.isExtended ? '<br><small>Price-a-Key calculated</small>' : ''}
+                    <!-- Key Image -->
+                    <div class="key-image-container">
+                        <img src="${imageUrl}" 
+                             alt="${key.title}" 
+                             class="key-image"
+                             onerror="this.src='${getKeyTypePlaceholder(key.type)}'">
+                        <div class="key-image-overlay">${oemLabel}</div>
+                    </div>
+                    
+                    <!-- Key Content -->
+                    <div class="key-content">
+                        <div class="key-header">
+                            <div>
+                                <div class="key-title">${key.title}</div>
+                                <div class="key-type">${key.type}${extendedBadge}</div>
+                            </div>
+                            <div class="key-price">
+                                <div class="key-price-amount">$${pricing.total.toFixed(2)}</div>
+                                <div class="key-price-breakdown">
+                                    Key: $${key.price} + Programming: $${pricing.programming}
+                                    ${key.isExtended ? '<br><small>Price-a-Key calculated</small>' : ''}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="key-details">
-                        <div class="key-detail-row">
-                            <span class="key-detail-label">SKU:</span>
-                            <span class="key-detail-value">${key.sku}</span>
+                        
+                        <div class="key-details">
+                            <div class="key-detail-row">
+                                <span class="key-detail-label">SKU:</span>
+                                <span class="key-detail-value">${key.sku}</span>
+                            </div>
+                            ${key.fcc !== 'N/A' ? `
+                            <div class="key-detail-row">
+                                <span class="key-detail-label">FCC ID:</span>
+                                <span class="key-detail-value">${key.fcc}</span>
+                            </div>` : ''}
+                            <div class="key-detail-row">
+                                <span class="key-detail-label">Status:</span>
+                                <span class="status-indicator ${statusClass}">${statusText}</span>
+                            </div>
+                            ${key.isExtended ? `
+                            <div class="key-detail-row">
+                                <span class="key-detail-label">Source:</span>
+                                <span class="key-detail-value">Extended Database via RKS</span>
+                            </div>` : ''}
                         </div>
-                        ${key.fcc !== 'N/A' ? `
-                        <div class="key-detail-row">
-                            <span class="key-detail-label">FCC ID:</span>
-                            <span class="key-detail-value">${key.fcc}</span>
-                        </div>` : ''}
-                        <div class="key-detail-row">
-                            <span class="key-detail-label">Status:</span>
-                            <span class="status-indicator ${statusClass}">${statusText}</span>
-                        </div>
-                        ${key.isExtended ? `
-                        <div class="key-detail-row">
-                            <span class="key-detail-label">Source:</span>
-                            <span class="key-detail-value">Extended Database via RKS</span>
-                        </div>` : ''}
+                        
+                        ${renderToolRequirements(key)}
                     </div>
-                    
-                    ${renderToolRequirements(key)}
                 </div>
             `;
         }
@@ -1795,6 +2414,62 @@
             document.getElementById('vinDisplay').style.display = 'block';
             document.getElementById('conflictResolvedBtn').style.display = 'inline-block';
         }
+        
+        function resolveConflictAndShowCuratedItems() {
+            // VIN has been captured, now resolve conflicts and show curated items
+            if (appState.pendingCuratedItems) {
+                // Apply VIN-based conflict resolution to curated items
+                const resolvedItems = resolveConflictsWithVin(appState.pendingCuratedItems, appState.vinNumber);
+                
+                // Update search results with resolved items
+                appState.searchResults = resolvedItems;
+                appState.conflictDetected = false; // Mark as resolved
+                
+                // Show resolved items to customer
+                showScreen('screen2'); // Return to results screen
+                displaySearchResults();
+                document.getElementById('proceedBtn').style.display = 'inline-block';
+                
+                // Clear pending items
+                appState.pendingCuratedItems = null;
+                
+                // Show success message
+                showExtendedSearchNotification('✅ VIN verified - conflicts resolved!');
+            } else {
+                // Standard conflict resolution flow
+                showScreen('screen4');
+            }
+        }
+        
+        function resolveConflictsWithVin(items, vin) {
+            // Simulate VIN-based conflict resolution
+            // In production, this would use actual VIN decode service
+            
+            console.log(`Resolving conflicts for VIN: ${vin}`);
+            
+            // Mock VIN resolution logic
+            const vinYear = vin.substring(9, 10); // 10th character indicates model year
+            const vinCheck = vin.substring(8, 9);  // 9th character is check digit
+            
+            // Filter items based on VIN decode (mock logic)
+            return items.filter(item => {
+                // Keep OEM items for luxury vehicles (mock logic)
+                if (item.oem && item.type.includes('Smart Key')) {
+                    return true;
+                }
+                
+                // Keep first aftermarket option for each type
+                const sameTypeItems = items.filter(i => i.type === item.type);
+                return sameTypeItems.indexOf(item) === 0 || item.oem;
+            }).map(item => {
+                // Mark as VIN-resolved
+                return {
+                    ...item,
+                    vinResolved: true,
+                    resolvedNote: `VIN-verified for ${vin.substring(0, 8)}...`
+                };
+            });
+        }
 
         function copyVinToClipboard() {
             navigator.clipboard.writeText(appState.vinNumber).then(() => {
@@ -1873,8 +2548,11 @@
                 // Create Shopify draft order
                 await createShopifyDraftOrder();
                 
-                // Send customer email
-                await sendCustomerInvoiceEmail();
+                // Generate email template with images
+                const emailTemplate = generateCustomerEmailTemplate();
+                
+                // Send customer email with images
+                await sendCustomerInvoiceEmail(emailTemplate);
                 
                 // Create calendar entry data for job planning
                 const calendarData = prepareCalendarData();
@@ -1888,6 +2566,140 @@
                 btn.textContent = 'Generate & Send Invoice';
                 btn.disabled = false;
             }
+        }
+
+        function generateCustomerEmailTemplate() {
+            const customer = appState.customer;
+            const vehicle = `${appState.vehicle.year} ${appState.vehicle.make} ${appState.vehicle.model}`;
+            const selectedKeys = appState.searchResults; // Keys customer will see
+            
+            let keyOptionsHtml = '';
+            let totalEstimate = 0;
+            
+            selectedKeys.forEach(key => {
+                const pricing = calculatePricing(key);
+                const imageUrl = getKeyImage(key);
+                totalEstimate += pricing.total;
+                
+                keyOptionsHtml += `
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <td style="padding: 20px; vertical-align: top;">
+                            <img src="${imageUrl}" 
+                                 alt="${key.title}" 
+                                 style="width: 150px; height: 110px; object-fit: cover; border-radius: 8px; border: 2px solid #e2e8f0;">
+                        </td>
+                        <td style="padding: 20px; vertical-align: top;">
+                            <h3 style="color: #1a2332; font-size: 1.1rem; margin-bottom: 8px;">${key.title}</h3>
+                            <div style="color: #64748b; margin-bottom: 10px;">
+                                <strong>Type:</strong> ${key.type} • ${key.oem ? 'OEM' : 'Aftermarket'}<br>
+                                <strong>SKU:</strong> ${key.sku}<br>
+                                ${key.fcc !== 'N/A' ? `<strong>FCC ID:</strong> ${key.fcc}<br>` : ''}
+                                <strong>Availability:</strong> ${key.inStock ? 'In Stock - Same Day' : key.leadTime || '2-3 business days'}
+                            </div>
+                            <div style="background: #f8fafc; padding: 10px; border-radius: 6px; font-size: 0.9rem; color: #64748b;">
+                                ${key.description || 'Professional automotive key programming service included.'}
+                            </div>
+                        </td>
+                        <td style="padding: 20px; text-align: right; vertical-align: top;">
+                            <div style="font-size: 1.8rem; font-weight: 700; color: #1a2332; margin-bottom: 5px;">
+                                $${pricing.total.toFixed(2)}
+                            </div>
+                            <div style="font-size: 0.9rem; color: #64748b;">
+                                Key: $${key.price}<br>
+                                Programming: $${pricing.programming}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            return `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Your Key Programming Options - Carolina Key Cutters</title>
+                </head>
+                <body style="margin: 0; padding: 0; font-family: 'Arial', sans-serif; background: #f8fafc;">
+                    <div style="max-width: 700px; margin: 0 auto; background: white;">
+                        <!-- Header -->
+                        <div style="background: linear-gradient(135deg, #1a2332 0%, #2a3442 100%); padding: 40px; text-align: center;">
+                            <h1 style="color: #d4af37; font-size: 2rem; margin: 0;">Carolina Key Cutters</h1>
+                            <p style="color: white; margin: 10px 0 0; font-size: 1.1rem;">Professional Mobile Key Programming</p>
+                        </div>
+                        
+                        <!-- Customer Info -->
+                        <div style="padding: 30px;">
+                            <h2 style="color: #1a2332; margin-bottom: 20px;">Hello ${customer.name}!</h2>
+                            <p style="color: #64748b; font-size: 1.1rem; line-height: 1.6; margin-bottom: 20px;">
+                                Thank you for choosing Carolina Key Cutters for your <strong>${vehicle}</strong> key programming needs. 
+                                Below are the available options we discussed:
+                            </p>
+                        </div>
+                        
+                        <!-- Key Options -->
+                        <div style="padding: 0 30px;">
+                            <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                <thead>
+                                    <tr style="background: #f8fafc;">
+                                        <th style="padding: 20px; text-align: left; color: #1a2332; border-bottom: 2px solid #e2e8f0;">Image</th>
+                                        <th style="padding: 20px; text-align: left; color: #1a2332; border-bottom: 2px solid #e2e8f0;">Key Details</th>
+                                        <th style="padding: 20px; text-align: right; color: #1a2332; border-bottom: 2px solid #e2e8f0;">Total Price</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${keyOptionsHtml}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Service Info -->
+                        <div style="padding: 30px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); margin: 30px;">
+                            <h3 style="color: #1a2332; margin-bottom: 15px;">🔧 What's Included:</h3>
+                            <ul style="color: #64748b; line-height: 1.8; padding-left: 20px;">
+                                <li>Professional mobile service - we come to you</li>
+                                <li>Complete key programming and testing</li>
+                                <li>All necessary equipment and expertise</li>
+                                <li>100% satisfaction guarantee</li>
+                                ${appState.serviceType === 'AKL' ? '<li>All-keys-lost recovery service</li>' : '<li>Add-a-key programming service</li>'}
+                            </ul>
+                        </div>
+                        
+                        <!-- Call to Action -->
+                        <div style="padding: 30px; text-align: center; background: #f8fafc;">
+                            <p style="color: #64748b; margin-bottom: 25px; font-size: 1.1rem;">
+                                Ready to schedule your service? Choose your preferred key option and book your appointment:
+                            </p>
+                            <a href="${BOOKING_URL}" 
+                               style="display: inline-block; background: #d4af37; color: #1a2332; padding: 15px 30px; 
+                                      text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 1.1rem;">
+                                📅 Schedule Your Appointment
+                            </a>
+                            <p style="color: #64748b; margin-top: 20px; font-size: 0.9rem;">
+                                Questions? Call us at <strong>(336) 555-0123</strong> or reply to this email.
+                            </p>
+                        </div>
+                        
+                        <!-- Footer -->
+                        <div style="padding: 20px; background: #1a2332; text-align: center;">
+                            <p style="color: white; margin: 0; font-size: 0.9rem;">
+                                Carolina Key Cutters | Winston-Salem, NC | Licensed & Insured
+                            </p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `;
+        }
+
+        async function sendCustomerInvoiceEmail(emailTemplate) {
+            // In production, this would send the HTML template via EmailJS or SMTP
+            console.log('Sending customer email with invoice template...');
+            console.log('Email Template:', emailTemplate);
+            
+            // Mock email sending
+            return new Promise(resolve => setTimeout(resolve, 1000));
         }
 
         async function createShopifyDraftOrder() {
