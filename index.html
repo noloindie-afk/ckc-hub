@@ -1,1514 +1,1458 @@
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-/* ═══ CKC KEY FINDER v8.85 ═══ */
-.ckc-finder {
-  --ckc-gold: #c9a227;
-  --ckc-gold-light: #e0c458;
-  --ckc-primary-light: #e0b830;
-  --ckc-bg: #111111;
-  --ckc-card: #1a1a1a;
-  --ckc-text: #f0f0f0;
-  --ckc-text-muted: #9ca3af;
-  --ckc-border: #2d2d2d;
-  --ckc-success: #4ade80;
-  --ckc-shadow: 0 2px 12px rgba(0,0,0,0.3);
-  --ckc-shadow-lg: 0 8px 30px rgba(0,0,0,0.5);
-  --ckc-radius: 12px;
-  font-family: 'DM Sans', sans-serif;
-  color: var(--ckc-text);
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-  width: 100%;
-  box-sizing: border-box;
-}
-.ckc-finder *, .ckc-finder *::before, .ckc-finder *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CKC Command 2.1 — Phone Quote Tool</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Crimson+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <style>
+        /* ══════════════════════════════════════════════════════════════════
+           CKC COMMAND 2.1 — PHONE QUOTE TOOL
+           Base design preserved from v2.0 prototype
+           ══════════════════════════════════════════════════════════════════ */
+        :root {
+            --ckc-gold: #d4af37;
+            --ckc-gold-dark: #b8941f;
+            --ckc-gold-light: #e8c75a;
+            --ckc-navy: #1a2332;
+            --ckc-navy-light: #2a3442;
+            --ckc-slate: #64748b;
+            --ckc-slate-light: #94a3b8;
+            --ckc-white: #ffffff;
+            --ckc-gray-50: #f8fafc;
+            --ckc-gray-100: #f1f5f9;
+            --ckc-gray-200: #e2e8f0;
+            --ckc-gray-800: #1e293b;
+            --ckc-gray-900: #0f172a;
+            --ckc-success: #10b981;
+            --ckc-warning: #f59e0b;
+            --ckc-error: #ef4444;
+            --ckc-info: #3b82f6;
+            --ckc-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            --ckc-shadow-lg: 0 10px 25px rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.1);
+            --ckc-border-radius: 8px;
+            --ckc-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Crimson Pro', serif;
+            background: linear-gradient(135deg, var(--ckc-navy) 0%, var(--ckc-navy-light) 100%);
+            color: var(--ckc-white);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        .app-container { max-width: 1400px; margin: 0 auto; padding: 20px; min-height: 100vh; }
+        .app-header { text-align: center; margin-bottom: 40px; padding: 30px 0; background: rgba(212, 175, 55, 0.1); border-radius: var(--ckc-border-radius); border: 2px solid var(--ckc-gold); }
+        .app-title { font-family: 'JetBrains Mono', monospace; font-size: 2.5rem; font-weight: 700; color: var(--ckc-gold); margin-bottom: 10px; letter-spacing: -0.5px; }
+        .app-subtitle { font-size: 1.2rem; color: var(--ckc-slate-light); font-weight: 500; }
+        .version-badge { display: inline-block; background: var(--ckc-gold); color: var(--ckc-navy); padding: 4px 12px; border-radius: 20px; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; font-weight: 600; margin-top: 15px; }
 
-/* ═══ LOADING BAR ═══ */
-.ckc-loading-bar { position: relative; width: 100%; height: 3px; background: rgba(201,162,39,0.15); overflow: hidden; display: none; margin-bottom: 16px; border-radius: 3px; }
-.ckc-loading-bar.active { display: block; }
-.ckc-loading-bar::after { content: ''; position: absolute; top: 0; left: -40%; width: 40%; height: 100%; background: linear-gradient(90deg, transparent, var(--ckc-gold), transparent); animation: ckc-sweep 1.2s ease-in-out infinite; }
-@keyframes ckc-sweep { 0% { left: -40%; } 100% { left: 100%; } }
+        /* Progress */
+        .progress-bar { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-bottom: 15px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--ckc-gold-dark), var(--ckc-gold-light)); transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 4px; }
+        .step-indicator { display: flex; justify-content: space-between; margin-bottom: 30px; padding: 0 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; }
+        .step { color: var(--ckc-slate); transition: var(--ckc-transition); }
+        .step.active { color: var(--ckc-gold); font-weight: 600; }
+        .step.completed { color: var(--ckc-success); }
 
-/* ═══ SYNC BAR & BADGES ═══ */
-.ckc-sync-bar { display: flex; flex-direction: column; align-items: center; gap: 16px; margin-bottom: 32px; }
-.ckc-sync-status { display: inline-flex; align-items: center; gap: 8px; font-size: 0.88rem; font-weight: 500; padding: 6px 16px; border-radius: 100px; background: rgba(201,162,39,0.08); border: 1px solid rgba(201,162,39,0.15); color: var(--ckc-text-muted); transition: all 0.3s; }
-.ckc-sync-status.live { background: rgba(74,222,128,0.08); border-color: rgba(74,222,128,0.2); color: var(--ckc-success); }
-.ckc-sync-status.offline { background: rgba(248,113,113,0.08); border-color: rgba(248,113,113,0.2); color: #f87171; }
-.ckc-sync-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-.ckc-badge-row { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; }
-.ckc-badge { display: inline-flex; align-items: center; gap: 10px; background: rgba(201,162,39,0.12); border: 1px solid rgba(201,162,39,0.3); border-radius: 100px; padding: 12px 24px; color: var(--ckc-gold-light); font-size: 1.05rem; font-weight: 600; }
-.ckc-badge svg { width: 20px; height: 20px; flex-shrink: 0; }
-/* v8.81: city badge link styles */
-a.ckc-badge { text-decoration: none; cursor: pointer; transition: background 0.2s, border-color 0.2s; }
-a.ckc-badge:hover { background: rgba(201,162,39,0.22); border-color: rgba(201,162,39,0.55); }
+        /* Screens */
+        .screen { display: none; background: var(--ckc-white); color: var(--ckc-gray-800); border-radius: var(--ckc-border-radius); box-shadow: var(--ckc-shadow-lg); padding: 40px; margin: 20px 0; animation: slideInUp 0.4s ease-out; }
+        .screen.active { display: block; }
+        @keyframes slideInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .screen-header { border-bottom: 3px solid var(--ckc-gold); margin-bottom: 30px; padding-bottom: 20px; }
+        .screen-title { font-family: 'JetBrains Mono', monospace; font-size: 1.8rem; font-weight: 600; color: var(--ckc-navy); margin-bottom: 10px; }
+        .screen-description { color: var(--ckc-slate); font-size: 1.1rem; }
 
-/* ═══ WIZARD CONTAINER ═══ */
-.ckc-wizard { animation: ckc-fadeUp 0.3s ease; }
-@keyframes ckc-fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        /* Phone script */
+        .phone-script { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px solid var(--ckc-info); border-radius: var(--ckc-border-radius); padding: 25px; margin-bottom: 30px; position: relative; }
+        .phone-script::before { content: "📞"; position: absolute; top: -15px; left: 25px; background: var(--ckc-white); padding: 5px 10px; border-radius: 20px; font-size: 1.2rem; }
+        .phone-script-title { font-family: 'JetBrains Mono', monospace; font-size: 1rem; font-weight: 600; color: var(--ckc-info); margin-bottom: 15px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .phone-script-text { font-size: 1.1rem; color: var(--ckc-gray-800); line-height: 1.6; font-style: italic; margin-bottom: 10px; }
+        .phone-script-text:last-child { margin-bottom: 0; }
 
-/* ═══ SCREEN 1 — VEHICLE SEARCH ═══ */
-.ckc-search-card { background: var(--ckc-card); border-radius: var(--ckc-radius); box-shadow: var(--ckc-shadow); border: 1px solid var(--ckc-border); padding: 40px; margin-bottom: 32px; }
-.ckc-search-title { font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 700; margin-bottom: 28px; color: var(--ckc-gold); }
-.ckc-search-grid { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 16px; align-items: end; }
-@media (max-width: 700px) { .ckc-search-grid { grid-template-columns: 1fr; } }
-.ckc-field label { display: block; font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ckc-text-muted); margin-bottom: 8px; }
-.ckc-field select { width: 100%; padding: 16px 20px; border: 2px solid var(--ckc-border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 1.1rem; color: var(--ckc-text); background: #222; cursor: pointer; transition: border-color 0.2s; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' fill='none' stroke='%239ca3af' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
-.ckc-field select:focus { outline: none; border-color: var(--ckc-gold); }
-.ckc-field select:disabled { background: #1a1a1a; color: #555; cursor: not-allowed; }
-.ckc-search-btn { padding: 16px 44px; background: var(--ckc-gold); color: #111; border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
-.ckc-search-btn:hover { background: var(--ckc-primary-light); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(201,162,39,0.3); }
-.ckc-search-btn:disabled { background: #555; cursor: not-allowed; transform: none; box-shadow: none; }
+        /* Forms */
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; margin-bottom: 30px; }
+        .form-group { display: flex; flex-direction: column; gap: 8px; }
+        .form-label { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; font-weight: 600; color: var(--ckc-navy); text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-select, .form-input {
+            padding: 12px 16px;
+            border: 2px solid var(--ckc-gray-200);
+            border-radius: var(--ckc-border-radius);
+            font-size: 1rem;
+            font-family: 'Crimson Pro', serif;
+            background: var(--ckc-white);
+            color: var(--ckc-gray-800);
+            transition: var(--ckc-transition);
+        }
+        .form-select:focus, .form-input:focus { outline: none; border-color: var(--ckc-gold); box-shadow: 0 0 0 3px rgba(212,175,55,0.1); }
+        .form-select:disabled { background: var(--ckc-gray-100); color: var(--ckc-slate); }
 
-/* ═══ WIZARD SCREEN WRAPPER ═══ */
-.ckc-screen { display: none; }
-.ckc-screen.active { display: block; animation: ckc-fadeUp 0.25s ease; }
+        .radio-group { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
+        .radio-option { display: flex; align-items: center; gap: 12px; padding: 15px; border: 2px solid var(--ckc-gray-200); border-radius: var(--ckc-border-radius); cursor: pointer; transition: var(--ckc-transition); }
+        .radio-option:hover { border-color: var(--ckc-gold-light); background: var(--ckc-gray-50); }
+        .radio-option input[type="radio"] { margin: 0; accent-color: var(--ckc-gold); transform: scale(1.2); }
+        .radio-option input[type="radio"]:checked + label { color: var(--ckc-navy); font-weight: 600; }
+        .radio-option label { flex: 1; cursor: pointer; color: var(--ckc-gray-800); }
 
-/* ═══ SCREEN HEADER ═══ */
-.ckc-screen-header { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
-.ckc-back-btn-wiz { background: none; border: 1px solid var(--ckc-border); color: var(--ckc-text-muted); padding: 8px 18px; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
-.ckc-back-btn-wiz:hover { border-color: var(--ckc-text-muted); color: var(--ckc-text); }
-.ckc-screen-title { font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 600; color: var(--ckc-text-muted); flex: 1; }
-.ckc-step-indicator { font-size: 0.8rem; color: #555; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        /* Buttons */
+        .btn-group { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 30px; }
+        .btn { padding: 14px 28px; border: none; border-radius: var(--ckc-border-radius); font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: var(--ckc-transition); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-primary { background: var(--ckc-gold); color: var(--ckc-navy); }
+        .btn-primary:hover:not(:disabled) { background: var(--ckc-gold-dark); transform: translateY(-1px); box-shadow: var(--ckc-shadow); }
+        .btn-secondary { background: var(--ckc-gray-200); color: var(--ckc-gray-800); }
+        .btn-secondary:hover:not(:disabled) { background: var(--ckc-slate-light); color: var(--ckc-white); }
+        .btn-success { background: var(--ckc-success); color: var(--ckc-white); }
+        .btn-success:hover:not(:disabled) { background: #059669; transform: translateY(-1px); }
+        .btn-warning { background: var(--ckc-warning); color: var(--ckc-white); }
+        .btn-warning:hover:not(:disabled) { background: #d97706; transform: translateY(-1px); }
+        .btn-outline { background: transparent; color: var(--ckc-navy); border: 2px solid var(--ckc-navy); }
+        .btn-outline:hover:not(:disabled) { background: var(--ckc-navy); color: var(--ckc-white); }
 
-/* ═══ SCREEN 2 — KEY TYPE SELECTOR ═══ */
-.ckc-type-screen { background: var(--ckc-card); border-radius: var(--ckc-radius); border: 1px solid var(--ckc-border); padding: 36px; margin-bottom: 24px; }
-.ckc-type-screen-q { font-family: 'Outfit', sans-serif; font-size: 1.35rem; font-weight: 700; color: var(--ckc-gold); margin-bottom: 8px; }
-.ckc-type-screen-sub { font-size: 0.9rem; color: var(--ckc-text-muted); margin-bottom: 28px; }
-.ckc-vehicle-label { display: inline-block; font-size: 0.88rem; font-weight: 600; padding: 5px 14px; border-radius: 100px; background: rgba(201,162,39,0.12); color: var(--ckc-gold); margin-bottom: 24px; }
-.ckc-type-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
-@media (max-width: 500px) { .ckc-type-grid { grid-template-columns: 1fr 1fr; } }
-.ckc-type-card { border: 2px solid var(--ckc-border); border-radius: 12px; padding: 20px 14px 16px; cursor: pointer; transition: all 0.18s; text-align: center; background: #1f1f1f; }
-.ckc-type-card:hover { border-color: rgba(201,162,39,0.5); background: rgba(201,162,39,0.05); transform: translateY(-2px); }
-.ckc-type-card.selected { border-color: var(--ckc-gold); background: rgba(201,162,39,0.1); }
-.ckc-type-card-img { width: 100%; height: 110px; object-fit: contain; border-radius: 8px; background: #f9fafb; padding: 6px; margin-bottom: 10px; display: block; }
-.ckc-type-card-img-placeholder { width: 100%; height: 110px; border-radius: 8px; background: linear-gradient(135deg, #252525, #2d2d2d); display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
-.ckc-type-card-label { font-size: 0.88rem; font-weight: 700; color: var(--ckc-text); margin-bottom: 4px; line-height: 1.3; }
-.ckc-type-card-sub { font-size: 0.72rem; color: var(--ckc-text-muted); line-height: 1.4; }
+        /* Alerts */
+        .alert { padding: 15px 20px; border-radius: var(--ckc-border-radius); margin: 15px 0; border-left: 4px solid; }
+        .alert-warning { background: #fffbeb; border-color: var(--ckc-warning); color: #92400e; }
+        .alert-info { background: #eff6ff; border-color: var(--ckc-info); color: #1e40af; }
+        .alert-success { background: #ecfdf5; border-color: var(--ckc-success); color: #065f46; }
+        .alert-error { background: #fef2f2; border-color: var(--ckc-error); color: #991b1b; }
 
-/* ═══ SCREEN 3 — BLADE/FCC QUALIFIER ═══ */
-.ckc-qual-screen { background: linear-gradient(135deg, #1a1505, #1a1a0a); border: 2px solid var(--ckc-gold); border-radius: var(--ckc-radius); padding: 32px 36px; margin-bottom: 24px; }
-.ckc-qual-screen-q { font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 700; color: var(--ckc-gold); margin-bottom: 8px; }
-.ckc-qual-screen-sub { font-size: 0.9rem; color: var(--ckc-text-muted); margin-bottom: 24px; }
-.ckc-compare-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px; }
-.ckc-compare-card { border: 2px solid var(--ckc-border); border-radius: 12px; padding: 18px 14px; cursor: pointer; transition: all 0.18s; text-align: center; background: #222; }
-.ckc-compare-card:hover { border-color: rgba(201,162,39,0.5); background: rgba(201,162,39,0.04); transform: translateY(-2px); }
-.ckc-compare-card.selected { border-color: var(--ckc-gold); background: rgba(201,162,39,0.1); }
-.ckc-compare-card-img { width: 100%; height: 120px; object-fit: contain; border-radius: 8px; background: #f9fafb; padding: 6px; margin-bottom: 10px; display: block; }
-.ckc-compare-card-img-loading { width: 100%; height: 120px; border-radius: 8px; background: linear-gradient(135deg, #252525, #2d2d2d); margin-bottom: 10px; position: relative; overflow: hidden; }
-.ckc-compare-card-img-loading::after { content:''; position:absolute; top:0; left:-100%; width:100%; height:100%; background: linear-gradient(90deg,transparent,rgba(201,162,39,0.06),transparent); animation: ckc-shimmer 1.5s infinite; }
-@keyframes ckc-shimmer { 0%{left:-100%} 100%{left:100%} }
-.ckc-compare-card-title { font-size: 0.85rem; font-weight: 700; color: var(--ckc-text); margin-bottom: 4px; line-height: 1.3; }
-.ckc-compare-card-blade { font-size: 0.78rem; color: var(--ckc-gold); font-weight: 600; margin-bottom: 4px; }
-.ckc-compare-card-price { font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--ckc-text); }
-.ckc-compare-card-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--ckc-border); margin: 8px auto 0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
-.ckc-compare-card.selected .ckc-compare-card-check { border-color: var(--ckc-gold); background: var(--ckc-gold); }
-.ckc-compare-card-check-dot { width: 8px; height: 8px; border-radius: 50%; background: #111; display: none; }
-.ckc-compare-card.selected .ckc-compare-card-check-dot { display: block; }
-.ckc-none-match-opt { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1px dashed rgba(255,255,255,0.15); border-radius: 10px; cursor: pointer; transition: all 0.15s; margin-top: 4px; color: var(--ckc-text-muted); font-size: 0.9rem; }
-.ckc-none-match-opt:hover { border-color: rgba(255,255,255,0.3); color: var(--ckc-text); }
+        /* Results */
+        .results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--ckc-gray-200); }
+        .results-title { font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; font-weight: 600; color: var(--ckc-navy); text-transform: uppercase; letter-spacing: 0.5px; }
+        .results-count { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: var(--ckc-slate); }
 
-/* ═══ MAGNIFIER ═══ */
-.ckc-mag-wrap { position: relative; width: 100%; padding-bottom: 90%; overflow: hidden; border-radius: 8px; background: #f9fafb; margin-bottom: 10px; }
-.ckc-mag-wrap img.ckc-mag-base { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; padding: 6px; display: block; }
-.ckc-mag-wrap .ckc-mag-ph { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; background: linear-gradient(135deg, #252525, #2d2d2d); }
-.ckc-mag-lens { position: absolute; width: 100px; height: 100px; border-radius: 50%; border: 2.5px solid var(--ckc-gold); pointer-events: none; display: none; overflow: hidden; z-index: 10; }
-.ckc-mag-lens img { position: absolute; object-fit: contain; background: #f9fafb; }
+        /* Key card */
+        .key-card { background: var(--ckc-white); border: 2px solid var(--ckc-gray-200); border-radius: var(--ckc-border-radius); padding: 20px; margin-bottom: 15px; transition: var(--ckc-transition); display: flex; gap: 20px; }
+        .key-card:hover { border-color: var(--ckc-gold-light); box-shadow: var(--ckc-shadow); }
+        .key-card.selected { border-color: var(--ckc-gold); background: #fffbeb; box-shadow: 0 0 0 3px rgba(212,175,55,0.2); }
+        .key-card-image { width: 120px; height: 120px; background: var(--ckc-gray-100); border-radius: var(--ckc-border-radius); flex-shrink: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .key-card-image img { width: 100%; height: 100%; object-fit: contain; }
+        .key-card-image-placeholder { color: var(--ckc-slate); font-size: 0.8rem; text-align: center; padding: 10px; }
+        .key-card-body { flex: 1; }
+        .key-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 15px; margin-bottom: 12px; }
+        .key-title { font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; font-weight: 600; color: var(--ckc-navy); }
+        .key-type { font-size: 0.95rem; color: var(--ckc-slate); margin-top: 3px; }
+        .key-price { text-align: right; font-family: 'JetBrains Mono', monospace; }
+        .key-price-amount { font-size: 1.3rem; font-weight: 700; color: var(--ckc-gold-dark); }
+        .key-price-breakdown { font-size: 0.8rem; color: var(--ckc-slate); margin-top: 3px; }
+        .key-details { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 8px; font-size: 0.88rem; }
+        .key-detail-row { display: flex; gap: 6px; }
+        .key-detail-label { color: var(--ckc-slate); text-transform: uppercase; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.5px; padding-top: 2px; }
+        .key-detail-value { color: var(--ckc-gray-800); font-weight: 500; }
+        .status-indicator { padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 0.5px; }
+        .status-in-stock { background: #ecfdf5; color: var(--ckc-success); }
+        .status-rks { background: #fef3c7; color: #92400e; }
+        .key-card-actions { display: flex; gap: 10px; margin-top: 15px; }
 
-/* FCC screen */
-.ckc-fcc-select { width: 100%; padding: 12px 16px; border: 2px solid var(--ckc-border); border-radius: 10px; background: #222; color: var(--ckc-text); font-family: 'DM Sans', sans-serif; font-size: 1rem; margin-bottom: 10px; appearance: none; cursor: pointer; }
-.ckc-fcc-select:focus { outline: none; border-color: var(--ckc-gold); }
-.ckc-fcc-fallback { font-size: 0.82rem; color: var(--ckc-text-muted); margin: 8px 0 6px; }
-.ckc-fcc-input { width: 100%; padding: 12px 16px; border: 2px solid var(--ckc-border); border-radius: 10px; background: #222; color: var(--ckc-text); font-family: monospace, 'DM Sans', sans-serif; font-size: 1rem; letter-spacing: 1.5px; }
-.ckc-fcc-input:focus { outline: none; border-color: var(--ckc-gold); }
+        /* Selection checkbox for curation */
+        .key-select-checkbox { display: flex; align-items: center; gap: 10px; padding: 10px 0; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 600; color: var(--ckc-navy); text-transform: uppercase; letter-spacing: 0.5px; }
+        .key-select-checkbox input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--ckc-gold); cursor: pointer; }
 
-/* Button count */
-.ckc-btn-count-row { display: flex; gap: 10px; flex-wrap: wrap; }
-.ckc-btn-count-opt { padding: 12px 20px; border: 2px solid var(--ckc-border); border-radius: 10px; background: #222; color: var(--ckc-text); font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.18s; min-width: 80px; text-align: center; }
-.ckc-btn-count-opt:hover { border-color: var(--ckc-gold); }
-.ckc-btn-count-opt.selected { border-color: var(--ckc-gold); background: rgba(201,162,39,0.12); color: var(--ckc-gold); }
+        /* CKC Quotes matrix result card */
+        .quotes-card { background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 2px solid var(--ckc-gold); border-radius: var(--ckc-border-radius); padding: 20px; margin: 20px 0; }
+        .quotes-tier { display: inline-block; padding: 4px 12px; border-radius: 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 10px; }
+        .tier-1 { background: #d1fae5; color: #065f46; }
+        .tier-2 { background: #fef3c7; color: #92400e; }
+        .tier-3 { background: #fee2e2; color: #991b1b; }
+        .tier-4 { background: #e9d5ff; color: #6b21a8; }
+        .quotes-vehicle { font-family: 'JetBrains Mono', monospace; font-size: 1.15rem; font-weight: 700; color: var(--ckc-navy); }
+        .quotes-keytype { font-size: 0.95rem; color: var(--ckc-slate); margin-top: 3px; }
+        .quotes-pricing { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
+        .quotes-price-box { background: var(--ckc-white); border: 1px solid var(--ckc-gray-200); border-radius: var(--ckc-border-radius); padding: 15px; }
+        .quotes-price-box.selected { border-color: var(--ckc-gold); background: #fffbeb; }
+        .quotes-price-label { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 700; color: var(--ckc-slate); text-transform: uppercase; letter-spacing: 0.5px; }
+        .quotes-price-value { font-family: 'JetBrains Mono', monospace; font-size: 1.5rem; font-weight: 700; color: var(--ckc-gold-dark); margin-top: 5px; }
+        .quotes-price-mid { font-size: 0.85rem; color: var(--ckc-slate); margin-top: 3px; }
+        .quotes-script { background: var(--ckc-white); border-left: 3px solid var(--ckc-gold); padding: 12px 16px; margin-top: 15px; font-style: italic; color: var(--ckc-gray-800); border-radius: 0 var(--ckc-border-radius) var(--ckc-border-radius) 0; font-size: 0.95rem; }
+        .quotes-flags { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+        .quotes-flag { padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; display: flex; align-items: flex-start; gap: 8px; }
+        .quotes-flag::before { content: "•"; font-weight: 700; }
+        .qflag-warn { background: #fef3c7; color: #92400e; }
+        .qflag-info { background: #dbeafe; color: #1e40af; }
+        .qflag-danger { background: #fee2e2; color: #991b1b; }
+        .qflag-success { background: #d1fae5; color: #065f46; }
 
-/* ═══ SCREEN 4 — QUALITY TIER ═══ */
-.ckc-tier-screen { background: var(--ckc-card); border-radius: var(--ckc-radius); border: 1px solid var(--ckc-border); padding: 32px 36px; margin-bottom: 24px; }
-.ckc-tier-screen-q { font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 700; color: var(--ckc-text); margin-bottom: 8px; }
-.ckc-tier-screen-sub { font-size: 0.9rem; color: var(--ckc-text-muted); margin-bottom: 24px; }
-.ckc-tier-options { display: flex; flex-direction: column; gap: 12px; }
-.ckc-tier-opt { display: flex; align-items: center; gap: 16px; padding: 16px 18px; border: 2px solid var(--ckc-border); border-radius: 12px; cursor: pointer; transition: all 0.18s; background: #1f1f1f; }
-.ckc-tier-opt:hover { border-color: rgba(201,162,39,0.4); background: rgba(201,162,39,0.03); }
-.ckc-tier-opt.selected { border-color: var(--ckc-gold); background: rgba(201,162,39,0.08); }
-.ckc-tier-opt-img { width: 60px; height: 60px; object-fit: contain; border-radius: 8px; background: #f9fafb; padding: 4px; flex-shrink: 0; }
-.ckc-tier-opt-img-ph { width: 60px; height: 60px; border-radius: 8px; background: #2a2a2a; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; }
-.ckc-tier-opt-info { flex: 1; }
-.ckc-tier-opt-label { font-size: 1rem; font-weight: 700; color: var(--ckc-text); margin-bottom: 3px; }
-.ckc-tier-opt-desc { font-size: 0.82rem; color: var(--ckc-text-muted); line-height: 1.4; }
-.ckc-tier-opt-price { font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 800; color: var(--ckc-text); text-align: right; }
-.ckc-tier-opt-radio { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--ckc-border); display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
-.ckc-tier-opt.selected .ckc-tier-opt-radio { border-color: var(--ckc-gold); background: var(--ckc-gold); }
-.ckc-tier-opt-radio-dot { width: 8px; height: 8px; border-radius: 50%; background: #111; display: none; }
-.ckc-tier-opt.selected .ckc-tier-opt-radio-dot { display: block; }
+        /* Manual override */
+        .manual-override { background: #fef3c7; border: 2px dashed var(--ckc-warning); border-radius: var(--ckc-border-radius); padding: 20px; margin: 20px 0; }
+        .manual-override-title { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+        .manual-override-input { width: 100%; padding: 10px 14px; border: 2px solid var(--ckc-warning); border-radius: var(--ckc-border-radius); font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 600; margin-top: 8px; }
 
-/* ═══ SCREEN 5 — BUY NOW ═══ */
-.ckc-buynow-screen { background: var(--ckc-card); border-radius: var(--ckc-radius); border: 1px solid var(--ckc-border); padding: 36px; margin-bottom: 24px; }
-.ckc-buynow-product { display: grid; grid-template-columns: 200px 1fr; gap: 32px; align-items: start; margin-bottom: 32px; }
-@media (max-width: 600px) { .ckc-buynow-product { grid-template-columns: 1fr; } }
-.ckc-buynow-img { width: 200px; height: 200px; object-fit: contain; border-radius: 12px; background: #f9fafb; padding: 12px; display: block; }
-.ckc-buynow-img-ph { width: 200px; height: 200px; border-radius: 12px; background: linear-gradient(135deg, #222, #2a2a2a); display: flex; align-items: center; justify-content: center; font-size: 4rem; }
-.ckc-buynow-info-type { display: inline-block; font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 12px; border-radius: 100px; background: rgba(201,162,39,0.12); color: var(--ckc-gold); margin-bottom: 10px; }
-.ckc-buynow-info-title { font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 700; color: var(--ckc-text); margin-bottom: 8px; }
-.ckc-buynow-info-compat { font-size: 0.92rem; color: var(--ckc-text-muted); line-height: 1.5; margin-bottom: 12px; }
-.ckc-buynow-info-details { font-size: 0.82rem; color: #555; line-height: 1.6; }
-.ckc-buynow-match-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 600; color: var(--ckc-success); background: rgba(74,222,128,0.08); border: 1px solid rgba(74,222,128,0.2); border-radius: 100px; padding: 4px 12px; margin-top: 8px; }
-.ckc-stock-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 0.9rem; font-weight: 600; line-height: 1.4; margin-bottom: 10px; }
-.ckc-stock-badge.in-stock { color: var(--ckc-success); }
-.ckc-stock-badge.ships { color: var(--ckc-gold); }
-.ckc-stock-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; background: currentColor; flex-shrink: 0; margin-top: 3px; }
-.ckc-prog-toggle { border: 1px solid var(--ckc-border); border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
-.ckc-prog-toggle-opt { display: flex; align-items: flex-start; gap: 14px; padding: 14px 16px; cursor: pointer; transition: background 0.15s; border-bottom: 1px solid var(--ckc-border); }
-.ckc-prog-toggle-opt:last-child { border-bottom: none; }
-.ckc-prog-toggle-opt:hover { background: rgba(255,255,255,0.03); }
-.ckc-prog-toggle-opt.selected { background: rgba(201,162,39,0.07); }
-.ckc-prog-radio { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--ckc-border); flex-shrink: 0; margin-top: 2px; transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
-.ckc-prog-toggle-opt.selected .ckc-prog-radio { border-color: var(--ckc-gold); background: var(--ckc-gold); }
-.ckc-prog-radio-dot { width: 7px; height: 7px; border-radius: 50%; background: #111; display: none; }
-.ckc-prog-toggle-opt.selected .ckc-prog-radio-dot { display: block; }
-.ckc-prog-label { font-size: 0.9rem; line-height: 1.4; flex: 1; }
-.ckc-prog-label strong { color: var(--ckc-text); font-size: 0.95rem; display: block; }
-.ckc-prog-label span { color: var(--ckc-text-muted); font-size: 0.82rem; }
-.ckc-prog-price-tag { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1.05rem; color: var(--ckc-gold); white-space: nowrap; padding-top: 2px; }
-.ckc-price-summary { border-top: 1px solid var(--ckc-border); padding-top: 20px; }
-.ckc-price-line { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 0.95rem; color: var(--ckc-text-muted); }
-.ckc-price-total-line { display: flex; justify-content: space-between; align-items: center; padding: 14px 0 8px; border-top: 1px solid var(--ckc-border); margin-top: 6px; }
-.ckc-price-total-label { font-size: 0.9rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--ckc-text-muted); }
-.ckc-price-total-val { font-family: 'Outfit', sans-serif; font-size: 2.2rem; font-weight: 800; color: var(--ckc-gold); }
-.ckc-price-tax-note { font-size: 0.82rem; color: #555; text-align: right; margin-bottom: 20px; }
-.ckc-buy-now-btn { display: block; width: 100%; padding: 18px 24px; background: var(--ckc-success); color: #111; border: none; border-radius: 12px; font-family: 'DM Sans', sans-serif; font-size: 1.15rem; font-weight: 700; cursor: pointer; transition: all 0.2s; text-align: center; animation: ckc-pop-in 0.3s ease; }
-.ckc-buy-now-btn:hover { box-shadow: 0 4px 20px rgba(74,222,128,0.35); transform: translateY(-1px); }
-.ckc-call-to-order-btn { display: block; width: 100%; padding: 18px 24px; background: var(--ckc-gold); color: #111; border: none; border-radius: 12px; font-family: 'DM Sans', sans-serif; font-size: 1.15rem; font-weight: 700; cursor: pointer; transition: all 0.2s; text-align: center; text-decoration: none; animation: ckc-pop-in 0.3s ease; }
-.ckc-call-to-order-btn:hover { background: var(--ckc-primary-light); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(201,162,39,0.3); }
-@keyframes ckc-pop-in { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-.ckc-cfq-notice { padding: 12px 14px; background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.2); border-radius: 8px; font-size: 0.85rem; color: #f59e0b; line-height: 1.5; margin-bottom: 12px; }
-.ckc-cfq-vin-hint { padding: 10px 12px; background: rgba(201,162,39,0.06); border: 1px solid rgba(201,162,39,0.15); border-radius: 8px; font-size: 0.78rem; color: var(--ckc-text-muted); margin-bottom: 12px; }
-.ckc-cfq-btn { display: block; width: 100%; padding: 16px 24px; background: #f59e0b; color: #111; border: none; border-radius: 12px; font-family: 'DM Sans', sans-serif; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; text-align: center; }
-.ckc-cfq-btn:hover { background: #fbbf24; transform: translateY(-1px); }
-.ckc-tool-url { margin-top: 10px; padding: 10px 14px; background: rgba(201,162,39,0.07); border: 1px solid rgba(201,162,39,0.2); border-radius: 8px; font-size: 0.75rem; color: var(--ckc-gold-light); word-break: break-all; line-height: 1.6; display: none; }
-.ckc-tool-url.show { display: block; }
-.ckc-tool-url-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--ckc-gold); margin-bottom: 4px; display: block; }
+        /* VIN */
+        .vin-container { background: var(--ckc-gray-50); border-radius: var(--ckc-border-radius); padding: 25px; margin: 20px 0; }
+        .vin-input { font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; letter-spacing: 2px; text-align: center; text-transform: uppercase; }
+        .vin-display { font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; font-weight: 700; text-align: center; padding: 15px; background: var(--ckc-white); border-radius: var(--ckc-border-radius); margin: 15px 0; letter-spacing: 2px; }
+        .qr-container { display: flex; justify-content: center; margin: 20px 0; }
+        .vin-actions { display: flex; gap: 15px; justify-content: center; margin-top: 15px; }
 
-/* ═══ SCREEN 6 — CHECKOUT ═══ */
-.ckc-checkout-panel { background: var(--ckc-card); border: 2px solid var(--ckc-gold); border-radius: var(--ckc-radius); padding: 36px; margin-bottom: 24px; animation: ckc-fadeUp 0.3s ease; }
-.ckc-checkout-panel h3 { font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 700; color: var(--ckc-gold); margin-bottom: 20px; }
-.ckc-checkout-line { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--ckc-border); font-size: 1.05rem; }
-.ckc-checkout-line-label { color: var(--ckc-text); }
-.ckc-checkout-line-price { font-weight: 700; color: var(--ckc-text); }
-.ckc-checkout-total { display: flex; justify-content: space-between; align-items: center; padding: 18px 0 14px; }
-.ckc-checkout-total-label { font-size: 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--ckc-text-muted); }
-.ckc-checkout-total-price { font-family: 'Outfit', sans-serif; font-size: 2.2rem; font-weight: 800; color: var(--ckc-gold); }
-.ckc-checkout-tax { font-size: 0.85rem; color: var(--ckc-text-muted); text-align: right; margin-bottom: 18px; }
-.ckc-checkout-btn { display: block; width: 100%; padding: 18px; background: var(--ckc-gold); color: #111; border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 1.15rem; font-weight: 700; cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 1px; }
-.ckc-checkout-btn:hover { background: var(--ckc-primary-light); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(201,162,39,0.3); }
-.ckc-checkout-btn:disabled { background: #555; cursor: not-allowed; transform: none; }
-.ckc-back-btn { display: inline-block; margin-top: 12px; background: none; border: 1px solid var(--ckc-border); color: var(--ckc-text-muted); padding: 10px 24px; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
-.ckc-back-btn:hover { border-color: var(--ckc-text-muted); color: var(--ckc-text); }
+        /* Email preview */
+        .email-preview { background: var(--ckc-white); border: 2px solid var(--ckc-gray-200); border-radius: var(--ckc-border-radius); padding: 25px; margin-top: 20px; max-width: 600px; margin-left: auto; margin-right: auto; }
+        .email-header { border-bottom: 2px solid var(--ckc-gold); padding-bottom: 15px; margin-bottom: 20px; }
+        .email-logo { font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; font-weight: 700; color: var(--ckc-navy); }
+        .email-tagline { font-size: 0.9rem; color: var(--ckc-slate); margin-top: 3px; }
+        .email-greeting { font-size: 1.1rem; color: var(--ckc-gray-800); margin-bottom: 15px; }
+        .email-lineitem { display: flex; gap: 15px; padding: 15px 0; border-bottom: 1px solid var(--ckc-gray-100); align-items: center; }
+        .email-lineitem-image { width: 80px; height: 80px; background: var(--ckc-gray-100); border-radius: var(--ckc-border-radius); flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .email-lineitem-image img { width: 100%; height: 100%; object-fit: contain; }
+        .email-lineitem-body { flex: 1; }
+        .email-lineitem-title { font-weight: 600; color: var(--ckc-navy); }
+        .email-lineitem-meta { font-size: 0.85rem; color: var(--ckc-slate); margin-top: 3px; }
+        .email-lineitem-price { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--ckc-gold-dark); }
+        .email-totals { margin-top: 20px; padding-top: 15px; border-top: 2px solid var(--ckc-gray-200); }
+        .email-total-row { display: flex; justify-content: space-between; padding: 5px 0; font-family: 'JetBrains Mono', monospace; }
+        .email-total-row.grand { font-size: 1.2rem; font-weight: 700; color: var(--ckc-navy); padding-top: 10px; border-top: 1px solid var(--ckc-gray-200); margin-top: 5px; }
+        .email-footer { margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--ckc-gray-200); font-size: 0.9rem; color: var(--ckc-slate); text-align: center; }
 
-/* ═══ POST PURCHASE ═══ */
-.ckc-post-purchase { text-align: center; padding: 48px 32px; animation: ckc-fadeUp 0.4s ease; }
-.ckc-post-purchase-icon { width: 80px; height: 80px; border-radius: 50%; background: rgba(74,222,128,0.1); border: 2px solid var(--ckc-success); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto 20px; }
-.ckc-post-purchase h3 { font-family: 'Outfit', sans-serif; font-size: 1.6rem; font-weight: 700; color: var(--ckc-success); margin-bottom: 10px; }
-.ckc-post-purchase p { font-size: 1.05rem; color: var(--ckc-text-muted); line-height: 1.6; margin-bottom: 24px; }
-.ckc-new-search-btn { display: inline-block; margin-top: 16px; background: none; border: 1px solid var(--ckc-border); color: var(--ckc-text-muted); padding: 10px 28px; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
-.ckc-new-search-btn:hover { border-color: var(--ckc-gold); color: var(--ckc-gold); }
-.ckc-email-neon { margin: 28px auto; max-width: 480px; padding: 4px; border-radius: 16px; background: linear-gradient(135deg, var(--ckc-gold), #e0c458, var(--ckc-gold)); animation: ckc-neon-pulse 2s ease-in-out infinite; box-shadow: 0 0 20px rgba(201,162,39,0.4), 0 0 60px rgba(201,162,39,0.15); }
-@keyframes ckc-neon-pulse { 0%, 100% { box-shadow: 0 0 20px rgba(201,162,39,0.4), 0 0 60px rgba(201,162,39,0.15); } 50% { box-shadow: 0 0 30px rgba(201,162,39,0.6), 0 0 80px rgba(201,162,39,0.25), 0 0 120px rgba(201,162,39,0.1); } }
-.ckc-email-neon-inner { background: #1a1a1a; border-radius: 13px; padding: 36px 28px; text-align: center; }
-.ckc-email-neon-icon { font-size: 3.5rem; margin-bottom: 16px; animation: ckc-bounce 2s ease-in-out infinite; }
-@keyframes ckc-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-.ckc-email-neon-title { font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 800; color: var(--ckc-gold); letter-spacing: 2px; margin-bottom: 12px; text-shadow: 0 0 10px rgba(201,162,39,0.3); }
-.ckc-email-neon-desc { font-size: 1.05rem; color: var(--ckc-text); line-height: 1.6; margin-bottom: 16px; }
-.ckc-email-neon-arrow { font-size: 0.95rem; color: var(--ckc-gold-light); font-weight: 600; animation: ckc-arrow-pulse 1.5s ease-in-out infinite; }
-@keyframes ckc-arrow-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        /* Running total bar */
+        .total-bar { position: sticky; bottom: 20px; background: var(--ckc-navy); color: var(--ckc-gold-light); padding: 15px 25px; border-radius: var(--ckc-border-radius); display: flex; justify-content: space-between; align-items: center; margin-top: 25px; box-shadow: var(--ckc-shadow-lg); }
+        .total-label { font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .total-amount { font-family: 'JetBrains Mono', monospace; font-size: 1.6rem; font-weight: 700; color: var(--ckc-gold); }
 
-/* ═══ NO RESULTS ═══ */
-.ckc-no-results { text-align: center; padding: 60px 32px; background: var(--ckc-card); border-radius: var(--ckc-radius); border: 1px solid var(--ckc-border); }
-.ckc-no-results h3 { font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 700; margin-bottom: 10px; }
-.ckc-no-results p { color: var(--ckc-text-muted); font-size: 1.05rem; margin-bottom: 20px; }
-.ckc-call-btn { display: inline-flex; align-items: center; gap: 10px; padding: 14px 36px; background: var(--ckc-gold); color: #111; text-decoration: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 1.08rem; font-weight: 600; transition: all 0.2s; }
-.ckc-call-btn:hover { background: var(--ckc-primary-light); transform: translateY(-1px); }
+        /* ═══════════════════════════════════════════════════════════════════
+           OMNIPRESENT QR PANEL — bottom-right corner
+           ═══════════════════════════════════════════════════════════════════ */
+        .omni-qr {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--ckc-white);
+            border: 2px solid var(--ckc-gold);
+            border-radius: var(--ckc-border-radius);
+            padding: 12px;
+            box-shadow: var(--ckc-shadow-lg);
+            z-index: 1000;
+            max-width: 200px;
+            transition: var(--ckc-transition);
+        }
+        .omni-qr.collapsed { max-width: 60px; padding: 8px; cursor: pointer; }
+        .omni-qr.collapsed .omni-qr-body { display: none; }
+        .omni-qr.collapsed .omni-qr-header { margin: 0; padding: 0; border: none; text-align: center; }
+        .omni-qr-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid var(--ckc-gray-200); margin-bottom: 10px; }
+        .omni-qr-title { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 700; color: var(--ckc-navy); text-transform: uppercase; letter-spacing: 0.5px; }
+        .omni-qr-toggle { background: none; border: none; color: var(--ckc-slate); cursor: pointer; font-size: 1rem; padding: 0 4px; }
+        .omni-qr-toggle:hover { color: var(--ckc-navy); }
+        .omni-qr-canvas { display: flex; justify-content: center; margin-bottom: 8px; }
+        .omni-qr-canvas canvas { width: 140px !important; height: 140px !important; }
+        .omni-qr-context { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--ckc-gray-800); text-align: center; line-height: 1.4; word-break: break-word; background: var(--ckc-gray-50); padding: 6px; border-radius: 4px; }
+        .omni-qr-hint { font-size: 0.65rem; color: var(--ckc-slate); text-align: center; margin-top: 6px; font-style: italic; }
 
-/* ═══ PROGRAMMING CARD ═══ */
-.ckc-programming-card { background: linear-gradient(135deg, #1f1a0e, #231e10); border: 2px solid var(--ckc-gold); border-radius: var(--ckc-radius); padding: 36px; margin-bottom: 32px; display: flex; align-items: center; gap: 28px; }
-@media (max-width: 700px) { .ckc-programming-card { flex-direction: column; text-align: center; } }
-.ckc-programming-icon { width: 72px; height: 72px; background: var(--ckc-gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.ckc-programming-icon svg { width: 34px; height: 34px; color: #fff; }
-.ckc-programming-info { flex: 1; }
-.ckc-programming-info h3 { font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 700; margin-bottom: 6px; }
-.ckc-programming-info p { font-size: 1.05rem; color: #b8a060; }
-.ckc-programming-price { font-family: 'Outfit', sans-serif; font-size: 2.2rem; font-weight: 800; color: var(--ckc-gold); text-align: right; line-height: 1.2; }
+        @media (max-width: 768px) {
+            .app-container { padding: 10px; }
+            .screen { padding: 20px; }
+            .app-title { font-size: 1.8rem; }
+            .form-grid { grid-template-columns: 1fr; gap: 15px; }
+            .step-indicator { flex-wrap: wrap; gap: 8px; font-size: 0.75rem; }
+            .key-card { flex-direction: column; }
+            .key-card-image { width: 100%; height: 200px; }
+            .quotes-pricing { grid-template-columns: 1fr; }
+            .omni-qr { bottom: 10px; right: 10px; max-width: 160px; }
+            .omni-qr.collapsed { max-width: 50px; }
+            .omni-qr-canvas canvas { width: 110px !important; height: 110px !important; }
+        }
 
-/* ═══ VIN MODAL ═══ */
-.ckc-vin-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px; animation: ckc-fadeUp 0.2s ease; }
-.ckc-vin-modal { background: #ffffff; border: 3px solid var(--ckc-gold); border-radius: 16px; padding: 32px 28px; width: 100%; max-width: 440px; box-shadow: 0 24px 80px rgba(0,0,0,0.7); }
-.ckc-vin-modal h3 { font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 800; color: #111; margin-bottom: 8px; }
-.ckc-vin-modal p { font-size: 0.9rem; color: #444; margin-bottom: 20px; line-height: 1.6; }
-.ckc-vin-modal-field { position: relative; margin-bottom: 10px; }
-.ckc-vin-modal-input { width: 100%; padding: 16px 64px 16px 18px; background: #f5f5f5; border: 2px solid #ccc; border-radius: 10px; color: #111; font-family: monospace; font-size: 1.15rem; letter-spacing: 2.5px; text-transform: uppercase; outline: none; transition: border-color 0.2s; }
-.ckc-vin-modal-input::placeholder { color: #aaa; letter-spacing: 1px; font-size: 0.95rem; }
-.ckc-vin-modal-input:focus { border-color: var(--ckc-gold); background: #fff; }
-.ckc-vin-modal-input.valid { border-color: #16a34a; background: #f0fdf4; }
-.ckc-vin-modal-input.invalid { border-color: #dc2626; background: #fef2f2; }
-.ckc-vin-counter { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 0.82rem; font-weight: 700; color: #999; font-family: monospace; }
-.ckc-vin-counter.done { color: #16a34a; }
-.ckc-vin-counter.error { color: #dc2626; }
-.ckc-vin-error { display: none; margin-bottom: 12px; padding: 10px 12px; background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; font-size: 0.82rem; color: #dc2626; line-height: 1.5; }
-.ckc-vin-hint { font-size: 0.78rem; color: #666; margin-bottom: 20px; line-height: 1.6; padding: 10px 12px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; }
-.ckc-vin-hint strong { color: #111; }
-.ckc-vin-modal-btns { display: flex; gap: 10px; }
-.ckc-vin-call-btn { flex: 1; padding: 15px; background: var(--ckc-gold); color: #111; border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
-.ckc-vin-call-btn:hover { background: var(--ckc-primary-light); transform: translateY(-1px); }
-.ckc-vin-call-btn:disabled { background: #e5e5e5; color: #aaa; cursor: not-allowed; transform: none; }
-.ckc-vin-cancel-btn { padding: 15px 20px; background: transparent; border: 1.5px solid #ddd; border-radius: 10px; color: #666; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; }
-.ckc-vin-cancel-btn:hover { border-color: #999; color: #333; }
-
-/* ═══ DISCLAIMER ═══ */
-.ckc-disclaimer { background: var(--ckc-card); border-radius: var(--ckc-radius); border: 1px solid var(--ckc-border); padding: 24px 32px; margin-top: 32px; font-size: 0.95rem; color: var(--ckc-text-muted); line-height: 1.6; }
-.ckc-disclaimer strong { color: var(--ckc-text); }
-
-/* ═══ SPINNER ═══ */
-.ckc-spinner { width: 14px; height: 14px; border: 2px solid rgba(201,162,39,0.25); border-top-color: var(--ckc-gold); border-radius: 50%; animation: ckc-spin 0.8s linear infinite; flex-shrink: 0; }
-@keyframes ckc-spin { to { transform: rotate(360deg); } }
-</style>
-
-<!-- ═══ KEY FINDER WIDGET ═══ -->
-<div class="ckc-finder" id="ckc-finder-root">
-  <div class="ckc-loading-bar" id="ckc-loading"></div>
-  <div class="ckc-sync-bar">
-    <div class="ckc-badge-row">
-      <a class="ckc-badge" href="https://carolinakeycutters.com/winston%E2%80%91salem" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0112 2a8 8 0 018 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
-        Winston-Salem
-      </a>
-      <a class="ckc-badge" href="https://carolinakeycutters.com/greensboro-1" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0112 2a8 8 0 018 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
-        Greensboro
-      </a>
-      <a class="ckc-badge" href="https://carolinakeycutters.com/highpoint" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0112 2a8 8 0 018 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
-        High Point
-      </a>
-    </div>
-    <div style="font-size:0.82rem; color:var(--ckc-text-muted); letter-spacing:0.08em; text-transform:uppercase; font-weight:500;">Serving the Triad</div>
-    <div class="ckc-sync-status" id="ckc-sync-status">
-      <span class="ckc-sync-dot"></span>
-      <span id="ckc-sync-text">Connecting...</span>
-    </div>
-  </div>
-
-  <!-- SCREEN 1: Vehicle Search -->
-  <div class="ckc-screen active" id="ckc-screen-1">
-    <div class="ckc-search-card">
-      <div class="ckc-search-title" style="text-align:center;">Lost your key — or just need a spare? Tell us what you drive.</div>
-      <div class="ckc-search-grid">
-        <div class="ckc-field">
-          <label>Year</label>
-          <select id="ckc-year"><option value="">Select Year</option></select>
+        .loading { text-align: center; padding: 40px; }
+        .loading-spinner { width: 40px; height: 40px; border: 4px solid var(--ckc-gray-200); border-top: 4px solid var(--ckc-gold); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="app-header">
+            <h1 class="app-title">CKC Command 2.1</h1>
+            <p class="app-subtitle">Phone Quote Tool — Carolina Key Cutters</p>
+            <span class="version-badge">v2.1</span>
         </div>
-        <div class="ckc-field">
-          <label>Make</label>
-          <select id="ckc-make" disabled><option value="">Select Make</option></select>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill" style="width: 16.67%"></div>
         </div>
-        <div class="ckc-field">
-          <label>Model</label>
-          <select id="ckc-model" disabled><option value="">Select Model</option></select>
+        <div class="step-indicator">
+            <span class="step active" id="step1">Setup</span>
+            <span class="step" id="step2">Search</span>
+            <span class="step" id="step3">Resolve</span>
+            <span class="step" id="step4">Select</span>
+            <span class="step" id="step5">Customer</span>
+            <span class="step" id="step6">Complete</span>
         </div>
-        <button class="ckc-search-btn" id="ckc-search-btn" disabled onclick="startWizard()">Find My Key</button>
-      </div>
+
+        <!-- SCREEN 1: Customer Call Setup -->
+        <div class="screen active" id="screen1">
+            <div class="screen-header">
+                <h2 class="screen-title">Customer Call Setup</h2>
+                <p class="screen-description">Ask two questions, enter the answers, proceed</p>
+            </div>
+            <div class="phone-script">
+                <div class="phone-script-title">Phone Script</div>
+                <div class="phone-script-text">"Carolina Key Cutters, how can I help you?"</div>
+                <div class="phone-script-text">"What's the year, make, and model?"</div>
+                <div class="phone-script-text">"Do you have a working key, or are all keys lost?"</div>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Year</label>
+                    <select class="form-select" id="vehicleYear"><option value="">Select Year</option></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Make</label>
+                    <select class="form-select" id="vehicleMake" disabled><option value="">Select Make</option></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Model</label>
+                    <select class="form-select" id="vehicleModel" disabled><option value="">Select Model</option></select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Service Type</label>
+                <div class="radio-group">
+                    <div class="radio-option">
+                        <input type="radio" id="aak" name="serviceType" value="AAK">
+                        <label for="aak">AAK (Add-A-Key) — Customer has a working key</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="akl" name="serviceType" value="AKL">
+                        <label for="akl">AKL (All Keys Lost) — No working keys</label>
+                    </div>
+                </div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" id="searchKeysBtn" disabled>Search Keys →</button>
+            </div>
+        </div>
+
+        <!-- SCREEN 2: Search Results -->
+        <div class="screen" id="screen2">
+            <div class="screen-header">
+                <h2 class="screen-title">Key Search Results</h2>
+                <p class="screen-description">Available options for <span id="vehicleDisplay"></span></p>
+            </div>
+            <div class="phone-script">
+                <div class="phone-script-title">Say to Customer</div>
+                <div class="phone-script-text">"Here's what I have for your <span id="vehicleDisplay2"></span>. Let me walk you through the options..."</div>
+            </div>
+            <div id="ckcQuotesPanel"></div>
+            <div class="results-container" id="resultsContainer">
+                <div class="loading" id="searchLoading">
+                    <div class="loading-spinner"></div>
+                    <p>Searching Shopify catalog...</p>
+                </div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="showScreen('screen1')">← Back</button>
+                <button class="btn btn-warning" id="showRksBtn" style="display: none;">Show RKS Options</button>
+                <button class="btn btn-outline" id="openAutosmartBtn2">Open MyAutoSmart</button>
+                <button class="btn btn-primary" id="proceedBtn" style="display: none;">Proceed to Selection →</button>
+            </div>
+        </div>
+
+        <!-- SCREEN 3: VIN Conflict Resolution -->
+        <div class="screen" id="screen3">
+            <div class="screen-header">
+                <h2 class="screen-title">VIN Verification</h2>
+                <p class="screen-description">Multiple specifications detected — VIN needed to confirm</p>
+            </div>
+            <div class="phone-script">
+                <div class="phone-script-title">Say to Customer</div>
+                <div class="phone-script-text">"I need your VIN to verify the exact key you need. You can find it on your dashboard or door frame. Hold on 30 seconds while I verify..."</div>
+            </div>
+            <div class="alert alert-warning">
+                <strong>⚠ Conflict Detected:</strong> Multiple FCC IDs or keyways found for this vehicle. VIN verification required.
+            </div>
+            <div class="vin-container">
+                <div class="form-group">
+                    <label class="form-label">Enter 17-Character VIN</label>
+                    <input type="text" class="vin-input form-input" id="vinInput" maxlength="17" placeholder="1HGCM82633A123456">
+                </div>
+                <div id="vinDisplay" style="display: none;">
+                    <div class="vin-display" id="vinDisplayText"></div>
+                    <p style="color: var(--ckc-slate); text-align: center; margin-top: 10px;">
+                        VIN saved — it's now in the omnipresent QR panel (bottom-right).<br>
+                        Scan it with your phone to hand off to MyAutoSmart.
+                    </p>
+                    <div class="vin-actions">
+                        <button class="btn btn-primary" id="copyVinBtn">📋 Copy VIN</button>
+                        <button class="btn btn-secondary" id="openAutosmartBtn3">Open MyAutoSmart</button>
+                    </div>
+                </div>
+                <button class="btn btn-primary" id="saveVinBtn" style="margin-top: 15px;">Save VIN & Update QR</button>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="showScreen('screen2')">← Back to Results</button>
+                <button class="btn btn-success" id="conflictResolvedBtn" style="display: none;">Conflict Resolved — Continue →</button>
+            </div>
+        </div>
+
+        <!-- SCREEN 4: Selection & Curation -->
+        <div class="screen" id="screen4">
+            <div class="screen-header">
+                <h2 class="screen-title">Key Selection & Curation</h2>
+                <p class="screen-description">Check the keys to include on the invoice</p>
+            </div>
+            <div class="phone-script">
+                <div class="phone-script-title">Say to Customer</div>
+                <div class="phone-script-text">"Here's exactly what I'm going to send you — check your email in a minute and tell me what you see..."</div>
+            </div>
+            <div id="curationQuotesPanel"></div>
+            <div id="manualOverridePanel"></div>
+            <div class="results-container" id="curationContainer"></div>
+            <div class="total-bar">
+                <span class="total-label">Running Total</span>
+                <span class="total-amount" id="runningTotal">$0.00</span>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="showScreen('screen2')">← Back to Results</button>
+                <button class="btn btn-primary" id="sendInvoiceBtn" disabled>Continue to Customer Info →</button>
+            </div>
+        </div>
+
+        <!-- SCREEN 5: Customer Info + Email Preview -->
+        <div class="screen" id="screen5">
+            <div class="screen-header">
+                <h2 class="screen-title">Customer Info & Email Preview</h2>
+                <p class="screen-description">Visual confirmation — sent while you're still on the call</p>
+            </div>
+            <div class="phone-script">
+                <div class="phone-script-title">Say to Customer</div>
+                <div class="phone-script-text">"What's the best email to send this to? I'll send it right now so you can see the picture and the price on your phone..."</div>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Customer Name *</label>
+                    <input type="text" class="form-input" id="customerName" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email Address *</label>
+                    <input type="email" class="form-input" id="customerEmail" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone Number</label>
+                    <input type="tel" class="form-input" id="customerPhone">
+                </div>
+            </div>
+            <div id="emailPreview"></div>
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="showScreen('screen4')">← Back to Selection</button>
+                <button class="btn btn-success" id="sendEmailBtn" disabled>Send Email to Customer</button>
+            </div>
+        </div>
+
+        <!-- SCREEN 6: Completion -->
+        <div class="screen" id="screen6">
+            <div class="screen-header">
+                <h2 class="screen-title">Email Sent</h2>
+                <p class="screen-description">Close the sale on the phone — customer has the picture on their screen now</p>
+            </div>
+            <div class="alert alert-success">
+                <strong>✓ Email Delivered</strong> — ask the customer to confirm they received it. Then take the card info and proceed.
+            </div>
+            <div id="completionSummary"></div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="startNewSearch()">Start New Call</button>
+            </div>
+        </div>
     </div>
+
+    <!-- OMNIPRESENT QR PANEL -->
+    <div class="omni-qr" id="omniQR">
+        <div class="omni-qr-header">
+            <span class="omni-qr-title">📱 Phone Hand-off</span>
+            <button class="omni-qr-toggle" id="omniQrToggle" title="Collapse/expand">−</button>
+        </div>
+        <div class="omni-qr-body">
+            <div class="omni-qr-canvas" id="omniQrCanvas"></div>
+            <div class="omni-qr-context" id="omniQrContext">CKC (336) 510-9816</div>
+            <div class="omni-qr-hint">Scan with phone camera</div>
+        </div>
+    </div>
+
+    <script>
+    /* ══════════════════════════════════════════════════════════════════
+       CKC COMMAND 2.1 — APPLICATION LOGIC
+       ══════════════════════════════════════════════════════════════════ */
+
+    const CKC_VERSION = 'v2.1';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxDw7dtdohInyx2kqeYM5EYNCpMaBN9Kdg3m_mtPGVKaz1jgw8bW4wZfwrUF3xR1gJW/exec';
+    const CATALOG_URL = 'https://ckc-blade-proxy.noloindie.workers.dev/catalog';
+    const BOOKING_URL = 'https://calendar.app.google/xqirB3Dpfmub5rAb6';
+    const SHOPIFY_DOMAIN = 'carolina-key-cutters.myshopify.com';
+    const CKC_PHONE = '(336) 510-9816';
+    const CKC_EMAIL_FROM = 'james@carolinakeycutters.com';
+
+    // EmailJS config (from memory)
+    const EMAILJS_PUBLIC_KEY = 'xnZyuYp9X4dIvLJBQ';
+    const EMAILJS_SERVICE = 'service_wkljx8t';
+    const EMAILJS_TEMPLATE = 'a8dpj1y';
+
+    // Shared YMM broadcaster key — other CKC tools can read this
+    const SHARED_CONTEXT_KEY = 'ckc.sharedContext';
+
+    /* ───────── CKC QUOTES MATRIX (baked in from ckc_quotes.html) ───────── */
+
+    const MAKE_NORMALIZE = {
+        'Ford':'FORD','Lincoln':'LINCOLN','Chevrolet':'CHEVROLET','GMC':'GMC','Buick':'BUICK',
+        'Cadillac':'CADILLAC','Pontiac':'PONTIAC','Saturn':'SATURN','Oldsmobile':'OLDSMOBILE',
+        'Dodge':'DODGE','RAM':'RAM','Chrysler':'CHRYSLER','Jeep':'JEEP',
+        'Toyota':'TOYOTA','Lexus':'LEXUS','Scion':'SCION',
+        'Honda':'HONDA','Acura':'ACURA','Nissan':'NISSAN','Infiniti':'INFINITI',
+        'Hyundai':'HYUNDAI','Kia':'KIA','Genesis':'GENESIS',
+        'Subaru':'SUBARU','Mazda':'MAZDA','Mitsubishi':'MITSUBISHI',
+        'BMW':'BMW','MINI':'MINI','Mercedes-Benz':'MERCEDES-BENZ',
+        'Audi':'AUDI','Volkswagen':'VOLKSWAGEN','Volvo':'VOLVO'
+    };
+
+    const MATRIX = [
+        { group:'Ford / Lincoln', makes:['FORD','LINCOLN'], rules:[
+            { test:v=>v.year>=2018, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'Autel IM508',
+              flags:['warn:Confirm PATS generation with VIN before quoting AKL','info:BCM access required — not standard OBD'],
+              script:"That's a push-start Ford — smart key programming is more involved than a standard key. Add-a-key labor runs $150 to $175, key billed separately. Did you lose all your keys or are you adding one?" },
+            { test:v=>true, tier:1, keyType:'Transponder Key', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+              flags:['success:Standard OBD — strong Autel coverage','info:F-150 / Escape / Explorer / Ranger / Mustang covered'],
+              script:"Good news — that's a standard transponder key. The $65 service call covers add-a-key, I come to you, done in under 30 minutes. What area are you in?" }
+        ]},
+        { group:'GM — Chevrolet / GMC / Buick / Cadillac', makes:['CHEVROLET','GMC','BUICK','CADILLAC','PONTIAC','SATURN','OLDSMOBILE'], rules:[
+            { test:v=>v.year>=2014, tier:2, keyType:'Remote Head Key / Smart Key', aak:'$150–$175', akl:'$300–$350', time:'45–60 min AAK / 90 min AKL', tool:'Autel IM508',
+              flags:['warn:Confirm RPO codes for push-start trim with VIN','info:BCM procedure — not standard OBD'],
+              script:"That's a newer GM with smart key programming. Add-a-key labor is $150 to $175, key separate. I'll need your VIN to confirm whether your trim has push-start — that affects the all-keys-lost price." },
+            { test:v=>true, tier:1, keyType:'Transponder Key', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+              flags:['success:Standard OBD — PassLock / PassKey III covered','info:Silverado / Sierra / Tahoe / Suburban / Impala / Malibu'],
+              script:"That's a standard GM transponder — $65 service call covers add-a-key, I come to your location in 20 to 30 minutes. What part of the Triad are you in?" }
+        ]},
+        { group:'Chrysler / Dodge / Jeep / RAM', makes:['CHRYSLER','DODGE','JEEP','RAM'], rules:[
+            { test:v=>v.year>=2011, tier:2, keyType:'FOBIK / Smart Key', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'Autel IM508',
+              flags:['warn:AKL may require EEPROM on some trims — confirm with VIN before committing','warn:FOBIK procedure — not standard OBD'],
+              script:"That's a FOBIK vehicle — programming is different from a standard key and the $65 service call doesn't apply. Add-a-key runs $150 to $175 labor. For all keys lost I need your VIN first — the method varies by trim." },
+            { test:v=>true, tier:1, keyType:'Transponder / Remote Head Key', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+              flags:['success:Standard SKIM procedure — OBD covered'],
+              script:"That's a standard transponder — $65 service call covers add-a-key, I come to your location. What part of the Triad are you in?" }
+        ]},
+        { group:'Toyota / Lexus / Scion', makes:['TOYOTA','LEXUS','SCION'], rules:[
+            { test:v=>v.year>=2010, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'Autel IM508',
+              flags:['warn:Smart key generation varies by year — confirm with VIN for AKL','info:BCM / smart key module access required'],
+              script:"That Toyota has push-start — smart key programming is a different procedure. Add-a-key labor runs $150 to $175, key separate. For all keys lost I need the VIN to confirm which procedure applies before I give you a firm price." },
+            { test:v=>true, tier:1, keyType:'Transponder Key (TOY43/TOY47)', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+              flags:['success:Standard OBD — excellent Autel coverage'],
+              script:"Great news — that's a standard Toyota transponder. The $65 service call covers add-a-key, I come to you, done in under 30 minutes. What area are you in?" }
+        ]},
+        { group:'Honda / Acura', makes:['HONDA','ACURA'], rules:[
+            { test:v=>v.year>=2013, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$350–$450', time:'60 min AAK / 90+ min AKL', tool:'Autel IM508 + possible bench',
+              flags:['danger:AKL on 2013+ Honda/Acura smart key typically requires EEPROM — bench work likely','warn:Do not commit to AKL price without confirming first','info:AAK handled via PIN procedure on Autel'],
+              script:"Newer Honda with push-start — add-a-key I can handle on-site for $150 to $175. All keys lost on that one may require bench work — I need your VIN before I can give you a firm price." },
+            { test:v=>true, tier:1, keyType:'Transponder Key (HO01/HON66)', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+              flags:['success:Standard Honda CMFI — OBD covered'],
+              script:"That's a standard Honda transponder — $65 service call, I come to you, done in under 30 minutes. What part of the Triad are you in?" }
+        ]},
+        { group:'Nissan / Infiniti', makes:['NISSAN','INFINITI'], rules:[
+            { test:v=>v.year>=2007, tier:2, keyType:'Smart Key / Proximity (NSN14)', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'Autel IM508',
+              flags:['warn:NATS 5/6 BCM access required — not standard OBD','info:VIN required before committing to AKL price'],
+              script:"That Nissan has push-start smart key — different procedure from a standard key. Add-a-key labor is $150 to $175, key separate. All keys lost I'll need your VIN to confirm the exact procedure before I quote." },
+            { test:v=>true, tier:1, keyType:'Transponder Key (NSN11/NSN14)', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+              flags:['success:Standard NATS OBD — reliable Autel coverage'],
+              script:"Standard Nissan transponder — $65 service call covers add-a-key, I come to you. What area are you in?" }
+        ]},
+        { group:'Hyundai / Kia', makes:['HYUNDAI','KIA'], rules:[
+            { test:v=>v.year>=2012, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$300–$350', time:'45–60 min AAK / 90 min AKL', tool:'Autel IM508',
+              flags:['warn:AKL method depends on immo generation — confirm with VIN','info:PIN or BCM procedure for AAK via Autel'],
+              script:"Newer Hyundai or Kia with push-start — add-a-key labor is $150 to $175. All keys lost varies by the immo version — I need the VIN to confirm the procedure and price before we schedule anything." },
+            { test:v=>true, tier:1, keyType:'Transponder Key (HY20/HY22)', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+              flags:['success:Standard OBD — strong Autel coverage'],
+              script:"Standard Hyundai or Kia transponder — $65 service call covers add-a-key, I come to you. What area are you in?" }
+        ]},
+        { group:'Genesis', makes:['GENESIS'], rules:[
+            { test:v=>true, tier:3, keyType:'Smart Key / Proximity', aak:'$175–$225', akl:'$350–$450', time:'60–90 min AAK', tool:'Autel IM508',
+              flags:['warn:Genesis BCM more complex than standard Hyundai/Kia','warn:VIN required before AKL — confirm Autel coverage first'],
+              script:"Genesis smart key programming is more involved than a standard Hyundai or Kia. Add-a-key labor runs $175 to $225. For all keys lost I'll need your VIN to confirm coverage before I give you a firm price." }
+        ]},
+        { group:'Subaru', makes:['SUBARU'], rules:[
+            { test:v=>v.year>=2018, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'Autel IM508',
+              flags:['info:Push-start Subaru 2018+ — BCM procedure','warn:Confirm VIN for AKL before quoting'],
+              script:"Newer Subaru with push-start — add-a-key labor is $150 to $175. All keys lost I'll want your VIN to confirm the procedure first." },
+            { test:v=>true, tier:1, keyType:'Transponder Key', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+              flags:['success:Standard OBD — good Autel coverage'],
+              script:"Standard Subaru transponder — $65 service call, done in under 30 minutes. What part of the Triad are you in?" }
+        ]},
+        { group:'Mazda / Mitsubishi', makes:['MAZDA','MITSUBISHI'], rules:[
+            { test:v=>v.year>=2014, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'Autel IM508',
+              flags:['warn:Confirm immo generation with VIN for AKL','info:BCM procedure for push-start models'],
+              script:"That's a newer push-start model — smart key labor runs $150 to $175 for add-a-key. I'll need the VIN to confirm the all-keys-lost procedure before quoting." },
+            { test:v=>true, tier:1, keyType:'Transponder Key', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+              flags:['success:Standard OBD covered'],
+              script:"Standard transponder — $65 service call, done in under 30 minutes. What part of the Triad are you in?" }
+        ]},
+        { group:'BMW / MINI', makes:['BMW','MINI'], rules:[
+            { test:v=>true, tier:4, keyType:'Smart Key / CAS Module', aak:'$250–$350', akl:'$450–$600+', time:'90–120 min AAK', tool:'Autel IM508 + KTAG',
+              flags:['danger:BMW/MINI CAS/FEM — EEPROM access required on all procedures','danger:AKL often requires bench work — confirm before dispatch','warn:VIN required before committing to any price'],
+              script:"BMW or MINI smart key requires EEPROM-level access — more involved than most vehicles. Add-a-key labor runs $250 to $350. For all keys lost I need your VIN before I can give you an accurate price." }
+        ]},
+        { group:'Mercedes-Benz', makes:['MERCEDES-BENZ'], rules:[
+            { test:v=>true, tier:3, keyType:'Smart Key / EIS Module', aak:'$200–$300', akl:'$400–$600+', time:'90–120 min AAK', tool:'Autel IM508 + KTAG',
+              flags:['danger:EIS EEPROM required — not standard OBD','danger:AKL likely requires EIS replacement + bench programming','warn:VIN required — procedure varies by year'],
+              script:"Mercedes smart key programming requires EIS module access — it's a more complex job. Add-a-key labor runs $200 to $300. All keys lost on a Mercedes is a significant job — I need the VIN before I can give you a firm price." }
+        ]},
+        { group:'Volkswagen / Audi', makes:['VOLKSWAGEN','AUDI'], rules:[
+            { test:v=>v.year>=2015, tier:3, keyType:'Smart Key / MQB Platform', aak:'$200–$250', akl:'$350–$500', time:'90+ min AAK', tool:'Autel IM508 + KTAG',
+              flags:['danger:MQB platform — EEPROM read likely for AAK','danger:AKL may require bench work','warn:VIN required before committing to any price'],
+              script:"Newer VW or Audi on the MQB platform — key programming requires EEPROM access. Add-a-key labor is $200 to $250. All keys lost I need the VIN first — bench work may be required." },
+            { test:v=>true, tier:2, keyType:'Transponder / Remote Head (HU66)', aak:'$150–$200', akl:'$300–$400', time:'60–90 min AAK', tool:'Autel IM508',
+              flags:['warn:PIN required for AAK — confirm immo generation with VIN','info:Immo3/4 handled by Autel OBD'],
+              script:"That VW or Audi requires a PIN for key programming — not a standard OBD job. Add-a-key labor runs $150 to $200. I'll need your VIN to confirm the exact procedure before quoting all keys lost." }
+        ]},
+        { group:'Volvo', makes:['VOLVO'], rules:[
+            { test:v=>true, tier:3, keyType:'Smart Key / CEM Module', aak:'$200–$275', akl:'$350–$500', time:'90 min AAK', tool:'Autel IM508',
+              flags:['warn:CEM module controls immobilizer — VIN required','danger:AKL may require CEM bench work — confirm coverage first'],
+              script:"Volvo smart key works through the CEM module — I need your VIN to confirm whether I can do this on-site or if it requires bench work. Add-a-key is $200 to $275." }
+        ]}
+    ];
+
+    const TIER_LABELS = ['', 'Tier 1 — Standard OBD', 'Tier 2 — Advanced / BCM', 'Tier 3 — EEPROM / Module', 'Tier 4 — Quote by VIN'];
+
+    /* VIN decoding for conflict resolution */
+    const YEAR_MAP = {'A':1980,'B':1981,'C':1982,'D':1983,'E':1984,'F':1985,'G':1986,'H':1987,'J':1988,'K':1989,'L':1990,'M':1991,'N':1992,'P':1993,'R':1994,'S':1995,'T':1996,'V':1997,'W':1998,'X':1999,'Y':2000,'1':2001,'2':2002,'3':2003,'4':2004,'5':2005,'6':2006,'7':2007,'8':2008,'9':2009};
+    const YEAR_MAP2 = {'A':2010,'B':2011,'C':2012,'D':2013,'E':2014,'F':2015,'G':2016,'H':2017,'J':2018,'K':2019,'L':2020,'M':2021,'N':2022,'P':2023,'R':2024,'S':2025,'T':2026,'V':2027};
+
+    /* ─────── CKC QUOTES MATRIX LOOKUP ─────── */
+    function lookupQuote(makeDisplay, year) {
+        const makeKey = MAKE_NORMALIZE[makeDisplay] || (makeDisplay || '').toUpperCase();
+        for (const g of MATRIX) {
+            if (g.makes.includes(makeKey)) {
+                for (const r of g.rules) {
+                    if (r.test({ make: makeKey, year: parseInt(year) })) {
+                        return { groupName: g.group, rule: r, matched: true };
+                    }
+                }
+            }
+        }
+        return { groupName: null, rule: null, matched: false };
+    }
+
+    /* Parse "$150–$175" → { low: 150, high: 175, mid: 163 } */
+    function parsePriceRange(rangeStr) {
+        if (!rangeStr || typeof rangeStr !== 'string') return null;
+        // Single value like "$65"
+        const singleMatch = rangeStr.match(/^\$(\d+)$/);
+        if (singleMatch) {
+            const v = parseInt(singleMatch[1]);
+            return { low: v, high: v, mid: v };
+        }
+        // Range like "$150–$175" or "$400–$600+"
+        const rangeMatch = rangeStr.match(/\$(\d+)[–-]\$(\d+)\+?/);
+        if (rangeMatch) {
+            const low = parseInt(rangeMatch[1]);
+            const high = parseInt(rangeMatch[2]);
+            return { low, high, mid: Math.round((low + high) / 2) };
+        }
+        return null;
+    }
+
+    /* ──────── SHARED CONTEXT (YMM broadcaster) ──────── */
+    function writeSharedContext() {
+        const ctx = {
+            year: appState.vehicle.year,
+            make: appState.vehicle.make,
+            model: appState.vehicle.model,
+            serviceType: appState.serviceType,
+            vin: appState.vinNumber || null,
+            updatedAt: Date.now(),
+            source: 'ckc-command-2.1'
+        };
+        try { localStorage.setItem(SHARED_CONTEXT_KEY, JSON.stringify(ctx)); } catch(e) { console.warn('localStorage write failed', e); }
+    }
+
+    /* ─────── APP STATE ─────── */
+    let appState = {
+        currentScreen: 1,
+        vehicle: { year: '', make: '', model: '' },
+        serviceType: '',
+        searchResults: [],           // all results from catalog
+        inStockResults: [],          // ckc-stock
+        rksResults: [],              // rks-stock
+        rksVisible: false,
+        quoteResult: null,           // from CKC Quotes matrix
+        conflictDetected: false,
+        vinNumber: '',
+        selectedKeys: [],            // array of SKUs selected in curation
+        customer: { name: '', email: '', phone: '' },
+        manualLaborOverride: null,   // dollar amount if user manually overrode
+        catalogLoaded: false,
+        catalogData: null
+    };
+
+    /* ─────── INITIALIZATION ─────── */
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log(`CKC Command ${CKC_VERSION} initialized`);
+        if (window.emailjs && EMAILJS_PUBLIC_KEY) {
+            try { emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY }); } catch(e) { console.warn('EmailJS init failed', e); }
+        }
+        populateYearDropdown();
+        setupEventListeners();
+        initOmniQR();
+        updateOmniQR();
+        loadCatalog();
+        showScreen('screen1');
+    });
+
+    function setupEventListeners() {
+        document.getElementById('vehicleYear').addEventListener('change', handleYearChange);
+        document.getElementById('vehicleMake').addEventListener('change', handleMakeChange);
+        document.getElementById('vehicleModel').addEventListener('change', handleModelChange);
+        document.querySelectorAll('input[name="serviceType"]').forEach(r => r.addEventListener('change', handleServiceTypeChange));
+        document.getElementById('searchKeysBtn').addEventListener('click', performKeySearch);
+        document.getElementById('showRksBtn').addEventListener('click', toggleRksVisible);
+        document.getElementById('openAutosmartBtn2').addEventListener('click', openMyAutoSmart);
+        document.getElementById('proceedBtn').addEventListener('click', () => showScreen('screen4'));
+        document.getElementById('saveVinBtn').addEventListener('click', saveVin);
+        document.getElementById('copyVinBtn').addEventListener('click', copyVinToClipboard);
+        document.getElementById('openAutosmartBtn3').addEventListener('click', openMyAutoSmart);
+        document.getElementById('conflictResolvedBtn').addEventListener('click', () => showScreen('screen4'));
+        document.getElementById('vinInput').addEventListener('input', validateVinInput);
+        document.getElementById('sendInvoiceBtn').addEventListener('click', () => showScreen('screen5'));
+        ['customerName','customerEmail','customerPhone'].forEach(id => document.getElementById(id).addEventListener('input', validateCustomerForm));
+        document.getElementById('sendEmailBtn').addEventListener('click', sendCustomerEmail);
+        document.getElementById('omniQrToggle').addEventListener('click', toggleOmniQR);
+        document.getElementById('omniQR').addEventListener('click', expandOmniQRIfCollapsed);
+    }
+
+    /* ─────── SCREEN MANAGEMENT ─────── */
+    function showScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+        const num = parseInt(screenId.replace('screen',''));
+        appState.currentScreen = num;
+        document.getElementById('progressFill').style.width = `${(num/6)*100}%`;
+        for (let i=1;i<=6;i++) {
+            const el = document.getElementById(`step${i}`);
+            el.classList.remove('active','completed');
+            if (i === num) el.classList.add('active');
+            else if (i < num) el.classList.add('completed');
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // Screen-entry hooks
+        if (screenId === 'screen4') enterCurationScreen();
+        if (screenId === 'screen5') renderEmailPreview();
+    }
+    window.showScreen = showScreen;
+
+    /* ─────── YMM DROPDOWNS ─────── */
+    function populateYearDropdown() {
+        const sel = document.getElementById('vehicleYear');
+        for (let y = 2027; y >= 1998; y--) {
+            const opt = document.createElement('option'); opt.value = y; opt.textContent = y; sel.appendChild(opt);
+        }
+    }
+
+    function handleYearChange() {
+        const year = this.value;
+        appState.vehicle.year = year;
+        const makeEl = document.getElementById('vehicleMake');
+        const modelEl = document.getElementById('vehicleModel');
+        makeEl.innerHTML = '<option value="">Select Make</option>';
+        modelEl.innerHTML = '<option value="">Select Model</option>';
+        makeEl.disabled = !year;
+        modelEl.disabled = true;
+        updateSearchButton();
+        if (year) populateMakeDropdown(year);
+        updateOmniQR();
+    }
+
+    function handleMakeChange() {
+        const make = this.value;
+        appState.vehicle.make = make;
+        const modelEl = document.getElementById('vehicleModel');
+        modelEl.innerHTML = '<option value="">Select Model</option>';
+        modelEl.disabled = !make;
+        updateSearchButton();
+        if (make) populateModelDropdown(appState.vehicle.year, make);
+        updateOmniQR();
+    }
+
+    function handleModelChange() {
+        appState.vehicle.model = this.value;
+        updateSearchButton();
+        updateOmniQR();
+    }
+
+    function handleServiceTypeChange() {
+        appState.serviceType = this.value;
+        updateSearchButton();
+        updateOmniQR();
+    }
+
+    function updateSearchButton() {
+        const { year, make, model } = appState.vehicle;
+        document.getElementById('searchKeysBtn').disabled = !(year && make && model && appState.serviceType);
+    }
+
+    /* Populate makes from catalog if loaded, else fallback to matrix */
+    function populateMakeDropdown(year) {
+        const makeEl = document.getElementById('vehicleMake');
+        let makes = [];
+        if (appState.catalogData && appState.catalogData.makes) {
+            makes = appState.catalogData.makes.slice().sort();
+        } else {
+            makes = Object.keys(MAKE_NORMALIZE).sort();
+        }
+        makes.forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = m; makeEl.appendChild(o); });
+        makeEl.disabled = false;
+    }
+
+    function populateModelDropdown(year, make) {
+        const modelEl = document.getElementById('vehicleModel');
+        let models = [];
+        if (appState.catalogData && appState.catalogData.modelsByMake && appState.catalogData.modelsByMake[make]) {
+            models = appState.catalogData.modelsByMake[make].slice().sort();
+        } else {
+            // Fallback mock list
+            const fallback = {
+                'Ford':['Bronco','Edge','Escape','Expedition','Explorer','F-150','F-250','Focus','Fusion','Mustang','Ranger'],
+                'Chevrolet':['Blazer','Colorado','Equinox','Impala','Malibu','Silverado 1500','Suburban','Tahoe','Traverse'],
+                'Toyota':['4Runner','Camry','Corolla','Highlander','RAV4','Sienna','Tacoma','Tundra'],
+                'Honda':['Accord','Civic','CR-V','Odyssey','Pilot','Ridgeline'],
+                'Nissan':['Altima','Frontier','Maxima','Murano','Pathfinder','Rogue','Sentra','Titan'],
+                'Hyundai':['Accent','Elantra','Santa Fe','Sonata','Tucson'],
+                'Kia':['Forte','Sorento','Soul','Sportage','Telluride'],
+                'BMW':['3 Series','5 Series','X3','X5']
+            };
+            models = fallback[make] || [];
+        }
+        models.forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = m; modelEl.appendChild(o); });
+        modelEl.disabled = false;
+    }
+
+    /* ─────── CATALOG LOAD ─────── */
+    async function loadCatalog() {
+        try {
+            const res = await fetch(CATALOG_URL);
+            if (!res.ok) throw new Error('Catalog fetch failed: ' + res.status);
+            const data = await res.json();
+            appState.catalogData = normalizeCatalog(data);
+            appState.catalogLoaded = true;
+            console.log(`Catalog loaded: ${appState.catalogData.products?.length || 0} products`);
+        } catch (e) {
+            console.warn('Catalog load failed — falling back to fallback dropdowns', e);
+            appState.catalogLoaded = false;
+        }
+    }
+
+    /* Normalize whatever shape the blade proxy returns into { products, makes, modelsByMake } */
+    function normalizeCatalog(raw) {
+        let products = [];
+        if (Array.isArray(raw)) products = raw;
+        else if (Array.isArray(raw.products)) products = raw.products;
+        else if (Array.isArray(raw.items)) products = raw.items;
+        const makes = new Set();
+        const modelsByMake = {};
+        products.forEach(p => {
+            const mk = p.make || p.vendor_make || p.vehicleMake;
+            const mo = p.model || p.vehicleModel;
+            if (mk) {
+                makes.add(mk);
+                if (mo) {
+                    if (!modelsByMake[mk]) modelsByMake[mk] = new Set();
+                    modelsByMake[mk].add(mo);
+                }
+            }
+        });
+        const modelsByMakeObj = {};
+        Object.keys(modelsByMake).forEach(k => modelsByMakeObj[k] = Array.from(modelsByMake[k]));
+        return { products, makes: Array.from(makes), modelsByMake: modelsByMakeObj };
+    }
+
+    /* ─────── KEY SEARCH ─────── */
+    async function performKeySearch() {
+        writeSharedContext();
+        showScreen('screen2');
+        const vd = `${appState.vehicle.year} ${appState.vehicle.make} ${appState.vehicle.model}`;
+        document.getElementById('vehicleDisplay').textContent = vd;
+        document.getElementById('vehicleDisplay2').textContent = vd;
+        document.getElementById('searchLoading').style.display = 'block';
+
+        // Run matrix lookup regardless of catalog
+        appState.quoteResult = lookupQuote(appState.vehicle.make, parseInt(appState.vehicle.year));
+        renderQuotesPanel('ckcQuotesPanel', appState.quoteResult);
+
+        try {
+            const products = filterCatalog(appState.vehicle.year, appState.vehicle.make, appState.vehicle.model);
+            appState.searchResults = products;
+            appState.inStockResults = products.filter(p => hasTag(p, 'ckc-stock'));
+            appState.rksResults = products.filter(p => hasTag(p, 'rks-stock') && !hasTag(p, 'ckc-stock'));
+            appState.conflictDetected = detectConflicts(appState.inStockResults);
+            if (appState.conflictDetected) {
+                displayConflictWarning();
+                setTimeout(() => showScreen('screen3'), 1500);
+            } else {
+                displaySearchResults();
+                document.getElementById('proceedBtn').style.display = 'inline-block';
+            }
+        } catch (e) {
+            console.error(e);
+            displaySearchError();
+        }
+        document.getElementById('searchLoading').style.display = 'none';
+    }
+
+    function filterCatalog(year, make, model) {
+        if (!appState.catalogData || !appState.catalogData.products) return [];
+        const yrNum = parseInt(year);
+        return appState.catalogData.products.filter(p => {
+            const pMake = (p.make || p.vendor_make || p.vehicleMake || '').toString();
+            const pModel = (p.model || p.vehicleModel || '').toString();
+            const pYearStart = parseInt(p.yearStart || p.year_start || p.yearFrom || p.year);
+            const pYearEnd = parseInt(p.yearEnd || p.year_end || p.yearTo || p.year);
+            if (pMake && pMake.toLowerCase() !== make.toLowerCase()) return false;
+            if (pModel && pModel.toLowerCase() !== model.toLowerCase()) return false;
+            if (pYearStart && yrNum < pYearStart) return false;
+            if (pYearEnd && yrNum > pYearEnd) return false;
+            return true;
+        });
+    }
+
+    function hasTag(product, tag) {
+        const tags = product.tags || product.tag_list || [];
+        if (typeof tags === 'string') return tags.toLowerCase().split(/[,\s]+/).includes(tag.toLowerCase());
+        if (Array.isArray(tags)) return tags.map(t => String(t).toLowerCase()).includes(tag.toLowerCase());
+        return false;
+    }
+
+    function detectConflicts(results) {
+        if (results.length <= 1) return false;
+        const byType = {};
+        results.forEach(k => {
+            const t = k.type || k.keyType || 'unknown';
+            (byType[t] = byType[t] || []).push(k);
+        });
+        for (const t in byType) {
+            const grp = byType[t];
+            if (grp.length <= 1) continue;
+            const fccs = new Set(grp.map(k => k.fcc || k.fccId).filter(x => x && x !== 'N/A'));
+            const keyways = new Set(grp.map(k => k.keyway || k.blade).filter(x => x && x !== 'N/A'));
+            if (fccs.size > 1 || keyways.size > 1) return true;
+        }
+        return false;
+    }
+
+    function displayConflictWarning() {
+        document.getElementById('resultsContainer').innerHTML = `
+            <div class="alert alert-warning"><strong>⚠ Conflict detected</strong> — multiple specifications found. Routing to VIN verification...</div>`;
+    }
+
+    function displaySearchError() {
+        document.getElementById('resultsContainer').innerHTML = `
+            <div class="alert alert-error"><strong>Catalog unavailable</strong> — proceed with manual lookup. Click "Open MyAutoSmart" below.</div>`;
+    }
+
+    /* Render CKC Quotes panel */
+    function renderQuotesPanel(containerId, quote) {
+        const el = document.getElementById(containerId);
+        if (!el) return;
+        if (!quote || !quote.matched) {
+            el.innerHTML = `
+                <div class="manual-override">
+                    <div class="manual-override-title">⚠ CKC Quotes: No matrix match</div>
+                    <p>This make isn't in the pricing matrix. Use MyAutoSmart for job details, then enter a manual labor quote below.</p>
+                </div>`;
+            return;
+        }
+        const r = quote.rule;
+        const serviceType = appState.serviceType;
+        const aakRange = parsePriceRange(r.aak);
+        const aklRange = parsePriceRange(r.akl);
+        const flagsHTML = r.flags.map(f => {
+            const i = f.indexOf(':'); const t = f.slice(0,i); const text = f.slice(i+1);
+            return `<div class="quotes-flag qflag-${t}">${text}</div>`;
+        }).join('');
+        el.innerHTML = `
+            <div class="quotes-card">
+                <span class="quotes-tier tier-${r.tier}">${TIER_LABELS[r.tier]}</span>
+                <div class="quotes-vehicle">${appState.vehicle.year} ${appState.vehicle.make} ${appState.vehicle.model}</div>
+                <div class="quotes-keytype">${r.keyType} · ${quote.groupName}</div>
+                <div class="quotes-pricing">
+                    <div class="quotes-price-box ${serviceType==='AAK'?'selected':''}">
+                        <div class="quotes-price-label">AAK — Add-a-Key Labor</div>
+                        <div class="quotes-price-value">${r.aak}</div>
+                        ${aakRange ? `<div class="quotes-price-mid">Mid: $${aakRange.mid}</div>` : ''}
+                    </div>
+                    <div class="quotes-price-box ${serviceType==='AKL'?'selected':''}">
+                        <div class="quotes-price-label">AKL — All Keys Lost Labor</div>
+                        <div class="quotes-price-value">${r.akl}</div>
+                        ${aklRange ? `<div class="quotes-price-mid">Mid: $${aklRange.mid}</div>` : ''}
+                    </div>
+                </div>
+                <div class="quotes-script">"${r.script}"</div>
+                ${flagsHTML ? `<div class="quotes-flags">${flagsHTML}</div>` : ''}
+            </div>`;
+    }
+
+    function displaySearchResults() {
+        const container = document.getElementById('resultsContainer');
+        let html = '';
+        if (appState.inStockResults.length === 0 && appState.rksResults.length === 0) {
+            html = `<div class="alert alert-info"><strong>No exact matches found.</strong> Use "Open MyAutoSmart" below to look up the vehicle manually, or check the catalog directly.</div>`;
+        } else {
+            if (appState.inStockResults.length > 0) {
+                html += `<div class="results-header"><div class="results-title">In-Stock Keys</div><div class="results-count">${appState.inStockResults.length} available</div></div>`;
+                html += appState.inStockResults.map(renderSearchCard).join('');
+            } else {
+                html += `<div class="alert alert-info">No in-stock items for this vehicle. Click <strong>Show RKS Options</strong> for 2–3 day ship items.</div>`;
+            }
+            if (appState.rksResults.length > 0) {
+                document.getElementById('showRksBtn').style.display = 'inline-block';
+            }
+        }
+        container.innerHTML = html;
+    }
+
+    function toggleRksVisible() {
+        appState.rksVisible = !appState.rksVisible;
+        const btn = document.getElementById('showRksBtn');
+        if (appState.rksVisible) {
+            btn.textContent = 'Hide RKS Options';
+            const container = document.getElementById('resultsContainer');
+            const rksHTML = `<div class="results-header" style="margin-top: 30px;"><div class="results-title">RKS Options (2–3 days)</div><div class="results-count">${appState.rksResults.length} available to order</div></div>${appState.rksResults.map(renderSearchCard).join('')}`;
+            container.insertAdjacentHTML('beforeend', rksHTML);
+        } else {
+            btn.textContent = 'Show RKS Options';
+            displaySearchResults();
+        }
+    }
+
+    function renderSearchCard(p) {
+        const sku = p.sku || p.SKU || p.variant_sku || 'N/A';
+        const title = p.title || p.name || p.product_title || sku;
+        const type = p.type || p.keyType || p.product_type || '';
+        const price = parseFloat(p.price || p.variant_price || 0);
+        const inStock = hasTag(p, 'ckc-stock');
+        const imgSrc = p.image || p.image_url || p.featured_image || (p.images && p.images[0]) || '';
+        const fcc = p.fcc || p.fccId || '';
+        const keyway = p.keyway || p.blade || '';
+        const statusClass = inStock ? 'status-in-stock' : 'status-rks';
+        const statusText = inStock ? 'In Stock — Same Day' : '2–3 Day Ship (RKS)';
+        return `
+            <div class="key-card" data-sku="${sku}">
+                <div class="key-card-image">
+                    ${imgSrc ? `<img src="${imgSrc}" alt="${title}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'key-card-image-placeholder',textContent:'No image'}))">` : `<div class="key-card-image-placeholder">No image</div>`}
+                </div>
+                <div class="key-card-body">
+                    <div class="key-header">
+                        <div>
+                            <div class="key-title">${title}</div>
+                            <div class="key-type">${type}</div>
+                        </div>
+                        <div class="key-price">
+                            <div class="key-price-amount">$${price.toFixed(2)}</div>
+                            <div class="key-price-breakdown">Key only</div>
+                        </div>
+                    </div>
+                    <div class="key-details">
+                        <div class="key-detail-row"><span class="key-detail-label">SKU</span><span class="key-detail-value">${sku}</span></div>
+                        ${fcc ? `<div class="key-detail-row"><span class="key-detail-label">FCC</span><span class="key-detail-value">${fcc}</span></div>` : ''}
+                        ${keyway ? `<div class="key-detail-row"><span class="key-detail-label">Keyway</span><span class="key-detail-value">${keyway}</span></div>` : ''}
+                        <div class="key-detail-row"><span class="key-detail-label">Status</span><span class="status-indicator ${statusClass}">${statusText}</span></div>
+                    </div>
+                </div>
+            </div>`;
+    }
+
+    /* ─────── VIN HANDLING ─────── */
+    function validateVinInput() {
+        const v = this.value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g,'');
+        this.value = v;
+        document.getElementById('saveVinBtn').disabled = v.length !== 17;
+    }
+
+    function saveVin() {
+        const v = document.getElementById('vinInput').value;
+        if (v.length !== 17) return;
+        appState.vinNumber = v;
+        writeSharedContext();
+        document.getElementById('vinDisplayText').textContent = v;
+        document.getElementById('vinDisplay').style.display = 'block';
+        document.getElementById('conflictResolvedBtn').style.display = 'inline-block';
+        updateOmniQR();
+    }
+
+    function copyVinToClipboard() {
+        navigator.clipboard.writeText(appState.vinNumber).then(() => {
+            const btn = document.getElementById('copyVinBtn');
+            const orig = btn.textContent;
+            btn.textContent = '✓ Copied!';
+            setTimeout(() => btn.textContent = orig, 2000);
+        });
+    }
+
+    function openMyAutoSmart() {
+        // MyAutoSmart is mobile-only. On desktop, we point user to the omni-QR.
+        const ua = navigator.userAgent || '';
+        const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+        if (isMobile) {
+            // Copy context to clipboard and attempt to open the app
+            const ctx = appState.vinNumber || `${appState.vehicle.year} ${appState.vehicle.make} ${appState.vehicle.model}`;
+            navigator.clipboard.writeText(ctx).catch(()=>{});
+            // Attempt deep link (adjust if MyAutoSmart supports a scheme)
+            window.location.href = 'myautosmart://';
+            setTimeout(() => {
+                // If we're still here, the app didn't open — show instructions
+                alert(`Context copied to clipboard:\n\n${ctx}\n\nOpen the MyAutoSmart app and paste.`);
+            }, 1000);
+        } else {
+            alert(`MyAutoSmart is a mobile app only.\n\nScan the QR code in the bottom-right corner with your phone — the YMM${appState.vinNumber ? '/VIN' : ''} will be copied to your phone's clipboard, then open MyAutoSmart on your phone and paste.`);
+        }
+    }
+
+    /* ─────── SELECTION & CURATION ─────── */
+    function enterCurationScreen() {
+        // Render the Quotes panel at top of Screen 4
+        renderQuotesPanel('curationQuotesPanel', appState.quoteResult);
+        renderManualOverridePanel();
+        renderCurationCards();
+        updateRunningTotal();
+    }
+
+    function renderManualOverridePanel() {
+        const el = document.getElementById('manualOverridePanel');
+        if (!appState.quoteResult || !appState.quoteResult.matched) {
+            el.innerHTML = `
+                <div class="manual-override">
+                    <div class="manual-override-title">Manual Labor Quote Required</div>
+                    <p style="margin-bottom:10px; color: #92400e;">No matrix match for this make. Enter the labor amount you're quoting:</p>
+                    <input type="number" class="manual-override-input" id="manualLaborInput" placeholder="e.g. 225" min="0" step="1">
+                </div>`;
+            const input = document.getElementById('manualLaborInput');
+            if (input) {
+                input.addEventListener('input', () => {
+                    appState.manualLaborOverride = parseFloat(input.value) || null;
+                    updateRunningTotal();
+                });
+            }
+        } else {
+            el.innerHTML = '';
+        }
+    }
+
+    function renderCurationCards() {
+        const container = document.getElementById('curationContainer');
+        const sourceList = [...appState.inStockResults, ...appState.rksResults];
+        if (sourceList.length === 0) {
+            container.innerHTML = `<div class="alert alert-info">No catalog results to select. Use the manual labor field above and proceed — you'll handle key supply outside the app.</div>`;
+            document.getElementById('sendInvoiceBtn').disabled = false;
+            return;
+        }
+        container.innerHTML = sourceList.map(p => {
+            const sku = p.sku || p.SKU || p.variant_sku;
+            const title = p.title || p.name || sku;
+            const type = p.type || p.keyType || p.product_type || '';
+            const price = parseFloat(p.price || p.variant_price || 0);
+            const imgSrc = p.image || p.image_url || p.featured_image || (p.images && p.images[0]) || '';
+            const inStock = hasTag(p, 'ckc-stock');
+            const statusClass = inStock ? 'status-in-stock' : 'status-rks';
+            const statusText = inStock ? 'In Stock' : '2–3 Days';
+            const checked = appState.selectedKeys.includes(sku) ? 'checked' : '';
+            return `
+                <div class="key-card" data-sku="${sku}">
+                    <div class="key-card-image">
+                        ${imgSrc ? `<img src="${imgSrc}" alt="${title}">` : `<div class="key-card-image-placeholder">No image</div>`}
+                    </div>
+                    <div class="key-card-body">
+                        <div class="key-header">
+                            <div>
+                                <div class="key-title">${title}</div>
+                                <div class="key-type">${type}</div>
+                            </div>
+                            <div class="key-price">
+                                <div class="key-price-amount">$${price.toFixed(2)}</div>
+                            </div>
+                        </div>
+                        <div class="key-details">
+                            <div class="key-detail-row"><span class="key-detail-label">SKU</span><span class="key-detail-value">${sku}</span></div>
+                            <div class="key-detail-row"><span class="key-detail-label">Status</span><span class="status-indicator ${statusClass}">${statusText}</span></div>
+                        </div>
+                        <label class="key-select-checkbox">
+                            <input type="checkbox" data-sku="${sku}" ${checked} onchange="toggleKeySelection('${sku}', this.checked)">
+                            Include this key on the invoice
+                        </label>
+                    </div>
+                </div>`;
+        }).join('');
+    }
+
+    window.toggleKeySelection = function(sku, checked) {
+        if (checked) {
+            if (!appState.selectedKeys.includes(sku)) appState.selectedKeys.push(sku);
+        } else {
+            appState.selectedKeys = appState.selectedKeys.filter(s => s !== sku);
+        }
+        const card = document.querySelector(`.key-card[data-sku="${sku}"]`);
+        if (card) card.classList.toggle('selected', checked);
+        updateRunningTotal();
+    };
+
+    function getLaborAmount() {
+        if (appState.manualLaborOverride != null) return appState.manualLaborOverride;
+        if (!appState.quoteResult || !appState.quoteResult.matched) return 0;
+        const priceStr = appState.serviceType === 'AKL' ? appState.quoteResult.rule.akl : appState.quoteResult.rule.aak;
+        const parsed = parsePriceRange(priceStr);
+        return parsed ? parsed.mid : 0;
+    }
+
+    function getSelectedProducts() {
+        const all = [...appState.inStockResults, ...appState.rksResults];
+        return all.filter(p => appState.selectedKeys.includes(p.sku || p.SKU || p.variant_sku));
+    }
+
+    function updateRunningTotal() {
+        const selected = getSelectedProducts();
+        const keyTotal = selected.reduce((sum, p) => sum + parseFloat(p.price || p.variant_price || 0), 0);
+        const labor = getLaborAmount();
+        const total = keyTotal + labor;
+        document.getElementById('runningTotal').textContent = `$${total.toFixed(2)}`;
+        // Enable continue button only if we have either a selected key or a manual override with at least $1
+        const canContinue = selected.length > 0 || appState.manualLaborOverride > 0;
+        document.getElementById('sendInvoiceBtn').disabled = !canContinue;
+    }
+
+    /* ─────── CUSTOMER FORM + EMAIL PREVIEW ─────── */
+    function validateCustomerForm() {
+        const name = document.getElementById('customerName').value.trim();
+        const email = document.getElementById('customerEmail').value.trim();
+        const phone = document.getElementById('customerPhone').value.trim();
+        const emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const ok = name && emailRx.test(email);
+        if (ok) appState.customer = { name, email, phone };
+        document.getElementById('sendEmailBtn').disabled = !ok;
+        renderEmailPreview();
+    }
+
+    function renderEmailPreview() {
+        const el = document.getElementById('emailPreview');
+        const selected = getSelectedProducts();
+        const labor = getLaborAmount();
+        const keyTotal = selected.reduce((sum, p) => sum + parseFloat(p.price || p.variant_price || 0), 0);
+        const grandTotal = keyTotal + labor;
+        const customerName = appState.customer.name || '[Customer Name]';
+        const vehicle = `${appState.vehicle.year} ${appState.vehicle.make} ${appState.vehicle.model}`;
+        const keyType = (appState.quoteResult && appState.quoteResult.matched) ? appState.quoteResult.rule.keyType : 'Manual quote';
+
+        const itemsHTML = selected.map(p => {
+            const title = p.title || p.name || p.sku;
+            const price = parseFloat(p.price || p.variant_price || 0);
+            const imgSrc = p.image || p.image_url || p.featured_image || (p.images && p.images[0]) || '';
+            const inStock = hasTag(p, 'ckc-stock');
+            const statusText = inStock ? 'In Stock — Same Day' : '2–3 Day Ship';
+            return `
+                <div class="email-lineitem">
+                    <div class="email-lineitem-image">${imgSrc ? `<img src="${imgSrc}">` : 'No image'}</div>
+                    <div class="email-lineitem-body">
+                        <div class="email-lineitem-title">${title}</div>
+                        <div class="email-lineitem-meta">${statusText}</div>
+                    </div>
+                    <div class="email-lineitem-price">$${price.toFixed(2)}</div>
+                </div>`;
+        }).join('');
+
+        el.innerHTML = `
+            <div class="email-preview">
+                <div class="email-header">
+                    <div class="email-logo">CAROLINA KEY CUTTERS</div>
+                    <div class="email-tagline">Mobile Automotive Locksmith — ${CKC_PHONE}</div>
+                </div>
+                <div class="email-greeting">Hi ${customerName},</div>
+                <p style="color: var(--ckc-gray-800); margin-bottom: 15px;">Here's what we just discussed for your <strong>${vehicle}</strong>:</p>
+                ${itemsHTML || `<p style="color: var(--ckc-slate); font-style: italic;">(No key selected — labor quote only)</p>`}
+                <div class="email-totals">
+                    ${selected.length > 0 ? `<div class="email-total-row"><span>Keys subtotal</span><span>$${keyTotal.toFixed(2)}</span></div>` : ''}
+                    <div class="email-total-row"><span>Programming / Labor (${keyType})</span><span>$${labor.toFixed(2)}</span></div>
+                    <div class="email-total-row grand"><span>Total</span><span>$${grandTotal.toFixed(2)}</span></div>
+                </div>
+                <div class="email-footer">
+                    <strong>Prepared by James — Carolina Key Cutters</strong><br>
+                    Call ${CKC_PHONE} to confirm and schedule<br>
+                    <em>This is a quote — not an invoice. No payment required from this email.</em>
+                </div>
+            </div>`;
+    }
+
+    /* ─────── SEND EMAIL ─────── */
+    async function sendCustomerEmail() {
+        const btn = document.getElementById('sendEmailBtn');
+        btn.textContent = 'Sending...';
+        btn.disabled = true;
+
+        const selected = getSelectedProducts();
+        const labor = getLaborAmount();
+        const keyTotal = selected.reduce((sum, p) => sum + parseFloat(p.price || p.variant_price || 0), 0);
+        const grandTotal = keyTotal + labor;
+        const vehicle = `${appState.vehicle.year} ${appState.vehicle.make} ${appState.vehicle.model}`;
+        const keyType = (appState.quoteResult && appState.quoteResult.matched) ? appState.quoteResult.rule.keyType : 'Manual quote';
+
+        // Build simple HTML email body (EmailJS template can also format this server-side)
+        const itemLines = selected.map(p => {
+            const title = p.title || p.name || p.sku;
+            const price = parseFloat(p.price || p.variant_price || 0);
+            const imgSrc = p.image || p.image_url || p.featured_image || (p.images && p.images[0]) || '';
+            const statusText = hasTag(p, 'ckc-stock') ? 'In Stock — Same Day' : '2–3 Day Ship';
+            return `<tr><td style="padding:10px;border-bottom:1px solid #eee;vertical-align:top;">${imgSrc ? `<img src="${imgSrc}" style="width:80px;height:80px;object-fit:contain;">` : ''}</td><td style="padding:10px;border-bottom:1px solid #eee;"><strong>${title}</strong><br><small>${statusText}</small></td><td style="padding:10px;border-bottom:1px solid #eee;text-align:right;font-family:monospace;">$${price.toFixed(2)}</td></tr>`;
+        }).join('');
+
+        const htmlBody = `
+<div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;">
+  <div style="border-bottom:3px solid #d4af37;padding-bottom:15px;margin-bottom:20px;">
+    <div style="font-size:22px;font-weight:700;color:#1a2332;">CAROLINA KEY CUTTERS</div>
+    <div style="font-size:13px;color:#64748b;">Mobile Automotive Locksmith — ${CKC_PHONE}</div>
   </div>
-
-  <!-- SCREENS 2-6 rendered dynamically into this container -->
-  <div id="ckc-wizard-area"></div>
-
-  <div class="ckc-disclaimer">
-    <strong>Pricing &amp; Service:</strong> Prices shown are for the key plus a service call for on-site programming &amp; cutting — we come to you, wherever you are in the Triad. 100% mobile, no shop visit required. Service fees vary based on the complexity of your job. Find and order your key above — or call us if you have any questions: <a href="tel:+13365109816" style="color:var(--ckc-gold);">(336) 510-9816</a>.
+  <p>Hi ${appState.customer.name},</p>
+  <p>Here's what we just discussed for your <strong>${vehicle}</strong>:</p>
+  <table style="width:100%;border-collapse:collapse;margin:15px 0;">${itemLines}</table>
+  <div style="border-top:2px solid #eee;padding-top:15px;font-family:monospace;">
+    ${selected.length > 0 ? `<div style="display:flex;justify-content:space-between;padding:3px 0;"><span>Keys subtotal</span><span>$${keyTotal.toFixed(2)}</span></div>` : ''}
+    <div style="display:flex;justify-content:space-between;padding:3px 0;"><span>Programming / Labor (${keyType})</span><span>$${labor.toFixed(2)}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:10px 0;font-size:18px;font-weight:700;color:#1a2332;border-top:1px solid #eee;margin-top:5px;"><span>Total</span><span>$${grandTotal.toFixed(2)}</span></div>
   </div>
-</div>
+  <p style="margin-top:25px;font-size:14px;color:#64748b;text-align:center;">
+    <strong>Prepared by James — Carolina Key Cutters</strong><br>
+    Call ${CKC_PHONE} to confirm and schedule<br>
+    <em>This is a quote — not an invoice. No payment required from this email.</em>
+  </p>
+</div>`;
 
-<script>
-// \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
-// CKC KEY FINDER v8.85
-// \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
-// v8.85: Disclaimer opening corrected — prices include key + service call, not key only.
-// v8.84: Disclaimer closing line updated — friendlier CTA, no longer implies call required for all orders.
-// v8.83: Disclaimer reworded — removed dollar amounts, added 100% mobile, simplified fee language.
-// v8.82: Search title reworded to friendly customer-facing copy.
-// v8.81: City badges replace old credential badges; each links to its landing page.
-//        "Serving the Triad" subtitle added. Live pill -> "Loading · X keys".
-// v8.80: Escaped apostrophe in guaranteeNote string inside renderCheckout()
-// \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+        const params = {
+            to_email: appState.customer.email,
+            to_name: appState.customer.name,
+            customer_name: appState.customer.name,
+            customer_phone: appState.customer.phone,
+            vehicle: vehicle,
+            service_type: appState.serviceType,
+            key_type: keyType,
+            key_subtotal: keyTotal.toFixed(2),
+            labor_amount: labor.toFixed(2),
+            grand_total: grandTotal.toFixed(2),
+            from_email: CKC_EMAIL_FROM,
+            reply_to: CKC_EMAIL_FROM,
+            html_body: htmlBody,
+            plain_body: `Hi ${appState.customer.name},\n\nHere's what we discussed for your ${vehicle}:\n\n${selected.map(p => `- ${p.title || p.name || p.sku}: $${parseFloat(p.price || 0).toFixed(2)}`).join('\n')}\n- Programming / Labor (${keyType}): $${labor.toFixed(2)}\n\nTotal: $${grandTotal.toFixed(2)}\n\nCall ${CKC_PHONE} to confirm.\n\n— James, Carolina Key Cutters`
+        };
 
-const SCRIPT_URL           = 'https://script.google.com/macros/s/AKfycbxDw7dtdohInyx2kqeYM5EYNCpMaBN9Kdg3m_mtPGVKaz1jgw8bW4wZfwrUF3xR1gJW/exec';
-const BLADE_PROXY_URL      = 'https://ckc-blade-proxy.noloindie.workers.dev';
-const PROGRAMMING_FEE      = 75;
-const SHOPIFY_DOMAIN       = 'carolina-key-cutters.myshopify.com';
-const BOOKING_URL          = 'https://calendar.app.google/g6bEGX8AzT9eWaLu6';
-const PROGRAMMING_VARIANT  = '45908511228101';
-const INTERNAL_TOOL_URL    = 'https://carolinakeycutters.com/tools';
-const CKC_VERSION          = 'v8.85';
-
-var liveCatalog      = [];
-var isLive           = false;
-var lastSearchParams = {};
-var _ckcMatches      = [];
-var _customerVIN     = '';
-var _cfqCardData     = {};
-var _progToggle      = {};
-
-var _wiz = {
-  screen: 1,
-  typeAnswer: '',
-  bladeAnswer: '',
-  tierAnswer: '',
-  finalKey: null,
-  aklMode: false,
-  _bladeImgLoaded: false,
-  _bladeKeywaySKUs: {}
-};
-
-var _byType       = {};
-var _bladeGroup   = [];
-var _fccGroup     = [];
-var _buttonsGroup = [];
-
-function requiresBlade(keyType) {
-  var t = (keyType || '').toLowerCase();
-  return t === 'remote head key' || t === 'remote flip key' || t === 'transponder key' || t === 'flip';
-}
-function isSmartKeyType(keyType) {
-  var t = (keyType || '').toLowerCase();
-  return t === 'smart key' || t === 'smart key (fobik)' || t === 'premium smart key' || t === 'fobik';
-}
-function getTierLabel(sku) {
-  var s = (sku || '').toUpperCase();
-  if (s.endsWith('-NO')) return 'New OEM';
-  if (s.endsWith('-RF')) return 'Refurbished OEM';
-  return 'Aftermarket';
-}
-function getTierOrder(sku) {
-  var s = (sku || '').toUpperCase();
-  if (s.endsWith('-NO')) return 2;
-  if (s.endsWith('-RF')) return 1;
-  return 0;
-}
-
-function isBuyNowEligible() {
-  var type = (_wiz.typeAnswer || '').toLowerCase();
-  var isBladeType = type === 'transponder key' ||
-                    type === 'remote head key' ||
-                    type === 'remote flip key' ||
-                    type === 'flip';
-  if (!isBladeType) return false;
-  if (!_wiz.bladeAnswer || _wiz.bladeAnswer === 'none') return false;
-  var key = _wiz.finalKey;
-  var hasInlineImage = key && key.image && key.image.startsWith('http');
-  if (!_wiz._bladeImgLoaded && !hasInlineImage) return false;
-  return true;
-}
-
-function needsGuaranteeDisclaimer() {
-  var type = (_wiz.typeAnswer || '').toLowerCase();
-  return type === 'remote head key' || type === 'remote flip key';
-}
-
-var MODEL_ALIASES = {
-  'f150':'F-150','f-150':'F-150','f 150':'F-150','f series':'F-150','f-series':'F-150',
-  'f250':'F-250','f-250':'F-250','f 250':'F-250','f250 super duty':'F-250 Super Duty','f-250 super duty':'F-250 Super Duty',
-  'f350':'F-350','f-350':'F-350','f 350':'F-350','f350 super duty':'F-350 Super Duty','f-350 super duty':'F-350 Super Duty',
-  'f450':'F-450','f-450':'F-450','f550':'F-550','f-550':'F-550',
-  'mustang gt':'Mustang','mustang gt500':'Mustang','mustang shelby':'Mustang','mustang mach-e':'Mustang Mach-E',
-  'explorer sport':'Explorer','escape hybrid':'Escape',
-  'silverado':'Silverado 1500','silverado 1500':'Silverado 1500','silverado1500':'Silverado 1500',
-  'silverado 2500':'Silverado 2500','silverado 2500hd':'Silverado 2500HD','silverado 3500':'Silverado 3500','silverado 3500hd':'Silverado 3500HD',
-  'sierra':'Sierra 1500','sierra 1500':'Sierra 1500','sierra1500':'Sierra 1500',
-  'sierra 2500':'Sierra 2500','sierra 2500hd':'Sierra 2500HD','sierra 3500':'Sierra 3500',
-  'tahoe z71':'Tahoe','suburban 1500':'Suburban','suburban1500':'Suburban',
-  'yukon xl':'Yukon XL','yukon xl 1500':'Yukon XL','colorado crew':'Colorado','canyon crew':'Canyon',
-  'ram 1500':'Ram 1500','ram1500':'Ram 1500','ram pickup':'Ram 1500','ram pickup 1500':'Ram 1500',
-  'ram 2500':'Ram 2500','ram 3500':'Ram 3500','durango srt':'Durango',
-  'grand cherokee l':'Grand Cherokee','grand cherokee laredo':'Grand Cherokee','grand cherokee limited':'Grand Cherokee',
-  'wrangler unlimited':'Wrangler','wrangler jk':'Wrangler','wrangler jl':'Wrangler','gladiator jt':'Gladiator',
-  'camry le':'Camry','camry se':'Camry','camry xse':'Camry','corolla le':'Corolla','corolla se':'Corolla',
-  'rav 4':'RAV4','rav-4':'RAV4','tacoma sr':'Tacoma','tacoma sr5':'Tacoma','tacoma trd':'Tacoma',
-  'tundra sr':'Tundra','tundra sr5':'Tundra','tundra trd':'Tundra',
-  '4runner sr5':'4Runner','4runner trd':'4Runner','4runner limited':'4Runner',
-  'highlander le':'Highlander','highlander xle':'Highlander','sequoia sr5':'Sequoia',
-  'sienna le':'Sienna','sienna xle':'Sienna','land cruiser':'Land Cruiser',
-  'accord lx':'Accord','accord ex':'Accord','accord sport':'Accord',
-  'civic lx':'Civic','civic ex':'Civic','civic sport':'Civic','civic si':'Civic','civic type r':'Civic',
-  'crv':'CR-V','cr v':'CR-V','cr-v lx':'CR-V','cr-v ex':'CR-V',
-  'hrv':'HR-V','hr v':'HR-V','hr-v':'HR-V',
-  'pilot ex':'Pilot','pilot ex-l':'Pilot','odyssey ex':'Odyssey','odyssey ex-l':'Odyssey',
-  'passport awd':'Passport','ridgeline rtl':'Ridgeline','mdx sh-awd':'MDX','rdx sh-awd':'RDX',
-  'altima s':'Altima','altima sv':'Altima','altima sl':'Altima',
-  'maxima s':'Maxima','maxima sv':'Maxima','sentra s':'Sentra',
-  'rogue s':'Rogue','rogue sv':'Rogue','rogue sl':'Rogue','rogue sport':'Rogue Sport',
-  'pathfinder s':'Pathfinder','pathfinder sv':'Pathfinder','frontier s':'Frontier','frontier sv':'Frontier',
-  'titan xd':'Titan','armada sl':'Armada','murano s':'Murano','murano sv':'Murano',
-  'qx80':'QX80','qx60':'QX60','q50':'Q50','q60':'Q60',
-  'elantra se':'Elantra','elantra sel':'Elantra','elantra n':'Elantra',
-  'sonata se':'Sonata','sonata sel':'Sonata','sonata hybrid':'Sonata',
-  'santa fe sport':'Santa Fe','santa fe xl':'Santa Fe','tucson se':'Tucson','tucson sel':'Tucson','tucson n line':'Tucson',
-  'palisade sel':'Palisade','palisade limited':'Palisade','kona se':'Kona',
-  'ioniq 5':'IONIQ 5','ioniq 6':'IONIQ 6','ioniq5':'IONIQ 5','ioniq6':'IONIQ 6',
-  'k5 lx':'K5','k5 gt':'K5','optima lx':'Optima','optima ex':'Optima',
-  'sorento lx':'Sorento','sorento ex':'Sorento','sportage lx':'Sportage','sportage ex':'Sportage',
-  'telluride lx':'Telluride','telluride ex':'Telluride','sedona':'Sedona','carnival lx':'Carnival',
-  'stinger gt':'Stinger','g70':'G70','g80':'G80','g90':'G90',
-  'outback premium':'Outback','outback limited':'Outback','forester premium':'Forester','forester limited':'Forester',
-  'crosstrek premium':'Crosstrek','crosstrek sport':'Crosstrek','impreza premium':'Impreza',
-  'legacy premium':'Legacy','ascent premium':'Ascent','wrx sti':'WRX','brz limited':'BRZ',
-  'mazda3':'Mazda3','mazda 3':'Mazda3','mazda6':'Mazda6','mazda 6':'Mazda6',
-  'cx5':'CX-5','cx 5':'CX-5','cx-5 sport':'CX-5','cx9':'CX-9','cx 9':'CX-9','cx-9 sport':'CX-9',
-  'cx30':'CX-30','cx 30':'CX-30','cx-30':'CX-30','cx50':'CX-50','cx 50':'CX-50','cx-50':'CX-50',
-  'jetta s':'Jetta','jetta se':'Jetta','jetta sel':'Jetta','passat s':'Passat','passat se':'Passat',
-  'tiguan s':'Tiguan','tiguan se':'Tiguan','atlas se':'Atlas','atlas cross sport':'Atlas Cross Sport',
-  'a4 premium':'A4','a4 premium plus':'A4','a6 premium':'A6',
-  'q3 premium':'Q3','q5 premium':'Q5','q7 premium':'Q7','q8 premium':'Q8',
-  '3 series':'3 Series','3series':'3 Series','5 series':'5 Series','5series':'5 Series',
-  '7 series':'7 Series','7series':'7 Series','x3 xdrive':'X3','x5 xdrive':'X5','x7 xdrive':'X7',
-  'c-class':'C-Class','c class':'C-Class','e-class':'E-Class','e class':'E-Class',
-  's-class':'S-Class','s class':'S-Class','glc 300':'GLC','gle 350':'GLE','gls 450':'GLS',
-  'xc60 t5':'XC60','xc90 t6':'XC90','s60 t5':'S60','v60 t5':'V60',
-  'es 350':'ES 350','es350':'ES 350','es300h':'ES 300h','is 300':'IS 300','is300':'IS 300',
-  'is 350':'IS 350','is350':'IS 350','rx 350':'RX 350','rx350':'RX 350','rx 450h':'RX 450h',
-  'gx 460':'GX 460','lx 570':'LX 570','nx 200t':'NX 200t','nx 300':'NX 300','ux 200':'UX 200',
-  'escalade esv':'Escalade ESV','ct4':'CT4','ct5':'CT5','xt4':'XT4','xt5':'XT5','xt6':'XT6',
-  'enclave premium':'Enclave','encore gx':'Encore GX','envision premium':'Envision','lacrosse premium':'LaCrosse',
-  'navigator l':'Navigator','aviator grand touring':'Aviator','corsair reserve':'Corsair',
-  'nautilus reserve':'Nautilus','mkz hybrid':'MKZ',
-  'outlander sport':'Outlander Sport','outlander phev':'Outlander','eclipse cross':'Eclipse Cross','galant es':'Galant'
-};
-function normModel(m) { if (!m) return m; var key = m.trim().toLowerCase(); return MODEL_ALIASES[key] || m.trim(); }
-
-var FALLBACK_DATABASE = [
-  { sku:"FOR-15-AM",title:"Ford Transponder Key H92/H84/H85 (80-Bit)",type:"Transponder Key",price:29.99,image:"",inStock:true,status:"active",fcc:"N/A",keyway:"H92",buttonCount:0,vehicles:[{make:"Ford",model:"F-150",years:"2004-2014"},{make:"Ford",model:"Ranger",years:"2001-2011"},{make:"Ford",model:"Explorer",years:"2001-2010"},{make:"Ford",model:"Escape",years:"2001-2012"}]},
-  { sku:"TOY-10-AM",title:"Toyota Transponder Key TOY43",type:"Transponder Key",price:29.99,image:"",inStock:true,status:"active",fcc:"N/A",keyway:"TOY43",buttonCount:0,vehicles:[{make:"Toyota",model:"Camry",years:"2003-2010"},{make:"Toyota",model:"Corolla",years:"2003-2010"},{make:"Toyota",model:"RAV4",years:"2003-2010"},{make:"Toyota",model:"Tacoma",years:"2005-2012"}]},
-  { sku:"HON-07-AM",title:"Honda Transponder Key HO01",type:"Transponder Key",price:29.99,image:"",inStock:true,status:"active",fcc:"N/A",keyway:"HO01",buttonCount:0,vehicles:[{make:"Honda",model:"Accord",years:"2003-2012"},{make:"Honda",model:"Civic",years:"2006-2013"},{make:"Honda",model:"CR-V",years:"2005-2013"}]},
-  { sku:"CHV-11-AM",title:"GM/Chevrolet Transponder Key B111",type:"Transponder Key",price:29.99,image:"",inStock:true,status:"active",fcc:"N/A",keyway:"B111",buttonCount:0,vehicles:[{make:"Chevrolet",model:"Silverado 1500",years:"2007-2013"},{make:"Chevrolet",model:"Impala",years:"2006-2013"},{make:"GMC",model:"Sierra 1500",years:"2007-2013"}]}
-];
-
-async function syncFromSheet() {
-  var loadingBar = document.getElementById('ckc-loading');
-  var statusEl   = document.getElementById('ckc-sync-status');
-  var statusText = document.getElementById('ckc-sync-text');
-  loadingBar.classList.add('active');
-  statusText.textContent = 'Syncing...';
-  var maxAttempts = 2;
-  for (var attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      var controller = new AbortController();
-      var timeoutId  = setTimeout(function() { controller.abort(); }, 20000);
-      var response = await fetch(BLADE_PROXY_URL + '/catalog', { method: 'GET', signal: controller.signal, headers: { 'Accept': 'application/json' } });
-      clearTimeout(timeoutId);
-      if (!response.ok) throw new Error('Worker returned ' + response.status);
-      var data = await response.json();
-      if (data && data.status === 'ok' && data.products && data.products.length > 0) {
-        liveCatalog = data.products.map(normalizeProduct);
-        isLive      = true;
-        statusEl.className     = 'ckc-sync-status live';
-        statusText.textContent = 'Loading · ' + liveCatalog.length + ' keys';
-        loadingBar.classList.remove('active');
-        initDropdowns();
-        return;
-      } else { throw new Error('Empty or invalid catalog response'); }
-    } catch (e) {
-      if (attempt < maxAttempts) { statusText.textContent = 'Retrying…'; await new Promise(function(r) { setTimeout(r, 2000); }); }
+        try {
+            if (window.emailjs && EMAILJS_PUBLIC_KEY) {
+                await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, params);
+                showCompletion(params);
+            } else {
+                throw new Error('EmailJS not loaded');
+            }
+        } catch (e) {
+            console.error('Email send failed', e);
+            alert('Email send failed. Check console for details. You can copy the preview content and send manually.\n\nError: ' + (e && e.message ? e.message : 'unknown'));
+            btn.textContent = 'Send Email to Customer';
+            btn.disabled = false;
+        }
     }
-  }
-  isLive = false;
-  statusEl.className     = 'ckc-sync-status offline';
-  statusText.textContent = 'Offline mode';
-  loadingBar.classList.remove('active');
-  initDropdowns();
-}
 
-function normalizeProduct(p) {
-  var compat = parseCompat(p.Compatibility || p.compatibility);
-  var years  = parseYears(p.Years || p.years);
-  var title  = p.Title || p.title || '';
-  var sku    = p.SKU || p.sku || '';
-  var type   = p.Type || p.type || '';
-  var price  = parseFloat(p.Price || p.price) || 0;
-  var image  = p.Image || p.image || '';
-  var handle = p.Handle || p.handle || '';
-  var vendor = (p.Vendor || p.vendor || '').trim();
-  var fcc    = p.FCC || p.fcc || '';
-  var keyway = p.Keyway || p.keyway || '';
-  var chip   = p.Chip || p.chip || '';
-  var conflictFlag = p.Conflict_Flag || p.conflict_flag || '';
-  var buttonCount  = parseInt(p.Buttons || p.buttons) || 0;
-  var MAKE_ALIASES = {
-    'chevy':'Chevrolet','chevrolet':'Chevrolet','chevroley':'Chevrolet','cehvrolet':'Chevrolet','chevorlet':'Chevrolet','chrevrolet':'Chevrolet',
-    'gm':'GMC','gmc':'GMC','buick':'Buick','cadillac':'Cadillac',
-    'chrysler':'Chrysler','chrsyler':'Chrysler','chrylser':'Chrysler','crysler':'Chrysler',
-    'town':'__SUPPRESS__','town & country':'__SUPPRESS__','town&country':'__SUPPRESS__',
-    'all':'__SUPPRESS__','all makes':'__SUPPRESS__','general':'__SUPPRESS__','universal':'__SUPPRESS__',
-    'dodge':'Dodge','jeep':'Jeep','ram':'RAM','ford':'Ford','lincoln':'Lincoln','mercury':'Mercury',
-    'toyota':'Toyota','lexus':'Lexus','scion':'Scion','honda':'Honda','acura':'Acura',
-    'nissan':'Nissan','infiniti':'Infiniti','hyundai':'Hyundai','kia':'Kia','genesis':'Genesis',
-    'subaru':'Subaru','mazda':'Mazda','mitsubishi':'Mitsubishi',
-    'volkswagen':'Volkswagen','vw':'Volkswagen','audi':'Audi','bmw':'BMW',
-    'mercedes':'Mercedes-Benz','mercedes-benz':'Mercedes-Benz',
-    'volvo':'Volvo','jaguar':'Jaguar','land rover':'Land Rover',
-    'mini':'MINI','fiat':'Fiat','alfa romeo':'Alfa Romeo','tesla':'Tesla','rivian':'Rivian',
-    'pontiac':'Pontiac','saturn':'Saturn','oldsmobile':'Oldsmobile','hummer':'Hummer',
-    'isuzu':'Isuzu','suzuki':'Suzuki','saab':'Saab'
-  };
-  function normMake(m) { return MAKE_ALIASES[(m || '').toLowerCase().trim()] || m; }
-  var vehicles = [];
-  if (compat.length > 0) {
-    compat.forEach(function(c) {
-      var vYears = c.years || (years.length > 0 ? Math.min.apply(null,years) + '-' + Math.max.apply(null,years) : '');
-      var canonicalModel = (c.model && c.model !== 'General / Universal') ? normModel(c.model) : 'All Models';
-      vehicles.push({ make: normMake(c.make), model: canonicalModel, years: vYears });
-    });
-  }
-  var inStock = (vendor === 'CKC');
-  return { sku, title, type, price, image, handle, vendor, inStock, fcc, keyway, chip, conflictFlag, buttonCount, vehicles, _compat: compat, _years: years };
-}
-
-function parseCompat(val) {
-  if (!val) return [];
-  if (Array.isArray(val)) return val;
-  try { return JSON.parse(val); } catch(e) { return []; }
-}
-function parseYears(val) {
-  if (!val) return [];
-  if (Array.isArray(val)) return val.map(function(y){return Math.round(Number(y));}).filter(function(y){return y>1900&&y<2100;});
-  var str = String(val);
-  if (str.length > 30 && !str.includes('|')) return [];
-  return str.split(/[|,;\s]+/).map(function(y){return Math.round(parseFloat(y.trim()));}).filter(function(y){return y>1900&&y<2100;});
-}
-
-async function tryFetchRKSImage(handle, sku) {
-  var attempts = [];
-  if (handle) attempts.push(handle);
-  var skuHandle = sku.toLowerCase().replace(/[^a-z0-9]+/g,'-');
-  attempts.push(skuHandle, skuHandle.replace(/-am$/,''), skuHandle.replace(/-am\d*$/,''));
-  for (var i = 0; i < attempts.length; i++) {
-    try {
-      var resp = await fetch('https://royalkeysupply.com/products/' + attempts[i] + '.json', { signal: AbortSignal.timeout(4000) });
-      if (resp.ok) {
-        var data = await resp.json();
-        if (data.product && data.product.image && data.product.image.src) return data.product.image.src;
-        if (data.product && data.product.images && data.product.images[0]) return data.product.images[0].src;
-      }
-    } catch(e) {}
-  }
-  try {
-    var resp2 = await fetch('https://royalkeysupply.com/search/suggest.json?q=' + encodeURIComponent(sku) + '&resources[type]=product&resources[limit]=1', { signal: AbortSignal.timeout(4000) });
-    if (resp2.ok) {
-      var data2 = await resp2.json();
-      if (data2&&data2.resources&&data2.resources.results&&data2.resources.results.products&&data2.resources.results.products[0]&&data2.resources.results.products[0].image) return data2.resources.results.products[0].image;
+    function showCompletion(params) {
+        showScreen('screen6');
+        const el = document.getElementById('completionSummary');
+        el.innerHTML = `
+            <div style="background:var(--ckc-gray-50);padding:20px;border-radius:var(--ckc-border-radius);margin-top:20px;">
+                <h3 style="font-family:'JetBrains Mono',monospace;color:var(--ckc-navy);margin-bottom:15px;">Summary</h3>
+                <div><strong>Customer:</strong> ${params.customer_name} (${params.to_email})</div>
+                <div><strong>Vehicle:</strong> ${params.vehicle}</div>
+                <div><strong>Service:</strong> ${params.service_type} — ${params.key_type}</div>
+                <div><strong>Total Quoted:</strong> $${params.grand_total}</div>
+            </div>
+            <div class="alert alert-info" style="margin-top:20px;">
+                <strong>Close the sale now:</strong><br>
+                1. Ask the customer to confirm they got the email and see the picture<br>
+                2. Take the card info over the phone<br>
+                3. Create the Shopify order the way you normally do<br>
+                4. ${appState.selectedKeys.length > 0 && appState.rksResults.some(p => appState.selectedKeys.includes(p.sku)) ? 'Add RKS items to your daily batch' : 'Send booking link: ' + BOOKING_URL}
+            </div>`;
     }
-  } catch(e) {}
-  return '';
-}
 
-function getDB() { return isLive ? liveCatalog : FALLBACK_DATABASE; }
+    /* ─────── OMNIPRESENT QR PANEL ─────── */
+    let omniQrCollapsed = false;
 
-function getMakesForYear(year) {
-  var makes = new Set();
-  getDB().forEach(function(key) {
-    key.vehicles.forEach(function(v) {
-      if (v.make === '__SUPPRESS__') return;
-      if (v.years) { var parts = v.years.split('-').map(Number); if (year >= parts[0] && year <= parts[1]) makes.add(v.make); }
-      if (key._years && key._years.includes(year) && v.make) makes.add(v.make);
-    });
-  });
-  return Array.from(makes).sort();
-}
-function getModelsForMakeAndYear(make, year) {
-  var models = new Set();
-  getDB().forEach(function(key) {
-    key.vehicles.forEach(function(v) {
-      if (v.make !== make) return;
-      var inRange = false;
-      if (v.years) { var parts = v.years.split('-').map(Number); inRange = year >= parts[0] && year <= parts[1]; }
-      if (key._years && key._years.includes(year)) inRange = true;
-      if (inRange && v.model && v.model !== 'All Models') models.add(normModel(v.model));
-    });
-  });
-  return Array.from(models).sort();
-}
-function initDropdowns() {
-  var yearSelect = document.getElementById('ckc-year');
-  yearSelect.innerHTML = '<option value="">Select Year</option>';
-  for (var y = 2027; y >= 1998; y--) {
-    var opt = document.createElement('option'); opt.value = y; opt.textContent = y; yearSelect.appendChild(opt);
-  }
-}
-
-document.getElementById('ckc-year').addEventListener('change', function() {
-  var year = parseInt(this.value);
-  var makeSelect = document.getElementById('ckc-make');
-  var modelSelect = document.getElementById('ckc-model');
-  makeSelect.innerHTML = '<option value="">Select Make</option>';
-  modelSelect.innerHTML = '<option value="">Select Model</option>';
-  modelSelect.disabled = true; document.getElementById('ckc-search-btn').disabled = true;
-  if (!year) { makeSelect.disabled = true; return; }
-  getMakesForYear(year).forEach(function(make) {
-    var opt = document.createElement('option'); opt.value = make; opt.textContent = make; makeSelect.appendChild(opt);
-  });
-  makeSelect.disabled = false;
-});
-document.getElementById('ckc-make').addEventListener('change', function() {
-  var year = parseInt(document.getElementById('ckc-year').value);
-  var modelSelect = document.getElementById('ckc-model');
-  modelSelect.innerHTML = '<option value="">Select Model</option>'; document.getElementById('ckc-search-btn').disabled = true;
-  if (!this.value) { modelSelect.disabled = true; return; }
-  getModelsForMakeAndYear(this.value, year).forEach(function(model) {
-    var opt = document.createElement('option'); opt.value = model; opt.textContent = model; modelSelect.appendChild(opt);
-  });
-  modelSelect.disabled = false;
-});
-document.getElementById('ckc-model').addEventListener('change', function() {
-  document.getElementById('ckc-search-btn').disabled = !this.value;
-});
-
-function detectFCCConflict(group) {
-  var fccSet = new Set();
-  group.forEach(function(k) { if (k.fcc && k.fcc !== 'N/A' && k.fcc !== '') fccSet.add(k.fcc); });
-  return fccSet.size > 1;
-}
-function detectButtonConflict(group) {
-  var btnSet = new Set(group.map(function(k){return k.buttonCount;}).filter(function(b){return b>0;}));
-  return btnSet.size > 1;
-}
-function detectBladeConflict(group) {
-  var kws = new Set();
-  group.forEach(function(k) {
-    if (k.keyway && k.keyway !== 'N/A' && k.keyway !== '' && k.keyway.toUpperCase() !== 'UNIVERSAL') kws.add(k.keyway);
-  });
-  return kws.size > 1;
-}
-
-function showScreen(n) {
-  _wiz.screen = n;
-  document.getElementById('ckc-screen-1').classList.toggle('active', n === 1);
-}
-
-function goBack() {
-  pauseResize();
-  var s = _wiz.screen;
-  if (s === 2) { _wiz.typeAnswer = ''; showScreen(1); document.getElementById('ckc-wizard-area').innerHTML = ''; resumeResize(); }
-  else if (s === 3) { _wiz.bladeAnswer = ''; _wiz._bladeImgLoaded = false; showScreen(2); renderScreen2(); }
-  else if (s === 4) { _wiz.tierAnswer = ''; _wiz.finalKey = null; showScreen(3); renderScreen3(); }
-  else if (s === 5) {
-    _wiz.finalKey = null;
-    var typeGroup = _byType[_wiz.typeAnswer] || [];
-    var hasTierChoice = _getTierCandidates(typeGroup).length > 1;
-    var hasBladeChoice = _getBladeConflictGroup(typeGroup).length > 1;
-    if (hasTierChoice && _wiz.bladeAnswer) { showScreen(4); renderScreen4(); }
-    else if (hasBladeChoice) { showScreen(3); renderScreen3(); }
-    else { showScreen(2); renderScreen2(); }
-  }
-  else if (s === 6) { showScreen(5); renderScreen5(); }
-  scrollToWizard();
-}
-
-function scrollToWizard() {
-  var el = document.getElementById('ckc-wizard-area');
-  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-function startWizard() {
-  pauseResize();
-  var year  = parseInt(document.getElementById('ckc-year').value);
-  var make  = document.getElementById('ckc-make').value;
-  var model = document.getElementById('ckc-model').value;
-
-  var db = getDB().filter(function(k) {
-    return k.type !== 'KEY BLADE' &&
-      !k.title.toLowerCase().includes('universal') &&
-      !k.title.toLowerCase().includes('pack of') &&
-      !k.sku.toUpperCase().startsWith('AUT-') &&
-      !k.sku.toUpperCase().startsWith('IKEY') &&
-      !k.sku.toUpperCase().endsWith('AM10');
-  });
-
-  lastSearchParams = { year: year, make: make, model: model };
-  _wiz = { screen: 1, typeAnswer: '', bladeAnswer: '', tierAnswer: '', finalKey: null, aklMode: false, _bladeImgLoaded: false, _bladeKeywaySKUs: {} };
-  _byType = {}; _bladeGroup = []; _fccGroup = []; _buttonsGroup = []; _progToggle = {};
-
-  var matches = [];
-  db.forEach(function(key) {
-    var matched = false;
-    key.vehicles.forEach(function(v) {
-      if (v.make !== make) return;
-      if (v.model !== model && v.model !== 'All Models') return;
-      if (v.years) { var parts = v.years.split('-').map(Number); if (year >= parts[0] && year <= parts[1]) matched = true; }
-    });
-    if (matched) matches.push(key);
-  });
-
-  var typeOrder = { 'Smart Key (FOBIK)':0,'Smart Key':0,'FOBIK':1,'Remote Head Key':2,'Remote Flip Key':3,'Remote (Keyless Entry)':4,'Transponder Key':5,'Key Shell':6 };
-  matches.sort(function(a,b) {
-    if (a.inStock && !b.inStock) return -1;
-    if (!a.inStock && b.inStock) return 1;
-    return (typeOrder[a.type]!==undefined?typeOrder[a.type]:99) - (typeOrder[b.type]!==undefined?typeOrder[b.type]:99);
-  });
-
-  _ckcMatches = matches;
-  matches.forEach(function(m) { var t = m.type||'Key'; if(!_byType[t])_byType[t]=[]; _byType[t].push(m); });
-
-  if (matches.length === 0) {
-    document.getElementById('ckc-screen-1').classList.remove('active');
-    document.getElementById('ckc-wizard-area').innerHTML =
-      '<div class="ckc-no-results"><h3>No exact match found</h3><p>We may still have a key for your ' + year + ' ' + make + ' ' + model + '.<br>Give us a call and we\'ll find the right one for you.</p>' +
-      '<a href="tel:+13365109816" class="ckc-call-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>Call Carolina Key Cutters</a>' +
-      '<br><br><button class="ckc-new-search-btn" onclick="resetFinder()">Try a different vehicle</button></div>';
-    scrollToWizard();
-    resumeResize();
-    return;
-  }
-
-  var types = Object.keys(_byType);
-  if (types.length === 1) {
-    _wiz.typeAnswer = types[0];
-    document.getElementById('ckc-screen-1').classList.remove('active');
-    advanceFromType();
-  } else {
-    showScreen(2);
-    document.getElementById('ckc-screen-1').classList.remove('active');
-    renderScreen2();
-  }
-  scrollToWizard();
-}
-
-function renderScreen2() {
-  var types = Object.keys(_byType);
-  var ymm = lastSearchParams.year + ' ' + lastSearchParams.make + ' ' + lastSearchParams.model;
-  var html = '<div class="ckc-type-screen">' +
-    '<div class="ckc-screen-header"><button class="ckc-back-btn-wiz" onclick="goBack()">← Change vehicle</button><div class="ckc-screen-title">Select Key Type</div></div>' +
-    '<div class="ckc-vehicle-label">🚗 ' + ymm + '</div>' +
-    '<div class="ckc-type-screen-q">Which of these matches your current key or remote?</div>' +
-    '<div class="ckc-type-screen-sub">Select the option that matches your current key.</div>' +
-    '<div class="ckc-type-grid">';
-
-  types.forEach(function(type) {
-    var group = _byType[type];
-    var rep = group.find(function(k){return k.inStock;}) || group[0];
-    var imgHTML = (rep.image && rep.image.startsWith('http'))
-      ? '<img src="' + rep.image + '" alt="' + type + '" class="ckc-type-card-img" onerror="this.outerHTML=\'<div class=\\\'ckc-type-card-img-placeholder\\\'>' + _typeIcon(type) + '</div>\'">'
-      : '<div class="ckc-type-card-img-placeholder" id="ckc-typeimg-' + rep.sku.replace(/[^a-z0-9]/gi,'') + '" data-sku="' + rep.sku + '" data-handle="' + (rep.handle||'') + '">' + _typeIcon(type) + '</div>';
-
-    var sel = _wiz.typeAnswer === type ? ' selected' : '';
-    html += '<div class="ckc-type-card' + sel + '" onclick="onTypeSelected(\'' + _escAttr(type) + '\')">' +
-      imgHTML +
-      '<div class="ckc-type-card-label">' + type + '</div>' +
-      '<div class="ckc-type-card-sub">' + _typeSubLabel(type) + '</div>' +
-      '</div>';
-  });
-
-  html += '</div>' +
-    '<div style="margin-top:20px;padding:12px 14px;background:rgba(201,162,39,0.06);border:1px solid rgba(201,162,39,0.15);border-radius:8px;font-size:0.82rem;color:var(--ckc-text-muted);">🔑 <strong style="color:var(--ckc-text);">Need a plain metal key with no chip or remote?</strong> We cut those too — <a href="tel:+13365109816" style="color:var(--ckc-gold);">call us at (336) 510-9816</a>.</div>' +
-    '<div class="ckc-none-match-opt" style="margin-top:12px;" onclick="onKeyNotShown()">' +
-    '<span style="font-size:1.2rem;">🔍</span>' +
-    '<div><strong style="color:var(--ckc-text);font-size:0.9rem;">I don\'t see my key type listed</strong><div style="font-size:0.78rem;margin-top:2px;">We\'ll source the right key for your vehicle</div></div>' +
-    '</div>' +
-    '</div>';
-
-  document.getElementById('ckc-wizard-area').innerHTML = html;
-  showScreen(2);
-  lazyLoadTypeImages().then(function() { resumeResize(); });
-}
-
-function _typeIcon(type) {
-  var t = (type||'').toLowerCase();
-  if (t.includes('transponder')) return '🔑';
-  if (t.includes('remote head')) return '🔑';
-  if (t.includes('flip')) return '🔑';
-  if (t.includes('smart') || t.includes('fobik')) return '📱';
-  if (t.includes('remote')) return '📡';
-  return '🔑';
-}
-function _typeSubLabel(type) {
-  var t = (type||'').toLowerCase();
-  if (t === 'transponder key') return 'Plastic head with chip';
-  if (t === 'remote head key') return 'Blade on top, buttons below';
-  if (t === 'remote flip key') return 'Blade folds into fob';
-  if (t === 'smart key' || t === 'smart key (fobik)' || t === 'fobik') return 'Push-to-start pocket fob';
-  if (t === 'remote (keyless entry)') return 'Lock/unlock only, no blade';
-  return '';
-}
-function _escAttr(s) { return (s||'').replace(/'/g,"\\'"); }
-
-function onTypeSelected(type) {
-  _wiz.typeAnswer = type;
-  advanceFromType();
-}
-
-function onKeyNotShown() {
-  pauseResize();
-  var ymm = lastSearchParams.year + ' ' + lastSearchParams.make + ' ' + lastSearchParams.model;
-  document.getElementById('ckc-wizard-area').innerHTML =
-    '<div style="background:var(--ckc-card);border-radius:var(--ckc-radius);border:1px solid var(--ckc-border);padding:40px 36px;text-align:center;">' +
-    '<div style="font-size:3rem;margin-bottom:16px;">🔍</div>' +
-    '<div style="font-family:\'Outfit\',sans-serif;font-size:1.5rem;font-weight:700;color:var(--ckc-text);margin-bottom:12px;">We\'ll source it for you</div>' +
-    '<p style="font-size:1rem;color:var(--ckc-text-muted);line-height:1.7;margin-bottom:8px;">We don\'t currently have that key in our catalog for your <strong style="color:var(--ckc-text);">' + ymm + '</strong>, but that doesn\'t mean we can\'t get it.</p>' +
-    '<p style="font-size:1rem;color:var(--ckc-text-muted);line-height:1.7;margin-bottom:28px;">Give us a call with your VIN and we\'ll identify the exact key you need, source it, come to you, and handle all the cutting and programming on-site.</p>' +
-    '<a href="tel:+13365109816" class="ckc-call-btn" style="display:inline-flex;margin-bottom:16px;">' +
-    '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>' +
-    'Call (336) 510-9816</a>' +
-    '<div style="font-size:0.82rem;color:#555;margin-bottom:24px;">Have your VIN ready — found on your dashboard lower-left or driver door jamb sticker</div>' +
-    '<button class="ckc-back-btn" onclick="goBack()">← Back to key types</button>' +
-    '</div>';
-  showScreen(2);
-  resumeResize();
-}
-
-function advanceFromType() {
-  var type = _wiz.typeAnswer;
-  var group = _byType[type] || [];
-
-  if (isSmartKeyType(type)) {
-    _wiz.finalKey = group.find(function(k){return k.inStock;}) || group[0];
-    _wiz.aklMode = false;
-    showScreen(5);
-    renderScreen5();
-    scrollToWizard();
-    return;
-  }
-
-  var bladeGroup = _getBladeConflictGroup(group);
-  var hasBlade = bladeGroup.length > 1;
-  var fccGroup  = _getFCCConflictGroup(group);
-  var hasFCC    = fccGroup.length > 1;
-
-  if (hasBlade || hasFCC) {
-    showScreen(3);
-    renderScreen3();
-  } else {
-    advanceFromBlade(group[0] ? group[0].sku : '');
-  }
-  scrollToWizard();
-}
-
-function _getBladeConflictGroup(group) {
-  var bladeKeys = group.filter(function(k){ return requiresBlade(k.type); });
-  if (detectBladeConflict(bladeKeys)) return bladeKeys;
-  return [];
-}
-function _getFCCConflictGroup(group) {
-  if (detectFCCConflict(group)) return group;
-  return [];
-}
-
-// FIX v8.73: moved s3Sub definition after showGroup is built to prevent undefined reference crash
-function renderScreen3() {
-  var type  = _wiz.typeAnswer;
-  var group = _byType[type] || [];
-
-  var bladeGroup = _getBladeConflictGroup(group);
-  var fccGroup   = _getFCCConflictGroup(group);
-  var rawGroup   = bladeGroup.length > 1 ? bladeGroup : fccGroup;
-  var isBladeQ   = bladeGroup.length > 1;
-  var typeLower  = _wiz.typeAnswer.toLowerCase();
-  var s3Question = isBladeQ
-    ? (typeLower.includes('flip') ? '🔑 Which key matches yours?' :
-       typeLower.includes('remote head') ? '🔑 Which blade matches your key?' :
-       typeLower.includes('transponder') ? '🔑 Which blade matches your key?' :
-       '📡 Which remote matches yours?')
-    : '📡 Which remote matches yours?';
-
-  _wiz._bladeKeywaySKUs = {};
-  var showGroup = [];
-  if (isBladeQ) {
-    rawGroup.forEach(function(key) {
-      var kw = (key.keyway || '—').toUpperCase();
-      if (kw === 'UNIVERSAL' || kw === 'N/A' || kw === '') return;
-      if (!_wiz._bladeKeywaySKUs[kw]) {
-        _wiz._bladeKeywaySKUs[kw] = [];
-        showGroup.push(key);
-      }
-      _wiz._bladeKeywaySKUs[kw].push(key.sku);
-    });
-  } else {
-    showGroup = rawGroup;
-  }
-
-  var s3Sub = isBladeQ
-    ? (typeLower.includes('flip') ? 'Your vehicle has two flip key options. Select the one that matches what you currently have.' :
-       'Your vehicle has ' + showGroup.length + ' option' + (showGroup.length !== 1 ? 's' : '') + '. Hover to zoom. Select the one that matches what you currently have.')
-    : 'Your vehicle has ' + showGroup.length + ' option' + (showGroup.length !== 1 ? 's' : '') + '. Hover to zoom. Select the one that matches what you currently have.';
-
-  var html = '<div class="ckc-qual-screen">' +
-    '<div class="ckc-screen-header"><button class="ckc-back-btn-wiz" onclick="goBack()">← Back</button><div class="ckc-screen-title">' + (isBladeQ ? 'Key Match' : 'Remote Match') + '</div></div>' +
-    '<div class="ckc-qual-screen-q">' + s3Question + '</div>' +
-    '<div class="ckc-qual-screen-sub">' + s3Sub + '</div>' +
-    '<div class="ckc-compare-grid">';
-
-  showGroup.forEach(function(key) {
-    var sel    = _wiz.bladeAnswer === key.sku ? ' selected' : '';
-    var safeId = key.sku.replace(/[^a-z0-9]/gi, '');
-    var imgSrc = (key.image && key.image.startsWith('http')) ? key.image : '';
-
-    var innerImg = imgSrc
-      ? '<img class="ckc-mag-base" id="ckc-cmpimg-' + safeId + '" src="' + imgSrc + '" alt="' + key.title + '" onerror="this.outerHTML=\'<div class=\\\'ckc-mag-ph\\\'>🔑</div>\'">'
-      : '<div class="ckc-mag-ph" id="ckc-cmpimg-' + safeId + '" data-sku="' + key.sku + '" data-handle="' + (key.handle||'') + '">🔑</div>';
-
-    var lensInnerSrc = imgSrc ? imgSrc : '';
-    var detail = isBladeQ
-      ? '<div class="ckc-compare-card-blade">Blade: ' + (key.keyway || '—') + '</div>'
-      : (key.fcc && key.fcc !== 'N/A' ? '<div class="ckc-compare-card-blade">FCC: ' + key.fcc + '</div>' : '') +
-        (key.buttonCount > 0 ? '<div class="ckc-compare-card-blade">' + key.buttonCount + ' Button' + (key.buttonCount > 1 ? 's' : '') + '</div>' : '');
-
-    html += '<div class="ckc-compare-card' + sel + '" onclick="onBladeSelected(\'' + _escAttr(key.sku) + '\')">' +
-      '<div class="ckc-mag-wrap" id="ckc-magwrap-' + safeId + '">' +
-        innerImg +
-        '<div class="ckc-mag-lens" id="ckc-lens-' + safeId + '">' +
-          '<img id="ckc-lensimg-' + safeId + '" src="' + lensInnerSrc + '" alt="">' +
-        '</div>' +
-      '</div>' +
-      detail +
-      '<div class="ckc-compare-card-title">' + key.title + '</div>' +
-      '<div class="ckc-compare-card-price">$' + key.price.toFixed(2) + '</div>' +
-      '<div class="ckc-compare-card-check"><div class="ckc-compare-card-check-dot"></div></div>' +
-      '</div>';
-  });
-
-  html += '</div>' +
-    '<div class="ckc-none-match-opt" onclick="onNoneMatch()">' +
-    '<span style="font-size:1.2rem;">❓</span>' +
-    '<div><strong style="color:var(--ckc-text);font-size:0.9rem;">None of these match my key</strong><div style="font-size:0.78rem;margin-top:2px;">We\'ll confirm the right key when we arrive</div></div>' +
-    '</div>' +
-    '</div>';
-
-  if (!isBladeQ) {
-    html += '<div style="background:var(--ckc-card);border:1px solid var(--ckc-border);border-radius:var(--ckc-radius);padding:24px 28px;margin-top:16px;">' +
-      '<div style="font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--ckc-text-muted);margin-bottom:12px;">Can\'t find an FCC ID on your remote?</div>' +
-      '<div style="font-size:0.88rem;color:var(--ckc-text-muted);margin-bottom:14px;line-height:1.5;">The FCC ID is printed on the back of your existing remote — usually a small alphanumeric code like <strong style="color:var(--ckc-text);">GQ4-53T</strong> or <strong style="color:var(--ckc-text);">OUC60270</strong>. If worn or missing, type it below or call us.</div>' +
-      '<input class="ckc-fcc-input" id="ckc-fcc-manual" type="text" placeholder="e.g. GQ4-53T" oninput="onFCCManual()" />' +
-      '</div>';
-  }
-
-  document.getElementById('ckc-wizard-area').innerHTML = html;
-  showScreen(3);
-  lazyLoadCompareImages(showGroup).then(function() {
-    initMagnifiers(showGroup);
-    resumeResize();
-  });
-}
-
-function onBladeSelected(sku) {
-  _wiz.bladeAnswer = sku;
-  advanceFromBlade(sku);
-}
-
-function onNoneMatch() {
-  _wiz.bladeAnswer = 'none';
-  var type  = _wiz.typeAnswer;
-  var group = _byType[type] || [];
-  _wiz.finalKey = group.find(function(k){return k.inStock;}) || group[0];
-  _wiz.aklMode  = false;
-  showScreen(5);
-  renderScreen5();
-  scrollToWizard();
-}
-
-function onFCCManual() {
-  var val = document.getElementById('ckc-fcc-manual').value.trim().toUpperCase();
-  if (val.length >= 4) {
-    var type  = _wiz.typeAnswer;
-    var group = _byType[type] || [];
-    var match = group.find(function(k){ return (k.fcc||'').toUpperCase() === val; });
-    if (match) { onBladeSelected(match.sku); }
-  }
-}
-
-function advanceFromBlade(sku) {
-  var type  = _wiz.typeAnswer;
-  var group = _byType[type] || [];
-
-  var candidates;
-  if (sku && sku !== 'none' && _wiz._bladeKeywaySKUs) {
-    var selectedKey = group.find(function(k){ return k.sku === sku; });
-    var kw = selectedKey ? (selectedKey.keyway||'').toUpperCase() : null;
-    var kwSkus = kw && _wiz._bladeKeywaySKUs[kw] ? _wiz._bladeKeywaySKUs[kw] : [sku];
-    candidates = group.filter(function(k){ return kwSkus.indexOf(k.sku) !== -1; });
-    if (candidates.length === 0) candidates = group.filter(function(k){ return k.sku === sku; });
-  } else if (sku && sku !== 'none') {
-    candidates = group.filter(function(k){ return k.sku === sku; });
-    if (candidates.length === 0) candidates = group;
-  } else {
-    candidates = group;
-  }
-
-  var tierCandidates = _getTierCandidates(candidates);
-  if (tierCandidates.length > 1) {
-    showScreen(4);
-    renderScreen4(tierCandidates);
-    scrollToWizard();
-  } else {
-    _wiz.finalKey = candidates[0];
-    showScreen(5);
-    renderScreen5();
-    scrollToWizard();
-  }
-}
-
-function _getTierCandidates(group) {
-  if (group.length <= 1) return group;
-  var baseSku = function(sku) { return sku.replace(/-(AM\d*|NO|RF)$/i,''); };
-  var baseSkus = group.map(function(k){ return baseSku(k.sku); });
-  var hasMultipleTiers = baseSkus.some(function(b){ return baseSkus.filter(function(x){return x===b;}).length >= 1; }) &&
-    group.some(function(k){ return k.sku.toUpperCase().endsWith('-NO') || k.sku.toUpperCase().endsWith('-RF'); });
-  return hasMultipleTiers ? group : [group[0]];
-}
-
-function renderScreen4(candidates) {
-  if (!candidates) {
-    var type = _wiz.typeAnswer;
-    var group = _byType[type] || [];
-    var bladeGroup2 = _wiz.bladeAnswer && _wiz.bladeAnswer !== 'none' ? group.filter(function(k){return k.sku===_wiz.bladeAnswer;}) : group;
-    candidates = _getTierCandidates(bladeGroup2.length ? bladeGroup2 : group);
-  }
-  candidates.sort(function(a,b){ return getTierOrder(a.sku) - getTierOrder(b.sku); });
-
-  var html = '<div class="ckc-tier-screen">' +
-    '<div class="ckc-screen-header"><button class="ckc-back-btn-wiz" onclick="goBack()">← Back</button><div class="ckc-screen-title">Choose Quality</div></div>' +
-    '<div class="ckc-tier-screen-q">Which quality level would you prefer?</div>' +
-    '<div class="ckc-tier-screen-sub">All options work the same — the difference is manufacturer and price.</div>' +
-    '<div class="ckc-tier-options">';
-
-  candidates.forEach(function(key) {
-    var tier = getTierLabel(key.sku);
-    var desc = tier === 'Aftermarket' ? 'New aftermarket key — cuts and programs to OEM spec' :
-               tier === 'Refurbished OEM' ? 'Original manufacturer key, professionally refurbished' :
-               'Brand new key from the original manufacturer';
-    var sel = _wiz.tierAnswer === key.sku ? ' selected' : '';
-    var imgHTML = (key.image && key.image.startsWith('http'))
-      ? '<img src="' + key.image + '" alt="' + tier + '" class="ckc-tier-opt-img" onerror="this.outerHTML=\'<div class=\\\'ckc-tier-opt-img-ph\\\'>🔑</div>\'">'
-      : '<div class="ckc-tier-opt-img-ph">🔑</div>';
-
-    html += '<div class="ckc-tier-opt' + sel + '" onclick="onTierSelected(\'' + _escAttr(key.sku) + '\')">' +
-      imgHTML +
-      '<div class="ckc-tier-opt-info"><div class="ckc-tier-opt-label">' + tier + '</div><div class="ckc-tier-opt-desc">' + desc + '</div></div>' +
-      '<div class="ckc-tier-opt-price">$' + key.price.toFixed(2) + '</div>' +
-      '<div class="ckc-tier-opt-radio"><div class="ckc-tier-opt-radio-dot"></div></div>' +
-      '</div>';
-  });
-
-  html += '</div></div>';
-  document.getElementById('ckc-wizard-area').innerHTML = html;
-  showScreen(4);
-  resumeResize();
-}
-
-function onTierSelected(sku) {
-  _wiz.tierAnswer = sku;
-  var type  = _wiz.typeAnswer;
-  var group = _byType[type] || [];
-  _wiz.finalKey = group.find(function(k){ return k.sku === sku; }) || group[0];
-  showScreen(5);
-  renderScreen5();
-  scrollToWizard();
-}
-
-function renderScreen5() {
-  var key = _wiz.finalKey;
-  if (!key) return;
-
-  var sku = key.sku;
-  _progToggle[sku] = 'full';
-  var progMode = 'full';
-  var keyPrice  = parseFloat(key.price) || 0;
-  var total     = progMode === 'full' ? keyPrice + PROGRAMMING_FEE : keyPrice;
-  var totalStr  = total.toFixed(2);
-  var compatList = key.vehicles.map(function(v){return v.years+' '+v.make+' '+v.model;}).join(' · ');
-  var isSmart = isSmartKeyType(key.type);
-  var isCFQ   = isSmart || _wiz.bladeAnswer === 'none';
-
-  var imgHTML = (key.image && key.image.startsWith('http'))
-    ? '<img src="' + key.image + '" alt="' + key.title + '" class="ckc-buynow-img" onerror="this.outerHTML=\'<div class=\\\'ckc-buynow-img-ph\\\'>🔑</div>\'">'
-    : '<div class="ckc-buynow-img-ph" id="ckc-buynow-img-' + sku.replace(/[^a-z0-9]/gi,'') + '" data-sku="' + sku + '" data-handle="' + (key.handle||'') + '">🔑</div>';
-
-  var stockHTML = key.inStock
-    ? '<div class="ckc-stock-badge in-stock"><span class="ckc-stock-dot"></span>🟢 In Stock — Schedule appointment after checkout</div>'
-    : '<div class="ckc-stock-badge ships"><span class="ckc-stock-dot"></span>📦 Ships in 2-3 days — Schedule programming when key arrives</div>';
-
-  var matchBadge = (_wiz.bladeAnswer && _wiz.bladeAnswer !== 'none' && key.keyway)
-    ? '<div class="ckc-buynow-match-badge">✓ Matched to blade: ' + key.keyway + '</div>' : '';
-
-  var detailParts = [];
-  if (key.fcc && key.fcc !== 'N/A' && key.fcc !== '') detailParts.push('FCC: ' + key.fcc);
-  if (key.keyway && key.keyway !== 'N/A' && key.keyway !== '') detailParts.push('Blade: ' + key.keyway);
-  detailParts.push('SKU: ' + key.sku);
-
-  var html = '<div class="ckc-buynow-screen">' +
-    '<div class="ckc-screen-header"><button class="ckc-back-btn-wiz" onclick="goBack()">← Back</button><div class="ckc-screen-title">Your Key</div></div>' +
-    '<div class="ckc-buynow-product">' +
-    '<div>' + imgHTML + '</div>' +
-    '<div>' +
-    '<div class="ckc-buynow-info-type">' + (key.type||'Key') + '</div>' +
-    '<div class="ckc-buynow-info-title">' + key.title + '</div>' +
-    stockHTML +
-    '<div class="ckc-buynow-info-compat">' + compatList + '</div>' +
-    '<div class="ckc-buynow-info-details">' + detailParts.join(' · ') + '</div>' +
-    matchBadge +
-    '</div></div>';
-
-  if (isCFQ) {
-    var cfqMsg = isSmart
-      ? 'Smart Key programming requires module-level work on most vehicles. Pricing varies by year, make, and model — call us for an exact quote before we arrive.'
-      : 'We\'ll identify the exact key for your vehicle using your VIN. Call us and we\'ll have everything ready before we arrive.';
-    html += '<div class="ckc-cfq-notice">' + cfqMsg + '</div>' +
-      '<div class="ckc-price-summary" style="margin-bottom:16px;">' +
-      '<div class="ckc-price-line"><span>Key price</span><span>$' + keyPrice.toFixed(2) + '</span></div>' +
-      '<div class="ckc-price-line"><span>Programming</span><span style="color:var(--ckc-gold);">Quoted on call</span></div>' +
-      '</div>' +
-      '<div class="ckc-cfq-vin-hint">📋 Have your VIN ready — found on your dashboard lower-left or driver door jamb sticker.</div>' +
-      '<a href="tel:+13365109816" class="ckc-call-to-order-btn">📞 Call to Order · (336) 510-9816</a>';
-  } else {
-    html += '<div style="background:rgba(201,162,39,0.06);border:1px solid rgba(201,162,39,0.15);border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px;">' +
-      '<span style="font-size:1.1rem;">🔧</span>' +
-      '<div><strong style="color:var(--ckc-text);font-size:0.95rem;">Includes mobile programming & key cutting</strong><div style="font-size:0.82rem;color:var(--ckc-text-muted);margin-top:2px;">We come to you · Triad, NC area</div></div>' +
-      '<div style="margin-left:auto;font-family:\'Outfit\',sans-serif;font-weight:800;font-size:1.15rem;color:var(--ckc-gold);white-space:nowrap;">+$' + PROGRAMMING_FEE + '</div>' +
-      '</div>' +
-      '<div class="ckc-price-summary">' +
-      '<div class="ckc-price-line"><span>Key</span><span>$' + keyPrice.toFixed(2) + '</span></div>' +
-      '<div class="ckc-price-line"><span>Mobile programming & cutting</span><span>$' + PROGRAMMING_FEE + '.00</span></div>' +
-      '<div class="ckc-price-total-line"><span class="ckc-price-total-label">Total</span><span class="ckc-price-total-val">$' + totalStr + '</span></div>' +
-      '</div>' +
-      '<div class="ckc-price-tax-note">+ NC sales tax calculated at checkout</div>' +
-      '<div style="font-size:0.82rem;color:var(--ckc-text-muted);text-align:center;margin-bottom:16px;">Service available in the Triad, NC area</div>';
-
-    if (isBuyNowEligible()) {
-      html += (key.inStock
-        ? '<div style="padding:14px 16px;background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.2);border-radius:10px;font-size:0.88rem;color:var(--ckc-text-muted);line-height:1.6;margin-bottom:16px;text-align:center;">🟢 This key is in stock and ready to order.</div>'
-        : '<div style="padding:14px 16px;background:rgba(201,162,39,0.07);border:1px solid rgba(201,162,39,0.2);border-radius:10px;font-size:0.88rem;color:var(--ckc-text-muted);line-height:1.6;margin-bottom:16px;text-align:center;">📦 We\'ll source this key for you — programming scheduled after it arrives.</div>') +
-        '<button class="ckc-buy-now-btn" onclick="openCheckoutFromS5()">Buy Now →</button>';
-    } else {
-      html += (key.inStock
-        ? '<div style="padding:14px 16px;background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.2);border-radius:10px;font-size:0.88rem;color:var(--ckc-text-muted);line-height:1.6;margin-bottom:16px;text-align:center;">🟢 This key is in stock. Call us to place your order and schedule your appointment.</div>'
-        : '<div style="padding:14px 16px;background:rgba(201,162,39,0.07);border:1px solid rgba(201,162,39,0.2);border-radius:10px;font-size:0.88rem;color:var(--ckc-text-muted);line-height:1.6;margin-bottom:16px;text-align:center;">📋 Ready to order? Call us with your VIN and we\'ll get everything set up for you — key, cutting, and programming.</div>') +
-        '<a href="tel:+13365109816" class="ckc-call-to-order-btn">📞 Call to Order · (336) 510-9816</a>';
+    function initOmniQR() {
+        // Pre-draw an initial QR
+        updateOmniQR();
     }
-  }
 
-  html += '</div>';
-  document.getElementById('ckc-wizard-area').innerHTML = html;
-  showScreen(5);
-  var phEl = document.getElementById('ckc-buynow-img-' + sku.replace(/[^a-z0-9]/gi,''));
-  if (phEl && phEl.dataset.sku) {
-    tryFetchRKSImage(phEl.dataset.handle, phEl.dataset.sku).then(function(url) {
-      var el2 = document.getElementById('ckc-buynow-img-' + sku.replace(/[^a-z0-9]/gi,''));
-      if (el2 && url) el2.outerHTML = '<img src="' + url + '" alt="Key" class="ckc-buynow-img" onerror="this.outerHTML=\'<div class=\\\'ckc-buynow-img-ph\\\'>🔑</div>\'">';
-    });
-  }
-  resumeResize();
-}
-
-function setS5ProgToggle(sku, mode, keyPrice) {
-  _progToggle[sku] = mode;
-  _wiz.finalKey._progMode = mode;
-  renderScreen5();
-  scrollToWizard();
-}
-
-function openCheckoutFromS5() {
-  var key = _wiz.finalKey;
-  key._progMode = _progToggle[key.sku] || 'full';
-  renderCheckout(key);
-  showScreen(6);
-  scrollToWizard();
-}
-
-function renderCheckout(key) {
-  var k = key || _wiz.finalKey;
-  var keyPrice  = parseFloat(k.price) || 0;
-  var total = keyPrice + PROGRAMMING_FEE;
-  var stockLabel = k.inStock ? '✅ In Stock' : '📦 Ships in 2-3 days';
-  var progLine = '<div class="ckc-checkout-line"><span class="ckc-checkout-line-label">🔧 Mobile Key Programming & Cutting<br><small style="color:var(--ckc-text-muted)">We come to you — includes key cutting + programming</small></span><span class="ckc-checkout-line-price">$'+PROGRAMMING_FEE+'.00</span></div>';
-  // FIX v8.80: escaped apostrophe in we\'ll to prevent SyntaxError
-  var guaranteeNote = needsGuaranteeDisclaimer()
-    ? '<div style="background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2);border-radius:8px;padding:12px 16px;margin:0 0 10px;font-size:0.86rem;color:#4ade80;line-height:1.6;">✅ <strong>Our guarantee:</strong> We matched this remote to your vehicle by FCC ID. In the rare case of a mid-production variant, we\'ll source the correct remote at no additional key charge.</div>'
-    : '';
-  var disclaimer = guaranteeNote + '<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:14px 16px;margin:14px 0;font-size:0.88rem;color:#d4a054;line-height:1.5;">⚠️ <strong style="color:#f59e0b;">Pricing Notice:</strong> The $'+PROGRAMMING_FEE+' service call fee covers add-a-key programming when you have a working key. All keys lost (AKL), EEPROM, or module programming may require additional cost. We will confirm your exact total before any work begins — no surprises.</div>';
-
-  document.getElementById('ckc-wizard-area').innerHTML =
-    '<div class="ckc-checkout-panel"><h3>🛒 Your Order</h3>' +
-    '<div class="ckc-checkout-line"><span class="ckc-checkout-line-label">'+k.title+'<br><small style="color:var(--ckc-text-muted)">'+k.type+' · '+stockLabel+'</small></span><span class="ckc-checkout-line-price">$'+keyPrice.toFixed(2)+'</span></div>' +
-    progLine + disclaimer +
-    '<div class="ckc-checkout-total"><span class="ckc-checkout-total-label">Total</span><span class="ckc-checkout-total-price">$'+total.toFixed(2)+'</span></div>' +
-    '<div class="ckc-checkout-tax">+ NC sales tax calculated at checkout</div>' +
-    '<div style="font-size:0.85rem;color:var(--ckc-text-muted);text-align:center;margin-bottom:14px;">Service available in the Triad, NC area</div>' +
-    '<button class="ckc-checkout-btn" id="ckc-checkout-btn" onclick="startShopifyCheckout()">Proceed to Checkout →</button>' +
-    '<button class="ckc-back-btn" onclick="goBack()">← Back</button></div>';
-  resumeResize();
-}
-
-function openVINModal(cardData) {
-  _cfqCardData = cardData || {};
-  if (_customerVIN.length === 17) { placeCallAndOpenTool(); return; }
-  var overlay = document.createElement('div');
-  overlay.className = 'ckc-vin-modal-overlay'; overlay.id = 'ckc-vin-overlay';
-  overlay.innerHTML = '<div class="ckc-vin-modal">' +
-    '<h3>📋 One Last Step Before We Connect</h3>' +
-    '<p>Enter your VIN so we can prepare your quote before the call. This saves time and helps us give you an accurate price immediately.</p>' +
-    '<div class="ckc-vin-modal-field">' +
-    '<input type="text" class="ckc-vin-modal-input" id="ckc-vin-modal-inp" maxlength="17" placeholder="17-DIGIT VIN" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" oninput="onVINModalInput(this)" onkeydown="if(event.key===\'Enter\')submitVINModal()">' +
-    '<span class="ckc-vin-counter" id="ckc-vin-counter">0/17</span></div>' +
-    '<div class="ckc-vin-error" id="ckc-vin-error"></div>' +
-    '<div class="ckc-vin-hint">Found on your <strong>dashboard lower-left</strong> (visible through windshield) or <strong>driver door jamb sticker</strong>.</div>' +
-    '<div class="ckc-vin-modal-btns">' +
-    '<button class="ckc-vin-cancel-btn" onclick="closeVINModal()">Cancel</button>' +
-    '<button class="ckc-vin-call-btn" id="ckc-vin-submit-btn" disabled onclick="submitVINModal()">📞 Connect & Call (336) 510-9816</button>' +
-    '</div></div>';
-  document.body.appendChild(overlay);
-  setTimeout(function(){ var inp = document.getElementById('ckc-vin-modal-inp'); if(inp) inp.focus(); }, 100);
-}
-function isValidVINFormat(vin) {
-  if (!vin || vin.length !== 17) return false;
-  if (/[IOQ]/.test(vin)) return false;
-  if (!/^[A-HJ-NPR-Z1-9]/.test(vin)) return false;
-  if (!/^[A-HJ-NPR-Z0-9]{17}$/.test(vin)) return false;
-  if (/^(.)\1{16}$/.test(vin)) return false;
-  return true;
-}
-async function verifyVINWithNHTSA(vin) {
-  try {
-    var resp = await fetch('https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues/' + vin + '?format=json', { signal: AbortSignal.timeout(5000) });
-    var data = await resp.json();
-    var r = data.Results && data.Results[0];
-    if (!r || !r.ModelYear || r.ModelYear === '' || r.ErrorCode === '8') return false;
-    return true;
-  } catch(e) { return true; }
-}
-function onVINModalInput(el) {
-  var val = el.value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g,'');
-  el.value = val;
-  var counter   = document.getElementById('ckc-vin-counter');
-  var submitBtn = document.getElementById('ckc-vin-submit-btn');
-  var errorEl   = document.getElementById('ckc-vin-error');
-  var len = val.length;
-  counter.textContent = len + '/17';
-  if (len === 17) {
-    if (isValidVINFormat(val)) {
-      counter.className = 'ckc-vin-counter done'; el.classList.add('valid'); el.classList.remove('invalid');
-      submitBtn.disabled = false; if(errorEl){errorEl.style.display='none';}
-    } else {
-      counter.className = 'ckc-vin-counter error'; el.classList.remove('valid'); el.classList.add('invalid');
-      submitBtn.disabled = true; if(errorEl){errorEl.textContent='⚠️ That VIN doesn\'t look right. Check the number on your dashboard or door jamb.';errorEl.style.display='block';}
+    function buildOmniContext() {
+        const { year, make, model } = appState.vehicle;
+        const parts = [];
+        if (appState.vinNumber) parts.push('VIN: ' + appState.vinNumber);
+        if (year && make && model) parts.push(`${year} ${make} ${model}`);
+        if (appState.serviceType) parts.push(appState.serviceType);
+        if (parts.length === 0) return `CKC ${CKC_PHONE}`;
+        return parts.join(' | ');
     }
-  } else {
-    counter.className = 'ckc-vin-counter'; el.classList.remove('valid','invalid');
-    submitBtn.disabled = true; if(errorEl){errorEl.style.display='none';}
-  }
-}
-async function submitVINModal() {
-  var inp = document.getElementById('ckc-vin-modal-inp');
-  if (!inp || inp.value.length !== 17) return;
-  var vin = inp.value.toUpperCase();
-  if (!isValidVINFormat(vin)) return;
-  var submitBtn = document.getElementById('ckc-vin-submit-btn');
-  var errorEl   = document.getElementById('ckc-vin-error');
-  submitBtn.disabled = true; submitBtn.textContent = 'Verifying VIN...';
-  var valid = await verifyVINWithNHTSA(vin);
-  if (!valid) {
-    submitBtn.disabled = false; submitBtn.innerHTML = '📞 Connect & Call (336) 510-9816';
-    inp.classList.remove('valid'); inp.classList.add('invalid');
-    document.getElementById('ckc-vin-counter').className = 'ckc-vin-counter error';
-    if(errorEl){errorEl.textContent='⚠️ That VIN couldn\'t be verified. Double-check the number on your dashboard or door jamb sticker.';errorEl.style.display='block';}
-    return;
-  }
-  _customerVIN = vin; closeVINModal(); placeCallAndOpenTool();
-}
-function closeVINModal() { var o = document.getElementById('ckc-vin-overlay'); if(o) o.remove(); }
-function placeCallAndOpenTool() {
-  var toolURL   = buildInternalToolURL();
-  var cardSku   = _cfqCardData.sku || '';
-  if (cardSku) {
-    var toolUrlEl = document.getElementById('ckc-tool-url-' + cardSku);
-    if (toolUrlEl) { toolUrlEl.innerHTML = '<span class="ckc-tool-url-label">🔧 Tap when you answer the call:</span>' + toolURL; toolUrlEl.classList.add('show'); }
-  }
-  window.location.href = 'tel:+13365109816';
-}
-function buildInternalToolURL() {
-  var key = _wiz.finalKey || {};
-  var params = new URLSearchParams({
-    vin: _customerVIN, y: lastSearchParams.year||'', mk: lastSearchParams.make||'', mo: lastSearchParams.model||'',
-    svc: _wiz.aklMode?'akl':'aak', sku: _cfqCardData.sku||key.sku||'',
-    blade: _cfqCardData.blade||(key.keyway||''),
-    fcc: _cfqCardData.fcc||(key.fcc||''), kp: _cfqCardData.keyPrice||'0', kt: _wiz.typeAnswer||''
-  });
-  return INTERNAL_TOOL_URL + '?' + params.toString();
-}
 
-async function startShopifyCheckout() {
-  var btn = document.getElementById('ckc-checkout-btn');
-  btn.disabled = true; btn.textContent = 'Opening checkout...';
-  try {
-    var k = _wiz.finalKey;
-    var handle = (k.handle||k.sku||'').toLowerCase().replace(/[^a-z0-9]+/g,'-');
-    var vehicleNote = 'Vehicle: ' + lastSearchParams.year + ' ' + lastSearchParams.make + ' ' + lastSearchParams.model;
-    var shopifyUrl;
-    try {
-      var prodJson = await fetch('https://'+SHOPIFY_DOMAIN+'/products/'+handle+'.json');
-      var prodData = await prodJson.json();
-      var keyVariantId = prodData.product.variants[0].id;
-      var cartItems = keyVariantId+':1,'+PROGRAMMING_VARIANT+':1';
-      shopifyUrl = 'https://'+SHOPIFY_DOMAIN+'/cart/'+cartItems+'?note='+encodeURIComponent(vehicleNote);
-    } catch(e) {
-      shopifyUrl = 'https://'+SHOPIFY_DOMAIN+'/products/'+handle+'?note='+encodeURIComponent(vehicleNote);
+    async function updateOmniQR() {
+        const ctx = buildOmniContext();
+        document.getElementById('omniQrContext').textContent = ctx;
+        const canvas = document.getElementById('omniQrCanvas');
+        if (!canvas || !window.QRCode) return;
+        canvas.innerHTML = '';
+        try {
+            await QRCode.toCanvas(canvas, ctx, {
+                width: 140,
+                margin: 1,
+                color: { dark: '#1a2332', light: '#ffffff' }
+            });
+        } catch(e) { console.warn('QR update failed', e); }
     }
-    window.open(shopifyUrl, '_blank');
-    showPostPurchase();
-  } catch(err) {
-    btn.disabled = false; btn.textContent = 'Proceed to Checkout →';
-    alert('Unable to open checkout. Please call us at (336) 510-9816 to order.');
-  }
-}
 
-function showPostPurchase() {
-  var key   = _wiz.finalKey;
-  var isRKS = key && !key.inStock;
-
-  if (isRKS) {
-    document.getElementById('ckc-wizard-area').innerHTML =
-      '<div class="ckc-post-purchase"><div class="ckc-post-purchase-icon">✅</div><h3>Order Received</h3>' +
-      '<p>Your checkout tab is open — complete your payment there.</p>' +
-      '<div class="ckc-email-neon"><div class="ckc-email-neon-inner">' +
-      '<div class="ckc-email-neon-icon">📦</div>' +
-      '<div class="ckc-email-neon-title">WE\'RE SOURCING YOUR KEY</div>' +
-      '<div class="ckc-email-neon-desc">We\'ll notify you by email as soon as your <strong>' + (key ? key.title : 'key') + '</strong> arrives.<br><br>Your notification will include a link to schedule your programming appointment.</div>' +
-      '<div style="margin-top:20px;">' +
-      '<button disabled style="display:block;width:100%;padding:16px;background:#222;color:#555;border:1px solid #333;border-radius:10px;font-family:\'DM Sans\',sans-serif;font-size:1rem;font-weight:600;cursor:not-allowed;letter-spacing:0.5px;">📅 Schedule Appointment — Available After Key Arrives</button>' +
-      '</div>' +
-      '<div style="margin-top:12px;font-size:0.82rem;color:#555;">Questions? Call us at <a href="tel:+13365109816" style="color:var(--ckc-gold);">(336) 510-9816</a></div>' +
-      '</div></div>' +
-      '<button class="ckc-new-search-btn" onclick="resetFinder()">Search for another key</button></div>';
-  } else {
-    document.getElementById('ckc-wizard-area').innerHTML =
-      '<div class="ckc-post-purchase"><div class="ckc-post-purchase-icon">🛒</div><h3>Checkout Opened</h3>' +
-      '<p>Your checkout tab is open — complete your order there before booking an appointment.</p>' +
-      '<div class="ckc-email-neon"><div class="ckc-email-neon-inner"><div class="ckc-email-neon-icon">📅</div>' +
-      '<div class="ckc-email-neon-title">BOOK YOUR APPOINTMENT AFTER CHECKOUT</div>' +
-      '<div class="ckc-email-neon-desc">After completing payment, you\'ll see a<br><strong>"Schedule My Appointment"</strong> button on the confirmation page.<br>Click it to choose your date and time!</div>' +
-      '<div class="ckc-email-neon-arrow">↓ Complete checkout first, then book your appointment ↓</div></div></div>' +
-      '<button class="ckc-new-search-btn" onclick="resetFinder()">Search for another key</button></div>';
-  }
-
-  showScreen(6);
-  scrollToWizard();
-  resumeResize();
-}
-
-async function lazyLoadTypeImages() {
-  var els = document.querySelectorAll('.ckc-type-card-img-placeholder[data-sku]');
-  for (var i = 0; i < els.length; i++) {
-    var el = els[i]; var sku = el.dataset.sku; var handle = el.dataset.handle;
-    if (!sku || !el.id) continue;
-    var url = await tryFetchRKSImage(handle, sku);
-    var el2 = document.getElementById(el.id);
-    if (el2 && url) el2.outerHTML = '<img src="' + url + '" alt="Key" class="ckc-type-card-img" onerror="this.outerHTML=\'<div class=\\\'ckc-type-card-img-placeholder\\\'>🔑</div>\'">';
-  }
-}
-
-async function lazyLoadCompareImages(showGroup) {
-  var els = document.querySelectorAll('.ckc-mag-ph[data-sku]');
-  for (var i = 0; i < els.length; i++) {
-    var el = els[i]; var sku = el.dataset.sku; var handle = el.dataset.handle;
-    if (!sku || !el.id) continue;
-    var url = await tryFetchRKSImage(handle, sku);
-    var safeId = sku.replace(/[^a-z0-9]/gi,'');
-    var el2 = document.getElementById(el.id);
-    if (el2 && url) {
-      el2.outerHTML = '<img class="ckc-mag-base" id="ckc-cmpimg-' + safeId + '" src="' + url + '" alt="Key" onerror="this.outerHTML=\'<div class=\\\'ckc-mag-ph\\\'>🔑</div>\'">';
-      if (sku === _wiz.bladeAnswer) _wiz._bladeImgLoaded = true;
-      var lensImg = document.getElementById('ckc-lensimg-' + safeId);
-      if (lensImg) lensImg.src = url;
+    function toggleOmniQR(ev) {
+        ev && ev.stopPropagation();
+        omniQrCollapsed = !omniQrCollapsed;
+        const panel = document.getElementById('omniQR');
+        panel.classList.toggle('collapsed', omniQrCollapsed);
+        document.getElementById('omniQrToggle').textContent = omniQrCollapsed ? '+' : '−';
     }
-  }
-}
 
-function initMagnifiers(group) {
-  group.forEach(function(key) {
-    var safeId  = key.sku.replace(/[^a-z0-9]/gi,'');
-    var wrap    = document.getElementById('ckc-magwrap-' + safeId);
-    var lens    = document.getElementById('ckc-lens-' + safeId);
-    var lensImg = document.getElementById('ckc-lensimg-' + safeId);
-    if (!wrap || !lens || !lensImg) return;
-    var ZOOM = 3, LS = 100;
-
-    function moveLens(mx, my) {
-      var ww = wrap.offsetWidth, wh = wrap.offsetHeight;
-      lens.style.left    = Math.max(0, Math.min(mx - LS/2, ww - LS)) + 'px';
-      lens.style.top     = Math.max(0, Math.min(my - LS/2, wh - LS)) + 'px';
-      lens.style.display = 'block';
-      lensImg.style.width  = (ww * ZOOM) + 'px';
-      lensImg.style.height = (wh * ZOOM) + 'px';
-      lensImg.style.left   = -(mx * ZOOM - LS/2) + 'px';
-      lensImg.style.top    = -(my * ZOOM - LS/2) + 'px';
+    function expandOmniQRIfCollapsed() {
+        if (omniQrCollapsed) {
+            omniQrCollapsed = false;
+            document.getElementById('omniQR').classList.remove('collapsed');
+            document.getElementById('omniQrToggle').textContent = '−';
+        }
     }
-    wrap.addEventListener('mousemove', function(e) {
-      var r = wrap.getBoundingClientRect();
-      moveLens(e.clientX - r.left, e.clientY - r.top);
-    });
-    wrap.addEventListener('mouseleave', function() { lens.style.display = 'none'; });
-    wrap.addEventListener('touchmove', function(e) {
-      e.preventDefault();
-      var r = wrap.getBoundingClientRect();
-      moveLens(e.touches[0].clientX - r.left, e.touches[0].clientY - r.top);
-    }, { passive: false });
-    wrap.addEventListener('touchend', function() { lens.style.display = 'none'; });
-  });
-}
 
-function resetFinder() {
-  _wiz = { screen: 1, typeAnswer: '', bladeAnswer: '', tierAnswer: '', finalKey: null, aklMode: false, _bladeImgLoaded: false, _bladeKeywaySKUs: {} };
-  lastSearchParams = {}; _ckcMatches = []; _progToggle = {}; _customerVIN = ''; _cfqCardData = {};
-  _byType = {}; _bladeGroup = []; _fccGroup = []; _buttonsGroup = [];
-  document.getElementById('ckc-wizard-area').innerHTML = '';
-  document.getElementById('ckc-screen-1').classList.add('active');
-  document.getElementById('ckc-year').value = '';
-  document.getElementById('ckc-make').innerHTML = '<option value="">Select Make</option>';
-  document.getElementById('ckc-model').innerHTML = '<option value="">Select Model</option>';
-  document.getElementById('ckc-make').disabled = true;
-  document.getElementById('ckc-model').disabled = true;
-  document.getElementById('ckc-search-btn').disabled = true;
-  if (!isLive) syncFromSheet();
-  document.getElementById('ckc-finder-root').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  resumeResize();
-}
+    /* ─────── RESET ─────── */
+    function startNewSearch() {
+        appState = {
+            currentScreen: 1,
+            vehicle: { year: '', make: '', model: '' },
+            serviceType: '',
+            searchResults: [], inStockResults: [], rksResults: [], rksVisible: false,
+            quoteResult: null, conflictDetected: false, vinNumber: '',
+            selectedKeys: [], customer: { name: '', email: '', phone: '' },
+            manualLaborOverride: null,
+            catalogLoaded: appState.catalogLoaded, catalogData: appState.catalogData
+        };
+        document.getElementById('vehicleYear').value = '';
+        document.getElementById('vehicleMake').innerHTML = '<option value="">Select Make</option>';
+        document.getElementById('vehicleMake').disabled = true;
+        document.getElementById('vehicleModel').innerHTML = '<option value="">Select Model</option>';
+        document.getElementById('vehicleModel').disabled = true;
+        document.querySelectorAll('input[name="serviceType"]').forEach(r => r.checked = false);
+        document.getElementById('customerName').value = '';
+        document.getElementById('customerEmail').value = '';
+        document.getElementById('customerPhone').value = '';
+        document.getElementById('vinInput').value = '';
+        document.getElementById('vinDisplay').style.display = 'none';
+        document.getElementById('showRksBtn').style.display = 'none';
+        document.getElementById('proceedBtn').style.display = 'none';
+        updateOmniQR();
+        showScreen('screen1');
+    }
+    window.startNewSearch = startNewSearch;
 
-var _postHeightTimer = null;
+    /* Debug helpers */
+    window.ckc = {
+        state: () => appState,
+        screen: (n) => showScreen(`screen${n}`),
+        reset: startNewSearch,
+        matrix: MATRIX,
+        lookup: lookupQuote
+    };
 
-function postHeight() {
-  if (window.parent === window) return;
-  if (_postHeightTimer) clearTimeout(_postHeightTimer);
-  _postHeightTimer = setTimeout(function() {
-    var el = document.getElementById('ckc-finder-root');
-    if (!el) return;
-    window.parent.postMessage({ type: 'ckc-resize', height: el.scrollHeight + 40 }, '*');
-    _postHeightTimer = null;
-  }, 350);
-}
-
-function pauseResize() {
-  if (_postHeightTimer) { clearTimeout(_postHeightTimer); _postHeightTimer = null; }
-}
-
-function resumeResize() {
-  postHeight();
-}
-
-function initResizeObserver() {
-  // Intentionally empty — ResizeObserver removed to eliminate shake feedback loop.
-}
-
-(async function init() {
-  await syncFromSheet();
-  if (!isLive) initDropdowns();
-  initResizeObserver();
-  postHeight();
-})();
-</script>
+    console.log('CKC Command 2.1 ready. Debug: window.ckc');
+    </script>
+</body>
+</html>
