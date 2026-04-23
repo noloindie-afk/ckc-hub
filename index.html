@@ -344,46 +344,90 @@
             </div>
         </div>
 
-        <!-- SCREEN 3: VIN Conflict Resolution -->
+        <!-- SCREEN 3: Conflict Resolution — Send Conflict Email, Wait for Reply -->
         <div class="screen" id="screen3">
             <div class="screen-header">
-                <h2 class="screen-title">VIN Verification</h2>
-                <p class="screen-description">Multiple specifications detected — VIN needed to confirm</p>
+                <h2 class="screen-title">Conflict Detected — Send Email to Customer</h2>
+                <p class="screen-description">Send the candidate keys to the customer so they can help identify the right one</p>
             </div>
+
+            <div class="alert alert-warning">
+                <strong>⚠ Conflict Detected:</strong> Multiple specifications found. Send the customer an email with the candidate keys — they'll reply with which one matches, or with their VIN if they can't tell.
+            </div>
+
             <div class="phone-script">
                 <div class="phone-script-title">Say to Customer</div>
-                <div class="phone-script-text">"I need your VIN to verify the exact key you need. You can find it on your dashboard or door frame. Hold on 30 seconds while I verify..."</div>
+                <div class="phone-script-text">"I'm going to email you a couple of key options right now — look them over and just reply to let me know which one matches yours. If you can't tell, no problem — just reply with your VIN and I'll figure it out."</div>
             </div>
-            <div class="alert alert-warning">
-                <strong>⚠ Conflict Detected:</strong> Multiple FCC IDs or keyways found for this vehicle. VIN verification required.
+
+            <!-- Candidate keys preview -->
+            <div style="background: var(--ckc-gray-50); border-radius: var(--ckc-border-radius); padding: 20px; margin-bottom: 20px;">
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 700; color: var(--ckc-navy); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 15px;">Candidates that will be shown to the customer</div>
+                <div id="conflictCandidates"></div>
             </div>
-            <div class="vin-container">
-                <div class="form-group">
-                    <label class="form-label">Enter 17-Character VIN</label>
-                    <input type="text" class="vin-input form-input" id="vinInput" maxlength="17" placeholder="1HGCM82633A123456">
-                </div>
-                <div id="vinDisplay" style="display: none;">
-                    <div class="vin-display" id="vinDisplayText"></div>
-                    <div style="background: #eff6ff; border: 2px solid var(--ckc-info); border-radius: var(--ckc-border-radius); padding: 18px; margin-top: 15px;">
-                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 700; color: var(--ckc-info); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">📱 Phone Hand-off Steps</div>
-                        <ol style="margin: 0 0 0 20px; color: var(--ckc-gray-800); line-height: 1.8;">
-                            <li>Scan the <strong>QR code</strong> in the bottom-right with your phone camera</li>
-                            <li>When text preview appears, <strong>long-press → Copy</strong></li>
-                            <li>Open <strong>MyAutoSmart</strong> on your phone (home screen icon)</li>
-                            <li>Tap search field → <strong>Paste</strong> → look up the correct FCC/keyway for this trim</li>
-                            <li>Come back to desktop and pick the matching key from the list</li>
-                        </ol>
+
+            <!-- Customer info collection (SINGLE collection point for the whole flow) -->
+            <div class="customer-form" style="background: #fffbeb; border: 2px solid var(--ckc-gold); border-radius: var(--ckc-border-radius); padding: 20px; margin-bottom: 20px;">
+                <h3 style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; font-weight: 700; color: var(--ckc-navy); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 15px;">Customer Information (one-time)</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Full Name *</label>
+                        <input type="text" class="form-input" id="customerNameEarly" required>
                     </div>
-                    <div class="vin-actions">
-                        <button class="btn btn-primary" id="copyVinBtn">📋 Copy VIN to Desktop Clipboard</button>
-                        <button class="btn btn-secondary" id="openAutosmartBtn3">Open MyAutoSmart</button>
+                    <div class="form-group">
+                        <label class="form-label">Email Address *</label>
+                        <input type="email" class="form-input" id="customerEmailEarly" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone Number</label>
+                        <input type="tel" class="form-input" id="customerPhoneEarly">
                     </div>
                 </div>
-                <button class="btn btn-primary" id="saveVinBtn" style="margin-top: 15px;">Save VIN & Update QR</button>
             </div>
+
             <div class="btn-group">
                 <button class="btn btn-secondary" onclick="showScreen('screen2')">← Back to Results</button>
-                <button class="btn btn-success" id="conflictResolvedBtn" style="display: none;">Conflict Resolved — Continue →</button>
+                <button class="btn btn-warning" id="sendConflictEmailBtn" disabled>Send Conflict Email to Customer</button>
+            </div>
+
+            <!-- After conflict email is sent, this section appears -->
+            <div id="conflictWaitingSection" style="display:none; margin-top: 30px;">
+                <div class="alert alert-success">
+                    <strong>✓ Conflict email sent.</strong> Customer will reply with either their choice (A/B/C) OR their VIN. Use the buttons below once you get their reply.
+                </div>
+
+                <!-- Option 1: customer replied with a letter choice -->
+                <div style="background: #eff6ff; border: 2px solid var(--ckc-info); border-radius: var(--ckc-border-radius); padding: 20px; margin-bottom: 20px;">
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 700; color: var(--ckc-info); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Customer chose a letter</div>
+                    <p style="margin-bottom: 15px;">Click the key they picked — that confirms it and sends them the final quote email.</p>
+                    <div id="conflictLetterButtons"></div>
+                </div>
+
+                <!-- Option 2: customer replied with a VIN -->
+                <div style="background: #eff6ff; border: 2px solid var(--ckc-info); border-radius: var(--ckc-border-radius); padding: 20px;">
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 700; color: var(--ckc-info); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Customer sent a VIN</div>
+                    <p style="margin-bottom: 15px;">Paste the VIN here — this won't auto-pick the key, but it gives you the reference to look up on MyAutoSmart.</p>
+                    <div class="form-group">
+                        <label class="form-label">Enter 17-Character VIN</label>
+                        <input type="text" class="vin-input form-input" id="vinInput" maxlength="17" placeholder="1HGCM82633A123456">
+                    </div>
+                    <div id="vinDisplay" style="display: none;">
+                        <div class="vin-display" id="vinDisplayText"></div>
+                        <div style="background: #eff6ff; border-radius: var(--ckc-border-radius); padding: 15px; margin-top: 15px;">
+                            <ol style="margin: 0 0 0 20px; color: var(--ckc-gray-800); line-height: 1.8;">
+                                <li>Scan the <strong>QR code</strong> in the bottom-right with your phone camera</li>
+                                <li>Long-press the text → Copy</li>
+                                <li>Open <strong>MyAutoSmart</strong> on your phone → paste → look up the correct key</li>
+                                <li>Come back and pick the matching key from the candidates above</li>
+                            </ol>
+                        </div>
+                        <div class="vin-actions">
+                            <button class="btn btn-primary" id="copyVinBtn">📋 Copy VIN to Desktop Clipboard</button>
+                            <button class="btn btn-secondary" id="openAutosmartBtn3">Open MyAutoSmart</button>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="saveVinBtn" style="margin-top: 15px;">Save VIN</button>
+                </div>
             </div>
         </div>
 
@@ -673,6 +717,8 @@
         rksVisible: false,
         quoteResult: null,           // from CKC Quotes matrix
         conflictDetected: false,
+        conflictKeys: [],            // array of products that are the conflicting candidates
+        conflictEmailSent: false,    // have we already sent the VIN-request email this call?
         vinNumber: '',
         selectedKeys: [],            // array of SKUs selected in curation
         customer: { name: '', email: '', phone: '' },
@@ -707,10 +753,15 @@
         document.getElementById('saveVinBtn').addEventListener('click', saveVin);
         document.getElementById('copyVinBtn').addEventListener('click', copyVinToClipboard);
         document.getElementById('openAutosmartBtn3').addEventListener('click', openMyAutoSmart);
-        document.getElementById('conflictResolvedBtn').addEventListener('click', () => showScreen('screen4'));
         document.getElementById('vinInput').addEventListener('input', validateVinInput);
         document.getElementById('sendInvoiceBtn').addEventListener('click', () => showScreen('screen5'));
         ['customerName','customerEmail','customerPhone'].forEach(id => document.getElementById(id).addEventListener('input', validateCustomerForm));
+        // Early customer info (Screen 3 conflict flow)
+        ['customerNameEarly','customerEmailEarly','customerPhoneEarly'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', syncEarlyCustomer);
+        });
+        document.getElementById('sendConflictEmailBtn').addEventListener('click', sendConflictEmail);
         document.getElementById('sendEmailBtn').addEventListener('click', sendCustomerEmail);
         document.getElementById('omniQrToggle').addEventListener('click', toggleOmniQR);
         document.getElementById('omniQR').addEventListener('click', expandOmniQRIfCollapsed);
@@ -731,6 +782,7 @@
         }
         window.scrollTo({ top: 0, behavior: 'smooth' });
         // Screen-entry hooks
+        if (screenId === 'screen3') renderConflictCandidates();
         if (screenId === 'screen4') enterCurationScreen();
         if (screenId === 'screen5') renderEmailPreview();
     }
@@ -916,7 +968,11 @@
             appState.searchResults = products;
             appState.inStockResults = products.filter(p => isInStock(p));
             appState.rksResults = products.filter(p => isRksStock(p));
-            appState.conflictDetected = detectConflicts(appState.inStockResults);
+            // Check conflicts across ALL results (both CKC and RKS), so the customer
+            // has a chance to see every candidate when picking.
+            const conflictInfo = detectConflicts([...appState.inStockResults, ...appState.rksResults]);
+            appState.conflictDetected = conflictInfo.hasConflict;
+            appState.conflictKeys = conflictInfo.candidates;
             if (appState.conflictDetected) {
                 displayConflictWarning();
                 setTimeout(() => showScreen('screen3'), 1500);
@@ -976,7 +1032,7 @@
     function pKeyway(p) { return p.Keyway || p.keyway || p.blade || ''; }
 
     function detectConflicts(results) {
-        if (results.length <= 1) return false;
+        if (results.length <= 1) return { hasConflict: false, candidates: [] };
         const byType = {};
         results.forEach(k => {
             const t = k.Type || k.type || k.keyType || 'unknown';
@@ -987,9 +1043,11 @@
             if (grp.length <= 1) continue;
             const fccs = new Set(grp.map(k => k.FCC || k.fcc || k.fccId).filter(x => x && x !== 'N/A'));
             const keyways = new Set(grp.map(k => k.Keyway || k.keyway || k.blade).filter(x => x && x !== 'N/A'));
-            if (fccs.size > 1 || keyways.size > 1) return true;
+            if (fccs.size > 1 || keyways.size > 1) {
+                return { hasConflict: true, candidates: grp };
+            }
         }
-        return false;
+        return { hasConflict: false, candidates: [] };
     }
 
     function displayConflictWarning() {
@@ -1105,7 +1163,7 @@
                         </div>
                     </div>
                     <div class="key-details">
-                        <div class="key-detail-row"><span class="key-detail-label">SKU</span><span class="key-detail-value">${sku}</span></div>
+                        <div class="key-detail-row"><span class="key-detail-label">SKU</span><span class="key-detail-value" style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:700;color:var(--ckc-gold-dark);letter-spacing:1px;">${sku}</span></div>
                         ${fcc ? `<div class="key-detail-row"><span class="key-detail-label">FCC</span><span class="key-detail-value">${fcc}</span></div>` : ''}
                         ${keyway ? `<div class="key-detail-row"><span class="key-detail-label">Keyway</span><span class="key-detail-value">${keyway}</span></div>` : ''}
                         <div class="key-detail-row"><span class="key-detail-label">Status</span><span class="status-indicator ${statusClass}">${statusText}</span></div>
@@ -1128,7 +1186,6 @@
         writeSharedContext();
         document.getElementById('vinDisplayText').textContent = v;
         document.getElementById('vinDisplay').style.display = 'block';
-        document.getElementById('conflictResolvedBtn').style.display = 'inline-block';
         updateOmniQR();
     }
 
@@ -1224,7 +1281,7 @@
                             </div>
                         </div>
                         <div class="key-details">
-                            <div class="key-detail-row"><span class="key-detail-label">SKU</span><span class="key-detail-value">${sku}</span></div>
+                            <div class="key-detail-row"><span class="key-detail-label">SKU</span><span class="key-detail-value" style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:700;color:var(--ckc-gold-dark);letter-spacing:1px;">${sku}</span></div>
                             <div class="key-detail-row"><span class="key-detail-label">Status</span><span class="status-indicator ${statusClass}">${statusText}</span></div>
                         </div>
                         <label class="key-select-checkbox">
@@ -1272,6 +1329,144 @@
     }
 
     /* ─────── CUSTOMER FORM + EMAIL PREVIEW ─────── */
+    /* ─────── SCREEN 3: CONFLICT EMAIL FLOW ─────── */
+
+    // Keep the Screen 5 customer fields synced with the Screen 3 early-collection fields
+    function syncEarlyCustomer() {
+        const n = document.getElementById('customerNameEarly').value.trim();
+        const e = document.getElementById('customerEmailEarly').value.trim();
+        const p = document.getElementById('customerPhoneEarly').value.trim();
+        appState.customer = { name: n, email: e, phone: p };
+        // Mirror into the Screen 5 fields so user doesn't re-enter
+        const s5n = document.getElementById('customerName');
+        const s5e = document.getElementById('customerEmail');
+        const s5p = document.getElementById('customerPhone');
+        if (s5n) s5n.value = n;
+        if (s5e) s5e.value = e;
+        if (s5p) s5p.value = p;
+        // Enable Send Conflict Email button when name + valid email present
+        const emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        document.getElementById('sendConflictEmailBtn').disabled = !(n && emailRx.test(e));
+    }
+
+    // Render the candidate keys on Screen 3 so James can see what's about to be sent
+    function renderConflictCandidates() {
+        const container = document.getElementById('conflictCandidates');
+        const candidates = appState.inStockResults.length > 0 ? appState.inStockResults : appState.rksResults;
+        if (!candidates || candidates.length === 0) {
+            container.innerHTML = '<div class="alert alert-info">No candidate keys found for this vehicle.</div>';
+            return;
+        }
+        container.innerHTML = candidates.map((p, idx) => {
+            const letter = String.fromCharCode(65 + idx); // A, B, C...
+            const title = pTitle(p);
+            const sku = pSku(p);
+            const img = pImage(p);
+            const fcc = pFcc(p);
+            const keyway = pKeyway(p);
+            return `
+                <div class="key-card" style="margin-bottom: 10px;">
+                    <div class="key-card-image">
+                        ${img ? `<img src="${img}" alt="${title}">` : '<div class="key-card-image-placeholder">No image</div>'}
+                    </div>
+                    <div class="key-card-body">
+                        <div class="key-header">
+                            <div>
+                                <div style="font-family:'JetBrains Mono',monospace;font-size:1.4rem;font-weight:800;color:var(--ckc-gold-dark);">Option ${letter}</div>
+                                <div class="key-title">${title}</div>
+                            </div>
+                        </div>
+                        <div class="key-details">
+                            <div class="key-detail-row"><span class="key-detail-label">SKU</span><span class="key-detail-value" style="font-family:'JetBrains Mono',monospace;font-weight:700;">${sku}</span></div>
+                            ${fcc ? `<div class="key-detail-row"><span class="key-detail-label">FCC</span><span class="key-detail-value">${fcc}</span></div>` : ''}
+                            ${keyway ? `<div class="key-detail-row"><span class="key-detail-label">Keyway</span><span class="key-detail-value">${keyway}</span></div>` : ''}
+                        </div>
+                    </div>
+                </div>`;
+        }).join('');
+
+        // Also render the letter buttons in the waiting section
+        const btnEl = document.getElementById('conflictLetterButtons');
+        if (btnEl) {
+            btnEl.innerHTML = candidates.map((p, idx) => {
+                const letter = String.fromCharCode(65 + idx);
+                const sku = pSku(p);
+                return `<button class="btn btn-success" style="margin: 5px;" onclick="pickConflictLetter('${sku}')">Customer picked ${letter} — Send Quote</button>`;
+            }).join('');
+        }
+    }
+
+    async function sendConflictEmail() {
+        const btn = document.getElementById('sendConflictEmailBtn');
+        btn.textContent = 'Sending...';
+        btn.disabled = true;
+
+        const candidates = appState.inStockResults.length > 0 ? appState.inStockResults : appState.rksResults;
+        const vehicle = `${appState.vehicle.year} ${appState.vehicle.make} ${appState.vehicle.model}`;
+
+        // Build the conflict email with letter-labeled candidate pictures
+        const cardsHTML = candidates.map((p, idx) => {
+            const letter = String.fromCharCode(65 + idx);
+            const title = pTitle(p);
+            const img = pImage(p);
+            return `<td style="padding:15px;border:1px solid #eee;border-radius:8px;text-align:center;vertical-align:top;width:33%;">
+                <div style="font-family:monospace;font-size:28px;font-weight:800;color:#d4af37;margin-bottom:8px;">${letter}</div>
+                ${img ? `<img src="${img}" style="width:140px;height:140px;object-fit:contain;border:1px solid #eee;border-radius:4px;" alt="${title}">` : '<div style="width:140px;height:140px;background:#f1f5f9;border-radius:4px;text-align:center;line-height:140px;color:#94a3b8;font-size:11px;margin:0 auto;">No image</div>'}
+                <div style="margin-top:10px;font-size:13px;color:#1a2332;font-weight:600;">${title}</div>
+            </td>`;
+        }).join('');
+
+        const htmlBody = `
+<div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;">
+  <div style="border-bottom:3px solid #d4af37;padding-bottom:15px;margin-bottom:20px;">
+    <div style="font-size:22px;font-weight:700;color:#1a2332;">CAROLINA KEY CUTTERS</div>
+    <div style="font-size:13px;color:#64748b;">Mobile Automotive Locksmith — ${CKC_PHONE}</div>
+  </div>
+  <p>Hi ${appState.customer.name},</p>
+  <p>Your <strong>${vehicle}</strong> has more than one key variant.</p>
+  <p><strong>Which key most closely resembles yours?</strong></p>
+  <table style="width:100%;border-collapse:separate;border-spacing:10px;margin:20px 0;"><tr>${cardsHTML}</tr></table>
+  <p>Just reply to this email with the <strong>letter</strong> (A, B${candidates.length > 2 ? ', C...' : ''}) that matches.</p>
+  <p>If you're not sure, please reply with your <strong>17-digit VIN</strong> and I'll figure it out.</p>
+  <p style="margin-top:25px;font-size:14px;color:#64748b;text-align:center;">
+    <strong>— James, Carolina Key Cutters</strong><br>
+    ${CKC_PHONE}
+  </p>
+</div>`;
+
+        const params = {
+            subject: `Your ${vehicle} — which key matches? (Carolina Key Cutters)`,
+            to_email: appState.customer.email,
+            to_name: appState.customer.name,
+            customer_name: appState.customer.name,
+            vehicle: vehicle,
+            from_email: CKC_EMAIL_FROM,
+            reply_to: CKC_EMAIL_FROM,
+            html_body: htmlBody,
+            plain_body: `Hi ${appState.customer.name},\n\nYour ${vehicle} has more than one key variant. Check the email for pictures and reply with the letter (A, B${candidates.length > 2 ? ', C...' : ''}) that matches yours. If you can't tell, reply with your 17-digit VIN.\n\n— James, Carolina Key Cutters`
+        };
+
+        try {
+            if (!window.emailjs || !EMAILJS_PUBLIC_KEY) throw new Error('EmailJS not loaded');
+            await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, params);
+            // Show the waiting section
+            document.getElementById('conflictWaitingSection').style.display = 'block';
+            btn.textContent = '✓ Conflict Email Sent';
+            btn.disabled = true;
+        } catch (e) {
+            console.error('Conflict email send failed', e);
+            alert('Conflict email send failed.\n\nError: ' + (e && (e.text || e.message) ? (e.text || e.message) : 'unknown'));
+            btn.textContent = 'Send Conflict Email to Customer';
+            btn.disabled = false;
+        }
+    }
+
+    // Customer picked a letter — auto-select that key and jump to Screen 5 to send quote
+    window.pickConflictLetter = function(sku) {
+        appState.selectedKeys = [sku];
+        showScreen('screen5');
+    };
+
     function validateCustomerForm() {
         const name = document.getElementById('customerName').value.trim();
         const email = document.getElementById('customerEmail').value.trim();
@@ -1294,6 +1489,7 @@
         const keyType = (appState.quoteResult && appState.quoteResult.matched) ? appState.quoteResult.rule.keyType : 'Manual quote';
 
         const itemsHTML = selected.map(p => {
+            const sku = pSku(p);
             const title = pTitle(p);
             const price = pPrice(p);
             const imgSrc = pImage(p);
@@ -1304,13 +1500,21 @@
                     <div class="email-lineitem-image">${imgSrc ? `<img src="${imgSrc}">` : 'No image'}</div>
                     <div class="email-lineitem-body">
                         <div class="email-lineitem-title">${title}</div>
-                        <div class="email-lineitem-meta">${statusText}</div>
+                        <div class="email-lineitem-meta">SKU: ${sku} &nbsp;·&nbsp; ${statusText}</div>
                     </div>
                     <div class="email-lineitem-price">$${price.toFixed(2)}</div>
                 </div>`;
         }).join('');
 
-        el.innerHTML = `
+        // James-facing SKU box — visible only to you, for Shopify order entry during the call
+        const jamesSkuBox = selected.length > 0 ? `
+            <div style="background:#1a2332;color:#e8c75a;border:2px solid #d4af37;border-radius:8px;padding:16px 20px;margin-bottom:20px;">
+                <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#d4af37;margin-bottom:8px;">🏷 SKUs for Shopify Entry</div>
+                ${selected.map(p => `<div style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:700;padding:4px 0;">${pSku(p)} <span style="font-weight:400;font-size:0.9rem;color:#94a3b8;"> — ${pTitle(p)}</span></div>`).join('')}
+                <div style="font-size:0.8rem;color:#94a3b8;margin-top:8px;font-style:italic;">Customer does not see this box — internal reference only</div>
+            </div>` : '';
+
+        el.innerHTML = jamesSkuBox + `
             <div class="email-preview">
                 <div class="email-header">
                     <div class="email-logo">CAROLINA KEY CUTTERS</div>
@@ -1347,11 +1551,12 @@
 
         // Build simple HTML email body (EmailJS template can also format this server-side)
         const itemLines = selected.map(p => {
+            const sku = pSku(p);
             const title = pTitle(p);
             const price = pPrice(p);
             const imgSrc = pImage(p);
             const statusText = isInStock(p) ? 'In Stock — Same Day' : '2–3 Day Ship';
-            return `<tr><td style="padding:10px;border-bottom:1px solid #eee;vertical-align:top;">${imgSrc ? `<img src="${imgSrc}" style="width:80px;height:80px;object-fit:contain;">` : ''}</td><td style="padding:10px;border-bottom:1px solid #eee;"><strong>${title}</strong><br><small>${statusText}</small></td><td style="padding:10px;border-bottom:1px solid #eee;text-align:right;font-family:monospace;">$${price.toFixed(2)}</td></tr>`;
+            return `<tr><td style="padding:10px;border-bottom:1px solid #eee;vertical-align:top;width:100px;">${imgSrc ? `<img src="${imgSrc}" style="width:90px;height:90px;object-fit:contain;border:1px solid #eee;border-radius:4px;" alt="${title}"><br><a href="${imgSrc}" style="font-size:10px;color:#64748b;text-decoration:none;">View image</a>` : '<div style="width:90px;height:90px;background:#f1f5f9;border-radius:4px;text-align:center;line-height:90px;color:#94a3b8;font-size:11px;">No image</div>'}</td><td style="padding:10px;border-bottom:1px solid #eee;"><strong>${title}</strong><br><small style="color:#64748b;">SKU: ${sku} &nbsp;·&nbsp; ${statusText}</small></td><td style="padding:10px;border-bottom:1px solid #eee;text-align:right;font-family:monospace;vertical-align:top;">$${price.toFixed(2)}</td></tr>`;
         }).join('');
 
         const htmlBody = `
@@ -1376,6 +1581,7 @@
 </div>`;
 
         const params = {
+            subject: 'Your Key Quote from Carolina Key Cutters',
             to_email: appState.customer.email,
             to_name: appState.customer.name,
             customer_name: appState.customer.name,
