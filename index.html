@@ -364,12 +364,18 @@
                 </div>
                 <div id="vinDisplay" style="display: none;">
                     <div class="vin-display" id="vinDisplayText"></div>
-                    <p style="color: var(--ckc-slate); text-align: center; margin-top: 10px;">
-                        VIN saved — it's now in the omnipresent QR panel (bottom-right).<br>
-                        Scan it with your phone to hand off to MyAutoSmart.
-                    </p>
+                    <div style="background: #eff6ff; border: 2px solid var(--ckc-info); border-radius: var(--ckc-border-radius); padding: 18px; margin-top: 15px;">
+                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 700; color: var(--ckc-info); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">📱 Phone Hand-off Steps</div>
+                        <ol style="margin: 0 0 0 20px; color: var(--ckc-gray-800); line-height: 1.8;">
+                            <li>Scan the <strong>QR code</strong> in the bottom-right with your phone camera</li>
+                            <li>When text preview appears, <strong>long-press → Copy</strong></li>
+                            <li>Open <strong>MyAutoSmart</strong> on your phone (home screen icon)</li>
+                            <li>Tap search field → <strong>Paste</strong> → look up the correct FCC/keyway for this trim</li>
+                            <li>Come back to desktop and pick the matching key from the list</li>
+                        </ol>
+                    </div>
                     <div class="vin-actions">
-                        <button class="btn btn-primary" id="copyVinBtn">📋 Copy VIN</button>
+                        <button class="btn btn-primary" id="copyVinBtn">📋 Copy VIN to Desktop Clipboard</button>
                         <button class="btn btn-secondary" id="openAutosmartBtn3">Open MyAutoSmart</button>
                     </div>
                 </div>
@@ -480,7 +486,7 @@
     // EmailJS config (from memory)
     const EMAILJS_PUBLIC_KEY = 'xnZyuYp9X4dIvLJBQ';
     const EMAILJS_SERVICE = 'service_wkljx8t';
-    const EMAILJS_TEMPLATE = 'a8dpj1y';
+    const EMAILJS_TEMPLATE = 'template_saraksq';
 
     // Shared YMM broadcaster key — other CKC tools can read this
     const SHARED_CONTEXT_KEY = 'ckc.sharedContext';
@@ -1432,9 +1438,21 @@
     function buildOmniContext() {
         const { year, make, model } = appState.vehicle;
         const parts = [];
-        if (appState.vinNumber) parts.push('VIN: ' + appState.vinNumber);
-        if (year && make && model) parts.push(`${year} ${make} ${model}`);
-        if (appState.serviceType) parts.push(appState.serviceType);
+        // VIN is the primary payload when present — it's what MyAutoSmart needs to isolate the trim
+        if (appState.vinNumber) {
+            parts.push(appState.vinNumber);
+            if (year && make && model) parts.push(`(${year} ${make} ${model})`);
+        } else {
+            if (year && make && model) parts.push(`${year} ${make} ${model}`);
+            if (appState.serviceType) parts.push(appState.serviceType);
+        }
+        // If we're in conflict resolution, include the conflicting FCCs/keyways
+        if (appState.conflictDetected && appState.inStockResults.length > 0) {
+            const fccs = [...new Set(appState.inStockResults.map(p => pFcc(p)).filter(x => x && x !== 'N/A'))];
+            const keyways = [...new Set(appState.inStockResults.map(p => pKeyway(p)).filter(x => x && x !== 'N/A'))];
+            if (fccs.length > 1) parts.push('FCCs: ' + fccs.join(', '));
+            if (keyways.length > 1) parts.push('Keyways: ' + keyways.join(', '));
+        }
         if (parts.length === 0) return `CKC ${CKC_PHONE}`;
         return parts.join(' | ');
     }
