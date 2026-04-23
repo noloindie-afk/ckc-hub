@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CKC Command 2.1 — Phone Quote Tool</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Crimson+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
         /* ══════════════════════════════════════════════════════════════════
@@ -833,24 +833,54 @@
     }
 
     /* Normalize whatever shape the blade proxy returns into { products, makes, modelsByMake } */
+    /* Parse "2001|2002|2003|2004" → [2001, 2002, 2003, 2004] */
+    function parseYearsField(yearsStr) {
+        if (!yearsStr || typeof yearsStr !== 'string') return [];
+        return yearsStr.split('|').map(y => parseInt(y.trim())).filter(y => !isNaN(y));
+    }
+
+    /* Parse Compatibility JSON string → array of {make, model, ...} objects */
+    function parseCompatibilityField(compatStr) {
+        if (!compatStr) return [];
+        if (Array.isArray(compatStr)) return compatStr;
+        if (typeof compatStr !== 'string') return [];
+        try {
+            const parsed = JSON.parse(compatStr);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch(e) {
+            return [];
+        }
+    }
+
+    /* Normalize every product: pre-parse Compatibility, Years, and extract unique makes/models */
     function normalizeCatalog(raw) {
         let products = [];
         if (Array.isArray(raw)) products = raw;
-        else if (Array.isArray(raw.products)) products = raw.products;
-        else if (Array.isArray(raw.items)) products = raw.items;
+        else if (raw && Array.isArray(raw.products)) products = raw.products;
+        else if (raw && Array.isArray(raw.items)) products = raw.items;
+
         const makes = new Set();
         const modelsByMake = {};
+
         products.forEach(p => {
-            const mk = p.make || p.vendor_make || p.vehicleMake;
-            const mo = p.model || p.vehicleModel;
-            if (mk) {
-                makes.add(mk);
-                if (mo) {
-                    if (!modelsByMake[mk]) modelsByMake[mk] = new Set();
-                    modelsByMake[mk].add(mo);
+            // Pre-parse expensive fields once, cache on product object
+            p._years = parseYearsField(p.Years || p.years);
+            p._compat = parseCompatibilityField(p.Compatibility || p.compatibility);
+
+            // Each compatibility entry contributes its make/model to the index
+            p._compat.forEach(c => {
+                const mk = (c.make || c.Make || '').toString().trim();
+                const mo = (c.model || c.Model || '').toString().trim();
+                if (mk) {
+                    makes.add(mk);
+                    if (mo) {
+                        if (!modelsByMake[mk]) modelsByMake[mk] = new Set();
+                        modelsByMake[mk].add(mo);
+                    }
                 }
-            }
+            });
         });
+
         const modelsByMakeObj = {};
         Object.keys(modelsByMake).forEach(k => modelsByMakeObj[k] = Array.from(modelsByMake[k]));
         return { products, makes: Array.from(makes), modelsByMake: modelsByMakeObj };
@@ -872,8 +902,8 @@
         try {
             const products = filterCatalog(appState.vehicle.year, appState.vehicle.make, appState.vehicle.model);
             appState.searchResults = products;
-            appState.inStockResults = products.filter(p => hasTag(p, 'ckc-stock'));
-            appState.rksResults = products.filter(p => hasTag(p, 'rks-stock') && !hasTag(p, 'ckc-stock'));
+            appState.inStockResults = products.filter(p => isInStock(p));
+            appState.rksResults = products.filter(p => isRksStock(p));
             appState.conflictDetected = detectConflicts(appState.inStockResults);
             if (appState.conflictDetected) {
                 displayConflictWarning();
@@ -892,38 +922,46 @@
     function filterCatalog(year, make, model) {
         if (!appState.catalogData || !appState.catalogData.products) return [];
         const yrNum = parseInt(year);
+        const makeLower = make.toLowerCase();
+        const modelLower = model.toLowerCase();
         return appState.catalogData.products.filter(p => {
-            const pMake = (p.make || p.vendor_make || p.vehicleMake || '').toString();
-            const pModel = (p.model || p.vehicleModel || '').toString();
-            const pYearStart = parseInt(p.yearStart || p.year_start || p.yearFrom || p.year);
-            const pYearEnd = parseInt(p.yearEnd || p.year_end || p.yearTo || p.year);
-            if (pMake && pMake.toLowerCase() !== make.toLowerCase()) return false;
-            if (pModel && pModel.toLowerCase() !== model.toLowerCase()) return false;
-            if (pYearStart && yrNum < pYearStart) return false;
-            if (pYearEnd && yrNum > pYearEnd) return false;
-            return true;
+            // Year match: the year must appear in the product's Years list
+            if (p._years.length > 0 && !p._years.includes(yrNum)) return false;
+            // Make + model match: at least one compatibility entry must match both
+            if (p._compat.length === 0) return false;
+            return p._compat.some(c => {
+                const cMake = (c.make || c.Make || '').toString().toLowerCase();
+                const cModel = (c.model || c.Model || '').toString().toLowerCase();
+                if (cMake !== makeLower) return false;
+                if (cModel && modelLower && cModel !== modelLower) return false;
+                return true;
+            });
         });
     }
 
-    function hasTag(product, tag) {
-        const tags = product.tags || product.tag_list || [];
-        if (typeof tags === 'string') return tags.toLowerCase().split(/[,\s]+/).includes(tag.toLowerCase());
-        if (Array.isArray(tags)) return tags.map(t => String(t).toLowerCase()).includes(tag.toLowerCase());
-        return false;
+    /* Stock routing: Vendor field is 'CKC' (in-stock) or 'RKS' (2-3 day ship) */
+    function isInStock(product) {
+        const vendor = (product.Vendor || product.vendor || '').toString().toUpperCase();
+        return vendor === 'CKC';
+    }
+
+    function isRksStock(product) {
+        const vendor = (product.Vendor || product.vendor || '').toString().toUpperCase();
+        return vendor === 'RKS';
     }
 
     function detectConflicts(results) {
         if (results.length <= 1) return false;
         const byType = {};
         results.forEach(k => {
-            const t = k.type || k.keyType || 'unknown';
+            const t = k.Type || k.type || k.keyType || 'unknown';
             (byType[t] = byType[t] || []).push(k);
         });
         for (const t in byType) {
             const grp = byType[t];
             if (grp.length <= 1) continue;
-            const fccs = new Set(grp.map(k => k.fcc || k.fccId).filter(x => x && x !== 'N/A'));
-            const keyways = new Set(grp.map(k => k.keyway || k.blade).filter(x => x && x !== 'N/A'));
+            const fccs = new Set(grp.map(k => k.FCC || k.fcc || k.fccId).filter(x => x && x !== 'N/A'));
+            const keyways = new Set(grp.map(k => k.Keyway || k.keyway || k.blade).filter(x => x && x !== 'N/A'));
             if (fccs.size > 1 || keyways.size > 1) return true;
         }
         return false;
@@ -1019,7 +1057,7 @@
         const title = p.title || p.name || p.product_title || sku;
         const type = p.type || p.keyType || p.product_type || '';
         const price = parseFloat(p.price || p.variant_price || 0);
-        const inStock = hasTag(p, 'ckc-stock');
+        const inStock = isInStock(p);
         const imgSrc = p.image || p.image_url || p.featured_image || (p.images && p.images[0]) || '';
         const fcc = p.fcc || p.fccId || '';
         const keyway = p.keyway || p.blade || '';
@@ -1141,7 +1179,7 @@
             const type = p.type || p.keyType || p.product_type || '';
             const price = parseFloat(p.price || p.variant_price || 0);
             const imgSrc = p.image || p.image_url || p.featured_image || (p.images && p.images[0]) || '';
-            const inStock = hasTag(p, 'ckc-stock');
+            const inStock = isInStock(p);
             const statusClass = inStock ? 'status-in-stock' : 'status-rks';
             const statusText = inStock ? 'In Stock' : '2–3 Days';
             const checked = appState.selectedKeys.includes(sku) ? 'checked' : '';
@@ -1234,7 +1272,7 @@
             const title = p.title || p.name || p.sku;
             const price = parseFloat(p.price || p.variant_price || 0);
             const imgSrc = p.image || p.image_url || p.featured_image || (p.images && p.images[0]) || '';
-            const inStock = hasTag(p, 'ckc-stock');
+            const inStock = isInStock(p);
             const statusText = inStock ? 'In Stock — Same Day' : '2–3 Day Ship';
             return `
                 <div class="email-lineitem">
@@ -1287,7 +1325,7 @@
             const title = p.title || p.name || p.sku;
             const price = parseFloat(p.price || p.variant_price || 0);
             const imgSrc = p.image || p.image_url || p.featured_image || (p.images && p.images[0]) || '';
-            const statusText = hasTag(p, 'ckc-stock') ? 'In Stock — Same Day' : '2–3 Day Ship';
+            const statusText = isInStock(p) ? 'In Stock — Same Day' : '2–3 Day Ship';
             return `<tr><td style="padding:10px;border-bottom:1px solid #eee;vertical-align:top;">${imgSrc ? `<img src="${imgSrc}" style="width:80px;height:80px;object-fit:contain;">` : ''}</td><td style="padding:10px;border-bottom:1px solid #eee;"><strong>${title}</strong><br><small>${statusText}</small></td><td style="padding:10px;border-bottom:1px solid #eee;text-align:right;font-family:monospace;">$${price.toFixed(2)}</td></tr>`;
         }).join('');
 
@@ -1360,7 +1398,7 @@
                 1. Ask the customer to confirm they got the email and see the picture<br>
                 2. Take the card info over the phone<br>
                 3. Create the Shopify order the way you normally do<br>
-                4. ${appState.selectedKeys.length > 0 && appState.rksResults.some(p => appState.selectedKeys.includes(p.sku)) ? 'Add RKS items to your daily batch' : 'Send booking link: ' + BOOKING_URL}
+                4. ${appState.selectedKeys.length > 0 && appState.rksResults.some(p => appState.selectedKeys.includes(p.SKU || p.sku)) ? 'Add RKS items to your daily batch' : 'Send booking link: ' + BOOKING_URL}
             </div>`;
     }
 
