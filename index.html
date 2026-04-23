@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CKC Command 2.1 — Phone Quote Tool</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Crimson+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
         /* ══════════════════════════════════════════════════════════════════
@@ -823,9 +823,16 @@
             const res = await fetch(CATALOG_URL);
             if (!res.ok) throw new Error('Catalog fetch failed: ' + res.status);
             const data = await res.json();
+            console.log('[catalog] Raw response:', { status: data.status, productCount: (data.products || data).length });
             appState.catalogData = normalizeCatalog(data);
             appState.catalogLoaded = true;
-            console.log(`Catalog loaded: ${appState.catalogData.products?.length || 0} products`);
+            console.log(`[catalog] Normalized: ${appState.catalogData.products.length} products, ${appState.catalogData.makes.length} makes`);
+            if (appState.catalogData.products.length > 0) {
+                const sample = appState.catalogData.products[0];
+                console.log('[catalog] Sample product keys:', Object.keys(sample));
+                console.log('[catalog] Sample _compat:', sample._compat);
+                console.log('[catalog] Sample _years:', sample._years);
+            }
         } catch (e) {
             console.warn('Catalog load failed — falling back to fallback dropdowns', e);
             appState.catalogLoaded = false;
@@ -916,7 +923,8 @@
             console.error(e);
             displaySearchError();
         }
-        document.getElementById('searchLoading').style.display = 'none';
+        const loader = document.getElementById('searchLoading');
+        if (loader) loader.style.display = 'none';
     }
 
     function filterCatalog(year, make, model) {
@@ -925,6 +933,9 @@
         const makeLower = make.toLowerCase();
         const modelLower = model.toLowerCase();
         return appState.catalogData.products.filter(p => {
+            // Defense: if normalize didn't run, parse on the fly
+            if (!p._years) p._years = parseYearsField(p.Years || p.years);
+            if (!p._compat) p._compat = parseCompatibilityField(p.Compatibility || p.compatibility);
             // Year match: the year must appear in the product's Years list
             if (p._years.length > 0 && !p._years.includes(yrNum)) return false;
             // Make + model match: at least one compatibility entry must match both
