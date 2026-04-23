@@ -961,7 +961,7 @@
     }
 
     /* Field accessors — catalog uses capital-letter field names (SKU, Title, etc.) */
-    function pSku(p)    { return pSku(p) || p.variant_sku || 'N/A'; }
+    function pSku(p)    { return p.SKU || p.sku || p.variant_sku || 'N/A'; }
     function pTitle(p)  { return p.Title || p.title || p.name || p.product_title || pSku(p); }
     function pType(p)   { return p.Type || p.type || p.keyType || p.product_type || ''; }
     function pPrice(p)  { return parseFloat(p.Price || p.price || p.variant_price || 0); }
