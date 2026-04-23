@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CKC Command 2.1 — Phone Quote Tool</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Crimson+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
         /* ══════════════════════════════════════════════════════════════════
@@ -961,6 +960,15 @@
         return vendor === 'RKS';
     }
 
+    /* Field accessors — catalog uses capital-letter field names (SKU, Title, etc.) */
+    function pSku(p)    { return pSku(p) || p.variant_sku || 'N/A'; }
+    function pTitle(p)  { return p.Title || p.title || p.name || p.product_title || pSku(p); }
+    function pType(p)   { return p.Type || p.type || p.keyType || p.product_type || ''; }
+    function pPrice(p)  { return parseFloat(p.Price || p.price || p.variant_price || 0); }
+    function pImage(p)  { return p.Image || p.image || p.image_url || p.featured_image || (p.images && p.images[0]) || ''; }
+    function pFcc(p)    { return p.FCC || p.fcc || p.fccId || ''; }
+    function pKeyway(p) { return p.Keyway || p.keyway || p.blade || ''; }
+
     function detectConflicts(results) {
         if (results.length <= 1) return false;
         const byType = {};
@@ -1064,14 +1072,14 @@
     }
 
     function renderSearchCard(p) {
-        const sku = p.sku || p.SKU || p.variant_sku || 'N/A';
-        const title = p.title || p.name || p.product_title || sku;
-        const type = p.type || p.keyType || p.product_type || '';
-        const price = parseFloat(p.price || p.variant_price || 0);
+        const sku = pSku(p);
+        const title = pTitle(p);
+        const type = pType(p);
+        const price = pPrice(p);
         const inStock = isInStock(p);
-        const imgSrc = p.image || p.image_url || p.featured_image || (p.images && p.images[0]) || '';
-        const fcc = p.fcc || p.fccId || '';
-        const keyway = p.keyway || p.blade || '';
+        const imgSrc = pImage(p);
+        const fcc = pFcc(p);
+        const keyway = pKeyway(p);
         const statusClass = inStock ? 'status-in-stock' : 'status-rks';
         const statusText = inStock ? 'In Stock — Same Day' : '2–3 Day Ship (RKS)';
         return `
@@ -1185,11 +1193,11 @@
             return;
         }
         container.innerHTML = sourceList.map(p => {
-            const sku = p.sku || p.SKU || p.variant_sku;
-            const title = p.title || p.name || sku;
-            const type = p.type || p.keyType || p.product_type || '';
-            const price = parseFloat(p.price || p.variant_price || 0);
-            const imgSrc = p.image || p.image_url || p.featured_image || (p.images && p.images[0]) || '';
+            const sku = pSku(p);
+            const title = pTitle(p);
+            const type = pType(p);
+            const price = pPrice(p);
+            const imgSrc = pImage(p);
             const inStock = isInStock(p);
             const statusClass = inStock ? 'status-in-stock' : 'status-rks';
             const statusText = inStock ? 'In Stock' : '2–3 Days';
@@ -1243,12 +1251,12 @@
 
     function getSelectedProducts() {
         const all = [...appState.inStockResults, ...appState.rksResults];
-        return all.filter(p => appState.selectedKeys.includes(p.sku || p.SKU || p.variant_sku));
+        return all.filter(p => appState.selectedKeys.includes(pSku(p)));
     }
 
     function updateRunningTotal() {
         const selected = getSelectedProducts();
-        const keyTotal = selected.reduce((sum, p) => sum + parseFloat(p.price || p.variant_price || 0), 0);
+        const keyTotal = selected.reduce((sum, p) => sum + pPrice(p), 0);
         const labor = getLaborAmount();
         const total = keyTotal + labor;
         document.getElementById('runningTotal').textContent = `$${total.toFixed(2)}`;
@@ -1273,16 +1281,16 @@
         const el = document.getElementById('emailPreview');
         const selected = getSelectedProducts();
         const labor = getLaborAmount();
-        const keyTotal = selected.reduce((sum, p) => sum + parseFloat(p.price || p.variant_price || 0), 0);
+        const keyTotal = selected.reduce((sum, p) => sum + pPrice(p), 0);
         const grandTotal = keyTotal + labor;
         const customerName = appState.customer.name || '[Customer Name]';
         const vehicle = `${appState.vehicle.year} ${appState.vehicle.make} ${appState.vehicle.model}`;
         const keyType = (appState.quoteResult && appState.quoteResult.matched) ? appState.quoteResult.rule.keyType : 'Manual quote';
 
         const itemsHTML = selected.map(p => {
-            const title = p.title || p.name || p.sku;
-            const price = parseFloat(p.price || p.variant_price || 0);
-            const imgSrc = p.image || p.image_url || p.featured_image || (p.images && p.images[0]) || '';
+            const title = pTitle(p);
+            const price = pPrice(p);
+            const imgSrc = pImage(p);
             const inStock = isInStock(p);
             const statusText = inStock ? 'In Stock — Same Day' : '2–3 Day Ship';
             return `
@@ -1326,16 +1334,16 @@
 
         const selected = getSelectedProducts();
         const labor = getLaborAmount();
-        const keyTotal = selected.reduce((sum, p) => sum + parseFloat(p.price || p.variant_price || 0), 0);
+        const keyTotal = selected.reduce((sum, p) => sum + pPrice(p), 0);
         const grandTotal = keyTotal + labor;
         const vehicle = `${appState.vehicle.year} ${appState.vehicle.make} ${appState.vehicle.model}`;
         const keyType = (appState.quoteResult && appState.quoteResult.matched) ? appState.quoteResult.rule.keyType : 'Manual quote';
 
         // Build simple HTML email body (EmailJS template can also format this server-side)
         const itemLines = selected.map(p => {
-            const title = p.title || p.name || p.sku;
-            const price = parseFloat(p.price || p.variant_price || 0);
-            const imgSrc = p.image || p.image_url || p.featured_image || (p.images && p.images[0]) || '';
+            const title = pTitle(p);
+            const price = pPrice(p);
+            const imgSrc = pImage(p);
             const statusText = isInStock(p) ? 'In Stock — Same Day' : '2–3 Day Ship';
             return `<tr><td style="padding:10px;border-bottom:1px solid #eee;vertical-align:top;">${imgSrc ? `<img src="${imgSrc}" style="width:80px;height:80px;object-fit:contain;">` : ''}</td><td style="padding:10px;border-bottom:1px solid #eee;"><strong>${title}</strong><br><small>${statusText}</small></td><td style="padding:10px;border-bottom:1px solid #eee;text-align:right;font-family:monospace;">$${price.toFixed(2)}</td></tr>`;
         }).join('');
@@ -1375,7 +1383,7 @@
             from_email: CKC_EMAIL_FROM,
             reply_to: CKC_EMAIL_FROM,
             html_body: htmlBody,
-            plain_body: `Hi ${appState.customer.name},\n\nHere's what we discussed for your ${vehicle}:\n\n${selected.map(p => `- ${p.title || p.name || p.sku}: $${parseFloat(p.price || 0).toFixed(2)}`).join('\n')}\n- Programming / Labor (${keyType}): $${labor.toFixed(2)}\n\nTotal: $${grandTotal.toFixed(2)}\n\nCall ${CKC_PHONE} to confirm.\n\n— James, Carolina Key Cutters`
+            plain_body: `Hi ${appState.customer.name},\n\nHere's what we discussed for your ${vehicle}:\n\n${selected.map(p => `- ${pTitle(p)}: $${pPrice(p).toFixed(2)}`).join('\n')}\n- Programming / Labor (${keyType}): $${labor.toFixed(2)}\n\nTotal: $${grandTotal.toFixed(2)}\n\nCall ${CKC_PHONE} to confirm.\n\n— James, Carolina Key Cutters`
         };
 
         try {
@@ -1409,7 +1417,7 @@
                 1. Ask the customer to confirm they got the email and see the picture<br>
                 2. Take the card info over the phone<br>
                 3. Create the Shopify order the way you normally do<br>
-                4. ${appState.selectedKeys.length > 0 && appState.rksResults.some(p => appState.selectedKeys.includes(p.SKU || p.sku)) ? 'Add RKS items to your daily batch' : 'Send booking link: ' + BOOKING_URL}
+                4. ${appState.selectedKeys.length > 0 && appState.rksResults.some(p => appState.selectedKeys.includes(pSku(p))) ? 'Add RKS items to your daily batch' : 'Send booking link: ' + BOOKING_URL}
             </div>`;
     }
 
@@ -1433,17 +1441,13 @@
 
     async function updateOmniQR() {
         const ctx = buildOmniContext();
-        document.getElementById('omniQrContext').textContent = ctx;
+        const ctxEl = document.getElementById('omniQrContext');
+        if (ctxEl) ctxEl.textContent = ctx;
         const canvas = document.getElementById('omniQrCanvas');
-        if (!canvas || !window.QRCode) return;
-        canvas.innerHTML = '';
-        try {
-            await QRCode.toCanvas(canvas, ctx, {
-                width: 140,
-                margin: 1,
-                color: { dark: '#1a2332', light: '#ffffff' }
-            });
-        } catch(e) { console.warn('QR update failed', e); }
+        if (!canvas) return;
+        // Use api.qrserver.com - server-generated QR as an image, no client library needed
+        const url = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=4&data=${encodeURIComponent(ctx)}`;
+        canvas.innerHTML = `<img src="${url}" alt="QR code" style="width:140px;height:140px;display:block;" onerror="this.alt='QR unavailable'">`;
     }
 
     function toggleOmniQR(ev) {
