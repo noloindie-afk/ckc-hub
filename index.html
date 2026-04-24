@@ -3,14 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CKC Command 2.2 — Phone Quote Tool</title>
+    <title>CKC Command 2.3 — Phone Quote Tool</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Crimson+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
         /* ══════════════════════════════════════════════════════════════════
-           CKC COMMAND 2.2 — PHONE QUOTE TOOL
+           CKC COMMAND 2.3 — PHONE QUOTE TOOL
            Base design preserved from v2.0 prototype
            v2.2: Fixed conflict detection false positives
+           v2.3: Screen 3 rebuild (keyway/FCC conflict branching) +
+                 Shopify direct-to-checkout handoff on Screen 6
            ══════════════════════════════════════════════════════════════════ */
         :root {
             --ckc-gold: #d4af37;
@@ -184,7 +186,54 @@
         .vin-input { font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; letter-spacing: 2px; text-align: center; text-transform: uppercase; }
         .vin-display { font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; font-weight: 700; text-align: center; padding: 15px; background: var(--ckc-white); border-radius: var(--ckc-border-radius); margin: 15px 0; letter-spacing: 2px; }
         .qr-container { display: flex; justify-content: center; margin: 20px 0; }
-        .vin-actions { display: flex; gap: 15px; justify-content: center; margin-top: 15px; }
+        .vin-actions { display: flex; gap: 15px; justify-content: center; margin-top: 15px; flex-wrap: wrap; }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           v2.3 — SCREEN 3 CONFLICT RESOLUTION BRANCHES
+           ═══════════════════════════════════════════════════════════════════ */
+        .conflict-branch { display: none; }
+        .conflict-branch.active { display: block; }
+
+        .branch-header { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; }
+        .branch-badge { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 700; padding: 4px 12px; border-radius: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .branch-badge.keyway { background: #dbeafe; color: #1e40af; }
+        .branch-badge.fcc { background: #fef3c7; color: #92400e; }
+        .branch-badge.both { background: #e9d5ff; color: #6b21a8; }
+        .branch-title { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 600; color: var(--ckc-navy); }
+
+        /* Blade comparison grid (keyway branch) */
+        .blade-compare-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin: 20px 0; }
+        .blade-compare-card { background: var(--ckc-white); border: 2px solid var(--ckc-gray-200); border-radius: var(--ckc-border-radius); padding: 18px; transition: var(--ckc-transition); cursor: pointer; }
+        .blade-compare-card:hover { border-color: var(--ckc-gold-light); }
+        .blade-compare-card.chosen { border-color: var(--ckc-gold); background: #fffbeb; box-shadow: 0 0 0 3px rgba(212,175,55,0.2); }
+        .blade-compare-image { width: 100%; height: 180px; background: var(--ckc-gray-50); border-radius: var(--ckc-border-radius); overflow: hidden; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
+        .blade-compare-image img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .blade-compare-keyway { font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; font-weight: 700; color: var(--ckc-navy); text-align: center; margin-bottom: 6px; letter-spacing: 1px; }
+        .blade-compare-meta { font-size: 0.85rem; color: var(--ckc-slate); text-align: center; margin-bottom: 12px; }
+        .blade-compare-choose { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px; background: var(--ckc-gray-50); border-radius: var(--ckc-border-radius); font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 600; color: var(--ckc-navy); text-transform: uppercase; letter-spacing: 0.5px; }
+        .blade-compare-choose input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--ckc-gold); cursor: pointer; }
+
+        /* FCC variant chooser (fcc branch) */
+        .fcc-variant-list { display: flex; flex-direction: column; gap: 12px; margin: 20px 0; }
+        .fcc-variant-option { display: flex; align-items: center; gap: 15px; padding: 16px; border: 2px solid var(--ckc-gray-200); border-radius: var(--ckc-border-radius); cursor: pointer; transition: var(--ckc-transition); background: var(--ckc-white); }
+        .fcc-variant-option:hover { border-color: var(--ckc-gold-light); background: var(--ckc-gray-50); }
+        .fcc-variant-option.chosen { border-color: var(--ckc-gold); background: #fffbeb; box-shadow: 0 0 0 3px rgba(212,175,55,0.2); }
+        .fcc-variant-option input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--ckc-gold); cursor: pointer; flex-shrink: 0; }
+        .fcc-variant-image { width: 70px; height: 70px; background: var(--ckc-gray-50); border-radius: var(--ckc-border-radius); overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .fcc-variant-image img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .fcc-variant-body { flex: 1; }
+        .fcc-variant-fcc { font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; font-weight: 700; color: var(--ckc-navy); letter-spacing: 0.5px; }
+        .fcc-variant-meta { font-size: 0.88rem; color: var(--ckc-slate); margin-top: 3px; }
+        .fcc-variant-price { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--ckc-gold-dark); font-size: 1.1rem; }
+
+        .branch-action-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--ckc-gray-200); }
+        .branch-fallback-note { font-size: 0.9rem; color: var(--ckc-slate); font-style: italic; margin-top: 10px; }
+
+        /* Email send status pill */
+        .email-status-pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 14px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; font-weight: 600; }
+        .email-status-pill.sent { background: #d1fae5; color: #065f46; }
+        .email-status-pill.sending { background: #fef3c7; color: #92400e; }
+        .email-status-pill.error { background: #fee2e2; color: #991b1b; }
 
         /* Email preview */
         .email-preview { background: var(--ckc-white); border: 2px solid var(--ckc-gray-200); border-radius: var(--ckc-border-radius); padding: 25px; margin-top: 20px; max-width: 600px; margin-left: auto; margin-right: auto; }
@@ -208,6 +257,19 @@
         .total-bar { position: sticky; bottom: 20px; background: var(--ckc-navy); color: var(--ckc-gold-light); padding: 15px 25px; border-radius: var(--ckc-border-radius); display: flex; justify-content: space-between; align-items: center; margin-top: 25px; box-shadow: var(--ckc-shadow-lg); }
         .total-label { font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
         .total-amount { font-family: 'JetBrains Mono', monospace; font-size: 1.6rem; font-weight: 700; color: var(--ckc-gold); }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           v2.3 — CHECKOUT HANDOFF (SCREEN 6)
+           ═══════════════════════════════════════════════════════════════════ */
+        .checkout-panel { background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 2px solid var(--ckc-gold); border-radius: var(--ckc-border-radius); padding: 30px; margin: 25px 0; text-align: center; }
+        .checkout-panel-title { font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; font-weight: 700; color: var(--ckc-navy); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .checkout-panel-subtitle { color: var(--ckc-gray-800); margin-bottom: 20px; font-size: 1.05rem; }
+        .checkout-qr-wrap { display: inline-block; padding: 15px; background: var(--ckc-white); border-radius: var(--ckc-border-radius); box-shadow: var(--ckc-shadow); }
+        .checkout-qr-wrap img { display: block; width: 260px; height: 260px; }
+        .checkout-url-box { background: var(--ckc-white); border: 1px solid var(--ckc-gray-200); border-radius: var(--ckc-border-radius); padding: 10px 14px; margin: 15px auto; max-width: 480px; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: var(--ckc-gray-800); word-break: break-all; text-align: left; }
+        .checkout-amount { font-family: 'JetBrains Mono', monospace; font-size: 2rem; font-weight: 700; color: var(--ckc-gold-dark); margin: 10px 0; }
+        .checkout-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 15px; }
+        .checkout-note { font-size: 0.88rem; color: var(--ckc-slate); margin-top: 15px; font-style: italic; }
 
         /* ═══════════════════════════════════════════════════════════════════
            OMNIPRESENT QR PANEL — bottom-right corner
@@ -249,6 +311,8 @@
             .omni-qr { bottom: 10px; right: 10px; max-width: 160px; }
             .omni-qr.collapsed { max-width: 50px; }
             .omni-qr-canvas canvas { width: 110px !important; height: 110px !important; }
+            .blade-compare-grid { grid-template-columns: 1fr; }
+            .checkout-qr-wrap img { width: 220px; height: 220px; }
         }
 
         .loading { text-align: center; padding: 40px; }
@@ -259,9 +323,9 @@
 <body>
     <div class="app-container">
         <div class="app-header">
-            <h1 class="app-title">CKC Command 2.2</h1>
+            <h1 class="app-title">CKC Command 2.3</h1>
             <p class="app-subtitle">Phone Quote Tool — Carolina Key Cutters</p>
-            <span class="version-badge">v2.2</span>
+            <span class="version-badge">v2.3</span>
         </div>
 
         <div class="progress-bar">
@@ -345,46 +409,102 @@
             </div>
         </div>
 
-        <!-- SCREEN 3: VIN Conflict Resolution -->
+        <!-- SCREEN 3: Conflict Resolution (v2.3 rebuild) -->
         <div class="screen" id="screen3">
             <div class="screen-header">
-                <h2 class="screen-title">VIN Verification</h2>
-                <p class="screen-description">Multiple specifications detected — VIN needed to confirm</p>
+                <h2 class="screen-title">Conflict Resolution</h2>
+                <p class="screen-description" id="screen3Description">Multiple specifications detected — resolving on the call</p>
             </div>
-            <div class="phone-script">
-                <div class="phone-script-title">Say to Customer</div>
-                <div class="phone-script-text">"I need your VIN to verify the exact key you need. You can find it on your dashboard or door frame. Hold on 30 seconds while I verify..."</div>
-            </div>
-            <div class="alert alert-warning">
-                <strong>⚠ Conflict Detected:</strong> Multiple FCC IDs or keyways found for this vehicle. VIN verification required.
-            </div>
-            <div class="vin-container">
-                <div class="form-group">
-                    <label class="form-label">Enter 17-Character VIN</label>
-                    <input type="text" class="vin-input form-input" id="vinInput" maxlength="17" placeholder="1HGCM82633A123456">
+
+            <!-- BRANCH A: Keyway conflict (blade differs) -->
+            <div class="conflict-branch" id="branchKeyway">
+                <div class="branch-header">
+                    <span class="branch-badge keyway">Keyway Conflict</span>
+                    <span class="branch-title">Customer can identify the blade</span>
                 </div>
-                <div id="vinDisplay" style="display: none;">
-                    <div class="vin-display" id="vinDisplayText"></div>
-                    <div style="background: #eff6ff; border: 2px solid var(--ckc-info); border-radius: var(--ckc-border-radius); padding: 18px; margin-top: 15px;">
-                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 700; color: var(--ckc-info); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">📱 Phone Hand-off Steps</div>
-                        <ol style="margin: 0 0 0 20px; color: var(--ckc-gray-800); line-height: 1.8;">
-                            <li>Scan the <strong>QR code</strong> in the bottom-right with your phone camera</li>
-                            <li>When text preview appears, <strong>long-press → Copy</strong></li>
-                            <li>Open <strong>MyAutoSmart</strong> on your phone (home screen icon)</li>
-                            <li>Tap search field → <strong>Paste</strong> → look up the correct FCC/keyway for this trim</li>
-                            <li>Come back to desktop and pick the matching key from the list</li>
-                        </ol>
+                <div class="phone-script">
+                    <div class="phone-script-title">Say to Customer</div>
+                    <div class="phone-script-text">"I'm going to send you a picture in one minute — it'll show two different key blades. Look at your current key and tell me which one matches. Hold while I send it..."</div>
+                </div>
+                <div class="alert alert-info">
+                    <strong>📧 Single-email workflow:</strong> Send both blade images in one email, customer picks verbally, lock it in with the checkbox.
+                </div>
+                <div id="bladeCompareGrid" class="blade-compare-grid"></div>
+                <div class="branch-action-row">
+                    <button class="btn btn-primary" id="sendBladeEmailBtn">📧 Send Blade Comparison Email</button>
+                    <span id="bladeEmailStatus"></span>
+                    <button class="btn btn-outline" id="fallbackToVinBtn">Customer can't tell → Fall back to VIN</button>
+                </div>
+                <div class="branch-fallback-note">If the customer can't identify the blade from the image, click the VIN fallback to switch branches.</div>
+            </div>
+
+            <!-- BRANCH B: FCC conflict (electronics differ, blade is the same) -->
+            <div class="conflict-branch" id="branchFcc">
+                <div class="branch-header">
+                    <span class="branch-badge fcc">FCC Conflict</span>
+                    <span class="branch-title">VIN verification — no customer email needed</span>
+                </div>
+                <div class="phone-script">
+                    <div class="phone-script-title">Say to Customer</div>
+                    <div class="phone-script-text">"I need your VIN to verify the exact key — it's on your dashboard or door frame. Read it to me slowly..."</div>
+                </div>
+                <div class="alert alert-warning">
+                    <strong>⚠ Same blade, different electronics.</strong> Enter the VIN into MyAutoSmart, identify the correct FCC, then check the matching variant below.
+                </div>
+                <div class="vin-container">
+                    <div class="form-group">
+                        <label class="form-label">Enter 17-Character VIN</label>
+                        <input type="text" class="vin-input form-input" id="vinInputFcc" maxlength="17" placeholder="1HGCM82633A123456">
                     </div>
                     <div class="vin-actions">
-                        <button class="btn btn-primary" id="copyVinBtn">📋 Copy VIN to Desktop Clipboard</button>
-                        <button class="btn btn-secondary" id="openAutosmartBtn3">Open MyAutoSmart</button>
+                        <button class="btn btn-primary" id="saveVinFccBtn" disabled>Save VIN & Update QR</button>
+                        <button class="btn btn-secondary" id="copyVinFccBtn" style="display:none;">📋 Copy VIN</button>
+                        <button class="btn btn-outline" id="openAutosmartFccBtn">Open MyAutoSmart</button>
                     </div>
                 </div>
-                <button class="btn btn-primary" id="saveVinBtn" style="margin-top: 15px;">Save VIN & Update QR</button>
+                <div id="fccVariantList" class="fcc-variant-list"></div>
+                <div class="branch-fallback-note">Check the box next to the FCC that matches what MyAutoSmart returned for this VIN.</div>
             </div>
+
+            <!-- BRANCH C: Both differ (keyway AND fcc) — show keyway first, VIN fallback inline -->
+            <div class="conflict-branch" id="branchBoth">
+                <div class="branch-header">
+                    <span class="branch-badge both">Keyway + FCC Conflict</span>
+                    <span class="branch-title">Try keyway first, fall back to VIN if needed</span>
+                </div>
+                <div class="phone-script">
+                    <div class="phone-script-title">Say to Customer</div>
+                    <div class="phone-script-text">"I'm going to send you a picture — there are two different key blade styles for your vehicle. Tell me which one matches and we'll narrow it down from there..."</div>
+                </div>
+                <div class="alert alert-info">
+                    <strong>Staged resolution:</strong> pick the blade first (cuts the list in half), then use VIN only if multiple FCCs remain within that blade group.
+                </div>
+                <div id="bladeCompareGridBoth" class="blade-compare-grid"></div>
+                <div class="branch-action-row">
+                    <button class="btn btn-primary" id="sendBladeEmailBothBtn">📧 Send Blade Comparison Email</button>
+                    <span id="bladeEmailStatusBoth"></span>
+                </div>
+                <div id="bothRemainingSection" style="display:none; margin-top: 25px; padding-top: 25px; border-top: 2px solid var(--ckc-gray-200);">
+                    <div class="branch-header">
+                        <span class="branch-badge fcc">Step 2 — FCC within chosen blade</span>
+                    </div>
+                    <div class="vin-container">
+                        <div class="form-group">
+                            <label class="form-label">Enter 17-Character VIN</label>
+                            <input type="text" class="vin-input form-input" id="vinInputBoth" maxlength="17" placeholder="1HGCM82633A123456">
+                        </div>
+                        <div class="vin-actions">
+                            <button class="btn btn-primary" id="saveVinBothBtn" disabled>Save VIN & Update QR</button>
+                            <button class="btn btn-outline" id="openAutosmartBothBtn">Open MyAutoSmart</button>
+                        </div>
+                    </div>
+                    <div id="fccVariantListBoth" class="fcc-variant-list"></div>
+                </div>
+            </div>
+
             <div class="btn-group">
                 <button class="btn btn-secondary" onclick="showScreen('screen2')">← Back to Results</button>
-                <button class="btn btn-success" id="conflictResolvedBtn" style="display: none;">Conflict Resolved — Continue →</button>
+                <button class="btn btn-success" id="conflictResolvedBtn" disabled>Conflict Resolved — Continue →</button>
             </div>
         </div>
 
@@ -442,15 +562,33 @@
             </div>
         </div>
 
-        <!-- SCREEN 6: Completion -->
+        <!-- SCREEN 6: Completion + Checkout Handoff -->
         <div class="screen" id="screen6">
             <div class="screen-header">
-                <h2 class="screen-title">Email Sent</h2>
-                <p class="screen-description">Close the sale on the phone — customer has the picture on their screen now</p>
+                <h2 class="screen-title">Email Sent — Close the Sale</h2>
+                <p class="screen-description">Customer has the picture on their screen now. Payment hand-off below.</p>
             </div>
             <div class="alert alert-success">
-                <strong>✓ Email Delivered</strong> — ask the customer to confirm they received it. Then take the card info and proceed.
+                <strong>✓ Quote Email Delivered</strong> — ask the customer to confirm they received it.
             </div>
+
+            <!-- v2.3: Checkout handoff panel -->
+            <div class="checkout-panel" id="checkoutPanel">
+                <div class="checkout-panel-title">💳 Customer Self-Checkout</div>
+                <div class="checkout-panel-subtitle">Scan the QR or send the link — customer pays themselves at Shopify</div>
+                <div class="checkout-amount" id="checkoutAmount">$0.00</div>
+                <div class="checkout-qr-wrap" id="checkoutQrWrap">
+                    <img id="checkoutQrImg" alt="Checkout QR code">
+                </div>
+                <div class="checkout-url-box" id="checkoutUrlBox"></div>
+                <div class="checkout-actions">
+                    <button class="btn btn-primary" id="sendCheckoutLinkBtn">📧 Send Checkout Link to Customer</button>
+                    <button class="btn btn-secondary" id="copyCheckoutUrlBtn">📋 Copy URL</button>
+                    <span id="checkoutLinkStatus"></span>
+                </div>
+                <div class="checkout-note">Customer can remove the programming line at checkout if they're supplying their own key — Shopify handles that natively, no toggle needed here.</div>
+            </div>
+
             <div id="completionSummary"></div>
             <div class="btn-group">
                 <button class="btn btn-primary" onclick="startNewSearch()">Start New Call</button>
@@ -473,14 +611,14 @@
 
     <script>
     /* ══════════════════════════════════════════════════════════════════
-       CKC COMMAND 2.2 — APPLICATION LOGIC
-       v2.2 change: detectConflicts rewritten — only flags when 2+ distinct
-       FCCs OR 2+ distinct keyways exist AMONG PRODUCTS THAT ACTUALLY LIST
-       THE QUERIED YEAR. The old version false-positived on any multi-product
-       result set.
+       CKC COMMAND 2.3 — APPLICATION LOGIC
+       v2.2: detectConflicts rewritten (false-positive fix)
+       v2.3: detectConflicts now returns a CONFLICT OBJECT (not boolean)
+             {type: 'keyway'|'fcc'|'both'|null, fccs: [...], keyways: [...]}
+             Screen 3 branches on type. Screen 6 adds checkout handoff.
        ══════════════════════════════════════════════════════════════════ */
 
-    const CKC_VERSION = 'v2.2';
+    const CKC_VERSION = 'v2.3';
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxDw7dtdohInyx2kqeYM5EYNCpMaBN9Kdg3m_mtPGVKaz1jgw8bW4wZfwrUF3xR1gJW/exec';
     const CATALOG_URL = 'https://ckc-blade-proxy.noloindie.workers.dev/catalog';
     const BOOKING_URL = 'https://calendar.app.google/xqirB3Dpfmub5rAb6';
@@ -488,15 +626,19 @@
     const CKC_PHONE = '(336) 510-9816';
     const CKC_EMAIL_FROM = 'james@carolinakeycutters.com';
 
-    // EmailJS config (from memory)
+    // v2.3: checkout handoff constants
+    const PROGRAMMING_VARIANT_ID = '45908511228101';
+    const CHECKOUT_BASE = `https://${SHOPIFY_DOMAIN}/cart`;
+
+    // EmailJS config
     const EMAILJS_PUBLIC_KEY = 'xnZyuYp9X4dIvLJBQ';
     const EMAILJS_SERVICE = 'service_wkljx8t';
     const EMAILJS_TEMPLATE = 'template_saraksq';
 
-    // Shared YMM broadcaster key — other CKC tools can read this
+    // Shared YMM broadcaster key
     const SHARED_CONTEXT_KEY = 'ckc.sharedContext';
 
-    /* ───────── CKC QUOTES MATRIX (baked in from ckc_quotes.html) ───────── */
+    /* ───────── CKC QUOTES MATRIX ───────── */
 
     const MAKE_NORMALIZE = {
         'Ford':'FORD','Lincoln':'LINCOLN','Chevrolet':'CHEVROLET','GMC':'GMC','Buick':'BUICK',
@@ -615,11 +757,7 @@
 
     const TIER_LABELS = ['', 'Tier 1 — Standard OBD', 'Tier 2 — Advanced / BCM', 'Tier 3 — EEPROM / Module', 'Tier 4 — Quote by VIN'];
 
-    /* VIN decoding for conflict resolution */
-    const YEAR_MAP = {'A':1980,'B':1981,'C':1982,'D':1983,'E':1984,'F':1985,'G':1986,'H':1987,'J':1988,'K':1989,'L':1990,'M':1991,'N':1992,'P':1993,'R':1994,'S':1995,'T':1996,'V':1997,'W':1998,'X':1999,'Y':2000,'1':2001,'2':2002,'3':2003,'4':2004,'5':2005,'6':2006,'7':2007,'8':2008,'9':2009};
-    const YEAR_MAP2 = {'A':2010,'B':2011,'C':2012,'D':2013,'E':2014,'F':2015,'G':2016,'H':2017,'J':2018,'K':2019,'L':2020,'M':2021,'N':2022,'P':2023,'R':2024,'S':2025,'T':2026,'V':2027};
-
-    /* ─────── CKC QUOTES MATRIX LOOKUP ─────── */
+    /* ─────── QUOTES MATRIX LOOKUP ─────── */
     function lookupQuote(makeDisplay, year) {
         const makeKey = MAKE_NORMALIZE[makeDisplay] || (makeDisplay || '').toUpperCase();
         for (const g of MATRIX) {
@@ -634,16 +772,13 @@
         return { groupName: null, rule: null, matched: false };
     }
 
-    /* Parse "$150–$175" → { low: 150, high: 175, mid: 163 } */
     function parsePriceRange(rangeStr) {
         if (!rangeStr || typeof rangeStr !== 'string') return null;
-        // Single value like "$65"
         const singleMatch = rangeStr.match(/^\$(\d+)$/);
         if (singleMatch) {
             const v = parseInt(singleMatch[1]);
             return { low: v, high: v, mid: v };
         }
-        // Range like "$150–$175" or "$400–$600+"
         const rangeMatch = rangeStr.match(/\$(\d+)[–-]\$(\d+)\+?/);
         if (rangeMatch) {
             const low = parseInt(rangeMatch[1]);
@@ -653,7 +788,7 @@
         return null;
     }
 
-    /* ──────── SHARED CONTEXT (YMM broadcaster) ──────── */
+    /* ──────── SHARED CONTEXT ──────── */
     function writeSharedContext() {
         const ctx = {
             year: appState.vehicle.year,
@@ -662,7 +797,7 @@
             serviceType: appState.serviceType,
             vin: appState.vinNumber || null,
             updatedAt: Date.now(),
-            source: 'ckc-command-2.2'
+            source: 'ckc-command-2.3'
         };
         try { localStorage.setItem(SHARED_CONTEXT_KEY, JSON.stringify(ctx)); } catch(e) { console.warn('localStorage write failed', e); }
     }
@@ -672,18 +807,22 @@
         currentScreen: 1,
         vehicle: { year: '', make: '', model: '' },
         serviceType: '',
-        searchResults: [],           // all results from catalog
-        inStockResults: [],          // ckc-stock
-        rksResults: [],              // rks-stock
+        searchResults: [],
+        inStockResults: [],
+        rksResults: [],
         rksVisible: false,
-        quoteResult: null,           // from CKC Quotes matrix
-        conflictDetected: false,
+        quoteResult: null,
+        // v2.3: conflict is now an object, not a boolean
+        conflict: null,  // { type: 'keyway'|'fcc'|'both', fccs:[], keyways:[] } or null
+        resolvedKeyway: null,       // user-chosen keyway from Screen 3
+        resolvedFcc: null,          // user-chosen FCC from Screen 3
         vinNumber: '',
-        selectedKeys: [],            // array of SKUs selected in curation
+        selectedKeys: [],
         customer: { name: '', email: '', phone: '' },
-        manualLaborOverride: null,   // dollar amount if user manually overrode
+        manualLaborOverride: null,
         catalogLoaded: false,
-        catalogData: null
+        catalogData: null,
+        bladeEmailSent: false
     };
 
     /* ─────── INITIALIZATION ─────── */
@@ -709,14 +848,28 @@
         document.getElementById('showRksBtn').addEventListener('click', toggleRksVisible);
         document.getElementById('openAutosmartBtn2').addEventListener('click', openMyAutoSmart);
         document.getElementById('proceedBtn').addEventListener('click', () => showScreen('screen4'));
-        document.getElementById('saveVinBtn').addEventListener('click', saveVin);
-        document.getElementById('copyVinBtn').addEventListener('click', copyVinToClipboard);
-        document.getElementById('openAutosmartBtn3').addEventListener('click', openMyAutoSmart);
-        document.getElementById('conflictResolvedBtn').addEventListener('click', () => showScreen('screen4'));
-        document.getElementById('vinInput').addEventListener('input', validateVinInput);
+
+        // v2.3: Screen 3 branch wiring
+        document.getElementById('sendBladeEmailBtn').addEventListener('click', () => sendBladeComparisonEmail('keyway'));
+        document.getElementById('sendBladeEmailBothBtn').addEventListener('click', () => sendBladeComparisonEmail('both'));
+        document.getElementById('fallbackToVinBtn').addEventListener('click', fallbackKeywayToVin);
+        document.getElementById('vinInputFcc').addEventListener('input', function(){ validateVinInputGeneric(this, 'saveVinFccBtn'); });
+        document.getElementById('vinInputBoth').addEventListener('input', function(){ validateVinInputGeneric(this, 'saveVinBothBtn'); });
+        document.getElementById('saveVinFccBtn').addEventListener('click', () => saveVinFromInput('vinInputFcc'));
+        document.getElementById('saveVinBothBtn').addEventListener('click', () => saveVinFromInput('vinInputBoth'));
+        document.getElementById('copyVinFccBtn').addEventListener('click', copyVinToClipboard);
+        document.getElementById('openAutosmartFccBtn').addEventListener('click', openMyAutoSmart);
+        document.getElementById('openAutosmartBothBtn').addEventListener('click', openMyAutoSmart);
+        document.getElementById('conflictResolvedBtn').addEventListener('click', confirmConflictResolution);
+
         document.getElementById('sendInvoiceBtn').addEventListener('click', () => showScreen('screen5'));
         ['customerName','customerEmail','customerPhone'].forEach(id => document.getElementById(id).addEventListener('input', validateCustomerForm));
         document.getElementById('sendEmailBtn').addEventListener('click', sendCustomerEmail);
+
+        // v2.3: Checkout handoff (Screen 6)
+        document.getElementById('sendCheckoutLinkBtn').addEventListener('click', sendCheckoutLinkEmail);
+        document.getElementById('copyCheckoutUrlBtn').addEventListener('click', copyCheckoutUrl);
+
         document.getElementById('omniQrToggle').addEventListener('click', toggleOmniQR);
         document.getElementById('omniQR').addEventListener('click', expandOmniQRIfCollapsed);
     }
@@ -735,7 +888,7 @@
             else if (i < num) el.classList.add('completed');
         }
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        // Screen-entry hooks
+        if (screenId === 'screen3') enterConflictScreen();
         if (screenId === 'screen4') enterCurationScreen();
         if (screenId === 'screen5') renderEmailPreview();
     }
@@ -791,7 +944,6 @@
         document.getElementById('searchKeysBtn').disabled = !(year && make && model && appState.serviceType);
     }
 
-    /* Populate makes from catalog if loaded, else fallback to matrix */
     function populateMakeDropdown(year) {
         const makeEl = document.getElementById('vehicleMake');
         let makes = [];
@@ -810,7 +962,6 @@
         if (appState.catalogData && appState.catalogData.modelsByMake && appState.catalogData.modelsByMake[make]) {
             models = appState.catalogData.modelsByMake[make].slice().sort();
         } else {
-            // Fallback mock list
             const fallback = {
                 'Ford':['Bronco','Edge','Escape','Expedition','Explorer','F-150','F-250','Focus','Fusion','Mustang','Ranger'],
                 'Chevrolet':['Blazer','Colorado','Equinox','Impala','Malibu','Silverado 1500','Suburban','Tahoe','Traverse'],
@@ -837,26 +988,17 @@
             appState.catalogData = normalizeCatalog(data);
             appState.catalogLoaded = true;
             console.log(`[catalog] Normalized: ${appState.catalogData.products.length} products, ${appState.catalogData.makes.length} makes`);
-            if (appState.catalogData.products.length > 0) {
-                const sample = appState.catalogData.products[0];
-                console.log('[catalog] Sample product keys:', Object.keys(sample));
-                console.log('[catalog] Sample _compat:', sample._compat);
-                console.log('[catalog] Sample _years:', sample._years);
-            }
         } catch (e) {
             console.warn('Catalog load failed — falling back to fallback dropdowns', e);
             appState.catalogLoaded = false;
         }
     }
 
-    /* Normalize whatever shape the blade proxy returns into { products, makes, modelsByMake } */
-    /* Parse "2001|2002|2003|2004" → [2001, 2002, 2003, 2004] */
     function parseYearsField(yearsStr) {
         if (!yearsStr || typeof yearsStr !== 'string') return [];
         return yearsStr.split('|').map(y => parseInt(y.trim())).filter(y => !isNaN(y));
     }
 
-    /* Parse Compatibility JSON string → array of {make, model, ...} objects */
     function parseCompatibilityField(compatStr) {
         if (!compatStr) return [];
         if (Array.isArray(compatStr)) return compatStr;
@@ -869,7 +1011,6 @@
         }
     }
 
-    /* Normalize every product: pre-parse Compatibility, Years, and extract unique makes/models */
     function normalizeCatalog(raw) {
         let products = [];
         if (Array.isArray(raw)) products = raw;
@@ -880,11 +1021,9 @@
         const modelsByMake = {};
 
         products.forEach(p => {
-            // Pre-parse expensive fields once, cache on product object
             p._years = parseYearsField(p.Years || p.years);
             p._compat = parseCompatibilityField(p.Compatibility || p.compatibility);
 
-            // Each compatibility entry contributes its make/model to the index
             p._compat.forEach(c => {
                 const mk = (c.make || c.Make || '').toString().trim();
                 const mo = (c.model || c.Model || '').toString().trim();
@@ -912,7 +1051,6 @@
         document.getElementById('vehicleDisplay2').textContent = vd;
         document.getElementById('searchLoading').style.display = 'block';
 
-        // Run matrix lookup regardless of catalog
         appState.quoteResult = lookupQuote(appState.vehicle.make, parseInt(appState.vehicle.year));
         renderQuotesPanel('ckcQuotesPanel', appState.quoteResult);
 
@@ -921,8 +1059,8 @@
             appState.searchResults = products;
             appState.inStockResults = products.filter(p => isInStock(p));
             appState.rksResults = products.filter(p => isRksStock(p));
-            appState.conflictDetected = detectConflicts(appState.inStockResults);
-            if (appState.conflictDetected) {
+            appState.conflict = detectConflicts(appState.inStockResults);
+            if (appState.conflict) {
                 displayConflictWarning();
                 setTimeout(() => showScreen('screen3'), 1500);
             } else {
@@ -937,23 +1075,15 @@
         if (loader) loader.style.display = 'none';
     }
 
-    /* v2.2: filterCatalog now REJECTS products with empty _years arrays.
-       The old behavior included them (the guard was `length > 0 && !includes`,
-       which let empty arrays slip through). If a product doesn't list the
-       queried year, it shouldn't be a search result. */
     function filterCatalog(year, make, model) {
         if (!appState.catalogData || !appState.catalogData.products) return [];
         const yrNum = parseInt(year);
         const makeLower = make.toLowerCase();
         const modelLower = model.toLowerCase();
         return appState.catalogData.products.filter(p => {
-            // Defense: if normalize didn't run, parse on the fly
             if (!p._years) p._years = parseYearsField(p.Years || p.years);
             if (!p._compat) p._compat = parseCompatibilityField(p.Compatibility || p.compatibility);
-            // Year match: the queried year MUST appear in the product's Years list.
-            // Products with no years listed are excluded (was bug: they slipped through).
             if (!p._years.includes(yrNum)) return false;
-            // Make + model match: at least one compatibility entry must match both
             if (p._compat.length === 0) return false;
             return p._compat.some(c => {
                 const cMake = (c.make || c.Make || '').toString().toLowerCase();
@@ -965,7 +1095,6 @@
         });
     }
 
-    /* Stock routing: Vendor field is 'CKC' (in-stock) or 'RKS' (2-3 day ship) */
     function isInStock(product) {
         const vendor = (product.Vendor || product.vendor || '').toString().toUpperCase();
         return vendor === 'CKC';
@@ -976,7 +1105,6 @@
         return vendor === 'RKS';
     }
 
-    /* Field accessors — catalog uses capital-letter field names (SKU, Title, etc.) */
     function pSku(p)    { return p.SKU || p.sku || p.variant_sku || 'N/A'; }
     function pTitle(p)  { return p.Title || p.title || p.name || p.product_title || pSku(p); }
     function pType(p)   { return p.Type || p.type || p.keyType || p.product_type || ''; }
@@ -984,59 +1112,67 @@
     function pImage(p)  { return p.Image || p.image || p.image_url || p.featured_image || (p.images && p.images[0]) || ''; }
     function pFcc(p)    { return p.FCC || p.fcc || p.fccId || ''; }
     function pKeyway(p) { return p.Keyway || p.keyway || p.blade || ''; }
+    // v2.3: Variant ID accessor (populated by CKC_VariantIdSync_v1.gs, 1779/1785 coverage)
+    function pVariantId(p) { return p['Variant ID'] || p.VariantId || p.variant_id || p['Variant Id'] || ''; }
 
     /* ═══════════════════════════════════════════════════════════════════
-       v2.2 CONFLICT DETECTION — FIXED
+       v2.3 CONFLICT DETECTION — returns OBJECT not boolean
        ═══════════════════════════════════════════════════════════════════
-       Old version grouped by product type first, then checked FCC divergence
-       within each type bucket. That produced false positives whenever the
-       catalog returned 2+ products for the same vehicle — which happens
-       constantly for normal reasons (production splits, supplier duplicates,
-       etc.) that a customer VIN can't necessarily resolve.
-
-       New rule, per owner direction: flag ONLY when 2+ distinct FCCs OR 2+
-       distinct keyways exist AMONG PRODUCTS THAT EXPLICITLY LIST THE
-       QUERIED YEAR.
+       v2.2 rule preserved: only flag when 2+ distinct FCCs OR 2+ distinct
+       keyways exist among products that explicitly list the queried year.
+       v2.3 addition: categorize the conflict so Screen 3 can branch.
+          - type 'keyway': only keyways differ
+          - type 'fcc':    only FCCs differ
+          - type 'both':   both differ
        ═══════════════════════════════════════════════════════════════════ */
     function detectConflicts(results) {
-        if (!results || results.length <= 1) return false;
+        if (!results || results.length <= 1) return null;
         const yrNum = parseInt(appState.vehicle.year);
 
-        // Only count products whose Years list actually contains the queried year.
-        // filterCatalog should already ensure this, but be defensive.
         const relevant = results.filter(p => {
             if (!p._years || p._years.length === 0) return false;
             return p._years.includes(yrNum);
         });
 
-        if (relevant.length <= 1) return false;
+        if (relevant.length <= 1) return null;
 
-        // Collect distinct FCCs (trim + uppercase before comparing)
         const fccs = new Set(
             relevant.map(p => (pFcc(p) || '').toString().trim().toUpperCase())
                     .filter(x => x && x !== 'N/A')
         );
-        // Collect distinct keyways (trim + uppercase before comparing)
         const keyways = new Set(
             relevant.map(p => (pKeyway(p) || '').toString().trim().toUpperCase())
                     .filter(x => x && x !== 'N/A')
         );
 
-        const hasConflict = fccs.size >= 2 || keyways.size >= 2;
+        const fccConflict = fccs.size >= 2;
+        const keywayConflict = keyways.size >= 2;
 
-        if (hasConflict) {
-            console.log('[conflict] Detected:',
-                'FCCs:', Array.from(fccs),
-                'Keyways:', Array.from(keyways),
-                'among', relevant.length, 'products listing year', yrNum);
-        }
+        if (!fccConflict && !keywayConflict) return null;
 
-        return hasConflict;
+        let type;
+        if (keywayConflict && fccConflict) type = 'both';
+        else if (keywayConflict) type = 'keyway';
+        else type = 'fcc';
+
+        console.log('[conflict] Detected:',
+            'type:', type,
+            'FCCs:', Array.from(fccs),
+            'Keyways:', Array.from(keyways),
+            'among', relevant.length, 'products listing year', yrNum);
+
+        return {
+            type,
+            fccs: Array.from(fccs),
+            keyways: Array.from(keyways),
+            relevantProducts: relevant
+        };
     }
 
     function displayConflictWarning() {
+        const t = appState.conflict ? appState.conflict.type : '?';
         document.getElementById('resultsContainer').innerHTML = `
-            <div class="alert alert-warning"><strong>⚠ Conflict detected</strong> — multiple specifications found. Routing to VIN verification...</div>`;
+            <div class="alert alert-warning"><strong>⚠ Conflict detected</strong> (${t}) — routing to conflict resolution...</div>`;
     }
 
     function displaySearchError() {
@@ -1156,55 +1292,321 @@
             </div>`;
     }
 
-    /* ─────── VIN HANDLING ─────── */
-    function validateVinInput() {
-        const v = this.value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g,'');
-        this.value = v;
-        document.getElementById('saveVinBtn').disabled = v.length !== 17;
+    /* ═══════════════════════════════════════════════════════════════════
+       v2.3 — SCREEN 3 CONFLICT RESOLUTION
+       ═══════════════════════════════════════════════════════════════════ */
+    function enterConflictScreen() {
+        if (!appState.conflict) {
+            console.warn('[screen3] No conflict set — returning to search');
+            showScreen('screen2');
+            return;
+        }
+
+        // Hide all branches, then activate the one that matches
+        document.querySelectorAll('#screen3 .conflict-branch').forEach(el => el.classList.remove('active'));
+
+        const type = appState.conflict.type;
+        const descEl = document.getElementById('screen3Description');
+        if (type === 'keyway') {
+            document.getElementById('branchKeyway').classList.add('active');
+            descEl.textContent = 'Two different key blades fit this vehicle — customer identifies the match.';
+            renderBladeCompareCards('bladeCompareGrid', appState.conflict.keyways);
+        } else if (type === 'fcc') {
+            document.getElementById('branchFcc').classList.add('active');
+            descEl.textContent = 'Same blade, different electronics — VIN required.';
+            renderFccVariantList('fccVariantList', appState.conflict.fccs);
+        } else if (type === 'both') {
+            document.getElementById('branchBoth').classList.add('active');
+            descEl.textContent = 'Blade and electronics both differ — pick the blade first, VIN if needed.';
+            renderBladeCompareCards('bladeCompareGridBoth', appState.conflict.keyways);
+            // FCC list stays hidden until a keyway is picked
+        }
+
+        updateConflictResolvedButton();
+        updateOmniQR();
     }
 
-    function saveVin() {
-        const v = document.getElementById('vinInput').value;
+    /* Group relevant products by keyway, render a card per distinct keyway */
+    function renderBladeCompareCards(containerId, keywaysArr) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const relevant = appState.conflict.relevantProducts || [];
+
+        const html = keywaysArr.map(kw => {
+            const sample = relevant.find(p => (pKeyway(p) || '').toString().trim().toUpperCase() === kw);
+            const img = sample ? pImage(sample) : '';
+            const count = relevant.filter(p => (pKeyway(p) || '').toString().trim().toUpperCase() === kw).length;
+            return `
+                <div class="blade-compare-card" data-keyway="${kw}" onclick="chooseKeyway('${kw}')">
+                    <div class="blade-compare-image">
+                        ${img ? `<img src="${img}" alt="${kw} blade">` : `<div class="key-card-image-placeholder">No image</div>`}
+                    </div>
+                    <div class="blade-compare-keyway">${kw}</div>
+                    <div class="blade-compare-meta">${count} key${count!==1?'s':''} with this blade</div>
+                    <label class="blade-compare-choose" onclick="event.stopPropagation();">
+                        <input type="checkbox" data-keyway="${kw}" onchange="chooseKeyway('${kw}', this.checked)">
+                        Customer confirmed
+                    </label>
+                </div>`;
+        }).join('');
+        container.innerHTML = html;
+    }
+
+    window.chooseKeyway = function(keyway, checkedOverride) {
+        // If a checkbox was clicked, honor its state. Otherwise toggle.
+        const currentlyChosen = appState.resolvedKeyway === keyway;
+        const willChoose = typeof checkedOverride === 'boolean' ? checkedOverride : !currentlyChosen;
+
+        // Uncheck all checkboxes in both possible grids
+        document.querySelectorAll('#bladeCompareGrid input[type="checkbox"], #bladeCompareGridBoth input[type="checkbox"]').forEach(cb => cb.checked = false);
+        document.querySelectorAll('#bladeCompareGrid .blade-compare-card, #bladeCompareGridBoth .blade-compare-card').forEach(c => c.classList.remove('chosen'));
+
+        if (willChoose) {
+            appState.resolvedKeyway = keyway;
+            document.querySelectorAll(`.blade-compare-card[data-keyway="${keyway}"]`).forEach(c => c.classList.add('chosen'));
+            document.querySelectorAll(`.blade-compare-card[data-keyway="${keyway}"] input[type="checkbox"]`).forEach(cb => cb.checked = true);
+
+            // If we're in the 'both' branch, now reveal the FCC chooser filtered to the chosen keyway
+            if (appState.conflict && appState.conflict.type === 'both') {
+                const relevant = appState.conflict.relevantProducts.filter(p =>
+                    (pKeyway(p) || '').toString().trim().toUpperCase() === keyway
+                );
+                const remainingFccs = [...new Set(relevant.map(p => (pFcc(p) || '').toString().trim().toUpperCase()).filter(x => x && x !== 'N/A'))];
+                if (remainingFccs.length >= 2) {
+                    document.getElementById('bothRemainingSection').style.display = 'block';
+                    renderFccVariantList('fccVariantListBoth', remainingFccs);
+                } else {
+                    // Only one FCC left within this keyway — auto-resolve
+                    document.getElementById('bothRemainingSection').style.display = 'none';
+                    appState.resolvedFcc = remainingFccs[0] || null;
+                }
+            }
+        } else {
+            appState.resolvedKeyway = null;
+            if (appState.conflict && appState.conflict.type === 'both') {
+                document.getElementById('bothRemainingSection').style.display = 'none';
+                appState.resolvedFcc = null;
+            }
+        }
+
+        updateConflictResolvedButton();
+        updateOmniQR();
+    };
+
+    function renderFccVariantList(containerId, fccsArr) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const relevant = appState.conflict.relevantProducts || [];
+        // For the 'both' branch second step, filter to the chosen keyway
+        const chosenKw = appState.resolvedKeyway;
+
+        const html = fccsArr.map(fcc => {
+            let sample;
+            if (chosenKw && containerId === 'fccVariantListBoth') {
+                sample = relevant.find(p =>
+                    (pFcc(p) || '').toString().trim().toUpperCase() === fcc &&
+                    (pKeyway(p) || '').toString().trim().toUpperCase() === chosenKw);
+            } else {
+                sample = relevant.find(p => (pFcc(p) || '').toString().trim().toUpperCase() === fcc);
+            }
+            const img = sample ? pImage(sample) : '';
+            const title = sample ? pTitle(sample) : fcc;
+            const price = sample ? pPrice(sample) : 0;
+            return `
+                <label class="fcc-variant-option" data-fcc="${fcc}">
+                    <input type="checkbox" data-fcc="${fcc}" onchange="chooseFcc('${fcc}', this.checked)">
+                    <div class="fcc-variant-image">
+                        ${img ? `<img src="${img}" alt="${fcc}">` : ''}
+                    </div>
+                    <div class="fcc-variant-body">
+                        <div class="fcc-variant-fcc">${fcc}</div>
+                        <div class="fcc-variant-meta">${title}</div>
+                    </div>
+                    <div class="fcc-variant-price">$${price.toFixed(2)}</div>
+                </label>`;
+        }).join('');
+        container.innerHTML = html;
+    }
+
+    window.chooseFcc = function(fcc, checked) {
+        // Uncheck all other FCC checkboxes in both lists
+        document.querySelectorAll('#fccVariantList input[type="checkbox"], #fccVariantListBoth input[type="checkbox"]').forEach(cb => {
+            if (cb.dataset.fcc !== fcc) cb.checked = false;
+        });
+        document.querySelectorAll('.fcc-variant-option').forEach(o => o.classList.remove('chosen'));
+
+        if (checked) {
+            appState.resolvedFcc = fcc;
+            document.querySelectorAll(`.fcc-variant-option[data-fcc="${fcc}"]`).forEach(o => o.classList.add('chosen'));
+        } else {
+            appState.resolvedFcc = null;
+        }
+        updateConflictResolvedButton();
+        updateOmniQR();
+    };
+
+    function validateVinInputGeneric(inputEl, saveBtnId) {
+        const v = inputEl.value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g,'');
+        inputEl.value = v;
+        document.getElementById(saveBtnId).disabled = v.length !== 17;
+    }
+
+    function saveVinFromInput(inputId) {
+        const v = document.getElementById(inputId).value;
         if (v.length !== 17) return;
         appState.vinNumber = v;
         writeSharedContext();
-        document.getElementById('vinDisplayText').textContent = v;
-        document.getElementById('vinDisplay').style.display = 'block';
-        document.getElementById('conflictResolvedBtn').style.display = 'inline-block';
+        // Show the copy button if it exists
+        const copyBtn = document.getElementById('copyVinFccBtn');
+        if (copyBtn) copyBtn.style.display = 'inline-block';
         updateOmniQR();
     }
 
     function copyVinToClipboard() {
+        if (!appState.vinNumber) return;
         navigator.clipboard.writeText(appState.vinNumber).then(() => {
-            const btn = document.getElementById('copyVinBtn');
-            const orig = btn.textContent;
-            btn.textContent = '✓ Copied!';
-            setTimeout(() => btn.textContent = orig, 2000);
+            const btn = document.getElementById('copyVinFccBtn');
+            if (btn) {
+                const orig = btn.textContent;
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => btn.textContent = orig, 2000);
+            }
         });
     }
 
-    function openMyAutoSmart() {
-        // MyAutoSmart is mobile-only. On desktop, we point user to the omni-QR.
-        const ua = navigator.userAgent || '';
-        const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
-        if (isMobile) {
-            // Copy context to clipboard and attempt to open the app
-            const ctx = appState.vinNumber || `${appState.vehicle.year} ${appState.vehicle.make} ${appState.vehicle.model}`;
-            navigator.clipboard.writeText(ctx).catch(()=>{});
-            // Attempt deep link (adjust if MyAutoSmart supports a scheme)
-            window.location.href = 'myautosmart://';
-            setTimeout(() => {
-                // If we're still here, the app didn't open — show instructions
-                alert(`Context copied to clipboard:\n\n${ctx}\n\nOpen the MyAutoSmart app and paste.`);
-            }, 1000);
-        } else {
-            alert(`MyAutoSmart is a mobile app only.\n\nScan the QR code in the bottom-right corner with your phone — the YMM${appState.vinNumber ? '/VIN' : ''} will be copied to your phone's clipboard, then open MyAutoSmart on your phone and paste.`);
+    function fallbackKeywayToVin() {
+        // Switch from keyway branch to FCC branch (treat all current variants as FCC conflict)
+        if (!appState.conflict) return;
+        console.log('[screen3] Keyway fallback → FCC branch');
+        appState.conflict.type = 'fcc';
+        // Re-derive FCCs from relevant products
+        appState.conflict.fccs = [...new Set(
+            appState.conflict.relevantProducts
+                .map(p => (pFcc(p) || '').toString().trim().toUpperCase())
+                .filter(x => x && x !== 'N/A')
+        )];
+        appState.resolvedKeyway = null;
+        enterConflictScreen();
+    }
+
+    function updateConflictResolvedButton() {
+        const btn = document.getElementById('conflictResolvedBtn');
+        if (!appState.conflict) { btn.disabled = true; return; }
+        const type = appState.conflict.type;
+        let ready = false;
+        if (type === 'keyway') ready = !!appState.resolvedKeyway;
+        else if (type === 'fcc') ready = !!appState.resolvedFcc;
+        else if (type === 'both') ready = !!appState.resolvedKeyway && !!appState.resolvedFcc;
+        btn.disabled = !ready;
+    }
+
+    /* When the user confirms, filter downstream results to the resolved variant(s) */
+    function confirmConflictResolution() {
+        if (!appState.conflict) { showScreen('screen4'); return; }
+
+        const kw = appState.resolvedKeyway;
+        const fcc = appState.resolvedFcc;
+
+        // Filter inStockResults + rksResults to only products matching the resolution
+        const matches = (p) => {
+            const pkw = (pKeyway(p) || '').toString().trim().toUpperCase();
+            const pfcc = (pFcc(p) || '').toString().trim().toUpperCase();
+            if (kw && pkw && pkw !== kw) return false;
+            if (fcc && pfcc && pfcc !== fcc) return false;
+            return true;
+        };
+        const originalInStock = appState.inStockResults.length;
+        const originalRks = appState.rksResults.length;
+        appState.inStockResults = appState.inStockResults.filter(matches);
+        appState.rksResults = appState.rksResults.filter(matches);
+        // Pre-select any remaining in-stock SKUs so curation is one step faster
+        appState.selectedKeys = appState.inStockResults.map(p => pSku(p));
+        console.log(`[screen3] Resolution filter: in-stock ${originalInStock}→${appState.inStockResults.length}, RKS ${originalRks}→${appState.rksResults.length}, kw=${kw}, fcc=${fcc}`);
+        showScreen('screen4');
+    }
+
+    /* ─────── v2.3 BLADE COMPARISON EMAIL ─────── */
+    async function sendBladeComparisonEmail(branch) {
+        const statusElId = branch === 'both' ? 'bladeEmailStatusBoth' : 'bladeEmailStatus';
+        const btnId = branch === 'both' ? 'sendBladeEmailBothBtn' : 'sendBladeEmailBtn';
+        const statusEl = document.getElementById(statusElId);
+        const btn = document.getElementById(btnId);
+
+        // First-time flow: if we don't have the customer email yet, prompt inline
+        if (!appState.customer.email) {
+            const email = prompt('Customer email address (we\'ll send the blade comparison picture here):');
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                statusEl.innerHTML = `<span class="email-status-pill error">Invalid email</span>`;
+                return;
+            }
+            appState.customer.email = email.trim();
+            const name = prompt('Customer first name (optional):') || '';
+            if (name) appState.customer.name = name.trim();
+        }
+
+        statusEl.innerHTML = `<span class="email-status-pill sending">Sending...</span>`;
+        btn.disabled = true;
+
+        const keyways = appState.conflict.keyways;
+        const relevant = appState.conflict.relevantProducts || [];
+        const vehicle = `${appState.vehicle.year} ${appState.vehicle.make} ${appState.vehicle.model}`;
+
+        const bladeRows = keyways.map(kw => {
+            const sample = relevant.find(p => (pKeyway(p) || '').toString().trim().toUpperCase() === kw);
+            const img = sample ? pImage(sample) : '';
+            return `
+                <td style="width:50%;padding:15px;vertical-align:top;text-align:center;">
+                    ${img ? `<img src="${img}" alt="${kw}" style="max-width:220px;max-height:220px;object-fit:contain;border:1px solid #e2e8f0;border-radius:8px;padding:10px;background:#f8fafc;">` : ''}
+                    <div style="font-family:monospace;font-size:20px;font-weight:700;color:#1a2332;margin-top:12px;letter-spacing:1px;">${kw}</div>
+                </td>`;
+        }).join('');
+
+        const htmlBody = `
+<div style="font-family:Georgia,serif;max-width:620px;margin:0 auto;color:#1e293b;">
+  <div style="border-bottom:3px solid #d4af37;padding-bottom:15px;margin-bottom:20px;">
+    <div style="font-size:22px;font-weight:700;color:#1a2332;font-family:monospace;">CAROLINA KEY CUTTERS</div>
+    <div style="font-size:13px;color:#64748b;">Mobile Automotive Locksmith — ${CKC_PHONE}</div>
+  </div>
+  <p>Hi ${appState.customer.name || 'there'},</p>
+  <p>Here are the two key blade styles that fit your <strong>${vehicle}</strong>. <strong>Look at your current key and tell me which one matches</strong> — I'm still on the line.</p>
+  <table style="width:100%;border-collapse:collapse;margin:20px 0;"><tr>${bladeRows}</tr></table>
+  <p style="background:#fffbeb;border-left:3px solid #d4af37;padding:12px 16px;font-style:italic;">
+    If you can't tell from the picture, just read me the 17-character VIN off your dashboard or door frame — I can look it up that way too.
+  </p>
+  <p style="margin-top:20px;font-size:14px;color:#64748b;text-align:center;">
+    <strong>James — Carolina Key Cutters</strong><br>
+    ${CKC_PHONE}
+  </p>
+</div>`;
+
+        const params = {
+            to_email: appState.customer.email,
+            to_name: appState.customer.name || 'Customer',
+            subject: `Carolina Key Cutters — Which blade matches your ${vehicle}?`,
+            html_body: htmlBody,
+            reply_to: CKC_EMAIL_FROM,
+            from_email: CKC_EMAIL_FROM
+        };
+
+        try {
+            if (window.emailjs && EMAILJS_PUBLIC_KEY) {
+                await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, params);
+                appState.bladeEmailSent = true;
+                statusEl.innerHTML = `<span class="email-status-pill sent">✓ Sent to ${appState.customer.email}</span>`;
+                btn.textContent = '📧 Resend Blade Email';
+                btn.disabled = false;
+            } else {
+                throw new Error('EmailJS not loaded');
+            }
+        } catch (e) {
+            console.error('Blade email send failed', e);
+            statusEl.innerHTML = `<span class="email-status-pill error">Send failed — see console</span>`;
+            btn.disabled = false;
         }
     }
 
     /* ─────── SELECTION & CURATION ─────── */
     function enterCurationScreen() {
-        // Render the Quotes panel at top of Screen 4
         renderQuotesPanel('curationQuotesPanel', appState.quoteResult);
         renderManualOverridePanel();
         renderCurationCards();
@@ -1251,7 +1653,7 @@
             const statusText = inStock ? 'In Stock' : '2–3 Days';
             const checked = appState.selectedKeys.includes(sku) ? 'checked' : '';
             return `
-                <div class="key-card" data-sku="${sku}">
+                <div class="key-card ${checked ? 'selected' : ''}" data-sku="${sku}">
                     <div class="key-card-image">
                         ${imgSrc ? `<img src="${imgSrc}" alt="${title}">` : `<div class="key-card-image-placeholder">No image</div>`}
                     </div>
@@ -1308,7 +1710,6 @@
         const labor = getLaborAmount();
         const total = keyTotal + labor;
         document.getElementById('runningTotal').textContent = `$${total.toFixed(2)}`;
-        // Enable continue button only if we have either a selected key or a manual override with at least $1
         const canContinue = selected.length > 0 || appState.manualLaborOverride > 0;
         document.getElementById('sendInvoiceBtn').disabled = !canContinue;
     }
@@ -1331,7 +1732,14 @@
         const labor = getLaborAmount();
         const keyTotal = selected.reduce((sum, p) => sum + pPrice(p), 0);
         const grandTotal = keyTotal + labor;
-        const customerName = appState.customer.name || '[Customer Name]';
+        // v2.3: Pre-fill customer name from blade email flow if it exists
+        if (appState.customer.name && !document.getElementById('customerName').value) {
+            document.getElementById('customerName').value = appState.customer.name;
+        }
+        if (appState.customer.email && !document.getElementById('customerEmail').value) {
+            document.getElementById('customerEmail').value = appState.customer.email;
+        }
+        const customerName = document.getElementById('customerName').value.trim() || appState.customer.name || '[Customer Name]';
         const vehicle = `${appState.vehicle.year} ${appState.vehicle.make} ${appState.vehicle.model}`;
         const keyType = (appState.quoteResult && appState.quoteResult.matched) ? appState.quoteResult.rule.keyType : 'Manual quote';
 
@@ -1374,7 +1782,7 @@
             </div>`;
     }
 
-    /* ─────── SEND EMAIL ─────── */
+    /* ─────── SEND QUOTE EMAIL ─────── */
     async function sendCustomerEmail() {
         const btn = document.getElementById('sendEmailBtn');
         btn.textContent = 'Sending...';
@@ -1387,7 +1795,6 @@
         const vehicle = `${appState.vehicle.year} ${appState.vehicle.make} ${appState.vehicle.model}`;
         const keyType = (appState.quoteResult && appState.quoteResult.matched) ? appState.quoteResult.rule.keyType : 'Manual quote';
 
-        // Build simple HTML email body (EmailJS template can also format this server-side)
         const itemLines = selected.map(p => {
             const title = pTitle(p);
             const price = pPrice(p);
@@ -1420,6 +1827,7 @@
         const params = {
             to_email: appState.customer.email,
             to_name: appState.customer.name,
+            subject: `Carolina Key Cutters — Quote for your ${vehicle}`,
             customer_name: appState.customer.name,
             customer_phone: appState.customer.phone,
             vehicle: vehicle,
@@ -1449,10 +1857,50 @@
         }
     }
 
+    /* ═══════════════════════════════════════════════════════════════════
+       v2.3 — SCREEN 6 CHECKOUT HANDOFF
+       ═══════════════════════════════════════════════════════════════════
+       Cart URL pattern: /cart/{PROGRAMMING}:1,{KEY_VARIANT}:1,.../checkout
+       Customer can remove programming at checkout if supplying own key.
+       ═══════════════════════════════════════════════════════════════════ */
+    function buildCheckoutUrl() {
+        const selected = getSelectedProducts();
+        const variantIds = [];
+        variantIds.push(`${PROGRAMMING_VARIANT_ID}:1`);
+        selected.forEach(p => {
+            const vid = pVariantId(p);
+            if (vid) variantIds.push(`${vid}:1`);
+            else console.warn('[checkout] Missing Variant ID for SKU', pSku(p));
+        });
+        const path = variantIds.join(',');
+        return `${CHECKOUT_BASE}/${path}/checkout`;
+    }
+
     function showCompletion(params) {
         showScreen('screen6');
         const el = document.getElementById('completionSummary');
+        const selected = getSelectedProducts();
+        const grandTotal = parseFloat(params.grand_total);
+
+        // Build and render checkout URL + QR
+        const checkoutUrl = buildCheckoutUrl();
+        const urlBox = document.getElementById('checkoutUrlBox');
+        const qrImg = document.getElementById('checkoutQrImg');
+        const amountEl = document.getElementById('checkoutAmount');
+        amountEl.textContent = `$${grandTotal.toFixed(2)}`;
+        urlBox.textContent = checkoutUrl;
+        // 400×400 QR so it scans cleanly even on small rendered sizes
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=4&ecc=M&data=${encodeURIComponent(checkoutUrl)}`;
+        qrImg.src = qrUrl;
+
+        // Warn if any selected product is missing a Variant ID
+        const missingVids = selected.filter(p => !pVariantId(p));
+        const missingWarning = missingVids.length > 0
+            ? `<div class="alert alert-warning" style="margin-top:15px;"><strong>⚠ Variant ID missing</strong> for ${missingVids.length} item${missingVids.length>1?'s':''} — checkout URL will not include ${missingVids.length>1?'them':'it'}. Run CostSync / VariantIdSync to fix.</div>`
+            : '';
+
         el.innerHTML = `
+            ${missingWarning}
             <div style="background:var(--ckc-gray-50);padding:20px;border-radius:var(--ckc-border-radius);margin-top:20px;">
                 <h3 style="font-family:'JetBrains Mono',monospace;color:var(--ckc-navy);margin-bottom:15px;">Summary</h3>
                 <div><strong>Customer:</strong> ${params.customer_name} (${params.to_email})</div>
@@ -1462,25 +1910,116 @@
             </div>
             <div class="alert alert-info" style="margin-top:20px;">
                 <strong>Close the sale now:</strong><br>
-                1. Ask the customer to confirm they got the email and see the picture<br>
-                2. Take the card info over the phone<br>
-                3. Create the Shopify order the way you normally do<br>
-                4. ${appState.selectedKeys.length > 0 && appState.rksResults.some(p => appState.selectedKeys.includes(pSku(p))) ? 'Add RKS items to your daily batch' : 'Send booking link: ' + BOOKING_URL}
+                1. Ask the customer to confirm they got the quote email<br>
+                2. Send or show them the <strong>checkout link above</strong> — they pay themselves at Shopify<br>
+                3. Once payment confirms in Shopify, ${selected.length > 0 && appState.rksResults.some(p => appState.selectedKeys.includes(pSku(p))) ? 'add RKS items to your daily batch' : 'send booking link: ' + BOOKING_URL}
             </div>`;
+    }
+
+    async function sendCheckoutLinkEmail() {
+        const btn = document.getElementById('sendCheckoutLinkBtn');
+        const statusEl = document.getElementById('checkoutLinkStatus');
+        btn.disabled = true;
+        statusEl.innerHTML = `<span class="email-status-pill sending">Sending...</span>`;
+
+        const checkoutUrl = buildCheckoutUrl();
+        const vehicle = `${appState.vehicle.year} ${appState.vehicle.make} ${appState.vehicle.model}`;
+        const selected = getSelectedProducts();
+        const labor = getLaborAmount();
+        const keyTotal = selected.reduce((sum, p) => sum + pPrice(p), 0);
+        const grandTotal = keyTotal + labor;
+
+        const htmlBody = `
+<div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;color:#1e293b;">
+  <div style="border-bottom:3px solid #d4af37;padding-bottom:15px;margin-bottom:20px;">
+    <div style="font-size:22px;font-weight:700;color:#1a2332;font-family:monospace;">CAROLINA KEY CUTTERS</div>
+    <div style="font-size:13px;color:#64748b;">Mobile Automotive Locksmith — ${CKC_PHONE}</div>
+  </div>
+  <p>Hi ${appState.customer.name},</p>
+  <p>Here's the secure checkout link for your <strong>${vehicle}</strong> — total <strong>$${grandTotal.toFixed(2)}</strong>.</p>
+  <div style="text-align:center;margin:30px 0;">
+    <a href="${checkoutUrl}" style="display:inline-block;background:#d4af37;color:#1a2332;padding:16px 36px;border-radius:8px;text-decoration:none;font-family:monospace;font-size:16px;font-weight:700;letter-spacing:0.5px;">Pay Now →</a>
+  </div>
+  <p style="font-size:13px;color:#64748b;text-align:center;word-break:break-all;">
+    Or copy this link into your browser:<br>
+    <span style="font-family:monospace;">${checkoutUrl}</span>
+  </p>
+  <p style="background:#fffbeb;border-left:3px solid #d4af37;padding:12px 16px;font-style:italic;margin-top:20px;">
+    Checkout is handled by Shopify — your card details go directly to them, not to me.
+  </p>
+  <p style="margin-top:25px;font-size:14px;color:#64748b;text-align:center;">
+    <strong>James — Carolina Key Cutters</strong><br>
+    ${CKC_PHONE}
+  </p>
+</div>`;
+
+        const params = {
+            to_email: appState.customer.email,
+            to_name: appState.customer.name,
+            subject: `Carolina Key Cutters — Checkout link for your ${vehicle}`,
+            customer_name: appState.customer.name,
+            customer_phone: appState.customer.phone || '',
+            vehicle: vehicle,
+            grand_total: grandTotal.toFixed(2),
+            checkout_url: checkoutUrl,
+            from_email: CKC_EMAIL_FROM,
+            reply_to: CKC_EMAIL_FROM,
+            html_body: htmlBody,
+            plain_body: `Hi ${appState.customer.name},\n\nHere's your checkout link for the ${vehicle} — total $${grandTotal.toFixed(2)}:\n\n${checkoutUrl}\n\n— James, Carolina Key Cutters\n${CKC_PHONE}`
+        };
+
+        try {
+            if (window.emailjs && EMAILJS_PUBLIC_KEY) {
+                await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, params);
+                statusEl.innerHTML = `<span class="email-status-pill sent">✓ Link sent</span>`;
+                btn.textContent = '📧 Resend Checkout Link';
+                btn.disabled = false;
+            } else {
+                throw new Error('EmailJS not loaded');
+            }
+        } catch (e) {
+            console.error('Checkout link send failed', e);
+            statusEl.innerHTML = `<span class="email-status-pill error">Send failed</span>`;
+            btn.disabled = false;
+        }
+    }
+
+    function copyCheckoutUrl() {
+        const url = buildCheckoutUrl();
+        navigator.clipboard.writeText(url).then(() => {
+            const btn = document.getElementById('copyCheckoutUrlBtn');
+            const orig = btn.textContent;
+            btn.textContent = '✓ Copied';
+            setTimeout(() => btn.textContent = orig, 2000);
+        });
+    }
+
+    /* ─────── MYAUTOSMART LAUNCHER ─────── */
+    function openMyAutoSmart() {
+        const ua = navigator.userAgent || '';
+        const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+        if (isMobile) {
+            const ctx = appState.vinNumber || `${appState.vehicle.year} ${appState.vehicle.make} ${appState.vehicle.model}`;
+            navigator.clipboard.writeText(ctx).catch(()=>{});
+            window.location.href = 'myautosmart://';
+            setTimeout(() => {
+                alert(`Context copied to clipboard:\n\n${ctx}\n\nOpen the MyAutoSmart app and paste.`);
+            }, 1000);
+        } else {
+            alert(`MyAutoSmart is a mobile app only.\n\nScan the QR code in the bottom-right corner with your phone — the YMM${appState.vinNumber ? '/VIN' : ''} will be copied to your phone's clipboard, then open MyAutoSmart on your phone and paste.`);
+        }
     }
 
     /* ─────── OMNIPRESENT QR PANEL ─────── */
     let omniQrCollapsed = false;
 
     function initOmniQR() {
-        // Pre-draw an initial QR
         updateOmniQR();
     }
 
     function buildOmniContext() {
         const { year, make, model } = appState.vehicle;
         const parts = [];
-        // VIN is the primary payload when present — it's what MyAutoSmart needs to isolate the trim
         if (appState.vinNumber) {
             parts.push(appState.vinNumber);
             if (year && make && model) parts.push(`(${year} ${make} ${model})`);
@@ -1489,11 +2028,9 @@
             if (appState.serviceType) parts.push(appState.serviceType);
         }
         // If we're in conflict resolution, include the conflicting FCCs/keyways
-        if (appState.conflictDetected && appState.inStockResults.length > 0) {
-            const fccs = [...new Set(appState.inStockResults.map(p => pFcc(p)).filter(x => x && x !== 'N/A'))];
-            const keyways = [...new Set(appState.inStockResults.map(p => pKeyway(p)).filter(x => x && x !== 'N/A'))];
-            if (fccs.length > 1) parts.push('FCCs: ' + fccs.join(', '));
-            if (keyways.length > 1) parts.push('Keyways: ' + keyways.join(', '));
+        if (appState.conflict) {
+            if (appState.conflict.fccs.length > 1) parts.push('FCCs: ' + appState.conflict.fccs.join(', '));
+            if (appState.conflict.keyways.length > 1) parts.push('Keyways: ' + appState.conflict.keyways.join(', '));
         }
         if (parts.length === 0) return `CKC ${CKC_PHONE}`;
         return parts.join(' | ');
@@ -1505,7 +2042,6 @@
         if (ctxEl) ctxEl.textContent = ctx;
         const canvas = document.getElementById('omniQrCanvas');
         if (!canvas) return;
-        // Use api.qrserver.com - server-generated QR as an image, no client library needed
         const url = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=4&data=${encodeURIComponent(ctx)}`;
         canvas.innerHTML = `<img src="${url}" alt="QR code" style="width:140px;height:140px;display:block;" onerror="this.alt='QR unavailable'">`;
     }
@@ -1533,10 +2069,13 @@
             vehicle: { year: '', make: '', model: '' },
             serviceType: '',
             searchResults: [], inStockResults: [], rksResults: [], rksVisible: false,
-            quoteResult: null, conflictDetected: false, vinNumber: '',
+            quoteResult: null, conflict: null,
+            resolvedKeyway: null, resolvedFcc: null,
+            vinNumber: '',
             selectedKeys: [], customer: { name: '', email: '', phone: '' },
             manualLaborOverride: null,
-            catalogLoaded: appState.catalogLoaded, catalogData: appState.catalogData
+            catalogLoaded: appState.catalogLoaded, catalogData: appState.catalogData,
+            bladeEmailSent: false
         };
         document.getElementById('vehicleYear').value = '';
         document.getElementById('vehicleMake').innerHTML = '<option value="">Select Make</option>';
@@ -1547,10 +2086,14 @@
         document.getElementById('customerName').value = '';
         document.getElementById('customerEmail').value = '';
         document.getElementById('customerPhone').value = '';
-        document.getElementById('vinInput').value = '';
-        document.getElementById('vinDisplay').style.display = 'none';
+        document.getElementById('vinInputFcc').value = '';
+        document.getElementById('vinInputBoth').value = '';
         document.getElementById('showRksBtn').style.display = 'none';
         document.getElementById('proceedBtn').style.display = 'none';
+        // Clear Screen 3 status pills
+        ['bladeEmailStatus','bladeEmailStatusBoth','checkoutLinkStatus'].forEach(id => {
+            const el = document.getElementById(id); if (el) el.innerHTML = '';
+        });
         updateOmniQR();
         showScreen('screen1');
     }
@@ -1563,11 +2106,24 @@
         reset: startNewSearch,
         matrix: MATRIX,
         lookup: lookupQuote,
-        // v2.2: expose conflict detector for testing against live catalog data
-        testConflict: () => detectConflicts(appState.inStockResults)
+        testConflict: () => detectConflicts(appState.inStockResults),
+        // v2.3: debug helpers for new flows
+        buildCheckoutUrl: buildCheckoutUrl,
+        simulateKeywayConflict: () => {
+            appState.conflict = { type: 'keyway', fccs: [], keyways: ['HU101','HU100'], relevantProducts: [] };
+            showScreen('screen3');
+        },
+        simulateFccConflict: () => {
+            appState.conflict = { type: 'fcc', fccs: ['M3N-A2C31243300','M3N-A2C31243800'], keyways: [], relevantProducts: [] };
+            showScreen('screen3');
+        },
+        simulateBothConflict: () => {
+            appState.conflict = { type: 'both', fccs: ['FCC-A','FCC-B','FCC-C'], keyways: ['HU101','HU100'], relevantProducts: [] };
+            showScreen('screen3');
+        }
     };
 
-    console.log('CKC Command 2.2 ready. Debug: window.ckc');
+    console.log('CKC Command 2.3 ready. Debug: window.ckc');
     </script>
 </body>
 </html>
