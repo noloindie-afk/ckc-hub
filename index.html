@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CKC Command 2.3 — Phone Quote Tool</title>
+    <title>CKC Command 2.3.1 — Phone Quote Tool</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Crimson+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
@@ -323,9 +323,9 @@
 <body>
     <div class="app-container">
         <div class="app-header">
-            <h1 class="app-title">CKC Command 2.3</h1>
+            <h1 class="app-title">CKC Command 2.3.1</h1>
             <p class="app-subtitle">Phone Quote Tool — Carolina Key Cutters</p>
-            <span class="version-badge">v2.3</span>
+            <span class="version-badge">v2.3.1</span>
         </div>
 
         <div class="progress-bar">
@@ -618,7 +618,7 @@
              Screen 3 branches on type. Screen 6 adds checkout handoff.
        ══════════════════════════════════════════════════════════════════ */
 
-    const CKC_VERSION = 'v2.3';
+    const CKC_VERSION = 'v2.3.1';
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxDw7dtdohInyx2kqeYM5EYNCpMaBN9Kdg3m_mtPGVKaz1jgw8bW4wZfwrUF3xR1gJW/exec';
     const CATALOG_URL = 'https://ckc-blade-proxy.noloindie.workers.dev/catalog';
     const BOOKING_URL = 'https://calendar.app.google/xqirB3Dpfmub5rAb6';
@@ -627,8 +627,12 @@
     const CKC_EMAIL_FROM = 'james@carolinakeycutters.com';
 
     // v2.3: checkout handoff constants
+    // v2.3.1 patch: Shopify deprecated the legacy /cart/{ids}/checkout suffix.
+    // We now use /cart/add?items[][id]=...&items[][quantity]=...&checkout which
+    // is the current Shopify-documented permalink pattern and goes straight
+    // to checkout on submit.
     const PROGRAMMING_VARIANT_ID = '45908511228101';
-    const CHECKOUT_BASE = `https://${SHOPIFY_DOMAIN}/cart`;
+    const CHECKOUT_BASE = `https://${SHOPIFY_DOMAIN}/cart/add`;
 
     // EmailJS config
     const EMAILJS_PUBLIC_KEY = 'xnZyuYp9X4dIvLJBQ';
@@ -1864,16 +1868,24 @@
        Customer can remove programming at checkout if supplying own key.
        ═══════════════════════════════════════════════════════════════════ */
     function buildCheckoutUrl() {
+        // v2.3.1: Shopify's modern permalink format requires URL-encoded
+        // query params, not path segments. Format:
+        //   /cart/add?items[][id]=VAR1&items[][quantity]=1&items[][id]=VAR2&items[][quantity]=1&checkout
+        // The trailing &checkout flag tells Shopify to go straight to checkout
+        // instead of stopping on the cart page.
         const selected = getSelectedProducts();
-        const variantIds = [];
-        variantIds.push(`${PROGRAMMING_VARIANT_ID}:1`);
+        const items = [];
+        items.push({ id: PROGRAMMING_VARIANT_ID, qty: 1 });
         selected.forEach(p => {
             const vid = pVariantId(p);
-            if (vid) variantIds.push(`${vid}:1`);
+            if (vid) items.push({ id: vid, qty: 1 });
             else console.warn('[checkout] Missing Variant ID for SKU', pSku(p));
         });
-        const path = variantIds.join(',');
-        return `${CHECKOUT_BASE}/${path}/checkout`;
+        // URL-encode the bracket characters [] so we get items%5B%5D...
+        const encodedKey = encodeURIComponent('items[][id]');
+        const encodedQty = encodeURIComponent('items[][quantity]');
+        const params = items.map(it => `${encodedKey}=${it.id}&${encodedQty}=${it.qty}`).join('&');
+        return `${CHECKOUT_BASE}?${params}&checkout`;
     }
 
     function showCompletion(params) {
@@ -2123,7 +2135,7 @@
         }
     };
 
-    console.log('CKC Command 2.3 ready. Debug: window.ckc');
+    console.log('CKC Command 2.3.1 ready. Debug: window.ckc');
     </script>
 </body>
 </html>
