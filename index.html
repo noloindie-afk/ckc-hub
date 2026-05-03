@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CKC Command 2.4b — Phone Quote Tool</title>
+    <title>CKC Command 2.4d — Phone Quote Tool</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Crimson+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
@@ -149,7 +149,9 @@
         .key-price-amount { font-size: 1.3rem; font-weight: 700; color: var(--ckc-gold-dark); }
         .key-price-breakdown { font-size: 0.8rem; color: var(--ckc-slate); margin-top: 3px; }
         /* v2.4: per-key labor pill on browse cards */
-        .key-labor-pill { display: inline-block; margin-top: 6px; padding: 3px 10px; background: #fef3c7; color: #92400e; border-radius: 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.3px; }
+        .key-labor-pill { display: inline-block; margin-top: 0; padding: 3px 10px; background: #fef3c7; color: #92400e; border-radius: 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.3px; }
+        /* v2.4c: blade/keyway pill — distinct color so it's instantly readable */
+        .key-blade-pill { display: inline-block; padding: 3px 10px; background: #dbeafe; color: #1e40af; border-radius: 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.3px; }
         /* v2.4b: per-card programming explanation note */
         .key-prog-note { margin-top: 8px; padding: 10px 12px; background: #f0f9ff; border-left: 3px solid #3b82f6; border-radius: 0 6px 6px 0; font-size: 0.92rem; color: #1e293b; line-height: 1.45; font-style: italic; }
         .key-total-line { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--ckc-navy); margin-top: 4px; font-weight: 600; }
@@ -300,9 +302,9 @@
 <body>
     <div class="app-container">
         <div class="app-header">
-            <h1 class="app-title">CKC Command 2.4b</h1>
+            <h1 class="app-title">CKC Command 2.4d</h1>
             <p class="app-subtitle">Phone Quote Tool — Carolina Key Cutters</p>
-            <span class="version-badge">v2.4b</span>
+            <span class="version-badge">v2.4d</span>
         </div>
 
         <div class="progress-bar">
@@ -600,7 +602,7 @@
          - Removed: Show RKS toggle, manual labor override, manualLaborOverride state
        ══════════════════════════════════════════════════════════════════ */
 
-    const CKC_VERSION = 'v2.4b';
+    const CKC_VERSION = 'v2.4d';
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxDw7dtdohInyx2kqeYM5EYNCpMaBN9Kdg3m_mtPGVKaz1jgw8bW4wZfwrUF3xR1gJW/exec';
     const CATALOG_URL = 'https://ckc-blade-proxy.noloindie.workers.dev/catalog';
     const BOOKING_URL = 'https://calendar.app.google/xqirB3Dpfmub5rAb6';
@@ -1159,13 +1161,15 @@
             appState.searchResults = products;
             appState.inStockResults = products.filter(p => isInStock(p));
             appState.rksResults = products.filter(p => isRksStock(p));
+            // v2.4c: Conflict detection still runs (informational), but we no longer
+            // auto-route to Screen 3. James sees ALL matching keys on Browse & Quote
+            // and decides which to send to the customer. The blade-comparison email
+            // is still available as a manual action when actually needed on a call.
             appState.conflict = detectConflicts(appState.inStockResults);
             if (appState.conflict) {
-                displayConflictWarning();
-                setTimeout(() => showScreen('screen3'), 1500);
-            } else {
-                renderBrowseAndQuote();
+                console.log('[v2.4c] Conflict detected but not auto-routing — showing all options on Browse & Quote');
             }
+            renderBrowseAndQuote();
         } catch (e) {
             console.error(e);
             displaySearchError();
@@ -1326,6 +1330,41 @@
         }
 
         let html = '';
+
+        // v2.4c: If conflict detection found multiple blades/FCCs, show an
+        // advisory banner — NOT a gate. James sees everything; this is just
+        // a heads-up that customer confirmation may be needed before invoicing.
+        // The action button adapts to the conflict type:
+        //   keyway → Send Blade Comparison Email (visual)
+        //   fcc    → Resolve by VIN (Screen 3 FCC branch)
+        //   both   → Full conflict resolution (Screen 3 'both' branch)
+        // A "Resolve Conflict →" button is always present so James can route
+        // to Screen 3 manually when he wants the guided resolution flow.
+        if (appState.conflict) {
+            const c = appState.conflict;
+            const parts = [];
+            if (c.keyways.length >= 2) parts.push(`<strong>${c.keyways.length} blade types</strong> (${c.keyways.join(', ')})`);
+            if (c.fccs.length >= 2) parts.push(`<strong>${c.fccs.length} FCC variants</strong>`);
+
+            // Pick the primary action button based on conflict type
+            let primaryActionHtml = '';
+            if (c.type === 'keyway') {
+                primaryActionHtml = `<button class="btn btn-outline" id="bladeCompareEmailBtn" style="padding: 8px 16px; font-size: 0.85rem;">📧 Send Blade Comparison Email</button>
+                    <span id="inlineBladeEmailStatus" style="margin-left: 10px;"></span>`;
+            } else if (c.type === 'fcc') {
+                primaryActionHtml = `<button class="btn btn-outline" id="resolveByVinBtn" style="padding: 8px 16px; font-size: 0.85rem;">🔑 Resolve by VIN →</button>`;
+            } else if (c.type === 'both') {
+                primaryActionHtml = `<button class="btn btn-outline" id="bladeCompareEmailBtn" style="padding: 8px 16px; font-size: 0.85rem;">📧 Send Blade Comparison Email</button>
+                    <button class="btn btn-outline" id="resolveByVinBtn" style="padding: 8px 16px; font-size: 0.85rem; margin-left: 8px;">🔑 Full Resolution →</button>
+                    <span id="inlineBladeEmailStatus" style="margin-left: 10px;"></span>`;
+            }
+
+            html += `<div class="alert alert-warning" style="margin-bottom: 20px;">
+                ⚠ <strong>${c.type === 'fcc' ? 'FCC' : c.type === 'keyway' ? 'Blade' : 'Blade + FCC'} Conflict:</strong> This vehicle has ${parts.join(' and ')}. All options shown below — confirm with the customer before invoicing.
+                <div style="margin-top: 10px;">${primaryActionHtml}</div>
+            </div>`;
+        }
+
         if (appState.inStockResults.length > 0) {
             html += `<div class="results-header"><div class="results-title">In-Stock Keys</div><div class="results-count">${appState.inStockResults.length} available — same day</div></div>`;
             html += appState.inStockResults.map(renderBrowseCard).join('');
@@ -1335,8 +1374,89 @@
             html += appState.rksResults.map(renderBrowseCard).join('');
         }
         container.innerHTML = html;
+
+        // Wire up advisory banner buttons (only present if conflict detected)
+        const bladeBtn = document.getElementById('bladeCompareEmailBtn');
+        if (bladeBtn) bladeBtn.addEventListener('click', sendInlineBladeComparison);
+        const vinBtn = document.getElementById('resolveByVinBtn');
+        if (vinBtn) vinBtn.addEventListener('click', () => showScreen('screen3'));
+
         updateRunningTotal();
         updateBrowseActionButtons();
+    }
+
+    /* v2.4c: Inline blade comparison email — fires from the Browse & Quote
+       advisory banner. Reuses the conflict.keyways list to build the same
+       email Screen 3 used to send, but without leaving the screen. */
+    async function sendInlineBladeComparison() {
+        const btn = document.getElementById('bladeCompareEmailBtn');
+        const statusEl = document.getElementById('inlineBladeEmailStatus');
+        if (!appState.conflict || !appState.conflict.keyways || appState.conflict.keyways.length < 2) {
+            statusEl.innerHTML = `<span class="email-status-pill error">No blade conflict to compare</span>`;
+            return;
+        }
+        if (!browseCustomerValid()) {
+            statusEl.innerHTML = `<span class="email-status-pill error">Enter customer name + email first</span>`;
+            return;
+        }
+        btn.disabled = true;
+        statusEl.innerHTML = `<span class="email-status-pill sending">Sending...</span>`;
+
+        const keyways = appState.conflict.keyways;
+        const relevant = appState.conflict.relevantProducts || appState.searchResults || [];
+        const vehicle = `${appState.vehicle.year} ${appState.vehicle.make} ${appState.vehicle.model}`;
+
+        const bladeRows = keyways.map(kw => {
+            const sample = relevant.find(p => (pKeyway(p) || '').toString().trim().toUpperCase() === kw);
+            const img = sample ? pImage(sample) : '';
+            return `
+                <td style="width:50%;padding:15px;vertical-align:top;text-align:center;">
+                    ${img ? `<img src="${img}" alt="${kw}" width="220" height="220" style="max-width:220px;max-height:220px;object-fit:contain;border:1px solid #e2e8f0;border-radius:8px;padding:10px;background:#f8fafc;">` : ''}
+                    <div style="font-family:monospace;font-size:20px;font-weight:700;color:#1a2332;margin-top:12px;letter-spacing:1px;">${kw}</div>
+                </td>`;
+        }).join('');
+
+        const htmlBody = `
+<div style="font-family:Georgia,serif;max-width:620px;margin:0 auto;color:#1e293b;">
+  <div style="border-bottom:3px solid #d4af37;padding-bottom:15px;margin-bottom:20px;">
+    <div style="font-size:22px;font-weight:700;color:#1a2332;font-family:monospace;">CAROLINA KEY CUTTERS</div>
+    <div style="font-size:13px;color:#64748b;">Mobile Automotive Locksmith — ${CKC_PHONE}</div>
+  </div>
+  <p>Hi ${appState.customer.name},</p>
+  <p>Here are the key blade styles that fit your <strong>${vehicle}</strong>. <strong>Look at your current key and tell me which one matches</strong> — I'm still on the line.</p>
+  <table style="width:100%;border-collapse:collapse;margin:20px 0;"><tr>${bladeRows}</tr></table>
+  <p style="background:#fffbeb;border-left:3px solid #d4af37;padding:12px 16px;font-style:italic;">
+    If you can't tell from the picture, just read me the 17-character VIN off your dashboard or door frame — I can look it up that way too.
+  </p>
+  <p style="margin-top:20px;font-size:14px;color:#64748b;text-align:center;">
+    <strong>Carolina Key Cutters</strong><br>
+    ${CKC_PHONE}
+  </p>
+</div>`;
+
+        const params = {
+            to_email: appState.customer.email,
+            to_name: appState.customer.name,
+            subject: `Carolina Key Cutters — Which blade matches your ${vehicle}?`,
+            html_body: htmlBody,
+            reply_to: CKC_EMAIL_FROM,
+            from_email: CKC_EMAIL_FROM
+        };
+
+        try {
+            if (window.emailjs && EMAILJS_PUBLIC_KEY) {
+                await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, params);
+                statusEl.innerHTML = `<span class="email-status-pill sent">✓ Sent to ${appState.customer.email}</span>`;
+                btn.textContent = '📧 Resend Blade Comparison';
+                btn.disabled = false;
+            } else {
+                throw new Error('EmailJS not loaded');
+            }
+        } catch (e) {
+            console.error('Inline blade email send failed', e);
+            statusEl.innerHTML = `<span class="email-status-pill error">Send failed</span>`;
+            btn.disabled = false;
+        }
     }
 
     function renderBrowseCard(p) {
@@ -1365,7 +1485,10 @@
                         <div>
                             <div class="key-title">${title}</div>
                             <div class="key-type">${type}</div>
-                            <div class="key-labor-pill">${labor.tier} · ${labor.tierLabel} · ${appState.serviceType} programming $${labor.amount}</div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;">
+                                ${keyway ? `<span class="key-blade-pill">Blade: ${keyway}</span>` : ''}
+                                <span class="key-labor-pill">${labor.tier} · ${labor.tierLabel} · ${appState.serviceType} programming $${labor.amount}</span>
+                            </div>
                         </div>
                         <div class="key-price">
                             <div class="key-price-amount">$${price.toFixed(2)}</div>
@@ -1943,6 +2066,10 @@
         // Pre-select remaining in-stock SKUs
         appState.selectedKeys = appState.inStockResults.map(p => pSku(p));
         console.log(`[screen3] Resolution filter: in-stock ${originalInStock}→${appState.inStockResults.length}, RKS ${originalRks}→${appState.rksResults.length}, kw=${kw}, fcc=${fcc}`);
+        // v2.4c: Clear conflict state so the advisory banner disappears on Browse & Quote
+        appState.conflict = null;
+        appState.resolvedKeyway = null;
+        appState.resolvedFcc = null;
         showScreen('screen2');
         renderBrowseAndQuote();
     }
@@ -2282,7 +2409,7 @@
         }
     };
 
-    console.log('CKC Command 2.4b ready. Debug: window.ckc');
+    console.log('CKC Command 2.4d ready. Debug: window.ckc');
     </script>
 </body>
 </html>
