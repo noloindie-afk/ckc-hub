@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CKC Command 2.4d — Phone Quote Tool</title>
+    <title>CKC Command 2.4e — Phone Quote Tool</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Crimson+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
@@ -302,9 +302,9 @@
 <body>
     <div class="app-container">
         <div class="app-header">
-            <h1 class="app-title">CKC Command 2.4d</h1>
+            <h1 class="app-title">CKC Command 2.4e</h1>
             <p class="app-subtitle">Phone Quote Tool — Carolina Key Cutters</p>
-            <span class="version-badge">v2.4d</span>
+            <span class="version-badge">v2.4e</span>
         </div>
 
         <div class="progress-bar">
@@ -602,7 +602,7 @@
          - Removed: Show RKS toggle, manual labor override, manualLaborOverride state
        ══════════════════════════════════════════════════════════════════ */
 
-    const CKC_VERSION = 'v2.4d';
+    const CKC_VERSION = 'v2.4e';
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxDw7dtdohInyx2kqeYM5EYNCpMaBN9Kdg3m_mtPGVKaz1jgw8bW4wZfwrUF3xR1gJW/exec';
     const CATALOG_URL = 'https://ckc-blade-proxy.noloindie.workers.dev/catalog';
     const BOOKING_URL = 'https://calendar.app.google/xqirB3Dpfmub5rAb6';
@@ -660,7 +660,8 @@
     };
 
     /* resolveKeyCategory — fuzzy match catalog "Type" string to a tier.
-       Validated standalone with 22 test cases (T1/T2/T3/T4 + defaults). */
+       v2.4e: Fixed misclassification of "Remote Head Key" (was T2, should be T1).
+       Remote head = transponder with integrated remote, still standard OBD. */
     function resolveKeyCategory(typeString) {
         if (!typeString || typeof typeString !== 'string') {
             console.warn('[resolveKeyCategory] Empty/non-string type, defaulting to T1:', typeString);
@@ -675,12 +676,15 @@
             s.includes('CEM') || s.includes('MQB') || s.includes('GENESIS')) {
             return 'T3';
         }
+        // T2 = smart-key / FOBIK / push-start / proximity. NOT remote-head (that's T1).
         if (s.includes('SMART') || s.includes('PROXIMITY') || s.includes('FOBIK') ||
-            s.includes('PUSH-START') || s.includes('PUSH START') || s.includes('REMOTE HEAD') ||
-            s.includes('I-KEY') || s.includes('PROX')) {
+            s.includes('PUSH-START') || s.includes('PUSH START') ||
+            s.includes('I-KEY') || s.includes('IKEY')) {
             return 'T2';
         }
-        if (s.includes('TRANSPONDER') || s.includes('STANDARD') || s.includes('CHIP KEY')) {
+        // T1 = standard transponder, including remote-head (transponder + integrated remote)
+        if (s.includes('TRANSPONDER') || s.includes('STANDARD') || s.includes('CHIP KEY') ||
+            s.includes('REMOTE HEAD') || s.includes('REMOTE-HEAD')) {
             return 'T1';
         }
         console.warn('[resolveKeyCategory] Unmatched type, defaulting to T1:', typeString);
@@ -2409,7 +2413,7 @@
         }
     };
 
-    console.log('CKC Command 2.4d ready. Debug: window.ckc');
+    console.log('CKC Command 2.4e ready. Debug: window.ckc');
     </script>
 </body>
 </html>
