@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CKC Command 2.4e — Phone Quote Tool</title>
+    <title>CKC Command 2.4f — Phone Quote Tool</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Crimson+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
@@ -152,6 +152,8 @@
         .key-labor-pill { display: inline-block; margin-top: 0; padding: 3px 10px; background: #fef3c7; color: #92400e; border-radius: 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.3px; }
         /* v2.4c: blade/keyway pill — distinct color so it's instantly readable */
         .key-blade-pill { display: inline-block; padding: 3px 10px; background: #dbeafe; color: #1e40af; border-radius: 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.3px; }
+        /* v2.4f: option letter badge — big circle with A/B/C... so customer can pick by letter on the phone */
+        .option-letter-badge { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; min-width: 44px; background: var(--ckc-gold); color: var(--ckc-navy); border-radius: 50%; font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-weight: 700; box-shadow: 0 2px 6px rgba(212,175,55,0.4); flex-shrink: 0; }
         /* v2.4b: per-card programming explanation note */
         .key-prog-note { margin-top: 8px; padding: 10px 12px; background: #f0f9ff; border-left: 3px solid #3b82f6; border-radius: 0 6px 6px 0; font-size: 0.92rem; color: #1e293b; line-height: 1.45; font-style: italic; }
         .key-total-line { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--ckc-navy); margin-top: 4px; font-weight: 600; }
@@ -302,9 +304,9 @@
 <body>
     <div class="app-container">
         <div class="app-header">
-            <h1 class="app-title">CKC Command 2.4e</h1>
+            <h1 class="app-title">CKC Command 2.4f</h1>
             <p class="app-subtitle">Phone Quote Tool — Carolina Key Cutters</p>
-            <span class="version-badge">v2.4e</span>
+            <span class="version-badge">v2.4f</span>
         </div>
 
         <div class="progress-bar">
@@ -602,7 +604,7 @@
          - Removed: Show RKS toggle, manual labor override, manualLaborOverride state
        ══════════════════════════════════════════════════════════════════ */
 
-    const CKC_VERSION = 'v2.4e';
+    const CKC_VERSION = 'v2.4f';
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxDw7dtdohInyx2kqeYM5EYNCpMaBN9Kdg3m_mtPGVKaz1jgw8bW4wZfwrUF3xR1gJW/exec';
     const CATALOG_URL = 'https://ckc-blade-proxy.noloindie.workers.dev/catalog';
     const BOOKING_URL = 'https://calendar.app.google/xqirB3Dpfmub5rAb6';
@@ -660,7 +662,7 @@
     };
 
     /* resolveKeyCategory — fuzzy match catalog "Type" string to a tier.
-       v2.4e: Fixed misclassification of "Remote Head Key" (was T2, should be T1).
+       v2.4f: Fixed misclassification of "Remote Head Key" (was T2, should be T1).
        Remote head = transponder with integrated remote, still standard OBD. */
     function resolveKeyCategory(typeString) {
         if (!typeString || typeof typeString !== 'string') {
@@ -1478,6 +1480,11 @@
         const labor = getLaborForKey(p, appState.serviceType);
         const total = price + labor.amount;
         const progExplain = getProgrammingExplanation(labor.tier, appState.serviceType, labor.amount);
+        // v2.4f: Option letter badge — only present if the card is currently selected
+        const optionLetter = getOptionLetter(sku);
+        const letterBadge = optionLetter
+            ? `<span class="option-letter-badge">${optionLetter}</span>`
+            : '';
 
         return `
             <div class="key-card ${checked ? 'selected' : ''}" data-sku="${sku}">
@@ -1486,12 +1493,17 @@
                 </div>
                 <div class="key-card-body">
                     <div class="key-header">
-                        <div>
-                            <div class="key-title">${title}</div>
-                            <div class="key-type">${type}</div>
-                            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;">
-                                ${keyway ? `<span class="key-blade-pill">Blade: ${keyway}</span>` : ''}
-                                <span class="key-labor-pill">${labor.tier} · ${labor.tierLabel} · ${appState.serviceType} programming $${labor.amount}</span>
+                        <div style="flex: 1;">
+                            <div style="display: flex; align-items: flex-start; gap: 12px;">
+                                ${letterBadge}
+                                <div style="flex: 1;">
+                                    <div class="key-title">${title}</div>
+                                    <div class="key-type">${type}</div>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;">
+                                        ${keyway ? `<span class="key-blade-pill">Blade: ${keyway}</span>` : ''}
+                                        <span class="key-labor-pill">${labor.tier} · ${labor.tierLabel} · ${appState.serviceType} programming $${labor.amount}</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="key-price">
@@ -1521,15 +1533,26 @@
         } else {
             appState.selectedKeys = appState.selectedKeys.filter(s => s !== sku);
         }
-        const card = document.querySelector(`.key-card[data-sku="${sku}"]`);
-        if (card) card.classList.toggle('selected', checked);
-        updateRunningTotal();
-        updateBrowseActionButtons();
+        // v2.4f: Re-render all cards so option letters reshuffle (e.g., if you
+        // uncheck B, what was C becomes the new B). Class-only toggle isn't
+        // enough now that letters depend on selection-order position.
+        renderBrowseAndQuote();
     };
 
     function getSelectedProducts() {
         const all = [...appState.inStockResults, ...appState.rksResults];
         return all.filter(p => appState.selectedKeys.includes(pSku(p)));
+    }
+
+    /* v2.4f: Map a SKU to its option letter (A, B, C, ...) based on the
+       position in appState.selectedKeys. Returns null if the SKU isn't
+       currently selected. Sequential by selection order — first checked = A. */
+    function getOptionLetter(sku) {
+        const idx = appState.selectedKeys.indexOf(sku);
+        if (idx < 0) return null;
+        if (idx < 26) return String.fromCharCode(65 + idx);  // A-Z
+        // Fallback for 27+ selections (defensive — shouldn't happen in practice)
+        return String.fromCharCode(65 + Math.floor(idx / 26) - 1) + String.fromCharCode(65 + (idx % 26));
     }
 
     /* Sum of (key price + per-key labor) for selected items */
@@ -1593,7 +1616,7 @@
         const { selected } = computeSelectedTotal();
         const vehicle = `${appState.vehicle.year} ${appState.vehicle.make} ${appState.vehicle.model}`;
 
-        const rows = selected.map(p => {
+        const rows = selected.map((p, idx) => {
             const title = pTitle(p);
             const type = pType(p);
             const price = pPrice(p);
@@ -1603,9 +1626,17 @@
             const labor = getLaborForKey(p, appState.serviceType);
             const total = price + labor.amount;
             const progExplain = getProgrammingExplanation(labor.tier, appState.serviceType, labor.amount);
+            // v2.4f: Option letter (A, B, C...) — inline-styled so email clients render it
+            const letter = getOptionLetter(pSku(p)) || String.fromCharCode(65 + idx);
             return `<tr>
                 <td colspan="5" style="padding:0;">
-                  <table style="width:100%;border-collapse:collapse;margin-bottom:10px;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;background:#fff;">
+                  <table style="width:100%;border-collapse:collapse;margin-bottom:14px;border:2px solid #d4af37;border-radius:8px;overflow:hidden;background:#fff;">
+                    <tr style="background:linear-gradient(90deg, #fffbeb 0%, #fef3c7 100%);">
+                      <td colspan="3" style="padding:10px 14px;border-bottom:1px solid #d4af37;">
+                        <span style="display:inline-block;width:36px;height:36px;line-height:36px;background:#d4af37;color:#1a2332;border-radius:50%;font-family:monospace;font-size:18px;font-weight:700;text-align:center;vertical-align:middle;">${letter}</span>
+                        <span style="font-family:monospace;font-size:14px;font-weight:700;color:#1a2332;text-transform:uppercase;letter-spacing:1px;margin-left:10px;vertical-align:middle;">Option ${letter}</span>
+                      </td>
+                    </tr>
                     <tr>
                       <td style="padding:12px;vertical-align:top;text-align:center;width:100px;background:#fafafa;">
                         ${imgSrc ? `<img src="${imgSrc}" width="80" height="80" style="width:80px;height:80px;object-fit:contain;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;display:block;" alt="${title}">` : ''}
@@ -1638,12 +1669,12 @@
     <div style="font-size:13px;color:#64748b;">Mobile Automotive Locksmith — ${CKC_PHONE}</div>
   </div>
   <p>Hi ${appState.customer.name},</p>
-  <p>Here are the options we just discussed for your <strong>${vehicle}</strong>. Each option shows the key, the programming charge, and a short explanation of what that programming involves — pick the one you want and I'll send you a payment link.</p>
+  <p>Here are the options we just discussed for your <strong>${vehicle}</strong>. <strong>Each option is labeled with a letter (A, B, C…)</strong> — when you've decided, just tell me the letter over the phone and I'll send you the payment link for that one.</p>
   <table style="width:100%;border-collapse:collapse;margin:20px 0;">
     <tbody>${rows}</tbody>
   </table>
   <p style="background:#fffbeb;border-left:3px solid #d4af37;padding:12px 16px;font-style:italic;">
-    Look these over — I'm still on the line. Tell me which one you want and I'll send the secure payment link right away.
+    Look these over — I'm still on the line. Just tell me the letter (A, B, C, ...) of the one you want and I'll send the payment link right away.
   </p>
   <p style="margin-top:25px;font-size:14px;color:#64748b;text-align:center;">
     <strong>Carolina Key Cutters</strong><br>
@@ -1661,11 +1692,12 @@
         const { total, selected } = computeSelectedTotal();
         const vehicle = `${appState.vehicle.year} ${appState.vehicle.make} ${appState.vehicle.model}`;
         const htmlBody = buildOptionsEmailHtml();
-        const plain = `Hi ${appState.customer.name},\n\nOptions for your ${vehicle}:\n\n${selected.map(p => {
+        const plain = `Hi ${appState.customer.name},\n\nOptions for your ${vehicle} (just tell me the letter of the one you want):\n\n${selected.map((p, idx) => {
             const labor = getLaborForKey(p, appState.serviceType);
             const explain = getProgrammingExplanation(labor.tier, appState.serviceType, labor.amount);
-            return `- ${pTitle(p)} — Key $${pPrice(p).toFixed(2)} + Programming $${labor.amount} = $${(pPrice(p)+labor.amount).toFixed(2)}\n  ${explain}`;
-        }).join('\n\n')}\n\nTell me which one you want and I'll send the payment link.\n\n— Carolina Key Cutters\n${CKC_PHONE}`;
+            const letter = getOptionLetter(pSku(p)) || String.fromCharCode(65 + idx);
+            return `OPTION ${letter} — ${pTitle(p)}\n  Key $${pPrice(p).toFixed(2)} + Programming $${labor.amount} = $${(pPrice(p)+labor.amount).toFixed(2)}\n  ${explain}`;
+        }).join('\n\n')}\n\nJust tell me the letter (A, B, C, ...) and I'll send the payment link.\n\n— Carolina Key Cutters\n${CKC_PHONE}`;
 
         const params = {
             to_email: appState.customer.email,
@@ -2413,7 +2445,7 @@
         }
     };
 
-    console.log('CKC Command 2.4e ready. Debug: window.ckc');
+    console.log('CKC Command 2.4f ready. Debug: window.ckc');
     </script>
 </body>
 </html>
