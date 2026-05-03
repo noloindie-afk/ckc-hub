@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CKC Command 2.3.1 — Phone Quote Tool</title>
+    <title>CKC Command 2.3.2 — Phone Quote Tool</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Crimson+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
@@ -323,9 +323,9 @@
 <body>
     <div class="app-container">
         <div class="app-header">
-            <h1 class="app-title">CKC Command 2.3.1</h1>
+            <h1 class="app-title">CKC Command 2.3.2</h1>
             <p class="app-subtitle">Phone Quote Tool — Carolina Key Cutters</p>
-            <span class="version-badge">v2.3.1</span>
+            <span class="version-badge">v2.3.2</span>
         </div>
 
         <div class="progress-bar">
@@ -618,7 +618,7 @@
              Screen 3 branches on type. Screen 6 adds checkout handoff.
        ══════════════════════════════════════════════════════════════════ */
 
-    const CKC_VERSION = 'v2.3.1';
+    const CKC_VERSION = 'v2.3.2';
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxDw7dtdohInyx2kqeYM5EYNCpMaBN9Kdg3m_mtPGVKaz1jgw8bW4wZfwrUF3xR1gJW/exec';
     const CATALOG_URL = 'https://ckc-blade-proxy.noloindie.workers.dev/catalog';
     const BOOKING_URL = 'https://calendar.app.google/xqirB3Dpfmub5rAb6';
@@ -1578,7 +1578,7 @@
     If you can't tell from the picture, just read me the 17-character VIN off your dashboard or door frame — I can look it up that way too.
   </p>
   <p style="margin-top:20px;font-size:14px;color:#64748b;text-align:center;">
-    <strong>James — Carolina Key Cutters</strong><br>
+    <strong>Carolina Key Cutters</strong><br>
     ${CKC_PHONE}
   </p>
 </div>`;
@@ -1779,7 +1779,7 @@
                     <div class="email-total-row grand"><span>Total</span><span>$${grandTotal.toFixed(2)}</span></div>
                 </div>
                 <div class="email-footer">
-                    <strong>Prepared by James — Carolina Key Cutters</strong><br>
+                    <strong>Carolina Key Cutters</strong><br>
                     Call ${CKC_PHONE} to confirm and schedule<br>
                     <em>This is a quote — not an invoice. No payment required from this email.</em>
                 </div>
@@ -1822,7 +1822,7 @@
     <div style="display:flex;justify-content:space-between;padding:10px 0;font-size:18px;font-weight:700;color:#1a2332;border-top:1px solid #eee;margin-top:5px;"><span>Total</span><span>$${grandTotal.toFixed(2)}</span></div>
   </div>
   <p style="margin-top:25px;font-size:14px;color:#64748b;text-align:center;">
-    <strong>Prepared by James — Carolina Key Cutters</strong><br>
+    <strong>Carolina Key Cutters</strong><br>
     Call ${CKC_PHONE} to confirm and schedule<br>
     <em>This is a quote — not an invoice. No payment required from this email.</em>
   </p>
@@ -1843,7 +1843,7 @@
             from_email: CKC_EMAIL_FROM,
             reply_to: CKC_EMAIL_FROM,
             html_body: htmlBody,
-            plain_body: `Hi ${appState.customer.name},\n\nHere's what we discussed for your ${vehicle}:\n\n${selected.map(p => `- ${pTitle(p)}: $${pPrice(p).toFixed(2)}`).join('\n')}\n- Programming / Labor (${keyType}): $${labor.toFixed(2)}\n\nTotal: $${grandTotal.toFixed(2)}\n\nCall ${CKC_PHONE} to confirm.\n\n— James, Carolina Key Cutters`
+            plain_body: `Hi ${appState.customer.name},\n\nHere's what we discussed for your ${vehicle}:\n\n${selected.map(p => `- ${pTitle(p)}: $${pPrice(p).toFixed(2)}`).join('\n')}\n- Programming / Labor (${keyType}): $${labor.toFixed(2)}\n\nTotal: $${grandTotal.toFixed(2)}\n\nCall ${CKC_PHONE} to confirm.\n\n— Carolina Key Cutters`
         };
 
         try {
@@ -1957,10 +1957,10 @@
     <span style="font-family:monospace;">${checkoutUrl}</span>
   </p>
   <p style="background:#fffbeb;border-left:3px solid #d4af37;padding:12px 16px;font-style:italic;margin-top:20px;">
-    Checkout is handled by Shopify — your card details go directly to them, not to me.
+    Checkout is handled by Shopify — your card details go directly to them, not to us.
   </p>
   <p style="margin-top:25px;font-size:14px;color:#64748b;text-align:center;">
-    <strong>James — Carolina Key Cutters</strong><br>
+    <strong>Carolina Key Cutters</strong><br>
     ${CKC_PHONE}
   </p>
 </div>`;
@@ -1977,7 +1977,7 @@
             from_email: CKC_EMAIL_FROM,
             reply_to: CKC_EMAIL_FROM,
             html_body: htmlBody,
-            plain_body: `Hi ${appState.customer.name},\n\nHere's your checkout link for the ${vehicle} — total $${grandTotal.toFixed(2)}:\n\n${checkoutUrl}\n\n— James, Carolina Key Cutters\n${CKC_PHONE}`
+            plain_body: `Hi ${appState.customer.name},\n\nHere's your checkout link for the ${vehicle} — total $${grandTotal.toFixed(2)}:\n\n${checkoutUrl}\n\n— Carolina Key Cutters\n${CKC_PHONE}`
         };
 
         try {
@@ -2135,7 +2135,7 @@
         }
     };
 
-    console.log('CKC Command 2.3.1 ready. Debug: window.ckc');
+    console.log('CKC Command 2.3.2 ready. Debug: window.ckc');
     </script>
 </body>
 </html>
