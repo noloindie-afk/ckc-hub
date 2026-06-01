@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RKS Fitment Puller — CKC</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --gold:#c9a227; --gold-l:#e0c458; --bg:#111; --card:#1a1a1a; --line:#2d2d2d;
+    --text:#f0f0f0; --muted:#9ca3af; --green:#4ade80; --amber:#f59e0b; --red:#f87171;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;line-height:1.55;padding:24px 16px 60px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:980px;margin:0 auto}
+  h1{font-family:'Outfit',sans-serif;font-size:1.6rem;font-weight:800;color:var(--gold);letter-spacing:.3px}
+  .sub{color:var(--muted);font-size:.95rem;margin-top:4px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:20px}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  button{font-family:'DM Sans',sans-serif;font-weight:700;border:none;border-radius:10px;cursor:pointer;transition:.15s}
+  .btn-go{background:var(--gold);color:#111;padding:15px 28px;font-size:1.05rem}
+  .btn-go:active{transform:scale(.98)}
+  .btn-go:disabled{background:#555;cursor:not-allowed}
+  .btn-out{background:#1f1f1f;color:var(--gold);border:2px solid var(--gold);padding:12px 20px;font-size:.95rem}
+  .btn-out:disabled{opacity:.4;cursor:not-allowed}
+  .bar-wrap{height:8px;background:#222;border-radius:8px;overflow:hidden;margin-top:16px;display:none}
+  .bar-wrap.on{display:block}
+  .bar{height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--gold-l));transition:width .25s}
+  .count{font-size:.9rem;color:var(--muted);margin-top:10px}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:.82rem;color:var(--muted);margin-top:14px}
+  .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle}
+  table{width:100%;border-collapse:collapse;margin-top:18px;font-size:.84rem}
+  th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;font-size:.72rem;position:sticky;top:0;background:var(--card)}
+  td.sku{font-family:monospace;font-weight:700;color:var(--gold-l);white-space:nowrap}
+  .st{font-weight:700;font-size:.74rem;padding:3px 9px;border-radius:100px;white-space:nowrap;display:inline-block}
+  .st.ok{color:var(--green);background:rgba(74,222,128,.1)}
+  .st.rev{color:var(--amber);background:rgba(245,158,11,.1)}
+  .st.no{color:var(--red);background:rgba(248,113,113,.1)}
+  .st.wait{color:var(--muted);background:#222}
+  .models{color:var(--text)}
+  .yrs{color:var(--gold-l);font-weight:600;white-space:nowrap}
+  .rkstitle{color:var(--muted);font-size:.78rem}
+  .note{background:rgba(201,162,39,.06);border:1px solid rgba(201,162,39,.2);border-radius:10px;padding:14px 16px;font-size:.88rem;color:var(--muted);margin-top:18px;line-height:1.6}
+  .note strong{color:var(--text)}
+  .err{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.3);color:var(--red);border-radius:10px;padding:14px 16px;font-size:.9rem;margin-top:16px;display:none;line-height:1.6}
+  .err.on{display:block}
+  .tablewrap{max-height:60vh;overflow:auto;margin-top:6px;border-radius:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🔑 RKS Fitment Puller</h1>
+  <div class="sub">Pulls vehicle fitment from Royal Key Supply for the 48 shelf keys that are missing it, all in one run.</div>
+
+  <div class="panel">
+    <div class="row">
+      <button class="btn-go" id="go" onclick="run()">Run Pull · 48 keys</button>
+      <button class="btn-out" id="csv" onclick="downloadCSV()" disabled>⬇ Download CSV</button>
+      <button class="btn-out" id="json" onclick="copyJSON()" disabled>⧉ Copy for Claude</button>
+    </div>
+    <div class="bar-wrap" id="barwrap"><div class="bar" id="bar"></div></div>
+    <div class="count" id="count"></div>
+    <div class="legend">
+      <span><span class="dot" style="background:var(--green)"></span>Matched</span>
+      <span><span class="dot" style="background:var(--amber)"></span>Found, needs a quick look</span>
+      <span><span class="dot" style="background:var(--red)"></span>Not found</span>
+    </div>
+    <div class="err" id="err"></div>
+  </div>
+
+  <div class="tablewrap">
+    <table id="tbl">
+      <thead><tr><th>SKU</th><th>Status</th><th>Make</th><th>Years</th><th>Models</th><th>RKS listing</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <strong>How to run it:</strong> drop this file into your <strong>ckc-hub</strong> repo, push with GitHub Desktop,
+    and open it at your github.io address — that's the same place your finder lives, so it's allowed to talk to RKS.
+    Then hit <strong>Run Pull</strong>. When it finishes, tap <strong>Copy for Claude</strong> and paste the result back to me,
+    or download the CSV. Anything amber just means the wording was unusual and I'll tidy it on my end.
+  </div>
+</div>
+
+<script>
+// ── The 48 shelf keys missing fitment (CKC ckc-stock, bare titles) ──
+const TARGETS = [
+ {sku:"CAD-11-AM",ckc:"FOBIK CAD-11-AM"},{sku:"CHR-12-AM",ckc:"Transponder Key CHR-12-AM"},
+ {sku:"CHR-16-AM",ckc:"Transponder Key CHR-16-AM"},{sku:"CHR-34-AM",ckc:"Transponder Key CHR-34-AM"},
+ {sku:"CHV-46-AM",ckc:"FOBIK CHV-46-AM"},{sku:"CHV-50-AM",ckc:"FOBIK CHV-50-AM"},
+ {sku:"CHV-54-AM",ckc:"FOBIK CHV-54-AM"},{sku:"CHV-55-AM",ckc:"FOBIK CHV-55-AM"},
+ {sku:"CHV-64-AM",ckc:"Transponder Key CHV-64-AM"},{sku:"DOG-12-AM",ckc:"FOBIK DOG-12-AM"},
+ {sku:"DOG-20-AM",ckc:"FOBIK DOG-20-AM"},{sku:"DOG-22-AM",ckc:"FOBIK DOG-22-AM"},
+ {sku:"DOG-27-AM",ckc:"FOBIK DOG-27-AM"},{sku:"DOG-35-AM",ckc:"FOBIK DOG-35-AM"},
+ {sku:"DOG-37-AM",ckc:"FOB DOG-37-AM"},{sku:"DOG-42-AM",ckc:"FOBIK DOG-42-AM"},
+ {sku:"DOG-54-AMP",ckc:"Transponder Key DOG-54-AMP"},{sku:"FOR-32-AM",ckc:"Remote Head Key FOR-32-AM"},
+ {sku:"FOR-38-AM",ckc:"Transponder Key FOR-38-AM"},{sku:"FOR-45-AM",ckc:"FOBIK FOR-45-AM"},
+ {sku:"FOR-46-AM",ckc:"FOBIK FOR-46-AM"},{sku:"FOR-54-AM",ckc:"FOBIK FOR-54-AM"},
+ {sku:"FOR-59-AM",ckc:"FOBIK FOR-59-AM"},{sku:"FOR-61-AM",ckc:"FOBIK FOR-61-AM"},
+ {sku:"FOR-63-AM",ckc:"FOBIK FOR-63-AM"},{sku:"FOR-87-AM",ckc:"Transponder Key FOR-87-AM"},
+ {sku:"GM-18-AM",ckc:"FOBIK GM-18-AM"},{sku:"GM-48-AM",ckc:"GM-48-AM"},
+ {sku:"HON-02-AM",ckc:"Transponder Key HON-02-AM"},{sku:"HON-03-AM",ckc:"Keyless Entry Remote HON-03-AM"},
+ {sku:"HON-15-AM",ckc:"Remote Head Key HON-15-AM"},{sku:"HON-29-AM",ckc:"Transponder Key HON-29-AM"},
+ {sku:"JEP-11-AM",ckc:"FOBIK JEP-11-AM"},{sku:"MAZ-13-AM",ckc:"Transponder Key MAZ-13-AM"},
+ {sku:"NIS-08-AM",ckc:"Remote Head Key NIS-08-AM"},{sku:"NIS-12-AM",ckc:"FOBIK NIS-12-AM"},
+ {sku:"NIS-24-AM",ckc:"FOBIK NIS-24-AM"},{sku:"NIS-25-AM",ckc:"FOBIK NIS-25-AM"},
+ {sku:"NIS-28-AM",ckc:"FOBIK NIS-28-AM"},{sku:"NIS-37-AM",ckc:"FOBIK NIS-37-AM"},
+ {sku:"NIS-38-AM",ckc:"FOBIK NIS-38-AM"},{sku:"NIS-70-AM",ckc:"Transponder Key NIS-70-AM"},
+ {sku:"TOY-01-AM",ckc:"Transponder Key TOY-01-AM"},{sku:"TOY-02-AM",ckc:"Transponder Key TOY-02-AM"},
+ {sku:"TOY-18-AM",ckc:"Remote Head Key TOY-18-AM"},{sku:"TOY-20-AM",ckc:"FOBIK TOY-20-AM"},
+ {sku:"TOY-54-AM",ckc:"Remote Head Key TOY-54-AM"},{sku:"TOY-64-AM",ckc:"FOBIK TOY-64-AM"}
+];
+
+const RKS = "https://royalkeysupply.com";
+const TYPE_WORDS = ["Fobik Key","Fobik","Remote Head Key","Remote Flip Key","Flip Key","Transponder Key",
+                    "Smart Key","Keyless Entry Remote","Keyless Entry","Remote"];
+const MAKE_MAP = {chevy:"Chevrolet",gm:"GM",dodge:"Dodge",ram:"RAM",chrysler:"Chrysler",jeep:"Jeep",
+  ford:"Ford",lincoln:"Lincoln",mercury:"Mercury",toyota:"Toyota",lexus:"Lexus",scion:"Scion",
+  honda:"Honda",acura:"Acura",nissan:"Nissan",infiniti:"Infiniti",hyundai:"Hyundai",kia:"Kia",
+  cadillac:"Cadillac",buick:"Buick",mazda:"Mazda",mitsubishi:"Mitsubishi",gmc:"GMC",jaguar:"Jaguar"};
+
+let RESULTS = [];
+
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+function el(id){return document.getElementById(id);}
+function esc(s){return (s||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+
+// pull product candidates for a SKU via Shopify predictive search
+async function suggest(sku){
+  const u = RKS+"/search/suggest.json?q="+encodeURIComponent(sku)+
+            "&resources[type]=product&resources[limit]=6&resources[options][unavailable_products]=last";
+  const r = await fetch(u,{signal:AbortSignal.timeout(8000)});
+  if(!r.ok) throw new Error("suggest "+r.status);
+  const d = await r.json();
+  return (d.resources&&d.resources.results&&d.resources.results.products)||[];
+}
+// confirm a candidate handle actually carries this SKU, and return its product json
+async function productByHandle(handle){
+  const r = await fetch(RKS+"/products/"+handle+".json",{signal:AbortSignal.timeout(8000)});
+  if(!r.ok) return null;
+  const d = await r.json();
+  return d.product||null;
+}
+
+function parseFitment(title){
+  const t = (title||"").trim();
+  // year range or single year
+  let y="", ya, yb;
+  let m = t.match(/(\d{4})\s*[-–]\s*(\d{4})/);
+  if(m){ya=m[1];yb=m[2];y=ya+"-"+yb;}
+  else { m=t.match(/\b(19|20)\d{2}\b/); if(m){y=m[0];} }
+  // make = first token
+  let make = t.split(/\s+/)[0]||"";
+  make = MAKE_MAP[make.toLowerCase()]||make;
+  // models = text after the year up to the first key-type word
+  let models=[];
+  if(y){
+    let after = t.slice(t.indexOf(y)+y.length);
+    let cutIdx = after.length;
+    for(const w of TYPE_WORDS){const i=after.indexOf(w);if(i>-1&&i<cutIdx)cutIdx=i;}
+    let seg = after.slice(0,cutIdx).replace(/aftermarket|refurbished|new oem|oem/ig,"").trim();
+    seg = seg.replace(/^[\s,;:–-]+|[\s,;:–-]+$/g,"");
+    models = seg.split(/\s*,\s*/).map(s=>s.trim()).filter(s=>s && /[a-z0-9]/i.test(s));
+  }
+  // key type
+  let type="";
+  for(const w of TYPE_WORDS){if(new RegExp(w,"i").test(t)){type=w;break;}}
+  // fcc / pn / buttons
+  let fcc=(t.match(/FCC\s*ID?:?\s*([A-Z0-9\-]+)/i)||[])[1]||"";
+  let pn=(t.match(/PN#?:?\s*([A-Z0-9\-]+)/i)||[])[1]||"";
+  let btn=(t.match(/\b(\d+)\s*B\b/)||[])[1]||"";
+  return {make,years:y,models,type,fcc,pn,btn};
+}
+
+async function lookup(sku){
+  let cands=[];
+  try{ cands = await suggest(sku); }catch(e){ /* fall through */ }
+  // try to confirm exact SKU on each candidate
+  for(const c of cands.slice(0,5)){
+    if(!c.handle) continue;
+    const p = await productByHandle(c.handle);
+    if(p && Array.isArray(p.variants)){
+      const hit = p.variants.some(v=>(v.sku||"").toUpperCase()===sku.toUpperCase());
+      if(hit){
+        const f = parseFitment(p.title);
+        return {ok:true, exact:true, title:p.title, ...f};
+      }
+    }
+    await sleep(120);
+  }
+  // no exact SKU confirm — use the top candidate title as a best guess (needs review)
+  if(cands[0] && cands[0].title){
+    const f = parseFitment(cands[0].title);
+    return {ok:true, exact:false, title:cands[0].title, ...f};
+  }
+  return {ok:false};
+}
+
+function statusOf(r){
+  if(!r.ok) return ["no","not found"];
+  if(!r.exact || !r.years || r.models.length===0) return ["rev","review"];
+  return ["ok","matched"];
+}
+
+function renderRow(i,t,r){
+  const tr = el("rows").children[i];
+  const [cls,label] = r ? statusOf(r) : ["wait","…"];
+  let make="",yrs="",models="",title="";
+  if(r&&r.ok){make=r.make||"";yrs=r.years||"";models=(r.models||[]).join(", ");title=r.title||"";}
+  tr.innerHTML =
+    '<td class="sku">'+esc(t.sku)+'</td>'+
+    '<td><span class="st '+cls+'">'+label+'</span></td>'+
+    '<td>'+esc(make)+'</td>'+
+    '<td class="yrs">'+esc(yrs)+'</td>'+
+    '<td class="models">'+esc(models)+'</td>'+
+    '<td class="rkstitle">'+esc(title)+'</td>';
+}
+
+function buildEmptyTable(){
+  el("rows").innerHTML = TARGETS.map(t=>
+    '<tr><td class="sku">'+esc(t.sku)+'</td><td><span class="st wait">…</span></td><td></td><td></td><td></td><td></td></tr>'
+  ).join("");
+}
+
+async function run(){
+  el("go").disabled=true; el("csv").disabled=true; el("json").disabled=true;
+  el("err").classList.remove("on");
+  el("barwrap").classList.add("on");
+  RESULTS=[]; buildEmptyTable();
+  let done=0, fails=0;
+  for(let i=0;i<TARGETS.length;i++){
+    const t=TARGETS[i];
+    let r;
+    try{ r = await lookup(t.sku); }
+    catch(e){ r={ok:false}; fails++; }
+    RESULTS.push({...t, ...r});
+    renderRow(i,t,r);
+    done++;
+    el("bar").style.width=(done/TARGETS.length*100)+"%";
+    el("count").textContent=done+" / "+TARGETS.length+" checked";
+    // if the very first few all hard-fail, it's almost certainly the wrong origin (CORS)
+    if(done===4 && fails===4){
+      el("err").classList.add("on");
+      el("err").innerHTML="⚠️ Couldn't reach Royal Key Supply from here. Open this page from your <strong>ckc-hub github.io</strong> site (not a local file and not inside a chat preview) — that's the origin RKS allows.";
+    }
+    await sleep(200);
+  }
+  el("go").disabled=false; el("go").textContent="Run Again";
+  el("csv").disabled=false; el("json").disabled=false;
+}
+
+function toCSV(){
+  const head=["SKU","Status","Make","Years","Models","Compatibility_JSON","Type","FCC","PN","Buttons","RKS_Title","CKC_Title"];
+  const lines=[head.join(",")];
+  for(const r of RESULTS){
+    const [,label]=r.ok?statusOf(r):["no","not found"];
+    const models=(r.models||[]);
+    const compat=JSON.stringify(models.map(m=>({make:r.make||"",model:m,years:r.years||""})));
+    const cell=v=>{v=(v==null?"":String(v));return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+    lines.push([r.sku,label,r.make||"",r.years||"",models.join("; "),compat,r.type||"",r.fcc||"",r.pn||"",r.btn||"",r.title||"",r.ckc||""].map(cell).join(","));
+  }
+  return lines.join("\n");
+}
+function downloadCSV(){
+  const blob=new Blob([toCSV()],{type:"text/csv"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download="rks_fitment_48.csv"; a.click();
+}
+function copyJSON(){
+  const out=RESULTS.map(r=>({sku:r.sku,make:r.make||"",years:r.years||"",models:r.models||[],type:r.type||"",fcc:r.fcc||"",pn:r.pn||"",rks_title:r.title||"",status:r.ok?statusOf(r)[1]:"not found"}));
+  navigator.clipboard.writeText(JSON.stringify(out,null,2)).then(()=>{
+    el("json").textContent="✓ Copied"; setTimeout(()=>el("json").textContent="⧉ Copy for Claude",1500);
+  });
+}
+
+buildEmptyTable();
+</script>
+</body>
+</html>
