@@ -97,11 +97,59 @@
   .script-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.68rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
   .script-text { font-size: 0.93rem; color: #c8b87a; font-style: italic; line-height: 1.7; padding: 13px 16px; background: rgba(201,162,39,0.05); border-left: 3px solid var(--gold); border-radius: 0 8px 8px 0; }
 
+  /* ═══════════════════════════════════════════════════════════
+     CUSTOMER QUOTE BUILDER  (added — uses your existing tokens)
+     ═══════════════════════════════════════════════════════════ */
+  .cust-section { padding: 18px 22px; border-top: 1px solid var(--border); }
+  .cust-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.68rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+  .cust-q { font-size: 0.85rem; color: var(--muted2); margin-bottom: 11px; }
+
+  .path-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .path-btn { padding: 14px 12px; border: 2px solid var(--border); background: #111; border-radius: 11px; cursor: pointer; text-align: center; transition: all 0.18s; -webkit-tap-highlight-color: transparent; }
+  .path-btn:hover { border-color: var(--muted2); }
+  .path-btn-q { font-family: 'Barlow Condensed', sans-serif; font-size: 0.7rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .path-btn-t { font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem; font-weight: 800; color: var(--text); }
+  .path-btn.aak.selected { border-color: var(--green); background: var(--green-bg); }
+  .path-btn.aak.selected .path-btn-t, .path-btn.aak.selected .path-btn-q { color: var(--green); }
+  .path-btn.akl.selected { border-color: var(--amber); background: var(--amber-bg); }
+  .path-btn.akl.selected .path-btn-t, .path-btn.akl.selected .path-btn-q { color: var(--amber); }
+
+  .vin-alert { margin: 16px 0 4px; background: var(--amber-bg); border: 2px solid var(--amber); border-radius: 12px; padding: 16px 18px; }
+  .vin-alert-title { font-family: 'Barlow Condensed', sans-serif; font-size: 1.5rem; font-weight: 900; letter-spacing: 1px; color: var(--amber); margin-bottom: 6px; line-height: 1; }
+  .vin-alert-body { font-size: 0.88rem; color: #e0b890; line-height: 1.55; margin-bottom: 13px; }
+  .vin-alert-btn { display: inline-block; background: var(--amber); color: #111; font-family: 'Barlow', sans-serif; font-weight: 700; font-size: 0.85rem; padding: 9px 16px; border-radius: 8px; text-decoration: none; }
+
+  .qb { margin-top: 16px; }
+  .qb-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .qb-field-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; display: block; }
+  .qb-input-wrap { position: relative; }
+  .qb-prefix { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--muted2); font-weight: 600; }
+  .qb-input { width: 100%; background: #1e1e1e; border: 2px solid var(--border); border-radius: 10px; padding: 12px 14px 12px 26px; color: var(--text); font-family: 'Barlow Semi Condensed', sans-serif; font-size: 1.2rem; font-weight: 700; outline: none; }
+  .qb-input:focus { border-color: var(--gold); }
+
+  .savings-card { background: var(--green-bg); border: 1px solid rgba(74,222,128,0.25); border-radius: 12px; padding: 14px 18px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .savings-card.zero { background: rgba(255,255,255,0.03); border-color: var(--border); }
+  .savings-card-left { font-size: 0.82rem; color: var(--muted2); }
+  .savings-card-right { text-align: right; }
+  .savings-card-amt { font-family: 'Barlow Condensed', sans-serif; font-size: 1.95rem; font-weight: 900; line-height: 1; color: var(--green); }
+  .savings-card-pct { font-size: 0.78rem; color: var(--green); font-weight: 600; margin-top: 3px; }
+  .savings-card.zero .savings-card-amt, .savings-card.zero .savings-card-pct { color: var(--muted); }
+
+  .stock-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .stock-btn { padding: 11px; border: 2px solid var(--border); background: #111; border-radius: 9px; cursor: pointer; text-align: center; font-family: 'Barlow', sans-serif; font-size: 0.85rem; font-weight: 600; color: var(--muted2); transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
+  .stock-btn.on { border-color: var(--gold); background: var(--gold-dim); color: var(--gold-light); }
+
+  .send-quote-btn { width: 100%; padding: 15px; background: var(--gold); color: #111; border: none; border-radius: 11px; font-family: 'Barlow', sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; -webkit-tap-highlight-color: transparent; }
+  .send-quote-btn:hover { background: var(--gold-light); transform: translateY(-1px); }
+  .send-quote-btn:disabled { background: #333; color: #555; cursor: not-allowed; transform: none; }
+  .qb-hint { font-size: 0.75rem; color: var(--muted); margin-top: 9px; text-align: center; line-height: 1.5; }
+
   @media (max-width: 520px) {
     .price-grid, .info-grid { grid-template-columns: 1fr; }
     .info-cell { border-right: none; border-bottom: 1px solid var(--border); }
     .ymm-row { grid-template-columns: 1fr; }
     .vin-row { flex-direction: column; }
+    .qb-row { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -376,6 +424,27 @@ const MAKE_NORMALIZE = {
 const TIER_LABELS = ['','Tier 1 — Standard OBD','Tier 2 — Advanced / BCM','Tier 3 — EEPROM / Module','Tier 4 — Quote by VIN'];
 const TIER_CLASS  = ['','t1','t2','t3','t4'];
 
+// ═══════════════════════════════════════════════════════════
+//  CUSTOMER-QUOTE LAYER  (added)
+// ═══════════════════════════════════════════════════════════
+const BOOKING_URL = 'https://calendar.app.google/xqirB3Dpfmub5rAb6';
+const AUTOSMART_URL = 'itms-apps://itunes.apple.com/app/id1459540790';
+
+// EDIT THESE to match your local market. These are the TYPICAL DEALER all-in
+// price (key + programming + cut) the customer would otherwise pay — used only
+// to show the "you save vs dealer" line. Keyed by tier, then service path.
+const DEALER_BENCHMARK = {
+  1: { aak: 200, akl: 275 },   // standard transponder
+  2: { aak: 450, akl: 525 },   // smart key / BCM
+  3: { aak: 600, akl: 850 },   // EEPROM / module (VW, Audi, Volvo, Mercedes)
+  4: { aak: 750, akl: 1050 }   // BMW / MINI CAS, or unknown
+};
+
+var _ctx = null;            // { make, year, label, rule, tier }
+var _chosenPath = '';       // 'aak' | 'akl'
+var _stockState = 'instock';// 'instock' | 'order'
+var _lookupHadVIN = false;  // true when this lookup came from a real VIN
+
 function decodeYear(vin) {
   const c = vin[9];
   const yr1 = YEAR_MAP[c]; const yr2 = YEAR_MAP2[c];
@@ -409,6 +478,11 @@ function findInMatrix(make, year) {
 }
 function flagClass(t) { return {warn:'flag-warn',info:'flag-info',danger:'flag-danger',success:'flag-success'}[t]||'flag-info'; }
 
+// Does this vehicle rule call for a VIN to confirm the exact key/procedure?
+function ruleNeedsVIN(r) { return (r.flags || []).some(function(f){ return /vin/i.test(f); }); }
+// Pull the first dollar number out of a range like "$150–$175" → 150
+function parseFirstNumber(str) { if (!str) return null; var m = String(str).match(/\d+(?:\.\d+)?/); return m ? parseFloat(m[0]) : null; }
+
 function renderResult(make, year, label, sourceNote) {
   const err = document.getElementById('error-bar');
   const pill = document.getElementById('decoded-pill');
@@ -416,6 +490,11 @@ function renderResult(make, year, label, sourceNote) {
   err.style.display = 'none'; pill.style.display = 'none'; card.style.display = 'none';
   const matched = findInMatrix(make, year);
   const r = matched.rule;
+
+  // store context for the customer-quote layer + reset its state
+  _ctx = { make: make, year: year, label: label, rule: r, tier: r.tier };
+  _chosenPath = ''; _stockState = 'instock';
+
   pill.innerHTML = sourceNote; pill.style.display = 'block';
   const flagsHTML = r.flags.map(f => {
     const i = f.indexOf(':'); const type = f.slice(0,i); const text = f.slice(i+1);
@@ -436,9 +515,140 @@ function renderResult(make, year, label, sourceNote) {
       '<div class="info-cell"><div class="info-cell-label">Est. time on-site</div><div class="info-cell-value">' + r.time + '</div></div>' +
     '</div>' +
     (flagsHTML ? '<div class="flags-section">' + flagsHTML + '</div>' : '') +
-    '<div class="script-section"><div class="script-label">Suggested phone line</div><div class="script-text">"' + r.script + '"</div></div>';
+    '<div class="script-section"><div class="script-label">Suggested phone line</div><div class="script-text">"' + r.script + '"</div></div>' +
+    customerSectionHTML();
   card.style.display = 'block';
   card.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+// The "Build customer quote" block appended under each result.
+function customerSectionHTML() {
+  return '<div class="cust-section">' +
+    '<div class="cust-label">Build customer quote</div>' +
+    '<div class="cust-q">Ask: <strong style="color:var(--text);">"Do you have a working key?"</strong> — then pick one.</div>' +
+    '<div class="path-row">' +
+      '<div class="path-btn aak" id="path-aak" onclick="choosePath(\'aak\')"><div class="path-btn-q">Has a working key</div><div class="path-btn-t">Add-a-Key</div></div>' +
+      '<div class="path-btn akl" id="path-akl" onclick="choosePath(\'akl\')"><div class="path-btn-q">All keys lost</div><div class="path-btn-t">AKL</div></div>' +
+    '</div>' +
+    '<div id="qb-area"></div>' +
+  '</div>';
+}
+
+function vinAlertHTML() {
+  return '<div class="vin-alert">' +
+    '<div class="vin-alert-title">⚠️ ASK FOR THE VIN</div>' +
+    '<div class="vin-alert-body">This year and model has more than one key configuration. Confirm the exact key against the customer\'s VIN in AutoSmart before you lock this price — especially for all keys lost.</div>' +
+    '<a class="vin-alert-btn" href="' + AUTOSMART_URL + '">Open AutoSmart →</a>' +
+  '</div>';
+}
+
+function choosePath(path) {
+  if (!_ctx) return;
+  _chosenPath = path;
+  document.getElementById('path-aak').classList.toggle('selected', path === 'aak');
+  document.getElementById('path-akl').classList.toggle('selected', path === 'akl');
+
+  var r = _ctx.rule;
+  var laborStr = (path === 'aak') ? r.aak : r.akl;
+  var defYour = parseFirstNumber(laborStr);            // starting point (low end of labor)
+  var dealer = (DEALER_BENCHMARK[_ctx.tier] && DEALER_BENCHMARK[_ctx.tier][path]) || '';
+  var showVinAlert = ruleNeedsVIN(r) && !_lookupHadVIN;
+
+  _stockState = 'instock';
+
+  var area = document.getElementById('qb-area');
+  area.innerHTML =
+    (showVinAlert ? vinAlertHTML() : '') +
+    '<div class="qb">' +
+      '<div class="qb-row">' +
+        '<div><label class="qb-field-label">Your price (all-in)</label>' +
+          '<div class="qb-input-wrap"><span class="qb-prefix">$</span>' +
+          '<input class="qb-input" id="qb-your" type="number" inputmode="decimal" min="0" value="' + (defYour != null ? defYour : '') + '" oninput="recalcQuote()"></div></div>' +
+        '<div><label class="qb-field-label">Dealer price (est.)</label>' +
+          '<div class="qb-input-wrap"><span class="qb-prefix">$</span>' +
+          '<input class="qb-input" id="qb-dealer" type="number" inputmode="decimal" min="0" value="' + dealer + '" oninput="recalcQuote()"></div></div>' +
+      '</div>' +
+      '<div class="savings-card zero" id="qb-savings">' +
+        '<div class="savings-card-left">Customer saves vs dealer</div>' +
+        '<div class="savings-card-right"><div class="savings-card-amt" id="qb-save-amt">—</div><div class="savings-card-pct" id="qb-save-pct"></div></div>' +
+      '</div>' +
+      '<label class="qb-field-label">Key availability</label>' +
+      '<div class="stock-row">' +
+        '<div class="stock-btn on" id="stock-instock" onclick="setStock(\'instock\')">🟢 In stock — same day</div>' +
+        '<div class="stock-btn" id="stock-order" onclick="setStock(\'order\')">📦 Order — 2–3 days</div>' +
+      '</div>' +
+      '<button class="send-quote-btn" id="qb-send" onclick="textQuote()">📲 Text Quote to Customer</button>' +
+      '<div class="qb-hint">Your price is the all-in number you\'re quoting (labor + key). The labor range above is your starting point — add the key cost and adjust.</div>' +
+    '</div>';
+
+  recalcQuote();
+  area.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+function setStock(s) {
+  _stockState = s;
+  document.getElementById('stock-instock').classList.toggle('on', s === 'instock');
+  document.getElementById('stock-order').classList.toggle('on', s === 'order');
+}
+
+function recalcQuote() {
+  var yourEl = document.getElementById('qb-your');
+  var dealerEl = document.getElementById('qb-dealer');
+  var card = document.getElementById('qb-savings');
+  if (!yourEl || !card) return;
+  var your = parseFloat(yourEl.value);
+  var dealer = parseFloat(dealerEl.value);
+  var amtEl = document.getElementById('qb-save-amt');
+  var pctEl = document.getElementById('qb-save-pct');
+  var sendBtn = document.getElementById('qb-send');
+
+  sendBtn.disabled = !(your > 0);
+
+  if (your > 0 && dealer > your) {
+    var save = dealer - your;
+    var pct = Math.round(save / dealer * 100);
+    amtEl.textContent = '$' + save.toFixed(0);
+    pctEl.textContent = 'about ' + pct + '% less than the dealer';
+    card.classList.remove('zero');
+  } else {
+    amtEl.textContent = '—';
+    pctEl.textContent = '';
+    card.classList.add('zero');
+  }
+}
+
+function buildCustomerMessage(your, dealer) {
+  var svcName = (_chosenPath === 'aak') ? 'Add-a-Key (you have a working key)' : 'All Keys Lost';
+  var lines = [];
+  lines.push('SAVE THIS TEXT — Carolina Key Cutters');
+  lines.push('');
+  lines.push('Your quote for your ' + _ctx.label + ':');
+  lines.push(svcName);
+  lines.push('');
+  lines.push('Your price: $' + your.toFixed(0) + ' — all-in, mobile (we come to you)');
+  if (dealer > your) {
+    var save = dealer - your;
+    var pct = Math.round(save / dealer * 100);
+    lines.push('Dealer price: about $' + dealer.toFixed(0));
+    lines.push('You save: about $' + save.toFixed(0) + ' (' + pct + '% less than the dealer)');
+  }
+  lines.push('');
+  lines.push(_stockState === 'instock'
+    ? 'Key: in stock — same-day service available'
+    : 'Key: ordered — arrives in 2-3 days, then we come install & program it');
+  lines.push('');
+  lines.push('Book your appointment: ' + BOOKING_URL);
+  lines.push('Questions? Call or text (336) 510-9816');
+  return lines.join('\n');
+}
+
+function textQuote() {
+  if (!_ctx || !_chosenPath) return;
+  var your = parseFloat(document.getElementById('qb-your').value);
+  var dealer = parseFloat(document.getElementById('qb-dealer').value);
+  if (!(your > 0)) return;
+  var msg = buildCustomerMessage(your, dealer);
+  window.location.href = 'sms:&body=' + encodeURIComponent(msg);
 }
 
 function runLookup(mode) {
@@ -451,6 +661,7 @@ function runLookup(mode) {
     if (raw.length !== 17) { err.textContent = 'VIN must be exactly 17 characters.'; err.style.display = 'block'; return; }
     const v = decodeVin(raw);
     if (!v) { err.textContent = 'Could not identify make or year from that VIN. WMI: ' + raw.slice(0,3) + ' — verify at vpic.nhtsa.dot.gov.'; err.style.display = 'block'; return; }
+    _lookupHadVIN = true;
     renderResult(v.make, v.year, v.year + ' ' + v.make, 'Decoded: <strong>' + v.year + ' ' + v.make + '</strong> &nbsp;&middot;&nbsp; WMI: ' + v.wmi + ' &nbsp;&middot;&nbsp; Year code: ' + v.yearChar);
   } else {
     const yearVal = parseInt(document.getElementById('ymm-year').value);
@@ -458,6 +669,7 @@ function runLookup(mode) {
     const modelVal = document.getElementById('ymm-model').value;
     if (!yearVal || !makeVal || !modelVal) { err.textContent = 'Please select a year, make, and model.'; err.style.display = 'block'; return; }
     const internalMake = MAKE_NORMALIZE[makeVal] || makeVal.toUpperCase();
+    _lookupHadVIN = false;
     renderResult(internalMake, yearVal, yearVal + ' ' + makeVal + ' ' + modelVal, 'Looking up: <strong>' + yearVal + ' ' + makeVal + ' ' + modelVal + '</strong>');
   }
 }
