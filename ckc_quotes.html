@@ -153,6 +153,12 @@
   .send-quote-btn { width: 100%; padding: 15px; background: var(--gold); color: #111; border: none; border-radius: 11px; font-family: 'Barlow', sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; -webkit-tap-highlight-color: transparent; }
   .send-quote-btn:hover { background: var(--gold-light); transform: translateY(-1px); }
   .send-quote-btn:disabled { background: #333; color: #555; cursor: not-allowed; transform: none; }
+  .copy-quote-btn { width: 100%; padding: 13px; margin-top: 10px; background: #1a1a1a; color: var(--gold); border: 2px solid var(--gold); border-radius: 11px; font-family: 'Barlow', sans-serif; font-size: 0.95rem; font-weight: 700; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .copy-quote-btn:hover { background: var(--gold-dim); }
+  .qr-wrap { text-align: center; margin-top: 16px; }
+  .qr-label { font-size: 0.78rem; color: var(--muted2); margin-bottom: 10px; }
+  .qr-box { display: inline-block; background: #fff; padding: 10px; border-radius: 10px; min-height: 20px; }
+  .qr-box img, .qr-box canvas { display: block; }
   .qb-hint { font-size: 0.75rem; color: var(--muted); margin-top: 9px; text-align: center; line-height: 1.5; }
 
   .qb-tax-note { font-size: 0.74rem; color: var(--gold-light); text-align: center; margin: -6px 0 14px; }
@@ -253,6 +259,7 @@
 
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 const WMI_MAP = {
   '1FA':'FORD','1FB':'FORD','1FC':'FORD','1FD':'FORD','1FE':'FORD','1FF':'FORD',
@@ -652,6 +659,8 @@ function choosePath(path) {
       '<div class="qb-preview-label">📱 Preview — what the customer sees</div>' +
       '<div id="qb-preview"></div>' +
       '<button class="send-quote-btn" id="qb-send" onclick="textQuote()">📲 Text Quote to Customer</button>' +
+      '<button class="copy-quote-btn" id="qb-copy" onclick="copyQuote()">📋 Copy Quote (for desktop)</button>' +
+      '<div class="qr-wrap" id="qb-qr-wrap"><div class="qr-label">📱 Or scan with your iPhone to send it from your phone</div><div class="qr-box" id="qb-qr"></div></div>' +
       '<div class="qb-hint">All-in = service + key + tax (tax on the key only). Service is pre-filled from the matrix; key price comes over from command.html.</div>' +
     '</div>';
 
@@ -695,15 +704,61 @@ function recalcQuote() {
     card.classList.add('zero');
   }
   updatePreview();
+  renderQR();
+}
+
+function buildQuoteText(d) {
+  var svcName = (d.path === 'aak') ? 'Add-a-Key (working key present)' : 'All Keys Lost';
+  var keyLabel = d.keyType || d.keyTitle || 'Key';
+  var L = [];
+  L.push('Carolina Key Cutters — Your Quote');
+  L.push(d.vehicle);
+  L.push(svcName);
+  L.push('');
+  if (!isNaN(d.key) && d.key > 0) L.push('- ' + keyLabel + ': $' + d.key.toFixed(2));
+  if (!isNaN(d.labor) && d.labor > 0) L.push('- Mobile service (program + cut): $' + d.labor.toFixed(2));
+  if (d.tax > 0) L.push('- Sales tax (key): $' + d.tax.toFixed(2));
+  L.push('Total all-in: $' + d.allin.toFixed(2) + ' — we come to you');
+  if (d.dealer > d.allin) {
+    var s = d.dealer - d.allin; var p = Math.round(s / d.dealer * 100);
+    L.push('');
+    L.push('Dealer price ~$' + d.dealer.toFixed(0) + ' · You save ~$' + s.toFixed(0) + ' (' + p + '% less)');
+  }
+  L.push('');
+  L.push(d.stock === 'instock' ? 'Key: in stock — same-day service' : 'Key: ordered — arrives in 2-3 days, then we install');
+  if (d.sku) L.push('Part #: ' + d.sku);
+  L.push('');
+  L.push('Photo + full quote: ' + buildCustomerViewURL(d));
+  L.push('Book: ' + BOOKING_URL);
+  L.push('(336) 510-9816');
+  return L.join('\n');
 }
 
 function textQuote() {
   if (!_ctx || !_chosenPath) return;
   var d = gatherQuote();
   if (!(d.allin > 0)) return;
-  var url = buildCustomerViewURL(d);
-  var head = 'Carolina Key Cutters — your quote for your ' + d.vehicle + ': $' + d.allin.toFixed(0) + ' all-in, we come to you. Full quote + photo:\n' + url;
-  window.location.href = 'sms:&body=' + encodeURIComponent(head);
+  window.location.href = 'sms:&body=' + encodeURIComponent(buildQuoteText(d));
+}
+
+function fallbackCopy(txt) {
+  var ta = document.createElement('textarea');
+  ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try { document.execCommand('copy'); } catch (e) {}
+  document.body.removeChild(ta);
+}
+
+function copyQuote() {
+  if (!_ctx || !_chosenPath) return;
+  var d = gatherQuote();
+  if (!(d.allin > 0)) return;
+  var txt = buildQuoteText(d);
+  var btn = document.getElementById('qb-copy');
+  function done() { if (btn) { var o = btn.textContent; btn.textContent = '✅ Copied — paste into RingCentral or email'; setTimeout(function(){ btn.textContent = o; }, 2200); } }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(txt).then(done, function(){ fallbackCopy(txt); done(); });
+  } else { fallbackCopy(txt); done(); }
 }
 
 function runLookup(mode) {
@@ -821,6 +876,29 @@ function updatePreview() {
   if (box) box.innerHTML = buildCustomerQuoteHTML(gatherQuote(), false);
 }
 
+function renderQR() {
+  var box = document.getElementById('qb-qr');
+  if (!box) return;
+  box.innerHTML = '';
+  var d = gatherQuote();
+  if (!(d.allin > 0)) return;
+  if (typeof QRCode === 'undefined') {
+    box.innerHTML = '<span style="font-size:0.74rem;color:#888;">QR couldn\'t load — use Copy Quote instead.</span>';
+    return;
+  }
+  try {
+    new QRCode(box, { text: buildCustomerViewURL(d) + '&me=1', width: 180, height: 180, correctLevel: QRCode.CorrectLevel.L });
+  } catch (e) {
+    box.innerHTML = '<span style="font-size:0.74rem;color:#888;">QR unavailable — use Copy Quote instead.</span>';
+  }
+}
+
+var _cvData = null;
+function textFromCustomerView() {
+  if (!_cvData) return;
+  window.location.href = 'sms:&body=' + encodeURIComponent(buildQuoteText(_cvData));
+}
+
 function buildCustomerViewURL(d) {
   var p = new URLSearchParams();
   p.set('view', 'quote');
@@ -848,9 +926,12 @@ function renderCustomerFullView() {
             allin: (isNaN(labor) ? 0 : labor) + taxable + tax,
             dealer: parseFloat(q.get('dl')), stock: q.get('st') || 'instock',
             sku: q.get('sku') || '', keyType: q.get('kt') || '', keyTitle: q.get('ktitle') || '', img: q.get('img') || '' };
+  _cvData = d;
+  var isMe = q.get('me') === '1';
+  var meBtn = isMe ? '<button class="cust-quote-book" style="margin-top:14px;" onclick="textFromCustomerView()">📲 Text this to the customer</button>' : '';
   document.body.innerHTML =
     '<div class="header"><div><div class="header-logo">Carolina Key Cutters</div><div class="header-sub">Your Quote</div></div><div class="header-phone">(336) 510-9816</div></div>' +
-    '<div class="cust-view-wrap">' + buildCustomerQuoteHTML(d, true) + '</div>';
+    '<div class="cust-view-wrap">' + buildCustomerQuoteHTML(d, !isMe) + meBtn + '</div>';
 }
 
 function autoPopulate() {
