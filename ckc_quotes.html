@@ -315,6 +315,124 @@ const YEAR_MAP2 = {
   'J':2018,'K':2019,'L':2020,'M':2021,'N':2022,'P':2023,'R':2024,'S':2025,'T':2026
 };
 
+const MATRIX = [
+  { group:'Ford / Lincoln', makes:['FORD','LINCOLN'], rules:[
+    { test:v=>v.year>=2018, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'CarDAQ-Plus 3 + FDRS (NASTF VSP)',
+      flags:['danger:Autel dropped Ford immobilizer functions (2015+) — IM508 cannot program this','warn:FDRS via CarDAQ-Plus 3 + NASTF VSP required; 10-min security wait on 2021+','info:FDRS access surcharge applies; NASTF key code added on AKL'],
+      script:'That\'s a push-start Ford — since Ford locked down 2015-and-newer programming, this runs on dealer-level FDRS, not a standard tool. Add-a-key labor runs $150 to $175 plus FDRS access, key billed separately. Did you lose all your keys or are you adding one?' },
+    { test:v=>v.year>=2015, tier:2, keyType:'Transponder / Bladed Key', aak:'$75', akl:'$150–$175', time:'30–45 min AAK / 60–90 min AKL', tool:'CarDAQ-Plus 3 + FDRS (NASTF VSP)',
+      flags:['danger:Autel dropped Ford immobilizer functions (2015+) — IM508 cannot program this','warn:FDRS via CarDAQ-Plus 3 + NASTF VSP required','info:FDRS access surcharge applies; NASTF key code added on AKL'],
+      script:'Even though that\'s a bladed key, Ford locked down 2015-and-newer programming — it runs on dealer-level FDRS now. Add-a-key labor is $75 plus FDRS access, key billed separately. Are you adding a key or did you lose all of them?' },
+    { test:v=>true, tier:1, keyType:'Transponder Key', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+      flags:['success:Pre-2015 PATS — standard OBD, strong Autel coverage','info:F-150 / Escape / Explorer / Ranger / Mustang covered'],
+      script:'Good news — that\'s a pre-2015 Ford, standard transponder key. The $65 service call covers add-a-key, I come to you, done in under 30 minutes. What area are you in?' }
+  ]},
+  { group:'GM — Chevrolet / GMC / Buick / Cadillac', makes:['CHEVROLET','GMC','BUICK','CADILLAC','PONTIAC','SATURN','OLDSMOBILE'], rules:[
+    { test:v=>v.year>=2014, tier:2, keyType:'Remote Head Key / Smart Key', aak:'$150–$175', akl:'$300–$350', time:'45–60 min AAK / 90 min AKL', tool:'Autel IM508',
+      flags:['warn:Confirm RPO codes for push-start trim with VIN','info:BCM procedure — not standard OBD','info:NASTF key code added on AKL'],
+      script:'That\'s a newer GM with smart key programming. Add-a-key labor is $150 to $175, key separate. I\'ll need your VIN to confirm whether your trim has push-start — that affects the all-keys-lost price.' },
+    { test:v=>true, tier:1, keyType:'Transponder Key', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+      flags:['success:Standard OBD — PassLock / PassKey III covered','info:Silverado / Sierra / Tahoe / Suburban / Impala / Malibu','info:NASTF key code added on AKL'],
+      script:'That\'s a standard GM transponder — $65 service call covers add-a-key, I come to your location in 20 to 30 minutes. What part of the Triad are you in?' }
+  ]},
+  { group:'Chrysler / Dodge / Jeep / RAM', makes:['CHRYSLER','DODGE','JEEP','RAM'], rules:[
+    { test:v=>v.year>=2011, tier:2, keyType:'FOBIK / Smart Key', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'Autel IM508',
+      flags:['warn:AKL may require EEPROM on some trims — confirm with VIN before committing','warn:FOBIK procedure — not standard OBD','info:SGW (2018+) needs AutoAuth; NASTF key code added on AKL'],
+      script:'That\'s a FOBIK vehicle — programming is different from a standard key and the $65 service call doesn\'t apply. Add-a-key runs $150 to $175 labor. For all keys lost I need your VIN first — the method varies by trim.' },
+    { test:v=>true, tier:1, keyType:'Transponder / Remote Head Key', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+      flags:['success:Standard SKIM procedure — OBD covered','info:NASTF key code added on AKL'],
+      script:'That\'s a standard transponder — $65 service call covers add-a-key, I come to your location. What part of the Triad are you in?' }
+  ]},
+  { group:'Toyota / Lexus / Scion', makes:['TOYOTA','LEXUS','SCION'], rules:[
+    { test:v=>v.year>=2010, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'Autel IM508 (AAK) · CarDAQ + Techstream (AKL)',
+      flags:['warn:Autel lost Toyota/Lexus AKL — add-a-key still works on the IM508, but AKL needs Techstream via CarDAQ + NASTF','info:Toyota dealer access + NASTF key code added on AKL only'],
+      script:'That Toyota has push-start. Adding a key I can do on-site — but all keys lost on a Toyota now runs through dealer Techstream, so there\'s a dealer-access charge on top. Are you adding a key, or did you lose all of them?' },
+    { test:v=>true, tier:1, keyType:'Transponder Key (TOY43/TOY47)', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508 (AAK) · CarDAQ + Techstream (AKL)',
+      flags:['success:Add-a-key — standard OBD on the IM508','warn:All keys lost runs through Techstream via CarDAQ + NASTF — dealer access surcharge applies'],
+      script:'That\'s a standard Toyota transponder. Add-a-key is a $65 service call, I come to you. All keys lost runs through dealer Techstream with a dealer-access charge — which situation are you in?' }
+  ]},
+  { group:'Honda / Acura', makes:['HONDA','ACURA'], rules:[
+    { test:v=>v.year>=2013, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$350–$450', time:'60 min AAK / 90+ min AKL', tool:'Autel IM508 + possible bench',
+      flags:['danger:AKL on 2013+ Honda/Acura smart key typically requires EEPROM — bench work likely','warn:Do not commit to AKL price without confirming first','info:AAK handled via PIN procedure on Autel; NASTF key code added on AKL'],
+      script:'Newer Honda with push-start — add-a-key I can handle on-site for $150 to $175. All keys lost on that one may require bench work — I need your VIN before I can give you a firm price.' },
+    { test:v=>true, tier:1, keyType:'Transponder Key (HO01/HON66)', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+      flags:['success:Standard Honda CMFI — OBD covered','info:NASTF key code added on AKL'],
+      script:'That\'s a standard Honda transponder — $65 service call, I come to you, done in under 30 minutes. What part of the Triad are you in?' }
+  ]},
+  { group:'Nissan / Infiniti', makes:['NISSAN','INFINITI'], rules:[
+    { test:v=>v.year>=2007, tier:2, keyType:'Smart Key / Proximity (NSN14)', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'Autel IM508',
+      flags:['warn:NATS 5/6 BCM access required — not standard OBD','info:VIN required before committing to AKL price','info:NASTF key code added on AKL'],
+      script:'That Nissan has push-start smart key — different procedure from a standard key. Add-a-key labor is $150 to $175, key separate. All keys lost I\'ll need your VIN to confirm the exact procedure before I quote.' },
+    { test:v=>true, tier:1, keyType:'Transponder Key (NSN11/NSN14)', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+      flags:['success:Standard NATS OBD — reliable Autel coverage','info:NASTF key code added on AKL'],
+      script:'Standard Nissan transponder — $65 service call covers add-a-key, I come to you. What area are you in?' }
+  ]},
+  { group:'Hyundai / Kia', makes:['HYUNDAI','KIA'], rules:[
+    { test:v=>v.year>=2012, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$300–$350', time:'45–60 min AAK / 90 min AKL', tool:'Autel IM508',
+      flags:['warn:AKL method depends on immo generation — confirm with VIN','info:PIN or BCM procedure for AAK via Autel','info:NASTF key code added on AKL'],
+      script:'Newer Hyundai or Kia with push-start — add-a-key labor is $150 to $175. All keys lost varies by the immo version — I need the VIN to confirm the procedure and price before we schedule anything.' },
+    { test:v=>true, tier:1, keyType:'Transponder Key (HY20/HY22)', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+      flags:['success:Standard OBD — strong Autel coverage','info:NASTF key code added on AKL'],
+      script:'Standard Hyundai or Kia transponder — $65 service call covers add-a-key, I come to you. What area are you in?' }
+  ]},
+  { group:'Genesis', makes:['GENESIS'], rules:[
+    { test:v=>true, tier:3, keyType:'Smart Key / Proximity', aak:'$175–$225', akl:'$350–$450', time:'60–90 min AAK', tool:'Autel IM508',
+      flags:['warn:Genesis BCM more complex than standard Hyundai/Kia','warn:VIN required before AKL — confirm Autel coverage first','info:NASTF key code added on AKL'],
+      script:'Genesis smart key programming is more involved than a standard Hyundai or Kia. Add-a-key labor runs $175 to $225. For all keys lost I\'ll need your VIN to confirm coverage before I give you a firm price.' }
+  ]},
+  { group:'Subaru', makes:['SUBARU'], rules:[
+    { test:v=>v.year>=2018, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'Autel IM508',
+      flags:['info:Push-start Subaru 2018+ — BCM procedure','warn:Confirm VIN for AKL before quoting','info:NASTF key code added on AKL'],
+      script:'Newer Subaru with push-start — add-a-key labor is $150 to $175. All keys lost I\'ll want your VIN to confirm the procedure first.' },
+    { test:v=>true, tier:1, keyType:'Transponder Key', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+      flags:['success:Standard OBD — good Autel coverage','info:NASTF key code added on AKL'],
+      script:'Standard Subaru transponder — $65 service call, done in under 30 minutes. What part of the Triad are you in?' }
+  ]},
+  { group:'Mazda / Mitsubishi', makes:['MAZDA','MITSUBISHI'], rules:[
+    { test:v=>v.year>=2014, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'Autel IM508',
+      flags:['warn:Confirm immo generation with VIN for AKL','info:BCM procedure for push-start models','info:NASTF key code added on AKL'],
+      script:'That\'s a newer push-start model — smart key labor runs $150 to $175 for add-a-key. I\'ll need the VIN to confirm the all-keys-lost procedure before quoting.' },
+    { test:v=>true, tier:1, keyType:'Transponder Key', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+      flags:['success:Standard OBD covered','info:NASTF key code added on AKL'],
+      script:'Standard transponder — $65 service call, done in under 30 minutes. What part of the Triad are you in?' }
+  ]},
+  { group:'BMW / MINI', makes:['BMW','MINI'], rules:[
+    { test:v=>true, tier:4, keyType:'Smart Key / CAS Module', aak:'$250–$350', akl:'$450–$600+', time:'90–120 min AAK', tool:'Autel IM508 + KTAG',
+      flags:['danger:BMW/MINI CAS/FEM — EEPROM access required on all procedures','danger:AKL often requires bench work — confirm before dispatch','warn:VIN required before committing to any price','info:NASTF key code added on AKL'],
+      script:'BMW or MINI smart key requires EEPROM-level access — more involved than most vehicles. Add-a-key labor runs $250 to $350. For all keys lost I need your VIN before I can give you an accurate price.' }
+  ]},
+  { group:'Mercedes-Benz', makes:['MERCEDES-BENZ'], rules:[
+    { test:v=>true, tier:3, keyType:'Smart Key / EIS Module', aak:'$200–$300', akl:'$400–$600+', time:'90–120 min AAK', tool:'Autel IM508 + KTAG',
+      flags:['danger:EIS EEPROM required — not standard OBD','danger:AKL likely requires EIS replacement + bench programming','warn:VIN required — procedure varies by year','info:NASTF key code added on AKL'],
+      script:'Mercedes smart key programming requires EIS module access — it\'s a more complex job. Add-a-key labor runs $200 to $300. All keys lost on a Mercedes is a significant job — I need the VIN before I can give you a firm price.' }
+  ]},
+  { group:'Volkswagen / Audi', makes:['VOLKSWAGEN','AUDI'], rules:[
+    { test:v=>v.year>=2015, tier:3, keyType:'Smart Key / MQB Platform', aak:'$200–$250', akl:'$350–$500', time:'90+ min AAK', tool:'Autel IM508 + KTAG',
+      flags:['danger:MQB platform — EEPROM read likely for AAK','danger:AKL may require bench work','warn:VIN required before committing to any price','info:NASTF key code added on AKL'],
+      script:'Newer VW or Audi on the MQB platform — key programming requires EEPROM access. Add-a-key labor is $200 to $250. All keys lost I need the VIN first — bench work may be required.' },
+    { test:v=>true, tier:2, keyType:'Transponder / Remote Head (HU66)', aak:'$150–$200', akl:'$300–$400', time:'60–90 min AAK', tool:'Autel IM508',
+      flags:['warn:PIN required for AAK — confirm immo generation with VIN','info:Immo3/4 handled by Autel OBD','info:NASTF key code added on AKL'],
+      script:'That VW or Audi requires a PIN for key programming — not a standard OBD job. Add-a-key labor runs $150 to $200. I\'ll need your VIN to confirm the exact procedure before quoting all keys lost.' }
+  ]},
+  { group:'Volvo', makes:['VOLVO'], rules:[
+    { test:v=>true, tier:3, keyType:'Smart Key / CEM Module', aak:'$200–$275', akl:'$350–$500', time:'90 min AAK', tool:'Autel IM508',
+      flags:['warn:CEM module controls immobilizer — VIN required','danger:AKL may require CEM bench work — confirm coverage first','info:NASTF key code added on AKL'],
+      script:'Volvo smart key works through the CEM module — I need your VIN to confirm whether I can do this on-site or if it requires bench work. Add-a-key is $200 to $275.' }
+  ]}
+];
+
+const MAKE_NORMALIZE = {
+  'Ford':'FORD','Lincoln':'LINCOLN','Chevrolet':'CHEVROLET','GMC':'GMC','Buick':'BUICK',
+  'Cadillac':'CADILLAC','Pontiac':'PONTIAC','Saturn':'SATURN','Oldsmobile':'OLDSMOBILE',
+  'Dodge':'DODGE','RAM':'RAM','Chrysler':'CHRYSLER','Jeep':'JEEP',
+  'Toyota':'TOYOTA','Lexus':'LEXUS','Scion':'SCION',
+  'Honda':'HONDA','Acura':'ACURA','Nissan':'NISSAN','Infiniti':'INFINITI',
+  'Hyundai':'HYUNDAI','Kia':'KIA','Genesis':'GENESIS',
+  'Subaru':'SUBARU','Mazda':'MAZDA','Mitsubishi':'MITSUBISHI',
+  'BMW':'BMW','MINI':'MINI','Mercedes-Benz':'MERCEDES-BENZ',
+  'Audi':'AUDI','Volkswagen':'VOLKSWAGEN','Volvo':'VOLVO'
+};
+
 const YMM_DATA = {
   'Ford':['Bronco','Edge','Escape','Expedition','Explorer','F-150','F-250','F-350','Focus','Fusion','Maverick','Mustang','Ranger','Transit'],
   'Lincoln':['Aviator','Corsair','MKZ','Nautilus','Navigator'],
@@ -350,121 +468,6 @@ const YMM_DATA = {
   'Volvo':['S60','S90','V60','V90','XC40','XC60','XC90']
 };
 
-const MATRIX = [
-  { group:'Ford / Lincoln', makes:['FORD','LINCOLN'], rules:[
-    { test:v=>v.year>=2018, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'Autel IM508',
-      flags:['warn:Confirm PATS generation with VIN before quoting AKL','info:BCM access required — not standard OBD'],
-      script:'That\'s a push-start Ford — smart key programming is more involved than a standard key. Add-a-key labor runs $150 to $175, key billed separately. Did you lose all your keys or are you adding one?' },
-    { test:v=>true, tier:1, keyType:'Transponder Key', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
-      flags:['success:Standard OBD — strong Autel coverage','info:F-150 / Escape / Explorer / Ranger / Mustang covered'],
-      script:'Good news — that\'s a standard transponder key. The $65 service call covers add-a-key, I come to you, done in under 30 minutes. What area are you in?' }
-  ]},
-  { group:'GM — Chevrolet / GMC / Buick / Cadillac', makes:['CHEVROLET','GMC','BUICK','CADILLAC','PONTIAC','SATURN','OLDSMOBILE'], rules:[
-    { test:v=>v.year>=2014, tier:2, keyType:'Remote Head Key / Smart Key', aak:'$150–$175', akl:'$300–$350', time:'45–60 min AAK / 90 min AKL', tool:'Autel IM508',
-      flags:['warn:Confirm RPO codes for push-start trim with VIN','info:BCM procedure — not standard OBD'],
-      script:'That\'s a newer GM with smart key programming. Add-a-key labor is $150 to $175, key separate. I\'ll need your VIN to confirm whether your trim has push-start — that affects the all-keys-lost price.' },
-    { test:v=>true, tier:1, keyType:'Transponder Key', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
-      flags:['success:Standard OBD — PassLock / PassKey III covered','info:Silverado / Sierra / Tahoe / Suburban / Impala / Malibu'],
-      script:'That\'s a standard GM transponder — $65 service call covers add-a-key, I come to your location in 20 to 30 minutes. What part of the Triad are you in?' }
-  ]},
-  { group:'Chrysler / Dodge / Jeep / RAM', makes:['CHRYSLER','DODGE','JEEP','RAM'], rules:[
-    { test:v=>v.year>=2011, tier:2, keyType:'FOBIK / Smart Key', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'Autel IM508',
-      flags:['warn:AKL may require EEPROM on some trims — confirm with VIN before committing','warn:FOBIK procedure — not standard OBD'],
-      script:'That\'s a FOBIK vehicle — programming is different from a standard key and the $65 service call doesn\'t apply. Add-a-key runs $150 to $175 labor. For all keys lost I need your VIN first — the method varies by trim.' },
-    { test:v=>true, tier:1, keyType:'Transponder / Remote Head Key', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
-      flags:['success:Standard SKIM procedure — OBD covered'],
-      script:'That\'s a standard transponder — $65 service call covers add-a-key, I come to your location. What part of the Triad are you in?' }
-  ]},
-  { group:'Toyota / Lexus / Scion', makes:['TOYOTA','LEXUS','SCION'], rules:[
-    { test:v=>v.year>=2010, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'Autel IM508',
-      flags:['warn:Smart key generation varies by year — confirm with VIN for AKL','info:BCM / smart key module access required'],
-      script:'That Toyota has push-start — smart key programming is a different procedure. Add-a-key labor runs $150 to $175, key separate. For all keys lost I need the VIN to confirm which procedure applies before I give you a firm price.' },
-    { test:v=>true, tier:1, keyType:'Transponder Key (TOY43/TOY47)', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
-      flags:['success:Standard OBD — excellent Autel coverage'],
-      script:'Great news — that\'s a standard Toyota transponder. The $65 service call covers add-a-key, I come to you, done in under 30 minutes. What area are you in?' }
-  ]},
-  { group:'Honda / Acura', makes:['HONDA','ACURA'], rules:[
-    { test:v=>v.year>=2013, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$350–$450', time:'60 min AAK / 90+ min AKL', tool:'Autel IM508 + possible bench',
-      flags:['danger:AKL on 2013+ Honda/Acura smart key typically requires EEPROM — bench work likely','warn:Do not commit to AKL price without confirming first','info:AAK handled via PIN procedure on Autel'],
-      script:'Newer Honda with push-start — add-a-key I can handle on-site for $150 to $175. All keys lost on that one may require bench work — I need your VIN before I can give you a firm price.' },
-    { test:v=>true, tier:1, keyType:'Transponder Key (HO01/HON66)', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
-      flags:['success:Standard Honda CMFI — OBD covered'],
-      script:'That\'s a standard Honda transponder — $65 service call, I come to you, done in under 30 minutes. What part of the Triad are you in?' }
-  ]},
-  { group:'Nissan / Infiniti', makes:['NISSAN','INFINITI'], rules:[
-    { test:v=>v.year>=2007, tier:2, keyType:'Smart Key / Proximity (NSN14)', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'Autel IM508',
-      flags:['warn:NATS 5/6 BCM access required — not standard OBD','info:VIN required before committing to AKL price'],
-      script:'That Nissan has push-start smart key — different procedure from a standard key. Add-a-key labor is $150 to $175, key separate. All keys lost I\'ll need your VIN to confirm the exact procedure before I quote.' },
-    { test:v=>true, tier:1, keyType:'Transponder Key (NSN11/NSN14)', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
-      flags:['success:Standard NATS OBD — reliable Autel coverage'],
-      script:'Standard Nissan transponder — $65 service call covers add-a-key, I come to you. What area are you in?' }
-  ]},
-  { group:'Hyundai / Kia', makes:['HYUNDAI','KIA'], rules:[
-    { test:v=>v.year>=2012, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$300–$350', time:'45–60 min AAK / 90 min AKL', tool:'Autel IM508',
-      flags:['warn:AKL method depends on immo generation — confirm with VIN','info:PIN or BCM procedure for AAK via Autel'],
-      script:'Newer Hyundai or Kia with push-start — add-a-key labor is $150 to $175. All keys lost varies by the immo version — I need the VIN to confirm the procedure and price before we schedule anything.' },
-    { test:v=>true, tier:1, keyType:'Transponder Key (HY20/HY22)', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
-      flags:['success:Standard OBD — strong Autel coverage'],
-      script:'Standard Hyundai or Kia transponder — $65 service call covers add-a-key, I come to you. What area are you in?' }
-  ]},
-  { group:'Genesis', makes:['GENESIS'], rules:[
-    { test:v=>true, tier:3, keyType:'Smart Key / Proximity', aak:'$175–$225', akl:'$350–$450', time:'60–90 min AAK', tool:'Autel IM508',
-      flags:['warn:Genesis BCM more complex than standard Hyundai/Kia','warn:VIN required before AKL — confirm Autel coverage first'],
-      script:'Genesis smart key programming is more involved than a standard Hyundai or Kia. Add-a-key labor runs $175 to $225. For all keys lost I\'ll need your VIN to confirm coverage before I give you a firm price.' }
-  ]},
-  { group:'Subaru', makes:['SUBARU'], rules:[
-    { test:v=>v.year>=2018, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'Autel IM508',
-      flags:['info:Push-start Subaru 2018+ — BCM procedure','warn:Confirm VIN for AKL before quoting'],
-      script:'Newer Subaru with push-start — add-a-key labor is $150 to $175. All keys lost I\'ll want your VIN to confirm the procedure first.' },
-    { test:v=>true, tier:1, keyType:'Transponder Key', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
-      flags:['success:Standard OBD — good Autel coverage'],
-      script:'Standard Subaru transponder — $65 service call, done in under 30 minutes. What part of the Triad are you in?' }
-  ]},
-  { group:'Mazda / Mitsubishi', makes:['MAZDA','MITSUBISHI'], rules:[
-    { test:v=>v.year>=2014, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'Autel IM508',
-      flags:['warn:Confirm immo generation with VIN for AKL','info:BCM procedure for push-start models'],
-      script:'That\'s a newer push-start model — smart key labor runs $150 to $175 for add-a-key. I\'ll need the VIN to confirm the all-keys-lost procedure before quoting.' },
-    { test:v=>true, tier:1, keyType:'Transponder Key', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
-      flags:['success:Standard OBD covered'],
-      script:'Standard transponder — $65 service call, done in under 30 minutes. What part of the Triad are you in?' }
-  ]},
-  { group:'BMW / MINI', makes:['BMW','MINI'], rules:[
-    { test:v=>true, tier:4, keyType:'Smart Key / CAS Module', aak:'$250–$350', akl:'$450–$600+', time:'90–120 min AAK', tool:'Autel IM508 + KTAG',
-      flags:['danger:BMW/MINI CAS/FEM — EEPROM access required on all procedures','danger:AKL often requires bench work — confirm before dispatch','warn:VIN required before committing to any price'],
-      script:'BMW or MINI smart key requires EEPROM-level access — more involved than most vehicles. Add-a-key labor runs $250 to $350. For all keys lost I need your VIN before I can give you an accurate price.' }
-  ]},
-  { group:'Mercedes-Benz', makes:['MERCEDES-BENZ'], rules:[
-    { test:v=>true, tier:3, keyType:'Smart Key / EIS Module', aak:'$200–$300', akl:'$400–$600+', time:'90–120 min AAK', tool:'Autel IM508 + KTAG',
-      flags:['danger:EIS EEPROM required — not standard OBD','danger:AKL likely requires EIS replacement + bench programming','warn:VIN required — procedure varies by year'],
-      script:'Mercedes smart key programming requires EIS module access — it\'s a more complex job. Add-a-key labor runs $200 to $300. All keys lost on a Mercedes is a significant job — I need the VIN before I can give you a firm price.' }
-  ]},
-  { group:'Volkswagen / Audi', makes:['VOLKSWAGEN','AUDI'], rules:[
-    { test:v=>v.year>=2015, tier:3, keyType:'Smart Key / MQB Platform', aak:'$200–$250', akl:'$350–$500', time:'90+ min AAK', tool:'Autel IM508 + KTAG',
-      flags:['danger:MQB platform — EEPROM read likely for AAK','danger:AKL may require bench work','warn:VIN required before committing to any price'],
-      script:'Newer VW or Audi on the MQB platform — key programming requires EEPROM access. Add-a-key labor is $200 to $250. All keys lost I need the VIN first — bench work may be required.' },
-    { test:v=>true, tier:2, keyType:'Transponder / Remote Head (HU66)', aak:'$150–$200', akl:'$300–$400', time:'60–90 min AAK', tool:'Autel IM508',
-      flags:['warn:PIN required for AAK — confirm immo generation with VIN','info:Immo3/4 handled by Autel OBD'],
-      script:'That VW or Audi requires a PIN for key programming — not a standard OBD job. Add-a-key labor runs $150 to $200. I\'ll need your VIN to confirm the exact procedure before quoting all keys lost.' }
-  ]},
-  { group:'Volvo', makes:['VOLVO'], rules:[
-    { test:v=>true, tier:3, keyType:'Smart Key / CEM Module', aak:'$200–$275', akl:'$350–$500', time:'90 min AAK', tool:'Autel IM508',
-      flags:['warn:CEM module controls immobilizer — VIN required','danger:AKL may require CEM bench work — confirm coverage first'],
-      script:'Volvo smart key works through the CEM module — I need your VIN to confirm whether I can do this on-site or if it requires bench work. Add-a-key is $200 to $275.' }
-  ]}
-];
-
-const MAKE_NORMALIZE = {
-  'Ford':'FORD','Lincoln':'LINCOLN','Chevrolet':'CHEVROLET','GMC':'GMC','Buick':'BUICK',
-  'Cadillac':'CADILLAC','Pontiac':'PONTIAC','Saturn':'SATURN','Oldsmobile':'OLDSMOBILE',
-  'Dodge':'DODGE','RAM':'RAM','Chrysler':'CHRYSLER','Jeep':'JEEP',
-  'Toyota':'TOYOTA','Lexus':'LEXUS','Scion':'SCION',
-  'Honda':'HONDA','Acura':'ACURA','Nissan':'NISSAN','Infiniti':'INFINITI',
-  'Hyundai':'HYUNDAI','Kia':'KIA','Genesis':'GENESIS',
-  'Subaru':'SUBARU','Mazda':'MAZDA','Mitsubishi':'MITSUBISHI',
-  'BMW':'BMW','MINI':'MINI','Mercedes-Benz':'MERCEDES-BENZ',
-  'Audi':'AUDI','Volkswagen':'VOLKSWAGEN','Volvo':'VOLVO'
-};
-
 const TIER_LABELS = ['','Tier 1 — Standard OBD','Tier 2 — Advanced / BCM','Tier 3 — EEPROM / Module','Tier 4 — Quote by VIN'];
 const TIER_CLASS  = ['','t1','t2','t3','t4'];
 
@@ -487,6 +490,41 @@ const DEALER_BENCHMARK = {
 // Sales tax applies to the KEY only (tangible goods) — never to labor/service.
 // Default: Forsyth County, NC = 7.00% (4.75% state + 2.25% county). Edit if your rate changes.
 const TAX_RATE = 0.07;
+
+// ── ACCESS SURCHARGES (folded into the single service line on the invoice, itemized on the quote) ──
+// FDRS access:   Ford/Lincoln 2015+ — Autel can't touch these; runs on FDRS via CarDAQ. ($1,200/yr annual amortized.)
+// NASTF key code: any AKL that pulls a NASTF/OEM security code. (Skips pre-2015 Ford offline PATS.)
+// Toyota access:  Toyota/Lexus/Scion AKL only — 2-day Techstream/TIS pass billed straight through.
+// These are service charges (NOT taxed in NC) and ride on the untaxed labor line. To change an amount,
+// edit the constant below — nothing else needs to change.
+const SURCHARGE_FDRS   = 30;
+const SURCHARGE_NASTF  = 30;
+const SURCHARGE_TOYOTA = 35;
+
+function computeSurcharges(make, year, path) {
+  var out = [];
+  var mk = (make || '').toUpperCase();
+  var yr = parseInt(year) || 0;
+  var isFord   = (mk === 'FORD' || mk === 'LINCOLN');
+  var isToyota = (mk === 'TOYOTA' || mk === 'LEXUS' || mk === 'SCION');
+  if (isFord && yr >= 2015) out.push({ label: 'FDRS access', amount: SURCHARGE_FDRS });
+  if (path === 'akl' && !(isFord && yr < 2015)) out.push({ label: 'NASTF key code', amount: SURCHARGE_NASTF });
+  if (isToyota && path === 'akl') out.push({ label: 'Toyota dealer access', amount: SURCHARGE_TOYOTA });
+  return out;
+}
+function surchargeTotal(list) {
+  var t = 0; (list || []).forEach(function(s){ t += s.amount; }); return t;
+}
+function encodeSurcharges(list) {
+  return (list || []).map(function(s){ return s.label + '~' + s.amount; }).join('|');
+}
+function decodeSurcharges(str) {
+  if (!str) return [];
+  return str.split('|').map(function(p){
+    var i = p.lastIndexOf('~');
+    return { label: p.slice(0, i), amount: parseFloat(p.slice(i + 1)) || 0 };
+  }).filter(function(s){ return s.label; });
+}
 
 var _ctx = null;            // { make, year, label, rule, tier }
 var _chosenPath = '';       // 'aak' | 'akl'
@@ -663,7 +701,7 @@ function choosePath(path) {
       '<button class="send-quote-btn" id="qb-send" onclick="textQuote()">📲 Text Quote to Customer</button>' +
       '<button class="copy-quote-btn" id="qb-copy" onclick="copyQuote()">📋 Copy Quote (for desktop)</button>' +
       '<div class="qr-wrap" id="qb-qr-wrap"><div class="qr-label">📱 Or scan with your iPhone to send it from your phone</div><div class="qr-box" id="qb-qr"></div></div>' +
-      '<div class="qb-hint">All-in = service + key + tax (tax on the key only). Service is pre-filled from the matrix; key price comes over from command.html.</div>' +
+      '<div class="qb-hint">All-in = service + access fees + key + tax (tax on the key only). Access fees (FDRS / NASTF / Toyota) are added automatically by make, year, and service type, and fold into the single service line on the invoice. Service is pre-filled from the matrix; key price comes over from command.html.</div>' +
     '</div>';
 
   setStock(_stockState);
@@ -685,7 +723,10 @@ function recalcQuote() {
   var taxEl = document.getElementById('qb-tax');
   if (taxEl) {
     var ratePct = (TAX_RATE * 100).toFixed(2).replace(/\.?0+$/, '');
-    taxEl.textContent = d.tax > 0 ? ('Includes $' + d.tax.toFixed(2) + ' sales tax on the key (' + ratePct + '%) — labor is not taxed') : '';
+    var parts = [];
+    if (d.tax > 0) parts.push('$' + d.tax.toFixed(2) + ' sales tax on the key (' + ratePct + '%) — labor & access fees are not taxed');
+    if (d.surchargeTotal > 0) parts.push('includes $' + d.surchargeTotal.toFixed(2) + ' access fees (' + d.surcharges.map(function(s){ return s.label; }).join(' + ') + ')');
+    taxEl.textContent = parts.join(' · ');
   }
 
   var card = document.getElementById('qb-savings');
@@ -719,6 +760,7 @@ function buildQuoteText(d) {
   L.push('');
   if (!isNaN(d.key) && d.key > 0) L.push('- ' + keyLabel + ': $' + d.key.toFixed(2));
   if (!isNaN(d.labor) && d.labor > 0) L.push('- Mobile service (program + cut): $' + d.labor.toFixed(2));
+  (d.surcharges || []).forEach(function(s){ L.push('- ' + s.label + ': $' + s.amount.toFixed(2)); });
   if (d.tax > 0) L.push('- Sales tax (key): $' + d.tax.toFixed(2));
   L.push('Total all-in: $' + d.allin.toFixed(2) + ' — we come to you');
   if (d.dealer > d.allin) {
@@ -837,10 +879,13 @@ function gatherQuote() {
   var key = keyEl ? parseFloat(keyEl.value) : NaN;
   var dealer = dealerEl ? parseFloat(dealerEl.value) : NaN;
   var sku = skuEl ? (skuEl.value || '').trim() : '';
+  var surcharges = _ctx ? computeSurcharges(_ctx.make, _ctx.year, _chosenPath) : [];
+  var scTotal = surchargeTotal(surcharges);
   var taxable = isNaN(key) ? 0 : key;
   var tax = taxable * TAX_RATE;
-  var allin = (isNaN(labor) ? 0 : labor) + taxable + tax;
+  var allin = (isNaN(labor) ? 0 : labor) + scTotal + taxable + tax;
   return { vehicle: _ctx ? _ctx.label : '', path: _chosenPath, key: key, labor: labor,
+           surcharges: surcharges, surchargeTotal: scTotal,
            tax: tax, allin: allin, dealer: dealer, stock: _stockState, sku: sku,
            keyTitle: _seedKeyTitle, keyType: _seedKeyType, img: _seedImg };
 }
@@ -851,6 +896,7 @@ function buildCustomerQuoteHTML(d, showCTA) {
   var lines = '';
   if (!isNaN(d.key) && d.key > 0) lines += '<div class="cql"><span>' + (d.keyType || d.keyTitle || 'Key') + '</span><span>$' + d.key.toFixed(2) + '</span></div>';
   if (!isNaN(d.labor) && d.labor > 0) lines += '<div class="cql"><span>Mobile service (program + cut)</span><span>$' + d.labor.toFixed(2) + '</span></div>';
+  (d.surcharges || []).forEach(function(s){ lines += '<div class="cql"><span>' + s.label + '</span><span>$' + s.amount.toFixed(2) + '</span></div>'; });
   if (d.tax > 0) lines += '<div class="cql"><span>Sales tax (key)</span><span>$' + d.tax.toFixed(2) + '</span></div>';
   lines += '<div class="cql total"><span>All-in</span><span>$' + (d.allin > 0 ? d.allin.toFixed(2) : '0.00') + '</span></div>';
   var savings = '';
@@ -912,11 +958,17 @@ function payNow() {
   var orig = btn ? btn.textContent : '';
   if (btn) { btn.disabled = true; btn.textContent = 'Creating your invoice…'; }
   var keyTitle = (d.vehicle ? d.vehicle + ' — ' : '') + (d.keyType || d.keyTitle || 'Key');
+  // Access fees fold into the single service line — keeps the invoice config and tax treatment unchanged.
+  var scList = d.surcharges || [];
+  var scSum = surchargeTotal(scList);
+  var laborBase = (isNaN(d.labor) ? 0 : d.labor);
+  var laborTitle = 'Mobile service (program + cut)';
+  if (scList.length) laborTitle += ' incl. ' + scList.map(function(s){ return s.label; }).join(' + ');
   var payload = {
     keyTitle:   keyTitle,
     keyPrice:   (isNaN(d.key)   ? 0 : d.key),
-    laborTitle: 'Mobile service (program + cut)',
-    labor:      (isNaN(d.labor) ? 0 : d.labor),
+    laborTitle: laborTitle,
+    labor:      laborBase + scSum,
     tax:        (d.tax > 0 ? d.tax : 0),
     sku:        d.sku || '',
     vehicle:    d.vehicle || ''
@@ -951,6 +1003,7 @@ function buildCustomerViewURL(d) {
   if (d.keyType) p.set('kt', d.keyType);
   if (d.keyTitle) p.set('ktitle', d.keyTitle);
   if (d.img) p.set('img', d.img);
+  if (d.surcharges && d.surcharges.length) p.set('sc', encodeSurcharges(d.surcharges));
   return 'https://noloindie-afk.github.io/ckc-hub/ckc_quotes.html?' + p.toString();
 }
 
@@ -958,11 +1011,13 @@ function renderCustomerFullView() {
   var q = new URLSearchParams(window.location.search);
   var key = parseFloat(q.get('kp'));
   var labor = parseFloat(q.get('lb'));
+  var surcharges = decodeSurcharges(q.get('sc'));
+  var scTotal = surchargeTotal(surcharges);
   var taxable = isNaN(key) ? 0 : key;
   var tax = taxable * TAX_RATE;
   var d = { vehicle: q.get('v') || '', path: q.get('p') || '',
-            key: key, labor: labor, tax: tax,
-            allin: (isNaN(labor) ? 0 : labor) + taxable + tax,
+            key: key, labor: labor, surcharges: surcharges, surchargeTotal: scTotal, tax: tax,
+            allin: (isNaN(labor) ? 0 : labor) + scTotal + taxable + tax,
             dealer: parseFloat(q.get('dl')), stock: q.get('st') || 'instock',
             sku: q.get('sku') || '', keyType: q.get('kt') || '', keyTitle: q.get('ktitle') || '', img: q.get('img') || '' };
   _cvData = d;
