@@ -140,6 +140,9 @@
   .allin-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.72rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold-light); }
   .allin-val { font-family: 'Barlow Condensed', sans-serif; font-size: 2rem; font-weight: 900; line-height: 1; color: var(--gold-light); }
   .key-item { background: rgba(96,165,250,0.06); border: 1px solid rgba(96,165,250,0.2); border-radius: 10px; padding: 11px 15px; margin: 14px 0 4px; }
+  .key-item.has-img { display: flex; align-items: center; gap: 12px; }
+  .key-item-img { width: 54px; height: 54px; object-fit: contain; background: #f9fafb; border-radius: 8px; padding: 4px; flex-shrink: 0; }
+  .key-item-text { flex: 1; }
   .key-item-main { font-family: 'Barlow Condensed', sans-serif; font-size: 1.05rem; font-weight: 800; color: var(--text); line-height: 1.2; }
   .key-item-sub { font-size: 0.78rem; color: var(--blue); margin-top: 2px; }
 
@@ -454,7 +457,7 @@ var _stockState = 'instock';// 'instock' | 'order'
 var _lookupHadVIN = false;  // true when this lookup came from a real VIN
 
 // Values handed over from command.html (the picked key), if present in the URL.
-var _seedSku = '', _seedKey = '', _seedKeyType = '', _seedKeyTitle = '', _seedStock = '';
+var _seedSku = '', _seedKey = '', _seedKeyType = '', _seedKeyTitle = '', _seedStock = '', _seedImg = '';
 (function () {
   var p = new URLSearchParams(window.location.search);
   _seedSku = p.get('sku') || '';
@@ -462,6 +465,7 @@ var _seedSku = '', _seedKey = '', _seedKeyType = '', _seedKeyTitle = '', _seedSt
   _seedKeyType = p.get('kt') || '';
   _seedKeyTitle = p.get('ktitle') || '';
   _seedStock = p.get('instock') || '';
+  _seedImg = p.get('img') || '';
 })();
 
 function decodeYear(vin) {
@@ -578,9 +582,13 @@ function choosePath(path) {
   // "from command.html" line — shows the key you picked in the finder, if one was handed over
   var fromFinder = '';
   if (_seedKeyTitle || _seedSku) {
-    fromFinder = '<div class="key-item">' +
-      '<div class="key-item-main">' + (_seedKeyTitle || _seedKeyType || 'Selected key') + '</div>' +
-      '<div class="key-item-sub">' + (_seedKeyType ? _seedKeyType + ' &middot; ' : '') + (_seedSku ? 'SKU ' + _seedSku : '') + ' &middot; from command.html</div>' +
+    var thumb = _seedImg ? '<img src="' + _seedImg + '" alt="" class="key-item-img">' : '';
+    fromFinder = '<div class="key-item' + (_seedImg ? ' has-img' : '') + '">' +
+      thumb +
+      '<div class="key-item-text">' +
+        '<div class="key-item-main">' + (_seedKeyTitle || _seedKeyType || 'Selected key') + '</div>' +
+        '<div class="key-item-sub">' + (_seedKeyType ? _seedKeyType + ' &middot; ' : '') + (_seedSku ? 'SKU ' + _seedSku : '') + ' &middot; from command.html</div>' +
+      '</div>' +
     '</div>';
   }
 
