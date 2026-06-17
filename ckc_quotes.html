@@ -183,6 +183,8 @@
   .cust-quote-cta { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
   .cust-quote-book { display: block; text-align: center; background: var(--gold); color: #111; font-family: 'Barlow', sans-serif; font-weight: 700; padding: 14px; border-radius: 11px; text-decoration: none; font-size: 1rem; }
   .cust-quote-call { display: block; text-align: center; background: #1a1a1a; color: var(--gold); border: 2px solid var(--gold); font-family: 'Barlow', sans-serif; font-weight: 700; padding: 13px; border-radius: 11px; text-decoration: none; }
+  .cust-quote-pay { display: block; width: 100%; text-align: center; background: #1a7f37; color: #fff; border: none; font-family: 'Barlow', sans-serif; font-weight: 800; padding: 16px; border-radius: 11px; font-size: 1.08rem; cursor: pointer; }
+  .cust-quote-pay:disabled { opacity: .6; cursor: default; }
   .cust-view-wrap { max-width: 480px; margin: 0 auto; padding: 28px 20px 60px; }
 
   @media (max-width: 520px) {
@@ -857,7 +859,9 @@ function buildCustomerQuoteHTML(d, showCTA) {
   }
   var stock = '<div class="cust-quote-stock">' + (d.stock === 'instock' ? '🟢 In stock — same-day service available' : '📦 Key ordered — arrives in 2-3 days, then we install') + '</div>';
   var part = d.sku ? '<div class="cust-quote-part">Part #: ' + d.sku + '</div>' : '';
+  var payLabel = (d.allin > 0) ? ('💳 Pay Now — $' + d.allin.toFixed(2)) : '💳 Pay Now';
   var cta = showCTA ? '<div class="cust-quote-cta">' +
+      '<button id="cq-pay-btn" class="cust-quote-pay" onclick="payNow()">' + payLabel + '</button>' +
       '<a class="cust-quote-book" href="' + BOOKING_URL + '">📅 Book My Appointment</a>' +
       '<a class="cust-quote-call" href="tel:+13365109816">📞 Call / Text (336) 510-9816</a>' +
     '</div>' : '';
@@ -897,6 +901,40 @@ var _cvData = null;
 function textFromCustomerView() {
   if (!_cvData) return;
   window.location.href = 'sms:&body=' + encodeURIComponent(buildQuoteText(_cvData));
+}
+
+var WORKER_INVOICE = 'https://ckc-blade-proxy.noloindie.workers.dev/invoice';
+function payNow() {
+  var d = _cvData;
+  if (!d || !(d.allin > 0)) return;
+  var btn = document.getElementById('cq-pay-btn');
+  var orig = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Creating your invoice…'; }
+  var keyTitle = (d.vehicle ? d.vehicle + ' — ' : '') + (d.keyType || d.keyTitle || 'Key');
+  var payload = {
+    keyTitle:   keyTitle,
+    keyPrice:   (isNaN(d.key)   ? 0 : d.key),
+    laborTitle: 'Mobile service (program + cut)',
+    labor:      (isNaN(d.labor) ? 0 : d.labor),
+    tax:        (d.tax > 0 ? d.tax : 0),
+    sku:        d.sku || '',
+    vehicle:    d.vehicle || ''
+  };
+  fetch(WORKER_INVOICE, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).then(function(r){ return r.json(); }).then(function(data){
+    if (data && data.ok && data.invoiceUrl) {
+      window.location.href = data.invoiceUrl;
+    } else {
+      if (btn) { btn.disabled = false; btn.textContent = orig || '💳 Pay Now'; }
+      alert('Sorry — we could not start the payment just now. Please call (336) 510-9816 and we will take care of it.');
+    }
+  }).catch(function(){
+    if (btn) { btn.disabled = false; btn.textContent = orig || '💳 Pay Now'; }
+    alert('Sorry — we could not start the payment just now. Please call (336) 510-9816 and we will take care of it.');
+  });
 }
 
 function buildCustomerViewURL(d) {
