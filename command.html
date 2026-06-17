@@ -960,6 +960,15 @@ function advanceFromType() {
   var group = _byType[type] || [];
 
   if (isSmartKeyType(type)) {
+    // Smart keys: if this year/make/model carries more than one FCC variant,
+    // let the user pick the correct one (confirm against the VIN) instead of
+    // auto-grabbing the first. Single variant still goes straight through.
+    if (detectFCCConflict(group)) {
+      showScreen(3);
+      renderScreen3();
+      scrollToWizard();
+      return;
+    }
     _wiz.finalKey = group.find(function(k){return k.inStock;}) || group[0];
     _wiz.aklMode = false;
     showScreen(5);
@@ -1236,7 +1245,8 @@ function renderScreen5() {
       '<div class="ckc-price-line"><span>Programming</span><span style="color:var(--ckc-gold);">Quoted on call</span></div>' +
       '</div>' +
       '<div class="ckc-cfq-vin-hint">📋 Have your VIN ready — dashboard lower-left or door jamb sticker.</div>' +
-      '<a href="tel:+13365109816" class="ckc-call-to-order-btn">📞 Call to Order · (336) 510-9816</a>';
+      '<a href="tel:+13365109816" class="ckc-call-to-order-btn">📞 Call to Order · (336) 510-9816</a>' +
+      '<button class="ckc-send-customer-btn" onclick="sendToCustomer()">💰 Build Quote →</button>';
   } else {
     html += '<div style="background:rgba(201,162,39,0.06);border:1px solid rgba(201,162,39,0.15);border-radius:12px;padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:12px;">' +
       '<span style="font-size:1.1rem;">🔧</span>' +
@@ -1255,13 +1265,13 @@ function renderScreen5() {
         ? '<div style="padding:12px;background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.2);border-radius:10px;font-size:0.85rem;color:var(--ckc-text-muted);margin-bottom:14px;text-align:center;">🟢 In stock and ready to order.</div>'
         : '<div style="padding:12px;background:rgba(201,162,39,0.07);border:1px solid rgba(201,162,39,0.2);border-radius:10px;font-size:0.85rem;color:var(--ckc-text-muted);margin-bottom:14px;text-align:center;">📦 We\'ll source this key — programming after it arrives.</div>') +
         '<button class="ckc-buy-now-btn" onclick="openCheckoutFromS5()">Buy Now →</button>' +
-        '<button class="ckc-send-customer-btn" onclick="sendToCustomer()">📲 Send to Customer</button>';
+        '<button class="ckc-send-customer-btn" onclick="sendToCustomer()">💰 Build Quote →</button>';
     } else {
       html += (key.inStock
         ? '<div style="padding:12px;background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.2);border-radius:10px;font-size:0.85rem;color:var(--ckc-text-muted);margin-bottom:14px;text-align:center;">🟢 In stock. Call to place your order.</div>'
         : '<div style="padding:12px;background:rgba(201,162,39,0.07);border:1px solid rgba(201,162,39,0.2);border-radius:10px;font-size:0.85rem;color:var(--ckc-text-muted);margin-bottom:14px;text-align:center;">📋 Call with your VIN and we\'ll get everything set up.</div>') +
         '<a href="tel:+13365109816" class="ckc-call-to-order-btn">📞 Call to Order · (336) 510-9816</a>' +
-        '<button class="ckc-send-customer-btn" onclick="sendToCustomer()">📲 Send to Customer</button>';
+        '<button class="ckc-send-customer-btn" onclick="sendToCustomer()">💰 Build Quote →</button>';
     }
   }
 
@@ -1290,7 +1300,8 @@ function sendToCustomer() {
     kp:      (parseFloat(key.price) || 0).toFixed(2),
     kt:      key.type || '',
     ktitle:  key.title || '',
-    instock: key.inStock ? '1' : '0'
+    instock: key.inStock ? '1' : '0',
+    img:     (key.image && key.image.indexOf('http') === 0) ? key.image : ''
   });
   window.open(base + '?' + params.toString(), '_blank');
 }
