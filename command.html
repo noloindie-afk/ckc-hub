@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1279,10 +1280,19 @@ function renderScreen5() {
 function sendToCustomer() {
   var key = _wiz.finalKey;
   if (!key) return;
-  var ymm = lastSearchParams.year + ' ' + lastSearchParams.make + ' ' + lastSearchParams.model;
-  var shopifyURL = 'https://' + SHOPIFY_DOMAIN + '/search?q=' + encodeURIComponent(key.sku);
-  var msg = 'SAVE THIS TEXT!\n\nHere\'s the key I found for your ' + ymm + ':\n\n' + key.title + '\n\n' + shopifyURL + '\n\nTap the link to order. After checkout your confirmation will include a link to schedule your programming & cutting appointment.\n\n— Carolina Key Cutters';
-  window.location.href = 'sms:&body=' + encodeURIComponent(msg);
+  // Flow the picked key into the CKC Quotes page (priced + itemized there).
+  var base = 'https://noloindie-afk.github.io/ckc-hub/ckc_quotes.html';
+  var params = new URLSearchParams({
+    year:    lastSearchParams.year  || '',
+    make:    lastSearchParams.make  || '',
+    model:   lastSearchParams.model || '',
+    sku:     key.sku || '',
+    kp:      (parseFloat(key.price) || 0).toFixed(2),
+    kt:      key.type || '',
+    ktitle:  key.title || '',
+    instock: key.inStock ? '1' : '0'
+  });
+  window.open(base + '?' + params.toString(), '_blank');
 }
 
 function openCheckoutFromS5() {
