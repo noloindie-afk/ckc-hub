@@ -779,10 +779,11 @@ function runLookup(mode) {
     const yearVal = parseInt(document.getElementById('ymm-year').value);
     const makeVal = document.getElementById('ymm-make').value;
     const modelVal = document.getElementById('ymm-model').value;
-    if (!yearVal || !makeVal || !modelVal) { err.textContent = 'Please select a year, make, and model.'; err.style.display = 'block'; return; }
+    if (!yearVal || !makeVal) { err.textContent = 'Please select a year and make.'; err.style.display = 'block'; return; }
     const internalMake = MAKE_NORMALIZE[makeVal] || makeVal.toUpperCase();
     _lookupHadVIN = false;
-    renderResult(internalMake, yearVal, yearVal + ' ' + makeVal + ' ' + modelVal, 'Looking up: <strong>' + yearVal + ' ' + makeVal + ' ' + modelVal + '</strong>');
+    var ymmLabel = yearVal + ' ' + makeVal + (modelVal ? ' ' + modelVal : '');
+    renderResult(internalMake, yearVal, ymmLabel, 'Looking up: <strong>' + ymmLabel + '</strong>');
   }
 }
 
@@ -823,8 +824,8 @@ function onMakeChange() {
 function checkYMMReady() {
   const y = document.getElementById('ymm-year').value;
   const mk = document.getElementById('ymm-make').value;
-  const mo = document.getElementById('ymm-model').value;
-  document.getElementById('ymm-btn').disabled = !(y && mk && mo);
+  // Model is optional — it's only a label; pricing keys off make + year.
+  document.getElementById('ymm-btn').disabled = !(y && mk);
 }
 // ── Quote data + customer-facing card (used by the live preview AND the shared link) ──
 function gatherQuote() {
@@ -992,7 +993,16 @@ function autoPopulate() {
           var modelSel = document.getElementById('ymm-model');
           var opts = Array.from(modelSel.options);
           var match = opts.find(function(o) { return o.value.toLowerCase() === model.toLowerCase(); });
-          if (match) modelSel.value = match.value;
+          if (match) {
+            modelSel.value = match.value;
+          } else {
+            // The key finder knows more models than this dropdown — trust it and add this one.
+            var newOpt = document.createElement('option');
+            newOpt.value = model;
+            newOpt.textContent = model;
+            modelSel.appendChild(newOpt);
+            modelSel.value = model;
+          }
         }
         checkYMMReady();
         var y = document.getElementById('ymm-year').value;
