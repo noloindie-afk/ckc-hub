@@ -155,6 +155,30 @@
   .send-quote-btn:disabled { background: #333; color: #555; cursor: not-allowed; transform: none; }
   .qb-hint { font-size: 0.75rem; color: var(--muted); margin-top: 9px; text-align: center; line-height: 1.5; }
 
+  .qb-tax-note { font-size: 0.74rem; color: var(--gold-light); text-align: center; margin: -6px 0 14px; }
+  .qb-preview-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.68rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin: 18px 0 8px; }
+
+  .cust-quote { background: #111; border: 1px solid var(--gold-dim); border-radius: 14px; padding: 18px; }
+  .cust-quote-head { border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 14px; }
+  .cust-quote-brand { font-family: 'Barlow Condensed', sans-serif; font-size: 1.15rem; font-weight: 900; color: var(--gold); letter-spacing: 0.5px; }
+  .cust-quote-sub { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+  .cust-quote-img { display: block; width: 100%; max-width: 160px; height: 140px; object-fit: contain; background: #f9fafb; border-radius: 10px; padding: 8px; margin: 0 auto 14px; }
+  .cust-quote-veh { font-family: 'Barlow Condensed', sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--text); }
+  .cust-quote-svc { font-size: 0.85rem; color: var(--muted2); margin-bottom: 6px; }
+  .cust-quote-lines { border-top: 1px solid var(--border); padding-top: 10px; margin-top: 10px; }
+  .cql { display: flex; justify-content: space-between; font-size: 0.9rem; padding: 4px 0; }
+  .cql span:first-child { color: var(--muted2); }
+  .cql span:last-child { color: var(--text); font-weight: 600; }
+  .cql.total { border-top: 1px solid var(--border); margin-top: 6px; padding-top: 10px; }
+  .cql.total span { color: var(--gold-light); font-family: 'Barlow Condensed', sans-serif; font-size: 1.35rem; font-weight: 900; }
+  .cust-quote-savings { background: var(--green-bg); border: 1px solid rgba(74,222,128,0.25); border-radius: 9px; padding: 10px 14px; margin-top: 12px; font-size: 0.86rem; color: var(--green); font-weight: 600; text-align: center; }
+  .cust-quote-stock { font-size: 0.85rem; color: var(--muted2); margin-top: 12px; }
+  .cust-quote-part { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+  .cust-quote-cta { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .cust-quote-book { display: block; text-align: center; background: var(--gold); color: #111; font-family: 'Barlow', sans-serif; font-weight: 700; padding: 14px; border-radius: 11px; text-decoration: none; font-size: 1rem; }
+  .cust-quote-call { display: block; text-align: center; background: #1a1a1a; color: var(--gold); border: 2px solid var(--gold); font-family: 'Barlow', sans-serif; font-weight: 700; padding: 13px; border-radius: 11px; text-decoration: none; }
+  .cust-view-wrap { max-width: 480px; margin: 0 auto; padding: 28px 20px 60px; }
+
   @media (max-width: 520px) {
     .price-grid, .info-grid { grid-template-columns: 1fr; }
     .info-cell { border-right: none; border-bottom: 1px solid var(--border); }
@@ -451,6 +475,10 @@ const DEALER_BENCHMARK = {
   4: { aak: 750, akl: 1050 }   // BMW / MINI CAS, or unknown
 };
 
+// Sales tax applies to the KEY only (tangible goods) — never to labor/service.
+// Default: Forsyth County, NC = 7.00% (4.75% state + 2.25% county). Edit if your rate changes.
+const TAX_RATE = 0.07;
+
 var _ctx = null;            // { make, year, label, rule, tier }
 var _chosenPath = '';       // 'aak' | 'akl'
 var _stockState = 'instock';// 'instock' | 'order'
@@ -608,6 +636,7 @@ function choosePath(path) {
       '<label class="qb-field-label">SKU (optional)</label>' +
       '<input class="qb-input" id="qb-sku" type="text" autocapitalize="characters" spellcheck="false" placeholder="part number" value="' + (_seedSku || '') + '" style="width:100%;margin-bottom:12px;letter-spacing:1px;">' +
       '<div class="allin-card"><div class="allin-label">All-in price to customer</div><div class="allin-val" id="qb-allin">$0</div></div>' +
+      '<div class="qb-tax-note" id="qb-tax"></div>' +
       '<label class="qb-field-label">Dealer price (est.)</label>' +
       '<div class="qb-input-wrap" style="margin-bottom:12px;"><span class="qb-prefix">$</span>' +
         '<input class="qb-input" id="qb-dealer" type="number" inputmode="decimal" min="0" value="' + dealer + '" oninput="recalcQuote()"></div>' +
@@ -620,8 +649,10 @@ function choosePath(path) {
         '<div class="stock-btn" id="stock-instock" onclick="setStock(\'instock\')">🟢 In stock — same day</div>' +
         '<div class="stock-btn" id="stock-order" onclick="setStock(\'order\')">📦 Order — 2–3 days</div>' +
       '</div>' +
+      '<div class="qb-preview-label">📱 Preview — what the customer sees</div>' +
+      '<div id="qb-preview"></div>' +
       '<button class="send-quote-btn" id="qb-send" onclick="textQuote()">📲 Text Quote to Customer</button>' +
-      '<div class="qb-hint">All-in = service + key, added up for you. Service is pre-filled from the matrix; key price comes over from command.html (or type it).</div>' +
+      '<div class="qb-hint">All-in = service + key + tax (tax on the key only). Service is pre-filled from the matrix; key price comes over from command.html.</div>' +
     '</div>';
 
   setStock(_stockState);
@@ -636,26 +667,25 @@ function setStock(s) {
 }
 
 function recalcQuote() {
-  var laborEl = document.getElementById('qb-labor');
-  var keyEl = document.getElementById('qb-key');
-  var dealerEl = document.getElementById('qb-dealer');
-  var allinEl = document.getElementById('qb-allin');
-  var card = document.getElementById('qb-savings');
-  if (!laborEl || !allinEl || !card) return;
-  var labor = parseFloat(laborEl.value);
-  var key = parseFloat(keyEl.value);
-  var dealer = parseFloat(dealerEl.value);
-  var allin = (isNaN(labor) ? 0 : labor) + (isNaN(key) ? 0 : key);
-  allinEl.textContent = '$' + (allin > 0 ? allin.toFixed(0) : '0');
+  if (!document.getElementById('qb-allin')) return;
+  var d = gatherQuote();
+  document.getElementById('qb-allin').textContent = '$' + (d.allin > 0 ? d.allin.toFixed(2) : '0.00');
 
+  var taxEl = document.getElementById('qb-tax');
+  if (taxEl) {
+    var ratePct = (TAX_RATE * 100).toFixed(2).replace(/\.?0+$/, '');
+    taxEl.textContent = d.tax > 0 ? ('Includes $' + d.tax.toFixed(2) + ' sales tax on the key (' + ratePct + '%) — labor is not taxed') : '';
+  }
+
+  var card = document.getElementById('qb-savings');
   var amtEl = document.getElementById('qb-save-amt');
   var pctEl = document.getElementById('qb-save-pct');
   var sendBtn = document.getElementById('qb-send');
-  sendBtn.disabled = !(allin > 0);
+  sendBtn.disabled = !(d.allin > 0);
 
-  if (allin > 0 && dealer > allin) {
-    var save = dealer - allin;
-    var pct = Math.round(save / dealer * 100);
+  if (d.allin > 0 && d.dealer > d.allin) {
+    var save = d.dealer - d.allin;
+    var pct = Math.round(save / d.dealer * 100);
     amtEl.textContent = '$' + save.toFixed(0);
     pctEl.textContent = 'about ' + pct + '% less than the dealer';
     card.classList.remove('zero');
@@ -664,48 +694,16 @@ function recalcQuote() {
     pctEl.textContent = '';
     card.classList.add('zero');
   }
-}
-
-function buildCustomerMessage(q) {
-  var svcName = (_chosenPath === 'aak') ? 'Add-a-Key (you have a working key)' : 'All Keys Lost';
-  var keyLabel = _seedKeyType || _seedKeyTitle || 'Key';
-  var lines = [];
-  lines.push('SAVE THIS TEXT — Carolina Key Cutters');
-  lines.push('');
-  lines.push('Your quote for your ' + _ctx.label + ':');
-  lines.push(svcName);
-  lines.push('');
-  if (!isNaN(q.key) && q.key > 0) lines.push('- ' + keyLabel + ': $' + q.key.toFixed(0));
-  if (!isNaN(q.labor) && q.labor > 0) lines.push('- Mobile service (program + cut): $' + q.labor.toFixed(0));
-  lines.push('Total all-in: $' + q.allin.toFixed(0) + ' — we come to you');
-  if (q.dealer > q.allin) {
-    var save = q.dealer - q.allin;
-    var pct = Math.round(save / q.dealer * 100);
-    lines.push('');
-    lines.push('Dealer price: about $' + q.dealer.toFixed(0));
-    lines.push('You save: about $' + save.toFixed(0) + ' (' + pct + '% less than the dealer)');
-  }
-  lines.push('');
-  lines.push(_stockState === 'instock'
-    ? 'Key: in stock — same-day service available'
-    : 'Key: ordered — arrives in 2-3 days, then we come install & program it');
-  if (q.sku) lines.push('Part #: ' + q.sku);
-  lines.push('');
-  lines.push('Book your appointment: ' + BOOKING_URL);
-  lines.push('Questions? Call or text (336) 510-9816');
-  return lines.join('\n');
+  updatePreview();
 }
 
 function textQuote() {
   if (!_ctx || !_chosenPath) return;
-  var labor = parseFloat(document.getElementById('qb-labor').value);
-  var key = parseFloat(document.getElementById('qb-key').value);
-  var dealer = parseFloat(document.getElementById('qb-dealer').value);
-  var sku = (document.getElementById('qb-sku').value || '').trim();
-  var allin = (isNaN(labor) ? 0 : labor) + (isNaN(key) ? 0 : key);
-  if (!(allin > 0)) return;
-  var msg = buildCustomerMessage({ labor: labor, key: key, allin: allin, dealer: dealer, sku: sku });
-  window.location.href = 'sms:&body=' + encodeURIComponent(msg);
+  var d = gatherQuote();
+  if (!(d.allin > 0)) return;
+  var url = buildCustomerViewURL(d);
+  var head = 'Carolina Key Cutters — your quote for your ' + d.vehicle + ': $' + d.allin.toFixed(0) + ' all-in, we come to you. Full quote + photo:\n' + url;
+  window.location.href = 'sms:&body=' + encodeURIComponent(head);
 }
 
 function runLookup(mode) {
@@ -771,45 +769,113 @@ function checkYMMReady() {
   const mo = document.getElementById('ymm-model').value;
   document.getElementById('ymm-btn').disabled = !(y && mk && mo);
 }
-document.getElementById('ymm-model').addEventListener('change', checkYMMReady);
-document.getElementById('ymm-year').addEventListener('change', checkYMMReady);
-document.getElementById('ymm-make').addEventListener('change', checkYMMReady);
-initYearDropdown();
+// ── Quote data + customer-facing card (used by the live preview AND the shared link) ──
+function gatherQuote() {
+  var laborEl = document.getElementById('qb-labor');
+  var keyEl = document.getElementById('qb-key');
+  var dealerEl = document.getElementById('qb-dealer');
+  var skuEl = document.getElementById('qb-sku');
+  var labor = laborEl ? parseFloat(laborEl.value) : NaN;
+  var key = keyEl ? parseFloat(keyEl.value) : NaN;
+  var dealer = dealerEl ? parseFloat(dealerEl.value) : NaN;
+  var sku = skuEl ? (skuEl.value || '').trim() : '';
+  var taxable = isNaN(key) ? 0 : key;
+  var tax = taxable * TAX_RATE;
+  var allin = (isNaN(labor) ? 0 : labor) + taxable + tax;
+  return { vehicle: _ctx ? _ctx.label : '', path: _chosenPath, key: key, labor: labor,
+           tax: tax, allin: allin, dealer: dealer, stock: _stockState, sku: sku,
+           keyTitle: _seedKeyTitle, keyType: _seedKeyType, img: _seedImg };
+}
 
-// ═══ AUTO-POPULATE FROM URL PARAMS ═══
-(function autoPopulate() {
+function buildCustomerQuoteHTML(d, showCTA) {
+  var svcName = (d.path === 'aak') ? 'Add-a-Key (working key present)' : 'All Keys Lost';
+  var img = d.img ? '<img src="' + d.img + '" alt="" class="cust-quote-img">' : '';
+  var lines = '';
+  if (!isNaN(d.key) && d.key > 0) lines += '<div class="cql"><span>' + (d.keyType || d.keyTitle || 'Key') + '</span><span>$' + d.key.toFixed(2) + '</span></div>';
+  if (!isNaN(d.labor) && d.labor > 0) lines += '<div class="cql"><span>Mobile service (program + cut)</span><span>$' + d.labor.toFixed(2) + '</span></div>';
+  if (d.tax > 0) lines += '<div class="cql"><span>Sales tax (key)</span><span>$' + d.tax.toFixed(2) + '</span></div>';
+  lines += '<div class="cql total"><span>All-in</span><span>$' + (d.allin > 0 ? d.allin.toFixed(2) : '0.00') + '</span></div>';
+  var savings = '';
+  if (d.dealer > d.allin && d.allin > 0) {
+    var s = d.dealer - d.allin; var p = Math.round(s / d.dealer * 100);
+    savings = '<div class="cust-quote-savings">Dealer price ~$' + d.dealer.toFixed(0) + ' &middot; You save ~$' + s.toFixed(0) + ' (' + p + '% less)</div>';
+  }
+  var stock = '<div class="cust-quote-stock">' + (d.stock === 'instock' ? '🟢 In stock — same-day service available' : '📦 Key ordered — arrives in 2-3 days, then we install') + '</div>';
+  var part = d.sku ? '<div class="cust-quote-part">Part #: ' + d.sku + '</div>' : '';
+  var cta = showCTA ? '<div class="cust-quote-cta">' +
+      '<a class="cust-quote-book" href="' + BOOKING_URL + '">📅 Book My Appointment</a>' +
+      '<a class="cust-quote-call" href="tel:+13365109816">📞 Call / Text (336) 510-9816</a>' +
+    '</div>' : '';
+  return '<div class="cust-quote">' +
+    '<div class="cust-quote-head"><div class="cust-quote-brand">Carolina Key Cutters</div><div class="cust-quote-sub">Your Quote</div></div>' +
+    img +
+    '<div class="cust-quote-veh">' + (d.vehicle || '') + '</div>' +
+    '<div class="cust-quote-svc">' + svcName + '</div>' +
+    '<div class="cust-quote-lines">' + lines + '</div>' +
+    savings + stock + part + cta +
+  '</div>';
+}
+
+function updatePreview() {
+  var box = document.getElementById('qb-preview');
+  if (box) box.innerHTML = buildCustomerQuoteHTML(gatherQuote(), false);
+}
+
+function buildCustomerViewURL(d) {
+  var p = new URLSearchParams();
+  p.set('view', 'quote');
+  p.set('v', d.vehicle || '');
+  p.set('p', d.path || '');
+  if (!isNaN(d.key)) p.set('kp', d.key);
+  if (!isNaN(d.labor)) p.set('lb', d.labor);
+  if (!isNaN(d.dealer)) p.set('dl', d.dealer);
+  p.set('st', d.stock || '');
+  if (d.sku) p.set('sku', d.sku);
+  if (d.keyType) p.set('kt', d.keyType);
+  if (d.keyTitle) p.set('ktitle', d.keyTitle);
+  if (d.img) p.set('img', d.img);
+  return 'https://noloindie-afk.github.io/ckc-hub/ckc_quotes.html?' + p.toString();
+}
+
+function renderCustomerFullView() {
+  var q = new URLSearchParams(window.location.search);
+  var key = parseFloat(q.get('kp'));
+  var labor = parseFloat(q.get('lb'));
+  var taxable = isNaN(key) ? 0 : key;
+  var tax = taxable * TAX_RATE;
+  var d = { vehicle: q.get('v') || '', path: q.get('p') || '',
+            key: key, labor: labor, tax: tax,
+            allin: (isNaN(labor) ? 0 : labor) + taxable + tax,
+            dealer: parseFloat(q.get('dl')), stock: q.get('st') || 'instock',
+            sku: q.get('sku') || '', keyType: q.get('kt') || '', keyTitle: q.get('ktitle') || '', img: q.get('img') || '' };
+  document.body.innerHTML =
+    '<div class="header"><div><div class="header-logo">Carolina Key Cutters</div><div class="header-sub">Your Quote</div></div><div class="header-phone">(336) 510-9816</div></div>' +
+    '<div class="cust-view-wrap">' + buildCustomerQuoteHTML(d, true) + '</div>';
+}
+
+function autoPopulate() {
   var params = new URLSearchParams(window.location.search);
   var year  = params.get('year');
   var make  = params.get('make');
   var model = params.get('model');
   if (!year && !make) return;
-
   if (year && make) {
-    // Switch to YMM tab
     switchTab('ymm');
-
-    // Set year
     var yearSel = document.getElementById('ymm-year');
     yearSel.value = year;
     onYearChange();
-
-    // Set make after a tick (onYearChange populates makes)
     setTimeout(function() {
       var makeSel = document.getElementById('ymm-make');
       makeSel.value = make;
       onMakeChange();
-
-      // Set model and run lookup after another tick
       setTimeout(function() {
         if (model) {
           var modelSel = document.getElementById('ymm-model');
-          // Find closest match
           var opts = Array.from(modelSel.options);
           var match = opts.find(function(o) { return o.value.toLowerCase() === model.toLowerCase(); });
           if (match) modelSel.value = match.value;
         }
         checkYMMReady();
-        // Auto-run if all three set
         var y = document.getElementById('ymm-year').value;
         var mk = document.getElementById('ymm-make').value;
         var mo = document.getElementById('ymm-model').value;
@@ -818,7 +884,19 @@ initYearDropdown();
       }, 50);
     }, 50);
   }
-})();
+}
+
+// ═══ BOOTSTRAP ═══
+var IS_CUSTOMER_VIEW = new URLSearchParams(window.location.search).get('view') === 'quote';
+if (IS_CUSTOMER_VIEW) {
+  renderCustomerFullView();
+} else {
+  document.getElementById('ymm-model').addEventListener('change', checkYMMReady);
+  document.getElementById('ymm-year').addEventListener('change', checkYMMReady);
+  document.getElementById('ymm-make').addEventListener('change', checkYMMReady);
+  initYearDropdown();
+  autoPopulate();
+}
 
 </script>
 </body>
