@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -134,6 +135,13 @@
   .savings-card-amt { font-family: 'Barlow Condensed', sans-serif; font-size: 1.95rem; font-weight: 900; line-height: 1; color: var(--green); }
   .savings-card-pct { font-size: 0.78rem; color: var(--green); font-weight: 600; margin-top: 3px; }
   .savings-card.zero .savings-card-amt, .savings-card.zero .savings-card-pct { color: var(--muted); }
+
+  .allin-card { background: var(--gold-dim); border: 1px solid rgba(201,162,39,0.35); border-radius: 12px; padding: 13px 18px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .allin-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.72rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold-light); }
+  .allin-val { font-family: 'Barlow Condensed', sans-serif; font-size: 2rem; font-weight: 900; line-height: 1; color: var(--gold-light); }
+  .key-item { background: rgba(96,165,250,0.06); border: 1px solid rgba(96,165,250,0.2); border-radius: 10px; padding: 11px 15px; margin: 14px 0 4px; }
+  .key-item-main { font-family: 'Barlow Condensed', sans-serif; font-size: 1.05rem; font-weight: 800; color: var(--text); line-height: 1.2; }
+  .key-item-sub { font-size: 0.78rem; color: var(--blue); margin-top: 2px; }
 
   .stock-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
   .stock-btn { padding: 11px; border: 2px solid var(--border); background: #111; border-radius: 9px; cursor: pointer; text-align: center; font-family: 'Barlow', sans-serif; font-size: 0.85rem; font-weight: 600; color: var(--muted2); transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
@@ -445,6 +453,17 @@ var _chosenPath = '';       // 'aak' | 'akl'
 var _stockState = 'instock';// 'instock' | 'order'
 var _lookupHadVIN = false;  // true when this lookup came from a real VIN
 
+// Values handed over from command.html (the picked key), if present in the URL.
+var _seedSku = '', _seedKey = '', _seedKeyType = '', _seedKeyTitle = '', _seedStock = '';
+(function () {
+  var p = new URLSearchParams(window.location.search);
+  _seedSku = p.get('sku') || '';
+  _seedKey = p.get('kp') || p.get('key') || '';
+  _seedKeyType = p.get('kt') || '';
+  _seedKeyTitle = p.get('ktitle') || '';
+  _seedStock = p.get('instock') || '';
+})();
+
 function decodeYear(vin) {
   const c = vin[9];
   const yr1 = YEAR_MAP[c]; const yr2 = YEAR_MAP2[c];
@@ -550,37 +569,54 @@ function choosePath(path) {
 
   var r = _ctx.rule;
   var laborStr = (path === 'aak') ? r.aak : r.akl;
-  var defYour = parseFirstNumber(laborStr);            // starting point (low end of labor)
+  var defLabor = parseFirstNumber(laborStr);           // pre-fill service from the matrix low end
   var dealer = (DEALER_BENCHMARK[_ctx.tier] && DEALER_BENCHMARK[_ctx.tier][path]) || '';
   var showVinAlert = ruleNeedsVIN(r) && !_lookupHadVIN;
 
-  _stockState = 'instock';
+  _stockState = (_seedStock === '0') ? 'order' : 'instock';
+
+  // "from command.html" line — shows the key you picked in the finder, if one was handed over
+  var fromFinder = '';
+  if (_seedKeyTitle || _seedSku) {
+    fromFinder = '<div class="key-item">' +
+      '<div class="key-item-main">' + (_seedKeyTitle || _seedKeyType || 'Selected key') + '</div>' +
+      '<div class="key-item-sub">' + (_seedKeyType ? _seedKeyType + ' &middot; ' : '') + (_seedSku ? 'SKU ' + _seedSku : '') + ' &middot; from command.html</div>' +
+    '</div>';
+  }
 
   var area = document.getElementById('qb-area');
   area.innerHTML =
     (showVinAlert ? vinAlertHTML() : '') +
+    fromFinder +
     '<div class="qb">' +
       '<div class="qb-row">' +
-        '<div><label class="qb-field-label">Your price (all-in)</label>' +
+        '<div><label class="qb-field-label">Service (labor)</label>' +
           '<div class="qb-input-wrap"><span class="qb-prefix">$</span>' +
-          '<input class="qb-input" id="qb-your" type="number" inputmode="decimal" min="0" value="' + (defYour != null ? defYour : '') + '" oninput="recalcQuote()"></div></div>' +
-        '<div><label class="qb-field-label">Dealer price (est.)</label>' +
+          '<input class="qb-input" id="qb-labor" type="number" inputmode="decimal" min="0" value="' + (defLabor != null ? defLabor : '') + '" oninput="recalcQuote()"></div></div>' +
+        '<div><label class="qb-field-label">Key price</label>' +
           '<div class="qb-input-wrap"><span class="qb-prefix">$</span>' +
-          '<input class="qb-input" id="qb-dealer" type="number" inputmode="decimal" min="0" value="' + dealer + '" oninput="recalcQuote()"></div></div>' +
+          '<input class="qb-input" id="qb-key" type="number" inputmode="decimal" min="0" placeholder="0" value="' + (_seedKey || '') + '" oninput="recalcQuote()"></div></div>' +
       '</div>' +
+      '<label class="qb-field-label">SKU (optional)</label>' +
+      '<input class="qb-input" id="qb-sku" type="text" autocapitalize="characters" spellcheck="false" placeholder="part number" value="' + (_seedSku || '') + '" style="width:100%;margin-bottom:12px;letter-spacing:1px;">' +
+      '<div class="allin-card"><div class="allin-label">All-in price to customer</div><div class="allin-val" id="qb-allin">$0</div></div>' +
+      '<label class="qb-field-label">Dealer price (est.)</label>' +
+      '<div class="qb-input-wrap" style="margin-bottom:12px;"><span class="qb-prefix">$</span>' +
+        '<input class="qb-input" id="qb-dealer" type="number" inputmode="decimal" min="0" value="' + dealer + '" oninput="recalcQuote()"></div>' +
       '<div class="savings-card zero" id="qb-savings">' +
         '<div class="savings-card-left">Customer saves vs dealer</div>' +
         '<div class="savings-card-right"><div class="savings-card-amt" id="qb-save-amt">—</div><div class="savings-card-pct" id="qb-save-pct"></div></div>' +
       '</div>' +
       '<label class="qb-field-label">Key availability</label>' +
       '<div class="stock-row">' +
-        '<div class="stock-btn on" id="stock-instock" onclick="setStock(\'instock\')">🟢 In stock — same day</div>' +
+        '<div class="stock-btn" id="stock-instock" onclick="setStock(\'instock\')">🟢 In stock — same day</div>' +
         '<div class="stock-btn" id="stock-order" onclick="setStock(\'order\')">📦 Order — 2–3 days</div>' +
       '</div>' +
       '<button class="send-quote-btn" id="qb-send" onclick="textQuote()">📲 Text Quote to Customer</button>' +
-      '<div class="qb-hint">Your price is the all-in number you\'re quoting (labor + key). The labor range above is your starting point — add the key cost and adjust.</div>' +
+      '<div class="qb-hint">All-in = service + key, added up for you. Service is pre-filled from the matrix; key price comes over from command.html (or type it).</div>' +
     '</div>';
 
+  setStock(_stockState);
   recalcQuote();
   area.scrollIntoView({ behavior:'smooth', block:'nearest' });
 }
@@ -592,20 +628,25 @@ function setStock(s) {
 }
 
 function recalcQuote() {
-  var yourEl = document.getElementById('qb-your');
+  var laborEl = document.getElementById('qb-labor');
+  var keyEl = document.getElementById('qb-key');
   var dealerEl = document.getElementById('qb-dealer');
+  var allinEl = document.getElementById('qb-allin');
   var card = document.getElementById('qb-savings');
-  if (!yourEl || !card) return;
-  var your = parseFloat(yourEl.value);
+  if (!laborEl || !allinEl || !card) return;
+  var labor = parseFloat(laborEl.value);
+  var key = parseFloat(keyEl.value);
   var dealer = parseFloat(dealerEl.value);
+  var allin = (isNaN(labor) ? 0 : labor) + (isNaN(key) ? 0 : key);
+  allinEl.textContent = '$' + (allin > 0 ? allin.toFixed(0) : '0');
+
   var amtEl = document.getElementById('qb-save-amt');
   var pctEl = document.getElementById('qb-save-pct');
   var sendBtn = document.getElementById('qb-send');
+  sendBtn.disabled = !(allin > 0);
 
-  sendBtn.disabled = !(your > 0);
-
-  if (your > 0 && dealer > your) {
-    var save = dealer - your;
+  if (allin > 0 && dealer > allin) {
+    var save = dealer - allin;
     var pct = Math.round(save / dealer * 100);
     amtEl.textContent = '$' + save.toFixed(0);
     pctEl.textContent = 'about ' + pct + '% less than the dealer';
@@ -617,25 +658,30 @@ function recalcQuote() {
   }
 }
 
-function buildCustomerMessage(your, dealer) {
+function buildCustomerMessage(q) {
   var svcName = (_chosenPath === 'aak') ? 'Add-a-Key (you have a working key)' : 'All Keys Lost';
+  var keyLabel = _seedKeyType || _seedKeyTitle || 'Key';
   var lines = [];
   lines.push('SAVE THIS TEXT — Carolina Key Cutters');
   lines.push('');
   lines.push('Your quote for your ' + _ctx.label + ':');
   lines.push(svcName);
   lines.push('');
-  lines.push('Your price: $' + your.toFixed(0) + ' — all-in, mobile (we come to you)');
-  if (dealer > your) {
-    var save = dealer - your;
-    var pct = Math.round(save / dealer * 100);
-    lines.push('Dealer price: about $' + dealer.toFixed(0));
+  if (!isNaN(q.key) && q.key > 0) lines.push('- ' + keyLabel + ': $' + q.key.toFixed(0));
+  if (!isNaN(q.labor) && q.labor > 0) lines.push('- Mobile service (program + cut): $' + q.labor.toFixed(0));
+  lines.push('Total all-in: $' + q.allin.toFixed(0) + ' — we come to you');
+  if (q.dealer > q.allin) {
+    var save = q.dealer - q.allin;
+    var pct = Math.round(save / q.dealer * 100);
+    lines.push('');
+    lines.push('Dealer price: about $' + q.dealer.toFixed(0));
     lines.push('You save: about $' + save.toFixed(0) + ' (' + pct + '% less than the dealer)');
   }
   lines.push('');
   lines.push(_stockState === 'instock'
     ? 'Key: in stock — same-day service available'
     : 'Key: ordered — arrives in 2-3 days, then we come install & program it');
+  if (q.sku) lines.push('Part #: ' + q.sku);
   lines.push('');
   lines.push('Book your appointment: ' + BOOKING_URL);
   lines.push('Questions? Call or text (336) 510-9816');
@@ -644,10 +690,13 @@ function buildCustomerMessage(your, dealer) {
 
 function textQuote() {
   if (!_ctx || !_chosenPath) return;
-  var your = parseFloat(document.getElementById('qb-your').value);
+  var labor = parseFloat(document.getElementById('qb-labor').value);
+  var key = parseFloat(document.getElementById('qb-key').value);
   var dealer = parseFloat(document.getElementById('qb-dealer').value);
-  if (!(your > 0)) return;
-  var msg = buildCustomerMessage(your, dealer);
+  var sku = (document.getElementById('qb-sku').value || '').trim();
+  var allin = (isNaN(labor) ? 0 : labor) + (isNaN(key) ? 0 : key);
+  if (!(allin > 0)) return;
+  var msg = buildCustomerMessage({ labor: labor, key: key, allin: allin, dealer: dealer, sku: sku });
   window.location.href = 'sms:&body=' + encodeURIComponent(msg);
 }
 
