@@ -772,9 +772,11 @@ function buildQuoteText(d) {
   L.push(d.stock === 'instock' ? 'Key: in stock — same-day service' : 'Key: ordered — arrives in 2-3 days, then we install');
   if (d.sku) L.push('Part #: ' + d.sku);
   L.push('');
-  L.push('Photo + full quote: ' + buildCustomerViewURL(d));
-  L.push('Book: ' + BOOKING_URL);
-  L.push('(336) 510-9816');
+  L.push('👉 Tap to see your key photo & pay online:');
+  L.push(buildCustomerViewURL(d));
+  L.push('');
+  L.push('Or book a time: ' + BOOKING_URL);
+  L.push('Questions? Call or text (336) 510-9816');
   return L.join('\n');
 }
 
@@ -1022,10 +1024,12 @@ function renderCustomerFullView() {
             sku: q.get('sku') || '', keyType: q.get('kt') || '', keyTitle: q.get('ktitle') || '', img: q.get('img') || '' };
   _cvData = d;
   var isMe = q.get('me') === '1';
+  // Pay Now / Book / Call always render — the customer needs them whether they scan the QR
+  // directly or open the texted link. The "Text to customer" button is an extra for James only.
   var meBtn = isMe ? '<button class="cust-quote-book" style="margin-top:14px;" onclick="textFromCustomerView()">📲 Text this to the customer</button>' : '';
   document.body.innerHTML =
     '<div class="header"><div><div class="header-logo">Carolina Key Cutters</div><div class="header-sub">Your Quote</div></div><div class="header-phone">(336) 510-9816</div></div>' +
-    '<div class="cust-view-wrap">' + buildCustomerQuoteHTML(d, !isMe) + meBtn + '</div>';
+    '<div class="cust-view-wrap">' + buildCustomerQuoteHTML(d, true) + meBtn + '</div>';
 }
 
 function autoPopulate() {
