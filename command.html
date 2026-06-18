@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -449,6 +450,7 @@ const CKC_VERSION          = 'v8.92-command';
 
 var liveCatalog      = [];
 var isLive           = false;
+var CKC_STOCK        = { ready: false, set: null };  // live Shopify in-stock SKUs (qty > 0)
 var lastSearchParams = {};
 var _ckcMatches      = [];
 var _customerVIN     = '';
@@ -588,6 +590,27 @@ var FALLBACK_DATABASE = [
   { sku:"CHV-11-AM",title:"GM/Chevrolet Transponder Key B111",type:"Transponder Key",price:29.99,image:"",inStock:true,status:"active",fcc:"N/A",keyway:"B111",buttonCount:0,vehicles:[{make:"Chevrolet",model:"Silverado 1500",years:"2007-2013"},{make:"Chevrolet",model:"Impala",years:"2006-2013"},{make:"GMC",model:"Sierra 1500",years:"2007-2013"}]}
 ];
 
+// Fetch the live in-stock SKU list from Shopify (via Worker). Populates CKC_STOCK.
+// Never throws — if it fails, CKC_STOCK.ready stays false and we fall back to the Vendor tag.
+async function loadStockSet() {
+  try {
+    var controller = new AbortController();
+    var timeoutId  = setTimeout(function() { controller.abort(); }, 15000);
+    var resp = await fetch(BLADE_PROXY_URL + '/stock?all=1', { method: 'GET', signal: controller.signal, headers: { 'Accept': 'application/json' } });
+    clearTimeout(timeoutId);
+    if (!resp.ok) throw new Error('stock endpoint returned ' + resp.status);
+    var data = await resp.json();
+    if (data && data.ok && Array.isArray(data.inStockSkus)) {
+      CKC_STOCK.set   = new Set(data.inStockSkus);
+      CKC_STOCK.ready = true;
+    } else {
+      throw new Error('bad stock payload');
+    }
+  } catch (e) {
+    CKC_STOCK.ready = false;  // graceful fallback to Vendor === 'CKC'
+  }
+}
+
 async function syncFromSheet() {
   var loadingBar = document.getElementById('ckc-loading');
   var statusEl   = document.getElementById('ckc-sync-status');
@@ -604,6 +627,7 @@ async function syncFromSheet() {
       if (!response.ok) throw new Error('Worker returned ' + response.status);
       var data = await response.json();
       if (data && data.status === 'ok' && data.products && data.products.length > 0) {
+        await loadStockSet();
         liveCatalog = data.products.map(normalizeProduct);
         isLive      = true;
         statusEl.className     = 'ckc-sync-status live';
@@ -664,7 +688,7 @@ function normalizeProduct(p) {
       vehicles.push({ make: normMake(c.make), model: canonicalModel, years: vYears });
     });
   }
-  var inStock = (vendor === 'CKC');
+  var inStock = CKC_STOCK.ready ? CKC_STOCK.set.has(sku) : (vendor === 'CKC');
   return { sku, title, type, price, image, handle, vendor, inStock, fcc, keyway, chip, conflictFlag, buttonCount, vehicles, _compat: compat, _years: years };
 }
 
