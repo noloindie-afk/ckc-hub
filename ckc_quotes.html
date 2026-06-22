@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -194,6 +193,42 @@
     .vin-row { flex-direction: column; }
     .qb-row { grid-template-columns: 1fr; }
   }
+
+  /* ── Customer name/phone fields (plain text — no $ prefix) ── */
+  .qb-input.qb-plain { padding-left: 14px; font-size: 1rem; font-weight: 600; }
+
+  /* ── History button in header ── */
+  .header-right { display: flex; align-items: center; gap: 14px; }
+  .hist-open-btn { background: #1a1a1a; color: var(--gold); border: 1px solid var(--gold); border-radius: 8px; padding: 7px 13px; font-family: 'Barlow Condensed', sans-serif; font-size: 0.82rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
+  .hist-open-btn:hover { background: var(--gold-dim); }
+
+  /* ── Saved toast ── */
+  .log-toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(20px); background: #14331f; border: 1px solid rgba(74,222,128,0.4); color: var(--green); font-size: 0.85rem; font-weight: 600; padding: 9px 18px; border-radius: 999px; opacity: 0; pointer-events: none; transition: all 0.25s; z-index: 300; }
+  .log-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── History overlay / panel ── */
+  .hist-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 400; align-items: flex-start; justify-content: center; padding: 24px 14px; overflow-y: auto; }
+  .hist-panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 560px; margin-top: 16px; overflow: hidden; }
+  .hist-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--border); }
+  .hist-title { font-family: 'Barlow Condensed', sans-serif; font-size: 1.15rem; font-weight: 900; color: var(--gold); letter-spacing: 0.5px; }
+  .hist-close { background: none; border: none; color: var(--muted2); font-size: 1.3rem; cursor: pointer; line-height: 1; padding: 4px 8px; }
+  .hist-close:hover { color: var(--text); }
+  .hist-body { padding: 16px 18px; }
+  .hist-pin-label { font-size: 0.9rem; color: var(--muted2); margin-bottom: 12px; }
+  .hist-pin-err { font-size: 0.85rem; color: var(--red); margin-bottom: 10px; }
+  .hist-pin-input { width: 100%; background: #1e1e1e; border: 2px solid var(--border); border-radius: 10px; padding: 13px 16px; color: var(--text); font-family: 'Barlow Semi Condensed', sans-serif; font-size: 1.3rem; font-weight: 700; letter-spacing: 4px; text-align: center; outline: none; margin-bottom: 12px; }
+  .hist-pin-input:focus { border-color: var(--gold); }
+  .hist-pin-btn { width: 100%; background: var(--gold); color: #111; border: none; border-radius: 10px; padding: 13px; font-family: 'Barlow', sans-serif; font-weight: 700; font-size: 0.95rem; cursor: pointer; }
+  .hist-search { width: 100%; background: #1e1e1e; border: 2px solid var(--border); border-radius: 10px; padding: 11px 15px; color: var(--text); font-family: 'Barlow', sans-serif; font-size: 0.95rem; outline: none; margin-bottom: 14px; }
+  .hist-search:focus { border-color: var(--gold); }
+  .hist-rows { display: flex; flex-direction: column; gap: 9px; max-height: 60vh; overflow-y: auto; }
+  .hist-row { background: #111; border: 1px solid var(--border); border-radius: 10px; padding: 11px 14px; }
+  .hist-row-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .hist-veh { font-family: 'Barlow Condensed', sans-serif; font-size: 1.05rem; font-weight: 800; color: var(--text); }
+  .hist-total { font-family: 'Barlow Condensed', sans-serif; font-size: 1.05rem; font-weight: 900; color: var(--gold-light); white-space: nowrap; }
+  .hist-who { font-size: 0.88rem; color: var(--blue); margin-top: 3px; }
+  .hist-meta { font-size: 0.76rem; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+  .hist-empty { font-size: 0.9rem; color: var(--muted); text-align: center; padding: 24px 0; }
 </style>
 </head>
 <body>
@@ -203,7 +238,10 @@
     <div class="header-logo">Carolina Key Cutters</div>
     <div class="header-sub">CKC Quotes — James</div>
   </div>
-  <div class="header-phone">(336) 510-9816</div>
+  <div class="header-right">
+    <button class="hist-open-btn" onclick="openHistory()">📋 History</button>
+    <div class="header-phone">(336) 510-9816</div>
+  </div>
 </div>
 
 <div class="body">
@@ -260,6 +298,24 @@
   <div class="result-card" id="result-card"></div>
 
 </div>
+
+<!-- Quote History (operator only) -->
+<div class="hist-overlay" id="hist-overlay">
+  <div class="hist-panel">
+    <div class="hist-head">
+      <span class="hist-title">📋 Quote History</span>
+      <button class="hist-close" onclick="closeHistory()">&times;</button>
+    </div>
+    <div class="hist-body">
+      <div id="hist-pin-area"></div>
+      <div id="hist-list-area" style="display:none;">
+        <input class="hist-search" id="hist-search" placeholder="Search name, phone, vehicle…" oninput="filterHistory()">
+        <div class="hist-rows" id="hist-rows"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="log-toast" id="log-toast">✓ Saved to log</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
@@ -543,6 +599,16 @@ var _seedSku = '', _seedKey = '', _seedKeyType = '', _seedKeyTitle = '', _seedSt
   _seedImg = p.get('img') || '';
 })();
 
+// ── Quote log (writes through the Worker → Apps Script → Google Sheet) ──
+var LOG_ENDPOINT      = 'https://ckc-blade-proxy.noloindie.workers.dev/log';
+var QUOTELOG_ENDPOINT = 'https://ckc-blade-proxy.noloindie.workers.dev/quotelog';
+var _lookupModel = '';      // model from the YMM dropdown ('' for VIN lookups)
+var _quoteId = '';          // one id per quote session — lets the log update one row as you tweak
+var _logTimer = null;       // debounce handle
+var _logLastSig = '';       // skip re-sending an unchanged quote
+var _logPin = '';           // History PIN, remembered for this session after first use
+var _histRows = [];         // last-loaded history rows (for client-side search)
+
 function decodeYear(vin) {
   const c = vin[9];
   const yr1 = YEAR_MAP[c]; const yr2 = YEAR_MAP2[c];
@@ -592,6 +658,7 @@ function renderResult(make, year, label, sourceNote) {
   // store context for the customer-quote layer + reset its state
   _ctx = { make: make, year: year, label: label, rule: r, tier: r.tier };
   _chosenPath = ''; _stockState = 'instock';
+  _quoteId = ''; _logLastSig = '';
 
   pill.innerHTML = sourceNote; pill.style.display = 'block';
   const flagsHTML = r.flags.map(f => {
@@ -673,6 +740,12 @@ function choosePath(path) {
     fromFinder +
     '<div class="qb">' +
       '<div class="qb-row">' +
+        '<div><label class="qb-field-label">Customer name</label>' +
+          '<input class="qb-input qb-plain" id="qb-customer" type="text" autocomplete="off" placeholder="optional" value="" oninput="recalcQuote()"></div>' +
+        '<div><label class="qb-field-label">Phone</label>' +
+          '<input class="qb-input qb-plain" id="qb-phone" type="tel" inputmode="tel" autocomplete="off" placeholder="optional" value="" oninput="recalcQuote()"></div>' +
+      '</div>' +
+      '<div class="qb-row">' +
         '<div><label class="qb-field-label">Service (labor)</label>' +
           '<div class="qb-input-wrap"><span class="qb-prefix">$</span>' +
           '<input class="qb-input" id="qb-labor" type="number" inputmode="decimal" min="0" value="' + (defLabor != null ? defLabor : '') + '" oninput="recalcQuote()"></div></div>' +
@@ -713,6 +786,7 @@ function setStock(s) {
   _stockState = s;
   document.getElementById('stock-instock').classList.toggle('on', s === 'instock');
   document.getElementById('stock-order').classList.toggle('on', s === 'order');
+  recalcQuote();
 }
 
 function recalcQuote() {
@@ -748,6 +822,7 @@ function recalcQuote() {
   }
   updatePreview();
   renderQR();
+  scheduleLog();
 }
 
 function buildQuoteText(d) {
@@ -784,7 +859,8 @@ function textQuote() {
   if (!_ctx || !_chosenPath) return;
   var d = gatherQuote();
   if (!(d.allin > 0)) return;
-  window.location.href = 'sms:&body=' + encodeURIComponent(buildQuoteText(d));
+  var to = d.phone ? d.phone.replace(/[^\d+]/g, '') : '';
+  window.location.href = 'sms:' + to + '&body=' + encodeURIComponent(buildQuoteText(d));
 }
 
 function fallbackCopy(txt) {
@@ -818,6 +894,7 @@ function runLookup(mode) {
     const v = decodeVin(raw);
     if (!v) { err.textContent = 'Could not identify make or year from that VIN. WMI: ' + raw.slice(0,3) + ' — verify at vpic.nhtsa.dot.gov.'; err.style.display = 'block'; return; }
     _lookupHadVIN = true;
+    _lookupModel = '';
     renderResult(v.make, v.year, v.year + ' ' + v.make, 'Decoded: <strong>' + v.year + ' ' + v.make + '</strong> &nbsp;&middot;&nbsp; WMI: ' + v.wmi + ' &nbsp;&middot;&nbsp; Year code: ' + v.yearChar);
   } else {
     const yearVal = parseInt(document.getElementById('ymm-year').value);
@@ -826,6 +903,7 @@ function runLookup(mode) {
     if (!yearVal || !makeVal) { err.textContent = 'Please select a year and make.'; err.style.display = 'block'; return; }
     const internalMake = MAKE_NORMALIZE[makeVal] || makeVal.toUpperCase();
     _lookupHadVIN = false;
+    _lookupModel = modelVal || '';
     var ymmLabel = yearVal + ' ' + makeVal + (modelVal ? ' ' + modelVal : '');
     renderResult(internalMake, yearVal, ymmLabel, 'Looking up: <strong>' + ymmLabel + '</strong>');
   }
@@ -881,6 +959,10 @@ function gatherQuote() {
   var key = keyEl ? parseFloat(keyEl.value) : NaN;
   var dealer = dealerEl ? parseFloat(dealerEl.value) : NaN;
   var sku = skuEl ? (skuEl.value || '').trim() : '';
+  var custEl = document.getElementById('qb-customer');
+  var phoneEl = document.getElementById('qb-phone');
+  var customer = custEl ? (custEl.value || '').trim() : '';
+  var phone = phoneEl ? (phoneEl.value || '').trim() : '';
   var surcharges = _ctx ? computeSurcharges(_ctx.make, _ctx.year, _chosenPath) : [];
   var scTotal = surchargeTotal(surcharges);
   var taxable = isNaN(key) ? 0 : key;
@@ -889,6 +971,7 @@ function gatherQuote() {
   return { vehicle: _ctx ? _ctx.label : '', path: _chosenPath, key: key, labor: labor,
            surcharges: surcharges, surchargeTotal: scTotal,
            tax: tax, allin: allin, dealer: dealer, stock: _stockState, sku: sku,
+           customer: customer, phone: phone,
            keyTitle: _seedKeyTitle, keyType: _seedKeyType, img: _seedImg };
 }
 
@@ -1072,6 +1155,155 @@ function autoPopulate() {
       }, 50);
     }, 50);
   }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  QUOTE LOG  +  HISTORY VIEWER
+// ═══════════════════════════════════════════════════════════
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+  });
+}
+
+// Pull an FCC ID out of a key title like "...FCC ID: RX2TRF198..." if one is present.
+function extractFCC(title) {
+  if (!title) return '';
+  var m = String(title).match(/FCC\s*ID[:#]?\s*([A-Z0-9\-]{4,})/i);
+  return m ? m[1] : '';
+}
+
+// Debounce: wait until typing settles, then log once.
+function scheduleLog() {
+  if (_logTimer) clearTimeout(_logTimer);
+  _logTimer = setTimeout(sendLog, 1200);
+}
+
+// Auto-log the current quote (upserts one row per quote session via _quoteId).
+function sendLog() {
+  if (!_ctx || !_chosenPath) return;
+  var d = gatherQuote();
+  if (!(d.allin > 0)) return;                 // only log a quote that has a real price
+  if (!_quoteId) _quoteId = 'Q' + Date.now();  // lazily start a session id on first real quote
+  var payload = {
+    quoteId:    _quoteId,
+    customer:   d.customer || '',
+    phone:      d.phone || '',
+    year:       _ctx.year || '',
+    make:       _ctx.make || '',
+    model:      _lookupModel || '',
+    keyType:    d.keyType || (_ctx.rule ? _ctx.rule.keyType : '') || '',
+    keyName:    d.keyTitle || '',
+    fcc:        extractFCC(d.keyTitle),
+    sku:        d.sku || '',
+    stock:      d.stock || '',
+    keyPrice:   (isNaN(d.key)   ? 0 : d.key),
+    labor:      (isNaN(d.labor) ? 0 : d.labor),
+    surcharges: d.surchargeTotal || 0,
+    total:      d.allin || 0,
+    notes:      (d.path === 'aak' ? 'Add-a-Key' : (d.path === 'akl' ? 'All Keys Lost' : ''))
+  };
+  var sig = JSON.stringify(payload);
+  if (sig === _logLastSig) return;             // nothing changed since the last write
+  _logLastSig = sig;
+  fetch(LOG_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: sig
+  }).then(function (r) { return r.json(); }).then(function (res) {
+    if (res && res.ok) showLogSaved();
+  }).catch(function () { /* logging is best-effort — never block the operator */ });
+}
+
+function showLogSaved() {
+  var t = document.getElementById('log-toast');
+  if (!t) return;
+  t.classList.add('show');
+  clearTimeout(showLogSaved._t);
+  showLogSaved._t = setTimeout(function () { t.classList.remove('show'); }, 1500);
+}
+
+// ── History viewer ──
+function openHistory() {
+  var ov = document.getElementById('hist-overlay');
+  if (!ov) return;
+  ov.style.display = 'flex';
+  if (_logPin) loadHistory();      // already unlocked this session
+  else showHistPin();
+}
+function closeHistory() {
+  var ov = document.getElementById('hist-overlay');
+  if (ov) ov.style.display = 'none';
+}
+function showHistPin(msg) {
+  document.getElementById('hist-list-area').style.display = 'none';
+  var area = document.getElementById('hist-pin-area');
+  area.style.display = 'block';
+  area.innerHTML =
+    '<div class="hist-pin-label">Enter your PIN to view the quote log.</div>' +
+    (msg ? '<div class="hist-pin-err">' + esc(msg) + '</div>' : '') +
+    '<input class="hist-pin-input" id="hist-pin" type="password" inputmode="numeric" autocomplete="off" placeholder="• • • •" onkeydown="if(event.key===\'Enter\')submitHistPin()">' +
+    '<button class="hist-pin-btn" onclick="submitHistPin()">View log</button>';
+  setTimeout(function () { var el = document.getElementById('hist-pin'); if (el) el.focus(); }, 60);
+}
+function submitHistPin() {
+  var el = document.getElementById('hist-pin');
+  var pin = el ? el.value.trim() : '';
+  if (!pin) return;
+  loadHistory(pin);
+}
+function loadHistory(pin) {
+  var usePin = pin || _logPin;
+  if (!usePin) { showHistPin(); return; }
+  var area = document.getElementById('hist-pin-area');
+  area.style.display = 'block';
+  area.innerHTML = '<div class="hist-pin-label">Loading…</div>';
+  fetch(QUOTELOG_ENDPOINT + '?pin=' + encodeURIComponent(usePin) + '&n=200')
+    .then(function (r) { return r.json(); })
+    .then(function (res) {
+      if (!res || !res.ok) { _logPin = ''; showHistPin('Wrong PIN — try again.'); return; }
+      _logPin = usePin;
+      _histRows = res.rows || [];
+      area.style.display = 'none';
+      document.getElementById('hist-list-area').style.display = 'block';
+      var search = document.getElementById('hist-search');
+      if (search) search.value = '';
+      renderHistory(_histRows);
+    })
+    .catch(function () { showHistPin('Could not load — check your connection.'); });
+}
+function fmtDate(ts) {
+  if (!ts) return '';
+  var dt = new Date(ts);
+  if (isNaN(dt.getTime())) return String(ts);
+  return (dt.getMonth() + 1) + '/' + dt.getDate() + '/' + String(dt.getFullYear()).slice(2) + ' ' +
+         dt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+function renderHistory(rows) {
+  var box = document.getElementById('hist-rows');
+  if (!box) return;
+  if (!rows || !rows.length) { box.innerHTML = '<div class="hist-empty">No quotes logged yet.</div>'; return; }
+  box.innerHTML = rows.map(function (r) {
+    var veh = [r.year, r.make, r.model].filter(Boolean).join(' ');
+    var who = [r.customer, r.phone].filter(Boolean).join(' · ');
+    var total = (r.total || r.total === 0) ? ('$' + Number(r.total).toFixed(2)) : '';
+    var metaBits = [fmtDate(r.timestamp), r.notes, r.keyName, r.sku].filter(Boolean);
+    return '<div class="hist-row">' +
+        '<div class="hist-row-top"><span class="hist-veh">' + (esc(veh) || '—') + '</span><span class="hist-total">' + esc(total) + '</span></div>' +
+        (who ? '<div class="hist-who">' + esc(who) + '</div>' : '') +
+        '<div class="hist-meta">' + metaBits.map(esc).join(' · ') + '</div>' +
+      '</div>';
+  }).join('');
+}
+function filterHistory() {
+  var el = document.getElementById('hist-search');
+  var q = el ? (el.value || '').toLowerCase().trim() : '';
+  if (!q) { renderHistory(_histRows); return; }
+  var f = _histRows.filter(function (r) {
+    return [r.customer, r.phone, r.year, r.make, r.model, r.keyName, r.sku, r.notes]
+      .filter(Boolean).join(' ').toLowerCase().indexOf(q) !== -1;
+  });
+  renderHistory(f);
 }
 
 // ═══ BOOTSTRAP ═══
