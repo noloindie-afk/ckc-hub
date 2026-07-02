@@ -77,6 +77,8 @@
   .price-box.aak .price-box-val { color: var(--green); }
   .price-box.akl .price-box-val { color: var(--amber); }
   .price-box-note { font-size: 0.76rem; color: var(--muted); line-height: 1.4; }
+  .price-box-split { font-size: 0.72rem; color: var(--muted2); margin-top: 5px; line-height: 1.5; }
+  .price-box-split b { color: var(--text); font-weight: 600; }
 
   .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border-bottom: 1px solid var(--border); }
   .info-cell { padding: 13px 22px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
@@ -114,10 +116,24 @@
   .path-btn.akl.selected { border-color: var(--amber); background: var(--amber-bg); }
   .path-btn.akl.selected .path-btn-t, .path-btn.akl.selected .path-btn-q { color: var(--amber); }
 
+  /* ── Retail / Dealer rate toggle ── */
+  .rate-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0 4px; }
+  .rate-btn { padding: 11px 10px; border: 2px solid var(--border); background: #111; border-radius: 10px; cursor: pointer; text-align: center; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
+  .rate-btn-t { font-family: 'Barlow Condensed', sans-serif; font-size: 0.95rem; font-weight: 800; color: var(--muted2); letter-spacing: 0.5px; }
+  .rate-btn-p { font-size: 0.74rem; color: var(--muted); margin-top: 2px; }
+  .rate-btn.retail.on { border-color: var(--gold); background: var(--gold-dim); }
+  .rate-btn.retail.on .rate-btn-t { color: var(--gold-light); }
+  .rate-btn.dealer.on { border-color: var(--blue); background: var(--blue-bg); }
+  .rate-btn.dealer.on .rate-btn-t { color: var(--blue); }
+
   .vin-alert { margin: 16px 0 4px; background: var(--amber-bg); border: 2px solid var(--amber); border-radius: 12px; padding: 16px 18px; }
   .vin-alert-title { font-family: 'Barlow Condensed', sans-serif; font-size: 1.5rem; font-weight: 900; letter-spacing: 1px; color: var(--amber); margin-bottom: 6px; line-height: 1; }
   .vin-alert-body { font-size: 0.88rem; color: #e0b890; line-height: 1.55; margin-bottom: 13px; }
   .vin-alert-btn { display: inline-block; background: var(--amber); color: #111; font-family: 'Barlow', sans-serif; font-weight: 700; font-size: 0.85rem; padding: 9px 16px; border-radius: 8px; text-decoration: none; }
+
+  .refer-alert { margin: 4px 0; background: var(--red-bg); border: 2px solid var(--red); border-radius: 12px; padding: 16px 18px; }
+  .refer-alert-title { font-family: 'Barlow Condensed', sans-serif; font-size: 1.3rem; font-weight: 900; letter-spacing: 0.5px; color: var(--red); margin-bottom: 6px; line-height: 1.1; }
+  .refer-alert-body { font-size: 0.88rem; color: #e5a0a0; line-height: 1.55; }
 
   .qb { margin-top: 16px; }
   .qb-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
@@ -179,6 +195,7 @@
   .cust-quote-savings { background: var(--green-bg); border: 1px solid rgba(74,222,128,0.25); border-radius: 9px; padding: 10px 14px; margin-top: 12px; font-size: 0.86rem; color: var(--green); font-weight: 600; text-align: center; }
   .cust-quote-stock { font-size: 0.85rem; color: var(--muted2); margin-top: 12px; }
   .cust-quote-part { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+  .cust-quote-po { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
   .cust-quote-cta { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
   .cust-quote-book { display: block; text-align: center; background: var(--gold); color: #111; font-family: 'Barlow', sans-serif; font-weight: 700; padding: 14px; border-radius: 11px; text-decoration: none; font-size: 1rem; }
   .cust-quote-call { display: block; text-align: center; background: #1a1a1a; color: var(--gold); border: 2px solid var(--gold); font-family: 'Barlow', sans-serif; font-weight: 700; padding: 13px; border-radius: 11px; text-decoration: none; }
@@ -371,109 +388,161 @@ const YEAR_MAP2 = {
   'J':2018,'K':2019,'L':2020,'M':2021,'N':2022,'P':2023,'R':2024,'S':2025,'T':2026
 };
 
+// ═══════════════════════════════════════════════════════════════════
+//  VEHICLE MATRIX  — audited & corrected (verified Feb 2026)
+//  Each rule now carries FOUR labor numbers:
+//    aakRetail / aakDealer  (add-a-key)   aklRetail / aklDealer  (all keys lost)
+//  Retail = walk-up customer (default).  Dealer = trade rate.
+//  Labor only — key price, subscription, and key-code stack separately.
+//  refer:true  => job not serviced; show refer-out card, no price/quote.
+// ═══════════════════════════════════════════════════════════════════
 const MATRIX = [
   { group:'Ford / Lincoln', makes:['FORD','LINCOLN'], rules:[
-    { test:v=>v.year>=2018, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'CarDAQ-Plus 3 + FDRS (NASTF VSP)',
-      flags:['danger:Autel dropped Ford immobilizer functions (2015+) — IM508 cannot program this','warn:FDRS via CarDAQ-Plus 3 + NASTF VSP required; 10-min security wait on 2021+','info:FDRS access surcharge applies; NASTF key code added on AKL'],
-      script:'That\'s a push-start Ford — since Ford locked down 2015-and-newer programming, this runs on dealer-level FDRS, not a standard tool. Add-a-key labor runs $150 to $175 plus FDRS access, key billed separately. Did you lose all your keys or are you adding one?' },
-    { test:v=>v.year>=2015, tier:2, keyType:'Transponder / Bladed Key', aak:'$75', akl:'$150–$175', time:'30–45 min AAK / 60–90 min AKL', tool:'CarDAQ-Plus 3 + FDRS (NASTF VSP)',
-      flags:['danger:Autel dropped Ford immobilizer functions (2015+) — IM508 cannot program this','warn:FDRS via CarDAQ-Plus 3 + NASTF VSP required','info:FDRS access surcharge applies; NASTF key code added on AKL'],
-      script:'Even though that\'s a bladed key, Ford locked down 2015-and-newer programming — it runs on dealer-level FDRS now. Add-a-key labor is $75 plus FDRS access, key billed separately. Are you adding a key or did you lose all of them?' },
-    { test:v=>true, tier:1, keyType:'Transponder Key', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
-      flags:['success:Pre-2015 PATS — standard OBD, strong Autel coverage','info:F-150 / Escape / Explorer / Ranger / Mustang covered'],
-      script:'Good news — that\'s a pre-2015 Ford, standard transponder key. The $65 service call covers add-a-key, I come to you, done in under 30 minutes. What area are you in?' }
+    { test:v=>true, tier:3, keyType:'Ford PATS / Smart Key',
+      aakRetail:175, aakDealer:125, aklRetail:350, aklDealer:275,
+      time:'60 min AAK / 90 min AKL', tool:'CarDAQ-Plus 3 + FDRS (NASTF VSP)',
+      flags:['danger:Autel removed ALL Ford immobilizer functions (every year, add-key AND AKL) as of Aug 25, 2025 — the IM508 cannot program any Ford key','warn:Every Ford key job now runs on dealer FDRS via CarDAQ-Plus 3 + NASTF VSP','info:FDRS subscription applies to every Ford job; NASTF key code added on AKL'],
+      script:'Ford now locks all key programming to dealer-level FDRS — even older ones. I run it on the same FDRS software the dealer uses. Add-a-key labor is $175 plus the FDRS access fee, key billed separately. Did you lose all your keys, or are you adding one?' }
   ]},
   { group:'GM — Chevrolet / GMC / Buick / Cadillac', makes:['CHEVROLET','GMC','BUICK','CADILLAC','PONTIAC','SATURN','OLDSMOBILE'], rules:[
-    { test:v=>v.year>=2014, tier:2, keyType:'Remote Head Key / Smart Key', aak:'$150–$175', akl:'$300–$350', time:'45–60 min AAK / 90 min AKL', tool:'Autel IM508',
+    { test:v=>v.year>=2021, tier:2, keyType:'Smart Key (CAN-FD)',
+      aakRetail:200, aakDealer:150, aklRetail:375, aklDealer:275,
+      time:'45–60 min AAK / 90 min AKL', tool:'Autel IM508 + CAN FD adapter',
+      flags:['warn:2021+ GM AKL needs an ECM/BCM security code — GM cut server access, so the PIN comes from a third-party calc (~$40), not the tool','info:Add-a-key does not need the code; AKL does','info:Confirm push-start trim with VIN; NASTF key code added on AKL'],
+      script:'That is a newer GM with the CAN-FD smart-key system. Add-a-key labor is $200. For all keys lost, GM shut down the code server so I have to buy a security code from a third party — I need your VIN to confirm before I lock the all-keys-lost price.' },
+    { test:v=>v.year>=2014, tier:2, keyType:'Remote Head Key / Smart Key',
+      aakRetail:200, aakDealer:150, aklRetail:375, aklDealer:275,
+      time:'45–60 min AAK / 90 min AKL', tool:'Autel IM508',
       flags:['warn:Confirm RPO codes for push-start trim with VIN','info:BCM procedure — not standard OBD','info:NASTF key code added on AKL'],
-      script:'That\'s a newer GM with smart key programming. Add-a-key labor is $150 to $175, key separate. I\'ll need your VIN to confirm whether your trim has push-start — that affects the all-keys-lost price.' },
-    { test:v=>true, tier:1, keyType:'Transponder Key', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+      script:'That is a newer GM with smart-key programming. Add-a-key labor is $200, key separate. I will need your VIN to confirm whether your trim has push-start — that affects the all-keys-lost price.' },
+    { test:v=>true, tier:1, keyType:'Transponder Key',
+      aakRetail:95, aakDealer:65, aklRetail:200, aklDealer:150,
+      time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
       flags:['success:Standard OBD — PassLock / PassKey III covered','info:Silverado / Sierra / Tahoe / Suburban / Impala / Malibu','info:NASTF key code added on AKL'],
-      script:'That\'s a standard GM transponder — $65 service call covers add-a-key, I come to your location in 20 to 30 minutes. What part of the Triad are you in?' }
+      script:'That is a standard GM transponder — $95 to add a key, I come to your location in 20 to 30 minutes. What part of the Triad are you in?' }
   ]},
   { group:'Chrysler / Dodge / Jeep / RAM', makes:['CHRYSLER','DODGE','JEEP','RAM'], rules:[
-    { test:v=>v.year>=2011, tier:2, keyType:'FOBIK / Smart Key', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'Autel IM508',
-      flags:['warn:AKL may require EEPROM on some trims — confirm with VIN before committing','warn:FOBIK procedure — not standard OBD','info:SGW (2018+) needs AutoAuth; NASTF key code added on AKL'],
-      script:'That\'s a FOBIK vehicle — programming is different from a standard key and the $65 service call doesn\'t apply. Add-a-key runs $150 to $175 labor. For all keys lost I need your VIN first — the method varies by trim.' },
-    { test:v=>true, tier:1, keyType:'Transponder / Remote Head Key', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+    { test:v=>v.year>=2011, tier:2, keyType:'FOBIK / Smart Key',
+      aakRetail:200, aakDealer:150, aklRetail:375, aklDealer:275,
+      time:'60 min AAK / 90 min AKL', tool:'Autel IM508',
+      flags:['warn:AKL may require EEPROM on some trims — confirm with VIN before committing','warn:SGW (2018+) needs AutoAuth or 12+8 bypass cable','info:Stellantis flash access is $35 per VIN when a module flash is required; NASTF key code added on AKL'],
+      script:'That is a FOBIK vehicle — programming is different from a standard key. Add-a-key runs $200 labor. For all keys lost I need your VIN first — the method varies by trim.' },
+    { test:v=>true, tier:1, keyType:'Transponder / Remote Head Key',
+      aakRetail:95, aakDealer:65, aklRetail:200, aklDealer:150,
+      time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
       flags:['success:Standard SKIM procedure — OBD covered','info:NASTF key code added on AKL'],
-      script:'That\'s a standard transponder — $65 service call covers add-a-key, I come to your location. What part of the Triad are you in?' }
+      script:'That is a standard transponder — $95 to add a key, I come to your location. What part of the Triad are you in?' }
   ]},
   { group:'Toyota / Lexus / Scion', makes:['TOYOTA','LEXUS','SCION'], rules:[
-    { test:v=>v.year>=2010, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'Autel IM508 (AAK) · CarDAQ + Techstream (AKL)',
-      flags:['warn:Autel lost Toyota/Lexus AKL — add-a-key still works on the IM508, but AKL needs Techstream via CarDAQ + NASTF','info:Toyota dealer access + NASTF key code added on AKL only'],
-      script:'That Toyota has push-start. Adding a key I can do on-site — but all keys lost on a Toyota now runs through dealer Techstream, so there\'s a dealer-access charge on top. Are you adding a key, or did you lose all of them?' },
-    { test:v=>true, tier:1, keyType:'Transponder Key (TOY43/TOY47)', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508 (AAK) · CarDAQ + Techstream (AKL)',
-      flags:['success:Add-a-key — standard OBD on the IM508','warn:All keys lost runs through Techstream via CarDAQ + NASTF — dealer access surcharge applies'],
-      script:'That\'s a standard Toyota transponder. Add-a-key is a $65 service call, I come to you. All keys lost runs through dealer Techstream with a dealer-access charge — which situation are you in?' }
+    { test:v=>v.year>=2018, tier:3, keyType:'Smart Key / Proximity',
+      aakRetail:200, aakDealer:150, aklRetail:0, aklDealer:0, aklRefer:true,
+      time:'60 min AAK', tool:'Autel IM508 + XP400 Pro (add-key only)',
+      flags:['success:Add-a-key with a working key still works on the Autel — no subscription','danger:ALL KEYS LOST on 2018+ Toyota/Lexus smart keys = REFER OUT. Autel removed Toyota AKL for North America (2024); key-capable TIS access is annual-only ($1,200 Security Pro) — do not take it','info:Older 8A bladed (non-smart) AKL is still possible with the 8A blade kit + G-BOX + APB130'],
+      script:'That Toyota has push-start. Adding a key I can do on-site — but if all keys are lost on this one, Toyota locked that out for independents and I would refer you to the dealer. Do you still have a working key?' },
+    { test:v=>true, tier:1, keyType:'Transponder Key (TOY43/TOY47)',
+      aakRetail:95, aakDealer:65, aklRetail:200, aklDealer:150,
+      time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+      flags:['success:Older Toyota transponder — add-key and AKL both run on the Autel, no subscription','info:Applies to pre-smart-key bladed Toyota/Lexus'],
+      script:'That is an older Toyota transponder key — I can add a key or do all-keys-lost on-site. Add-a-key is $95, I come to you. Which situation are you in?' }
   ]},
   { group:'Honda / Acura', makes:['HONDA','ACURA'], rules:[
-    { test:v=>v.year>=2013, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$350–$450', time:'60 min AAK / 90+ min AKL', tool:'Autel IM508 + possible bench',
+    { test:v=>v.year>=2013, tier:2, keyType:'Smart Key / Proximity',
+      aakRetail:200, aakDealer:150, aklRetail:425, aklDealer:325,
+      time:'60 min AAK / 90+ min AKL', tool:'Autel IM508 + possible bench',
       flags:['danger:AKL on 2013+ Honda/Acura smart key typically requires EEPROM — bench work likely','warn:Do not commit to AKL price without confirming first','info:AAK handled via PIN procedure on Autel; NASTF key code added on AKL'],
-      script:'Newer Honda with push-start — add-a-key I can handle on-site for $150 to $175. All keys lost on that one may require bench work — I need your VIN before I can give you a firm price.' },
-    { test:v=>true, tier:1, keyType:'Transponder Key (HO01/HON66)', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+      script:'Newer Honda with push-start — add-a-key I can handle on-site for $200. All keys lost on that one may require bench work — I need your VIN before I can give you a firm price.' },
+    { test:v=>true, tier:1, keyType:'Transponder Key (HO01/HON66)',
+      aakRetail:95, aakDealer:65, aklRetail:200, aklDealer:150,
+      time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
       flags:['success:Standard Honda CMFI — OBD covered','info:NASTF key code added on AKL'],
-      script:'That\'s a standard Honda transponder — $65 service call, I come to you, done in under 30 minutes. What part of the Triad are you in?' }
+      script:'That is a standard Honda transponder — $95 to add a key, I come to you, done in under 30 minutes. What part of the Triad are you in?' }
   ]},
   { group:'Nissan / Infiniti', makes:['NISSAN','INFINITI'], rules:[
-    { test:v=>v.year>=2007, tier:2, keyType:'Smart Key / Proximity (NSN14)', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'Autel IM508',
-      flags:['warn:NATS 5/6 BCM access required — not standard OBD','info:VIN required before committing to AKL price','info:NASTF key code added on AKL'],
-      script:'That Nissan has push-start smart key — different procedure from a standard key. Add-a-key labor is $150 to $175, key separate. All keys lost I\'ll need your VIN to confirm the exact procedure before I quote.' },
-    { test:v=>true, tier:1, keyType:'Transponder Key (NSN11/NSN14)', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+    { test:v=>v.year>=2007, tier:2, keyType:'Smart Key / Proximity (NSN14)',
+      aakRetail:200, aakDealer:150, aklRetail:375, aklDealer:275,
+      time:'60 min AAK / 90 min AKL', tool:'Autel IM508 (+ APB131 for AKL PIN read)',
+      flags:['warn:Add-key OK on Autel; AKL needs a PIN — dealer servers are closed, so PIN comes from a 3rd party (~$20) or an APB131 dump read','info:NATS 5/6 BCM access — not standard OBD','info:VIN required before AKL; NASTF key code added on AKL'],
+      script:'That Nissan has push-start. Add-a-key labor is $200. For all keys lost I need a PIN pulled from the car or bought from a third party — I will confirm the exact procedure with your VIN before I quote it.' },
+    { test:v=>true, tier:1, keyType:'Transponder Key (NSN11/NSN14)',
+      aakRetail:95, aakDealer:65, aklRetail:200, aklDealer:150,
+      time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
       flags:['success:Standard NATS OBD — reliable Autel coverage','info:NASTF key code added on AKL'],
-      script:'Standard Nissan transponder — $65 service call covers add-a-key, I come to you. What area are you in?' }
+      script:'Standard Nissan transponder — $95 to add a key, I come to you. What area are you in?' }
   ]},
   { group:'Hyundai / Kia', makes:['HYUNDAI','KIA'], rules:[
-    { test:v=>v.year>=2012, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$300–$350', time:'45–60 min AAK / 90 min AKL', tool:'Autel IM508',
-      flags:['warn:AKL method depends on immo generation — confirm with VIN','info:PIN or BCM procedure for AAK via Autel','info:NASTF key code added on AKL'],
-      script:'Newer Hyundai or Kia with push-start — add-a-key labor is $150 to $175. All keys lost varies by the immo version — I need the VIN to confirm the procedure and price before we schedule anything.' },
-    { test:v=>true, tier:1, keyType:'Transponder Key (HY20/HY22)', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+    { test:v=>v.year>=2012, tier:2, keyType:'Smart Key / Proximity',
+      aakRetail:200, aakDealer:150, aklRetail:375, aklDealer:275,
+      time:'45–60 min AAK / 90 min AKL', tool:'Autel IM508',
+      flags:['warn:Newer smart keys may throw a "remote incapable" error — the Diagnostic-path workaround usually clears it','warn:AKL method depends on immo generation — confirm with VIN','info:PIN or BCM procedure for AAK; NASTF key code added on AKL'],
+      script:'Newer Hyundai or Kia with push-start — add-a-key labor is $200. All keys lost varies by the immo version — I need the VIN to confirm the procedure and price before we schedule anything.' },
+    { test:v=>true, tier:1, keyType:'Transponder Key (HY20/HY22)',
+      aakRetail:95, aakDealer:65, aklRetail:200, aklDealer:150,
+      time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
       flags:['success:Standard OBD — strong Autel coverage','info:NASTF key code added on AKL'],
-      script:'Standard Hyundai or Kia transponder — $65 service call covers add-a-key, I come to you. What area are you in?' }
+      script:'Standard Hyundai or Kia transponder — $95 to add a key, I come to you. What area are you in?' }
   ]},
   { group:'Genesis', makes:['GENESIS'], rules:[
-    { test:v=>true, tier:3, keyType:'Smart Key / Proximity', aak:'$175–$225', akl:'$350–$450', time:'60–90 min AAK', tool:'Autel IM508',
+    { test:v=>true, tier:3, keyType:'Smart Key / Proximity',
+      aakRetail:250, aakDealer:200, aklRetail:450, aklDealer:350,
+      time:'60–90 min AAK', tool:'Autel IM508',
       flags:['warn:Genesis BCM more complex than standard Hyundai/Kia','warn:VIN required before AKL — confirm Autel coverage first','info:NASTF key code added on AKL'],
-      script:'Genesis smart key programming is more involved than a standard Hyundai or Kia. Add-a-key labor runs $175 to $225. For all keys lost I\'ll need your VIN to confirm coverage before I give you a firm price.' }
+      script:'Genesis smart-key programming is more involved than a standard Hyundai or Kia. Add-a-key labor runs $250. For all keys lost I will need your VIN to confirm coverage before I give you a firm price.' }
   ]},
   { group:'Subaru', makes:['SUBARU'], rules:[
-    { test:v=>v.year>=2018, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'Autel IM508',
+    { test:v=>v.year>=2018, tier:2, keyType:'Smart Key / Proximity',
+      aakRetail:200, aakDealer:150, aklRetail:375, aklDealer:275,
+      time:'60 min AAK / 90 min AKL', tool:'Autel IM508',
       flags:['info:Push-start Subaru 2018+ — BCM procedure','warn:Confirm VIN for AKL before quoting','info:NASTF key code added on AKL'],
-      script:'Newer Subaru with push-start — add-a-key labor is $150 to $175. All keys lost I\'ll want your VIN to confirm the procedure first.' },
-    { test:v=>true, tier:1, keyType:'Transponder Key', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+      script:'Newer Subaru with push-start — add-a-key labor is $200. All keys lost I will want your VIN to confirm the procedure first.' },
+    { test:v=>true, tier:1, keyType:'Transponder Key',
+      aakRetail:95, aakDealer:65, aklRetail:200, aklDealer:150,
+      time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
       flags:['success:Standard OBD — good Autel coverage','info:NASTF key code added on AKL'],
-      script:'Standard Subaru transponder — $65 service call, done in under 30 minutes. What part of the Triad are you in?' }
+      script:'Standard Subaru transponder — $95 to add a key, done in under 30 minutes. What part of the Triad are you in?' }
   ]},
   { group:'Mazda / Mitsubishi', makes:['MAZDA','MITSUBISHI'], rules:[
-    { test:v=>v.year>=2014, tier:2, keyType:'Smart Key / Proximity', aak:'$150–$175', akl:'$300–$350', time:'60 min AAK / 90 min AKL', tool:'Autel IM508',
-      flags:['warn:Confirm immo generation with VIN for AKL','info:BCM procedure for push-start models','info:NASTF key code added on AKL'],
-      script:'That\'s a newer push-start model — smart key labor runs $150 to $175 for add-a-key. I\'ll need the VIN to confirm the all-keys-lost procedure before quoting.' },
-    { test:v=>true, tier:1, keyType:'Transponder Key', aak:'$65', akl:'$150–$175', time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
+    { test:v=>v.year>=2014, tier:2, keyType:'Smart Key / Proximity',
+      aakRetail:200, aakDealer:150, aklRetail:375, aklDealer:275,
+      time:'60 min AAK / 90 min AKL', tool:'Autel IM508',
+      flags:['warn:Newer Mazda (2022+) may need a serial the Autel does not pull — may require MDARS or a 3rd-party PIN','warn:Confirm immo generation with VIN for AKL','info:BCM procedure for push-start models; NASTF key code added on AKL'],
+      script:'That is a newer push-start model — smart-key labor runs $200 for add-a-key. I will need the VIN to confirm the all-keys-lost procedure before quoting.' },
+    { test:v=>true, tier:1, keyType:'Transponder Key',
+      aakRetail:95, aakDealer:65, aklRetail:200, aklDealer:150,
+      time:'20–30 min AAK / 45–60 min AKL', tool:'Autel IM508',
       flags:['success:Standard OBD covered','info:NASTF key code added on AKL'],
-      script:'Standard transponder — $65 service call, done in under 30 minutes. What part of the Triad are you in?' }
+      script:'Standard transponder — $95 to add a key, done in under 30 minutes. What part of the Triad are you in?' }
   ]},
   { group:'BMW / MINI', makes:['BMW','MINI'], rules:[
-    { test:v=>true, tier:4, keyType:'Smart Key / CAS Module', aak:'$250–$350', akl:'$450–$600+', time:'90–120 min AAK', tool:'Autel IM508 + KTAG',
-      flags:['danger:BMW/MINI CAS/FEM — EEPROM access required on all procedures','danger:AKL often requires bench work — confirm before dispatch','warn:VIN required before committing to any price','info:NASTF key code added on AKL'],
-      script:'BMW or MINI smart key requires EEPROM-level access — more involved than most vehicles. Add-a-key labor runs $250 to $350. For all keys lost I need your VIN before I can give you an accurate price.' }
+    { test:v=>true, tier:4, keyType:'Smart Key / CAS · FEM · BDC',
+      aakRetail:400, aakDealer:300, aklRetail:800, aklDealer:550,
+      time:'90–120 min AAK / half-day AKL', tool:'Autel IM508 + XP400 Pro (+ G-BOX3 for AKL ISN read)',
+      flags:['danger:CAS4+ / FEM / BDC — EEPROM/bench access required on all procedures; module usually comes out','danger:AKL has NO independent OBD path — the online authorization is dealer/server-side, so the ISN must be read off the DME on the bench','warn:VIN sets the system (E=CAS · F=CAS4/FEM · G=BDC) and the tool chain — confirm before dispatch','warn:First-of-platform CAS4+ AKL is a half-day job — block the time, do not learn on it live in a driveway','info:NASTF gets the cut code, not the AKL token; NASTF key code added on AKL'],
+      script:'BMW or MINI keys need EEPROM-level access — more involved than most vehicles. Add-a-key runs $400 out the door on labor. All keys lost is a bigger bench job and starts around $800 — I will need your VIN and year to confirm.' }
   ]},
   { group:'Mercedes-Benz', makes:['MERCEDES-BENZ'], rules:[
-    { test:v=>true, tier:3, keyType:'Smart Key / EIS Module', aak:'$200–$300', akl:'$400–$600+', time:'90–120 min AAK', tool:'Autel IM508 + KTAG',
-      flags:['danger:EIS EEPROM required — not standard OBD','danger:AKL likely requires EIS replacement + bench programming','warn:VIN required — procedure varies by year','info:NASTF key code added on AKL'],
-      script:'Mercedes smart key programming requires EIS module access — it\'s a more complex job. Add-a-key labor runs $200 to $300. All keys lost on a Mercedes is a significant job — I need the VIN before I can give you a firm price.' }
+    { test:v=>true, tier:3, keyType:'Smart Key / EIS · EZS',
+      aakRetail:400, aakDealer:300, aklRetail:800, aklDealer:550,
+      time:'90–120 min AAK / half-day AKL', tool:'Autel IM508 + XP400 Pro + G-BOX3',
+      flags:['danger:EIS/EZS access required — not standard OBD','warn:AKL uses the G-BOX3 for the EIS password calculation (DAS3 EIS); can run on-vehicle or bench','warn:VIN required — procedure varies by chassis/year','info:NASTF key code added on AKL'],
+      script:'Mercedes keys work through the EIS module — a more complex job. Add-a-key labor runs $400. All keys lost on a Mercedes is a significant job that starts around $800 — I need the VIN before I can give you a firm price.' }
   ]},
   { group:'Volkswagen / Audi', makes:['VOLKSWAGEN','AUDI'], rules:[
-    { test:v=>v.year>=2015, tier:3, keyType:'Smart Key / MQB Platform', aak:'$200–$250', akl:'$350–$500', time:'90+ min AAK', tool:'Autel IM508 + KTAG',
-      flags:['danger:MQB platform — EEPROM read likely for AAK','danger:AKL may require bench work','warn:VIN required before committing to any price','info:NASTF key code added on AKL'],
-      script:'Newer VW or Audi on the MQB platform — key programming requires EEPROM access. Add-a-key labor is $200 to $250. All keys lost I need the VIN first — bench work may be required.' },
-    { test:v=>true, tier:2, keyType:'Transponder / Remote Head (HU66)', aak:'$150–$200', akl:'$300–$400', time:'60–90 min AAK', tool:'Autel IM508',
-      flags:['warn:PIN required for AAK — confirm immo generation with VIN','info:Immo3/4 handled by Autel OBD','info:NASTF key code added on AKL'],
-      script:'That VW or Audi requires a PIN for key programming — not a standard OBD job. Add-a-key labor runs $150 to $200. I\'ll need your VIN to confirm the exact procedure before quoting all keys lost.' }
+    { test:v=>v.year>=2015, tier:3, keyType:'Smart Key / MQB Platform',
+      aakRetail:250, aakDealer:200, aklRetail:550, aklDealer:375,
+      time:'90+ min AAK', tool:'Autel IM508 + XP400 Pro (+ APB130/APB131 for MQB immo read)',
+      flags:['danger:MQB platform — immo data read (NEC35xx) likely for AAK; needs XP400 Pro + APB130/APB131','warn:AKL may require bench work — confirm with VIN','info:NASTF key code added on AKL'],
+      script:'Newer VW or Audi on the MQB platform — key programming needs a module read. Add-a-key labor is $250. All keys lost I need the VIN first — bench work may be required.' },
+    { test:v=>true, tier:2, keyType:'Transponder / Remote Head (HU66)',
+      aakRetail:175, aakDealer:135, aklRetail:325, aklDealer:250,
+      time:'60–90 min AAK', tool:'Autel IM508 + XP400 Pro',
+      flags:['warn:PIN required for AAK — confirm immo generation with VIN','info:Immo3/4 handled by Autel','info:NASTF key code added on AKL'],
+      script:'That VW or Audi needs a PIN for key programming — not a standard OBD job. Add-a-key labor runs $175. I will need your VIN to confirm the exact procedure before quoting all keys lost.' }
   ]},
   { group:'Volvo', makes:['VOLVO'], rules:[
-    { test:v=>true, tier:3, keyType:'Smart Key / CEM Module', aak:'$200–$275', akl:'$350–$500', time:'90 min AAK', tool:'Autel IM508',
-      flags:['warn:CEM module controls immobilizer — VIN required','danger:AKL may require CEM bench work — confirm coverage first','info:NASTF key code added on AKL'],
-      script:'Volvo smart key works through the CEM module — I need your VIN to confirm whether I can do this on-site or if it requires bench work. Add-a-key is $200 to $275.' }
+    { test:v=>true, tier:4, keyType:'Smart Key / CEM Module', refer:true,
+      time:'—', tool:'Not serviced',
+      flags:['danger:Volvo is NOT serviced by CKC — refer out','info:Volvo key work runs through the CEM module on CarDAQ + VIDA; CKC no longer takes these jobs'],
+      script:'Volvo key work is one I refer out — it runs through Volvo-specific dealer software I do not carry. I can point you to someone who handles Volvo, or the dealer.' }
   ]}
 ];
 
@@ -526,66 +595,64 @@ const YMM_DATA = {
 
 const TIER_LABELS = ['','Tier 1 — Standard OBD','Tier 2 — Advanced / BCM','Tier 3 — EEPROM / Module','Tier 4 — Quote by VIN'];
 const TIER_CLASS  = ['','t1','t2','t3','t4'];
-
 // ═══════════════════════════════════════════════════════════
-//  CUSTOMER-QUOTE LAYER  (added)
+//  CUSTOMER-QUOTE LAYER
 // ═══════════════════════════════════════════════════════════
 const BOOKING_URL = 'https://calendar.app.google/xqirB3Dpfmub5rAb6';
 const AUTOSMART_URL = 'itms-apps://itunes.apple.com/app/id1459540790';
 
-// EDIT THESE to match your local market. These are the TYPICAL DEALER all-in
-// price (key + programming + cut) the customer would otherwise pay — used only
-// to show the "you save vs dealer" line. Keyed by tier, then service path.
+// Typical DEALER all-in price (key + programming + cut) the customer would
+// otherwise pay — used only for the "you save vs dealer" line. Market-aligned.
 const DEALER_BENCHMARK = {
-  1: { aak: 200, akl: 275 },   // standard transponder
-  2: { aak: 450, akl: 525 },   // smart key / BCM
-  3: { aak: 600, akl: 850 },   // EEPROM / module (VW, Audi, Volvo, Mercedes)
-  4: { aak: 750, akl: 1050 }   // BMW / MINI CAS, or unknown
+  1: { aak: 200, akl: 300 },
+  2: { aak: 450, akl: 650 },
+  3: { aak: 650, akl: 900 },
+  4: { aak: 900, akl: 1200 }
 };
 
-// Sales tax applies to the KEY only (tangible goods) — never to labor/service.
-// Default: Forsyth County, NC = 7.00% (4.75% state + 2.25% county). Edit if your rate changes.
+// Sales tax applies to the KEY only (tangible goods) — never to labor/service/fees.
+// Forsyth County, NC = 7.00% (4.75% state + 2.25% county).
 const TAX_RATE = 0.07;
 
-// ── ACCESS SURCHARGES (folded into the single service line on the invoice, itemized on the quote) ──
-// FDRS access:   Ford/Lincoln 2015+ — Autel can't touch these; runs on FDRS via CarDAQ. ($1,200/yr annual amortized.)
-// NASTF key code: any AKL that pulls a NASTF/OEM security code. (Skips pre-2015 Ford offline PATS.)
-// Toyota access:  Toyota/Lexus/Scion AKL only — 2-day Techstream/TIS pass billed straight through.
-// These are service charges (NOT taxed in NC) and ride on the untaxed labor line. To change an amount,
-// edit the constant below — nothing else needs to change.
-const SURCHARGE_FDRS   = 30;
-const SURCHARGE_NASTF  = 30;
-const SURCHARGE_TOYOTA = 35;
+// ── ACCESS-COST DEFAULTS (verified Feb 2026) — all editable per quote ──
+// SUBSCRIPTION (software/access you pay to run the job):
+//   Ford FDRS ...... $40/job amortized (annual) — 2-day pass alt is $120
+//   GM 2021+ AKL ... $40 third-party ECM/BCM security code (GM server closed)
+//   Stellantis flash $35 per VIN (only when a module flash is required)
+//   Toyota ......... $0 (Autel add-key; smart-key AKL refers out — no sub)
+// KEY CODE (NASTF/OEM cut or security code):
+//   $30 on AKL (skips pre-2015 Ford offline PATS, which had none)
+const SUB_FORD        = 40;
+const SUB_GM_PIN      = 40;   // 2021+ AKL only
+const SUB_STELLANTIS  = 35;   // FOBIK/flash trims
+const KEYCODE_NASTF   = 30;
 
-function computeSurcharges(make, year, path) {
-  var out = [];
+// Returns { subscription, subscriptionLabel, keyCode, keyCodeLabel }
+function computeAccess(make, year, tier, path) {
   var mk = (make || '').toUpperCase();
   var yr = parseInt(year) || 0;
   var isFord   = (mk === 'FORD' || mk === 'LINCOLN');
-  var isToyota = (mk === 'TOYOTA' || mk === 'LEXUS' || mk === 'SCION');
-  if (isFord && yr >= 2015) out.push({ label: 'FDRS access', amount: SURCHARGE_FDRS });
-  if (path === 'akl' && !(isFord && yr < 2015)) out.push({ label: 'NASTF key code', amount: SURCHARGE_NASTF });
-  if (isToyota && path === 'akl') out.push({ label: 'Toyota dealer access', amount: SURCHARGE_TOYOTA });
-  return out;
-}
-function surchargeTotal(list) {
-  var t = 0; (list || []).forEach(function(s){ t += s.amount; }); return t;
-}
-function encodeSurcharges(list) {
-  return (list || []).map(function(s){ return s.label + '~' + s.amount; }).join('|');
-}
-function decodeSurcharges(str) {
-  if (!str) return [];
-  return str.split('|').map(function(p){
-    var i = p.lastIndexOf('~');
-    return { label: p.slice(0, i), amount: parseFloat(p.slice(i + 1)) || 0 };
-  }).filter(function(s){ return s.label; });
+  var isGM     = ['CHEVROLET','GMC','BUICK','CADILLAC','PONTIAC','SATURN','OLDSMOBILE'].indexOf(mk) !== -1;
+  var isStell  = ['CHRYSLER','DODGE','JEEP','RAM'].indexOf(mk) !== -1;
+
+  var subscription = 0, subLabel = '';
+  if (isFord) { subscription = SUB_FORD; subLabel = 'FDRS access'; }
+  else if (isGM && path === 'akl' && yr >= 2021) { subscription = SUB_GM_PIN; subLabel = 'GM security code'; }
+  else if (isStell && tier >= 2) { subscription = SUB_STELLANTIS; subLabel = 'Stellantis flash access'; }
+
+  // Key code: NASTF cut/security code on AKL. Pre-2015 Ford PATS had none.
+  var keyCode = 0, kcLabel = '';
+  if (path === 'akl' && !(isFord && yr < 2015)) { keyCode = KEYCODE_NASTF; kcLabel = 'Key code (NASTF)'; }
+
+  return { subscription: subscription, subscriptionLabel: subLabel || 'Subscription / access',
+           keyCode: keyCode, keyCodeLabel: kcLabel || 'Key code' };
 }
 
 var _ctx = null;            // { make, year, label, rule, tier }
 var _chosenPath = '';       // 'aak' | 'akl'
-var _stockState = 'instock';// 'instock' | 'order'
-var _lookupHadVIN = false;  // true when this lookup came from a real VIN
+var _rate = 'retail';       // 'retail' | 'dealer' — quotes open on retail
+var _stockState = 'instock';
+var _lookupHadVIN = false;
 
 // Values handed over from command.html (the picked key), if present in the URL.
 var _seedSku = '', _seedKey = '', _seedKeyType = '', _seedKeyTitle = '', _seedStock = '', _seedImg = '';
@@ -599,15 +666,16 @@ var _seedSku = '', _seedKey = '', _seedKeyType = '', _seedKeyTitle = '', _seedSt
   _seedImg = p.get('img') || '';
 })();
 
-// ── Quote log (writes through the Worker → Apps Script → Google Sheet) ──
+// ── Quote log + invoice endpoints ──
 var LOG_ENDPOINT      = 'https://ckc-blade-proxy.noloindie.workers.dev/log';
 var QUOTELOG_ENDPOINT = 'https://ckc-blade-proxy.noloindie.workers.dev/quotelog';
-var _lookupModel = '';      // model from the YMM dropdown ('' for VIN lookups)
-var _quoteId = '';          // one id per quote session — lets the log update one row as you tweak
-var _logTimer = null;       // debounce handle
-var _logLastSig = '';       // skip re-sending an unchanged quote
-var _logPin = '';           // History PIN, remembered for this session after first use
-var _histRows = [];         // last-loaded history rows (for client-side search)
+var WORKER_INVOICE    = 'https://ckc-blade-proxy.noloindie.workers.dev/invoice';
+var _lookupModel = '';
+var _quoteId = '';
+var _logTimer = null;
+var _logLastSig = '';
+var _logPin = '';
+var _histRows = [];
 
 function decodeYear(vin) {
   const c = vin[9];
@@ -635,17 +703,22 @@ function findInMatrix(make, year) {
   }
   return { groupName:'Unknown / Not in matrix', rule:{
     tier:4, keyType:'Unknown — manual lookup required',
-    aak:'Quote by VIN', akl:'Quote by VIN', time:'VIN required first', tool:'Confirm with Autel vehicle list',
+    aakRetail:0, aakDealer:0, aklRetail:0, aklDealer:0,
+    time:'VIN required first', tool:'Confirm with Autel vehicle list',
     flags:['warn:Vehicle not in current matrix — check Autel vehicle list manually','danger:Do not quote without confirming tool coverage first'],
     script:'I need to look up your exact vehicle in my system before I can give you a price — can you confirm the full VIN so I can verify coverage?'
   }};
 }
 function flagClass(t) { return {warn:'flag-warn',info:'flag-info',danger:'flag-danger',success:'flag-success'}[t]||'flag-info'; }
-
-// Does this vehicle rule call for a VIN to confirm the exact key/procedure?
 function ruleNeedsVIN(r) { return (r.flags || []).some(function(f){ return /vin/i.test(f); }); }
-// Pull the first dollar number out of a range like "$150–$175" → 150
-function parseFirstNumber(str) { if (!str) return null; var m = String(str).match(/\d+(?:\.\d+)?/); return m ? parseFloat(m[0]) : null; }
+
+// Labor for the current rate + path (returns a number)
+function laborFor(r, path, rate) {
+  if (!r) return 0;
+  if (path === 'aak') return rate === 'dealer' ? r.aakDealer : r.aakRetail;
+  if (path === 'akl') return rate === 'dealer' ? r.aklDealer : r.aklRetail;
+  return 0;
+}
 
 function renderResult(make, year, label, sourceNote) {
   const err = document.getElementById('error-bar');
@@ -655,9 +728,8 @@ function renderResult(make, year, label, sourceNote) {
   const matched = findInMatrix(make, year);
   const r = matched.rule;
 
-  // store context for the customer-quote layer + reset its state
   _ctx = { make: make, year: year, label: label, rule: r, tier: r.tier };
-  _chosenPath = ''; _stockState = 'instock';
+  _chosenPath = ''; _rate = 'retail'; _stockState = 'instock';
   _quoteId = ''; _logLastSig = '';
 
   pill.innerHTML = sourceNote; pill.style.display = 'block';
@@ -665,6 +737,27 @@ function renderResult(make, year, label, sourceNote) {
     const i = f.indexOf(':'); const type = f.slice(0,i); const text = f.slice(i+1);
     return '<div class="flag-item ' + flagClass(type) + '"><div class="flag-dot"></div><span>' + text + '</span></div>';
   }).join('');
+
+  // Full refer-out make (Volvo): no price grid, no builder.
+  if (r.refer) {
+    card.innerHTML =
+      '<div class="tier-bar">' +
+        '<span class="tier-badge t3">Not serviced</span>' +
+        '<div class="tier-vehicle">' + label + '</div>' +
+        '<div class="tier-keytype">' + r.keyType + ' &nbsp;&middot;&nbsp; ' + matched.groupName + '</div>' +
+      '</div>' +
+      (flagsHTML ? '<div class="flags-section">' + flagsHTML + '</div>' : '') +
+      '<div class="script-section"><div class="script-label">Suggested phone line</div><div class="script-text">"' + r.script + '"</div></div>';
+    card.style.display = 'block';
+    card.scrollIntoView({ behavior:'smooth', block:'start' });
+    return;
+  }
+
+  const aakR = r.aakRetail, aakD = r.aakDealer, aklR = r.aklRetail, aklD = r.aklDealer;
+  const aklBox = r.aklRefer
+    ? '<div class="price-box akl"><div class="price-box-label">All Keys Lost</div><div class="price-box-val" style="font-size:1.15rem;color:var(--red);">Refer out</div><div class="price-box-note">Not serviceable on this platform</div></div>'
+    : '<div class="price-box akl"><div class="price-box-label">All Keys Lost — Labor</div><div class="price-box-val">$' + aklR + '</div><div class="price-box-split"><b>Retail $' + aklR + '</b> · Dealer $' + aklD + '</div><div class="price-box-note">Key + fees separate · confirm with VIN</div></div>';
+
   card.innerHTML =
     '<div class="tier-bar">' +
       '<span class="tier-badge ' + TIER_CLASS[r.tier] + '">' + TIER_LABELS[r.tier] + '</span>' +
@@ -672,8 +765,8 @@ function renderResult(make, year, label, sourceNote) {
       '<div class="tier-keytype">' + r.keyType + ' &nbsp;&middot;&nbsp; ' + matched.groupName + '</div>' +
     '</div>' +
     '<div class="price-grid">' +
-      '<div class="price-box aak"><div class="price-box-label">Add-a-Key — Labor</div><div class="price-box-val">' + r.aak + '</div><div class="price-box-note">Key billed separately &nbsp;&middot;&nbsp; ' + r.time.split('/')[0].trim() + '</div></div>' +
-      '<div class="price-box akl"><div class="price-box-label">All Keys Lost — Labor</div><div class="price-box-val">' + r.akl + '</div><div class="price-box-note">Key billed separately &nbsp;&middot;&nbsp; Always confirm with VIN</div></div>' +
+      '<div class="price-box aak"><div class="price-box-label">Add-a-Key — Labor</div><div class="price-box-val">$' + aakR + '</div><div class="price-box-split"><b>Retail $' + aakR + '</b> · Dealer $' + aakD + '</div><div class="price-box-note">Key + fees separate · ' + r.time.split('/')[0].trim() + '</div></div>' +
+      aklBox +
     '</div>' +
     '<div class="info-grid">' +
       '<div class="info-cell"><div class="info-cell-label">Tool required</div><div class="info-cell-value">' + r.tool + '</div></div>' +
@@ -686,7 +779,6 @@ function renderResult(make, year, label, sourceNote) {
   card.scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
-// The "Build customer quote" block appended under each result.
 function customerSectionHTML() {
   return '<div class="cust-section">' +
     '<div class="cust-label">Build customer quote</div>' +
@@ -707,21 +799,45 @@ function vinAlertHTML() {
   '</div>';
 }
 
+function setRate(rate) {
+  _rate = rate;
+  var rb = document.getElementById('rate-retail'), db = document.getElementById('rate-dealer');
+  if (rb) rb.classList.toggle('on', rate === 'retail');
+  if (db) db.classList.toggle('on', rate === 'dealer');
+  // Re-fill the service field to the selected rate's number.
+  var laborEl = document.getElementById('qb-labor');
+  if (laborEl && _ctx) laborEl.value = laborFor(_ctx.rule, _chosenPath, _rate) || '';
+  recalcQuote();
+}
+
 function choosePath(path) {
   if (!_ctx) return;
+  var r = _ctx.rule;
+
+  // AKL refer-out (Toyota smart key): show a stop card, no builder.
+  if (path === 'akl' && r.aklRefer) {
+    _chosenPath = '';
+    document.getElementById('path-aak').classList.remove('selected');
+    document.getElementById('path-akl').classList.add('selected');
+    document.getElementById('qb-area').innerHTML =
+      '<div class="refer-alert">' +
+        '<div class="refer-alert-title">⛔ All Keys Lost — refer out</div>' +
+        '<div class="refer-alert-body">Autel removed Toyota/Lexus all-keys-lost for North America, and key-capable TIS access is annual-only. Do not take this as an AKL job — refer to the dealer. Add-a-key (with a working key) is still fine on the Autel.</div>' +
+      '</div>';
+    return;
+  }
+
   _chosenPath = path;
   document.getElementById('path-aak').classList.toggle('selected', path === 'aak');
   document.getElementById('path-akl').classList.toggle('selected', path === 'akl');
 
-  var r = _ctx.rule;
-  var laborStr = (path === 'aak') ? r.aak : r.akl;
-  var defLabor = parseFirstNumber(laborStr);           // pre-fill service from the matrix low end
+  var defLabor = laborFor(r, path, _rate);
   var dealer = (DEALER_BENCHMARK[_ctx.tier] && DEALER_BENCHMARK[_ctx.tier][path]) || '';
   var showVinAlert = ruleNeedsVIN(r) && !_lookupHadVIN;
+  var acc = computeAccess(_ctx.make, _ctx.year, _ctx.tier, path);
 
   _stockState = (_seedStock === '0') ? 'order' : 'instock';
 
-  // "from command.html" line — shows the key you picked in the finder, if one was handed over
   var fromFinder = '';
   if (_seedKeyTitle || _seedSku) {
     var thumb = _seedImg ? '<img src="' + _seedImg + '" alt="" class="key-item-img">' : '';
@@ -738,6 +854,10 @@ function choosePath(path) {
   area.innerHTML =
     (showVinAlert ? vinAlertHTML() : '') +
     fromFinder +
+    '<div class="rate-toggle">' +
+      '<div class="rate-btn retail on" id="rate-retail" onclick="setRate(\'retail\')"><div class="rate-btn-t">Retail</div><div class="rate-btn-p">walk-up customer</div></div>' +
+      '<div class="rate-btn dealer" id="rate-dealer" onclick="setRate(\'dealer\')"><div class="rate-btn-t">Dealer</div><div class="rate-btn-p">trade rate</div></div>' +
+    '</div>' +
     '<div class="qb">' +
       '<div class="qb-row">' +
         '<div><label class="qb-field-label">Customer name</label>' +
@@ -748,13 +868,23 @@ function choosePath(path) {
       '<div class="qb-row">' +
         '<div><label class="qb-field-label">Service (labor)</label>' +
           '<div class="qb-input-wrap"><span class="qb-prefix">$</span>' +
-          '<input class="qb-input" id="qb-labor" type="number" inputmode="decimal" min="0" value="' + (defLabor != null ? defLabor : '') + '" oninput="recalcQuote()"></div></div>' +
+          '<input class="qb-input" id="qb-labor" type="number" inputmode="decimal" min="0" value="' + (defLabor || '') + '" oninput="recalcQuote()"></div></div>' +
         '<div><label class="qb-field-label">Key price</label>' +
           '<div class="qb-input-wrap"><span class="qb-prefix">$</span>' +
           '<input class="qb-input" id="qb-key" type="number" inputmode="decimal" min="0" placeholder="0" value="' + (_seedKey || '') + '" oninput="recalcQuote()"></div></div>' +
       '</div>' +
+      '<div class="qb-row">' +
+        '<div><label class="qb-field-label">' + acc.subscriptionLabel + '</label>' +
+          '<div class="qb-input-wrap"><span class="qb-prefix">$</span>' +
+          '<input class="qb-input" id="qb-sub" type="number" inputmode="decimal" min="0" value="' + (acc.subscription || '') + '" placeholder="0" oninput="recalcQuote()"></div></div>' +
+        '<div><label class="qb-field-label">' + acc.keyCodeLabel + '</label>' +
+          '<div class="qb-input-wrap"><span class="qb-prefix">$</span>' +
+          '<input class="qb-input" id="qb-keycode" type="number" inputmode="decimal" min="0" value="' + (acc.keyCode || '') + '" placeholder="0" oninput="recalcQuote()"></div></div>' +
+      '</div>' +
       '<label class="qb-field-label">SKU (optional)</label>' +
       '<input class="qb-input" id="qb-sku" type="text" autocapitalize="characters" spellcheck="false" placeholder="part number" value="' + (_seedSku || '') + '" style="width:100%;margin-bottom:12px;letter-spacing:1px;">' +
+      '<label class="qb-field-label">PO number (optional)</label>' +
+      '<input class="qb-input qb-plain" id="qb-po" type="text" autocomplete="off" placeholder="dealer / fleet PO — prints on invoice" value="" style="width:100%;margin-bottom:12px;" oninput="recalcQuote()">' +
       '<div class="allin-card"><div class="allin-label">All-in price to customer</div><div class="allin-val" id="qb-allin">$0</div></div>' +
       '<div class="qb-tax-note" id="qb-tax"></div>' +
       '<label class="qb-field-label">Dealer price (est.)</label>' +
@@ -774,7 +904,7 @@ function choosePath(path) {
       '<button class="send-quote-btn" id="qb-send" onclick="textQuote()">📲 Text Quote to Customer</button>' +
       '<button class="copy-quote-btn" id="qb-copy" onclick="copyQuote()">📋 Copy Quote (for desktop)</button>' +
       '<div class="qr-wrap" id="qb-qr-wrap"><div class="qr-label">📱 Or scan with your iPhone to send it from your phone</div><div class="qr-box" id="qb-qr"></div></div>' +
-      '<div class="qb-hint">All-in = service + access fees + key + tax (tax on the key only). Access fees (FDRS / NASTF / Toyota) are added automatically by make, year, and service type, and fold into the single service line on the invoice. Service is pre-filled from the matrix; key price comes over from command.html.</div>' +
+      '<div class="qb-hint">All-in = service + subscription + key code + key + tax (tax on the key only). Subscription and key-code are pre-filled by make/year/service and show as their own lines on the Shopify receipt. Everything is editable — zero out anything a job does not need.</div>' +
     '</div>';
 
   setStock(_stockState);
@@ -798,8 +928,11 @@ function recalcQuote() {
   if (taxEl) {
     var ratePct = (TAX_RATE * 100).toFixed(2).replace(/\.?0+$/, '');
     var parts = [];
-    if (d.tax > 0) parts.push('$' + d.tax.toFixed(2) + ' sales tax on the key (' + ratePct + '%) — labor & access fees are not taxed');
-    if (d.surchargeTotal > 0) parts.push('includes $' + d.surchargeTotal.toFixed(2) + ' access fees (' + d.surcharges.map(function(s){ return s.label; }).join(' + ') + ')');
+    if (d.tax > 0) parts.push('$' + d.tax.toFixed(2) + ' sales tax on the key (' + ratePct + '%) — labor & fees are not taxed');
+    var feeBits = [];
+    if (d.subscription > 0) feeBits.push(d.subscriptionLabel + ' $' + d.subscription.toFixed(2));
+    if (d.keyCode > 0) feeBits.push(d.keyCodeLabel + ' $' + d.keyCode.toFixed(2));
+    if (feeBits.length) parts.push('includes ' + feeBits.join(' + '));
     taxEl.textContent = parts.join(' · ');
   }
 
@@ -835,17 +968,20 @@ function buildQuoteText(d) {
   L.push('');
   if (!isNaN(d.key) && d.key > 0) L.push('- ' + keyLabel + ': $' + d.key.toFixed(2));
   if (!isNaN(d.labor) && d.labor > 0) L.push('- Mobile service (program + cut): $' + d.labor.toFixed(2));
-  (d.surcharges || []).forEach(function(s){ L.push('- ' + s.label + ': $' + s.amount.toFixed(2)); });
+  if (d.subscription > 0) L.push('- ' + d.subscriptionLabel + ': $' + d.subscription.toFixed(2));
+  if (d.keyCode > 0) L.push('- ' + d.keyCodeLabel + ': $' + d.keyCode.toFixed(2));
   if (d.tax > 0) L.push('- Sales tax (key): $' + d.tax.toFixed(2));
   L.push('Total all-in: $' + d.allin.toFixed(2) + ' — we come to you');
   if (d.dealer > d.allin) {
     var s = d.dealer - d.allin; var p = Math.round(s / d.dealer * 100);
     L.push('');
     L.push('Dealer price ~$' + d.dealer.toFixed(0) + ' · You save ~$' + s.toFixed(0) + ' (' + p + '% less)');
+    if (d.path === 'akl') L.push('Plus no tow — the dealer needs the car towed in.');
   }
   L.push('');
   L.push(d.stock === 'instock' ? 'Key: in stock — same-day service' : 'Key: ordered — arrives in 2-3 days, then we install');
   if (d.sku) L.push('Part #: ' + d.sku);
+  if (d.po) L.push('PO #: ' + d.po);
   L.push('');
   L.push('👉 Tap to see your key photo & pay online:');
   L.push(buildCustomerViewURL(d));
@@ -946,32 +1082,36 @@ function onMakeChange() {
 function checkYMMReady() {
   const y = document.getElementById('ymm-year').value;
   const mk = document.getElementById('ymm-make').value;
-  // Model is optional — it's only a label; pricing keys off make + year.
   document.getElementById('ymm-btn').disabled = !(y && mk);
 }
-// ── Quote data + customer-facing card (used by the live preview AND the shared link) ──
+
+// ── Quote data + customer-facing card ──
 function gatherQuote() {
-  var laborEl = document.getElementById('qb-labor');
-  var keyEl = document.getElementById('qb-key');
-  var dealerEl = document.getElementById('qb-dealer');
-  var skuEl = document.getElementById('qb-sku');
-  var labor = laborEl ? parseFloat(laborEl.value) : NaN;
-  var key = keyEl ? parseFloat(keyEl.value) : NaN;
-  var dealer = dealerEl ? parseFloat(dealerEl.value) : NaN;
-  var sku = skuEl ? (skuEl.value || '').trim() : '';
-  var custEl = document.getElementById('qb-customer');
-  var phoneEl = document.getElementById('qb-phone');
-  var customer = custEl ? (custEl.value || '').trim() : '';
-  var phone = phoneEl ? (phoneEl.value || '').trim() : '';
-  var surcharges = _ctx ? computeSurcharges(_ctx.make, _ctx.year, _chosenPath) : [];
-  var scTotal = surchargeTotal(surcharges);
-  var taxable = isNaN(key) ? 0 : key;
-  var tax = taxable * TAX_RATE;
-  var allin = (isNaN(labor) ? 0 : labor) + scTotal + taxable + tax;
-  return { vehicle: _ctx ? _ctx.label : '', path: _chosenPath, key: key, labor: labor,
-           surcharges: surcharges, surchargeTotal: scTotal,
-           tax: tax, allin: allin, dealer: dealer, stock: _stockState, sku: sku,
-           customer: customer, phone: phone,
+  function num(id){ var el = document.getElementById(id); return el ? parseFloat(el.value) : NaN; }
+  function str(id){ var el = document.getElementById(id); return el ? (el.value || '').trim() : ''; }
+  var labor = num('qb-labor');
+  var key = num('qb-key');
+  var sub = num('qb-sub');
+  var keyCode = num('qb-keycode');
+  var dealer = num('qb-dealer');
+  var sku = str('qb-sku');
+  var po = str('qb-po');
+  var customer = str('qb-customer');
+  var phone = str('qb-phone');
+  var acc = _ctx ? computeAccess(_ctx.make, _ctx.year, _ctx.tier, _chosenPath) : { subscriptionLabel:'Subscription / access', keyCodeLabel:'Key code' };
+
+  var subV     = isNaN(sub) ? 0 : sub;
+  var keyCodeV = isNaN(keyCode) ? 0 : keyCode;
+  var taxable  = isNaN(key) ? 0 : key;
+  var tax      = taxable * TAX_RATE;
+  var allin    = (isNaN(labor) ? 0 : labor) + subV + keyCodeV + taxable + tax;
+
+  return { vehicle: _ctx ? _ctx.label : '', path: _chosenPath, rate: _rate,
+           key: key, labor: labor,
+           subscription: subV, subscriptionLabel: acc.subscriptionLabel,
+           keyCode: keyCodeV, keyCodeLabel: acc.keyCodeLabel,
+           tax: tax, allin: allin, dealer: dealer, stock: _stockState,
+           sku: sku, po: po, customer: customer, phone: phone,
            keyTitle: _seedKeyTitle, keyType: _seedKeyType, img: _seedImg };
 }
 
@@ -981,16 +1121,19 @@ function buildCustomerQuoteHTML(d, showCTA) {
   var lines = '';
   if (!isNaN(d.key) && d.key > 0) lines += '<div class="cql"><span>' + (d.keyType || d.keyTitle || 'Key') + '</span><span>$' + d.key.toFixed(2) + '</span></div>';
   if (!isNaN(d.labor) && d.labor > 0) lines += '<div class="cql"><span>Mobile service (program + cut)</span><span>$' + d.labor.toFixed(2) + '</span></div>';
-  (d.surcharges || []).forEach(function(s){ lines += '<div class="cql"><span>' + s.label + '</span><span>$' + s.amount.toFixed(2) + '</span></div>'; });
+  if (d.subscription > 0) lines += '<div class="cql"><span>' + d.subscriptionLabel + '</span><span>$' + d.subscription.toFixed(2) + '</span></div>';
+  if (d.keyCode > 0) lines += '<div class="cql"><span>' + d.keyCodeLabel + '</span><span>$' + d.keyCode.toFixed(2) + '</span></div>';
   if (d.tax > 0) lines += '<div class="cql"><span>Sales tax (key)</span><span>$' + d.tax.toFixed(2) + '</span></div>';
   lines += '<div class="cql total"><span>All-in</span><span>$' + (d.allin > 0 ? d.allin.toFixed(2) : '0.00') + '</span></div>';
   var savings = '';
   if (d.dealer > d.allin && d.allin > 0) {
     var s = d.dealer - d.allin; var p = Math.round(s / d.dealer * 100);
-    savings = '<div class="cust-quote-savings">Dealer price ~$' + d.dealer.toFixed(0) + ' &middot; You save ~$' + s.toFixed(0) + ' (' + p + '% less)</div>';
+    var towLine = (d.path === 'akl') ? ' &middot; no tow required' : '';
+    savings = '<div class="cust-quote-savings">Dealer price ~$' + d.dealer.toFixed(0) + ' &middot; You save ~$' + s.toFixed(0) + ' (' + p + '% less)' + towLine + '</div>';
   }
   var stock = '<div class="cust-quote-stock">' + (d.stock === 'instock' ? '🟢 In stock — same-day service available' : '📦 Key ordered — arrives in 2-3 days, then we install') + '</div>';
   var part = d.sku ? '<div class="cust-quote-part">Part #: ' + d.sku + '</div>' : '';
+  var poLine = d.po ? '<div class="cust-quote-po">PO #: ' + d.po + '</div>' : '';
   var payLabel = (d.allin > 0) ? ('💳 Pay Now — $' + d.allin.toFixed(2)) : '💳 Pay Now';
   var cta = showCTA ? '<div class="cust-quote-cta">' +
       '<button id="cq-pay-btn" class="cust-quote-pay" onclick="payNow()">' + payLabel + '</button>' +
@@ -1003,7 +1146,7 @@ function buildCustomerQuoteHTML(d, showCTA) {
     '<div class="cust-quote-veh">' + (d.vehicle || '') + '</div>' +
     '<div class="cust-quote-svc">' + svcName + '</div>' +
     '<div class="cust-quote-lines">' + lines + '</div>' +
-    savings + stock + part + cta +
+    savings + stock + part + poLine + cta +
   '</div>';
 }
 
@@ -1035,7 +1178,6 @@ function textFromCustomerView() {
   window.location.href = 'sms:&body=' + encodeURIComponent(buildQuoteText(_cvData));
 }
 
-var WORKER_INVOICE = 'https://ckc-blade-proxy.noloindie.workers.dev/invoice';
 function payNow() {
   var d = _cvData;
   if (!d || !(d.allin > 0)) return;
@@ -1043,20 +1185,20 @@ function payNow() {
   var orig = btn ? btn.textContent : '';
   if (btn) { btn.disabled = true; btn.textContent = 'Creating your invoice…'; }
   var keyTitle = (d.vehicle ? d.vehicle + ' — ' : '') + (d.keyType || d.keyTitle || 'Key');
-  // Access fees fold into the single service line — keeps the invoice config and tax treatment unchanged.
-  var scList = d.surcharges || [];
-  var scSum = surchargeTotal(scList);
-  var laborBase = (isNaN(d.labor) ? 0 : d.labor);
   var laborTitle = 'Mobile service (program + cut)';
-  if (scList.length) laborTitle += ' incl. ' + scList.map(function(s){ return s.label; }).join(' + ');
   var payload = {
-    keyTitle:   keyTitle,
-    keyPrice:   (isNaN(d.key)   ? 0 : d.key),
-    laborTitle: laborTitle,
-    labor:      laborBase + scSum,
-    tax:        (d.tax > 0 ? d.tax : 0),
-    sku:        d.sku || '',
-    vehicle:    d.vehicle || ''
+    keyTitle:          keyTitle,
+    keyPrice:          (isNaN(d.key) ? 0 : d.key),
+    laborTitle:        laborTitle,
+    labor:             (isNaN(d.labor) ? 0 : d.labor),
+    subscription:      (d.subscription > 0 ? d.subscription : 0),
+    subscriptionLabel: d.subscriptionLabel || 'Subscription / access',
+    keyCode:           (d.keyCode > 0 ? d.keyCode : 0),
+    keyCodeLabel:      d.keyCodeLabel || 'Key code',
+    po:                d.po || '',
+    tax:               (d.tax > 0 ? d.tax : 0),
+    sku:               d.sku || '',
+    vehicle:           d.vehicle || ''
   };
   fetch(WORKER_INVOICE, {
     method: 'POST',
@@ -1082,13 +1224,15 @@ function buildCustomerViewURL(d) {
   p.set('p', d.path || '');
   if (!isNaN(d.key)) p.set('kp', d.key);
   if (!isNaN(d.labor)) p.set('lb', d.labor);
+  if (d.subscription > 0) { p.set('sub', d.subscription); p.set('subl', d.subscriptionLabel); }
+  if (d.keyCode > 0) { p.set('kc', d.keyCode); p.set('kcl', d.keyCodeLabel); }
   if (!isNaN(d.dealer)) p.set('dl', d.dealer);
   p.set('st', d.stock || '');
   if (d.sku) p.set('sku', d.sku);
+  if (d.po) p.set('po', d.po);
   if (d.keyType) p.set('kt', d.keyType);
   if (d.keyTitle) p.set('ktitle', d.keyTitle);
   if (d.img) p.set('img', d.img);
-  if (d.surcharges && d.surcharges.length) p.set('sc', encodeSurcharges(d.surcharges));
   return 'https://noloindie-afk.github.io/ckc-hub/ckc_quotes.html?' + p.toString();
 }
 
@@ -1096,19 +1240,23 @@ function renderCustomerFullView() {
   var q = new URLSearchParams(window.location.search);
   var key = parseFloat(q.get('kp'));
   var labor = parseFloat(q.get('lb'));
-  var surcharges = decodeSurcharges(q.get('sc'));
-  var scTotal = surchargeTotal(surcharges);
+  var sub = parseFloat(q.get('sub'));
+  var keyCode = parseFloat(q.get('kc'));
+  var subV = isNaN(sub) ? 0 : sub;
+  var keyCodeV = isNaN(keyCode) ? 0 : keyCode;
   var taxable = isNaN(key) ? 0 : key;
   var tax = taxable * TAX_RATE;
   var d = { vehicle: q.get('v') || '', path: q.get('p') || '',
-            key: key, labor: labor, surcharges: surcharges, surchargeTotal: scTotal, tax: tax,
-            allin: (isNaN(labor) ? 0 : labor) + scTotal + taxable + tax,
+            key: key, labor: labor,
+            subscription: subV, subscriptionLabel: q.get('subl') || 'Subscription / access',
+            keyCode: keyCodeV, keyCodeLabel: q.get('kcl') || 'Key code',
+            tax: tax,
+            allin: (isNaN(labor) ? 0 : labor) + subV + keyCodeV + taxable + tax,
             dealer: parseFloat(q.get('dl')), stock: q.get('st') || 'instock',
-            sku: q.get('sku') || '', keyType: q.get('kt') || '', keyTitle: q.get('ktitle') || '', img: q.get('img') || '' };
+            sku: q.get('sku') || '', po: q.get('po') || '',
+            keyType: q.get('kt') || '', keyTitle: q.get('ktitle') || '', img: q.get('img') || '' };
   _cvData = d;
   var isMe = q.get('me') === '1';
-  // Pay Now / Book / Call always render — the customer needs them whether they scan the QR
-  // directly or open the texted link. The "Text to customer" button is an extra for James only.
   var meBtn = isMe ? '<button class="cust-quote-book" style="margin-top:14px;" onclick="textFromCustomerView()">📲 Text this to the customer</button>' : '';
   document.body.innerHTML =
     '<div class="header"><div><div class="header-logo">Carolina Key Cutters</div><div class="header-sub">Your Quote</div></div><div class="header-phone">(336) 510-9816</div></div>' +
@@ -1138,7 +1286,6 @@ function autoPopulate() {
           if (match) {
             modelSel.value = match.value;
           } else {
-            // The key finder knows more models than this dropdown — trust it and add this one.
             var newOpt = document.createElement('option');
             newOpt.value = model;
             newOpt.textContent = model;
@@ -1149,9 +1296,7 @@ function autoPopulate() {
         checkYMMReady();
         var y = document.getElementById('ymm-year').value;
         var mk = document.getElementById('ymm-make').value;
-        var mo = document.getElementById('ymm-model').value;
-        if (y && mk && mo) runLookup('ymm');
-        else if (y && mk) runLookup('ymm');
+        if (y && mk) runLookup('ymm');
       }, 50);
     }, 50);
   }
@@ -1165,26 +1310,20 @@ function esc(s) {
     return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
   });
 }
-
-// Pull an FCC ID out of a key title like "...FCC ID: RX2TRF198..." if one is present.
 function extractFCC(title) {
   if (!title) return '';
   var m = String(title).match(/FCC\s*ID[:#]?\s*([A-Z0-9\-]{4,})/i);
   return m ? m[1] : '';
 }
-
-// Debounce: wait until typing settles, then log once.
 function scheduleLog() {
   if (_logTimer) clearTimeout(_logTimer);
   _logTimer = setTimeout(sendLog, 1200);
 }
-
-// Auto-log the current quote (upserts one row per quote session via _quoteId).
 function sendLog() {
   if (!_ctx || !_chosenPath) return;
   var d = gatherQuote();
-  if (!(d.allin > 0)) return;                 // only log a quote that has a real price
-  if (!_quoteId) _quoteId = 'Q' + Date.now();  // lazily start a session id on first real quote
+  if (!(d.allin > 0)) return;
+  if (!_quoteId) _quoteId = 'Q' + Date.now();
   var payload = {
     quoteId:    _quoteId,
     customer:   d.customer || '',
@@ -1196,15 +1335,18 @@ function sendLog() {
     keyName:    d.keyTitle || '',
     fcc:        extractFCC(d.keyTitle),
     sku:        d.sku || '',
+    po:         d.po || '',
+    rate:       d.rate || '',
     stock:      d.stock || '',
     keyPrice:   (isNaN(d.key)   ? 0 : d.key),
     labor:      (isNaN(d.labor) ? 0 : d.labor),
-    surcharges: d.surchargeTotal || 0,
+    subscription: d.subscription || 0,
+    keyCode:    d.keyCode || 0,
     total:      d.allin || 0,
-    notes:      (d.path === 'aak' ? 'Add-a-Key' : (d.path === 'akl' ? 'All Keys Lost' : ''))
+    notes:      (d.path === 'aak' ? 'Add-a-Key' : (d.path === 'akl' ? 'All Keys Lost' : '')) + (d.rate === 'dealer' ? ' · Dealer rate' : '')
   };
   var sig = JSON.stringify(payload);
-  if (sig === _logLastSig) return;             // nothing changed since the last write
+  if (sig === _logLastSig) return;
   _logLastSig = sig;
   fetch(LOG_ENDPOINT, {
     method: 'POST',
@@ -1212,9 +1354,8 @@ function sendLog() {
     body: sig
   }).then(function (r) { return r.json(); }).then(function (res) {
     if (res && res.ok) showLogSaved();
-  }).catch(function () { /* logging is best-effort — never block the operator */ });
+  }).catch(function () {});
 }
-
 function showLogSaved() {
   var t = document.getElementById('log-toast');
   if (!t) return;
@@ -1222,13 +1363,11 @@ function showLogSaved() {
   clearTimeout(showLogSaved._t);
   showLogSaved._t = setTimeout(function () { t.classList.remove('show'); }, 1500);
 }
-
-// ── History viewer ──
 function openHistory() {
   var ov = document.getElementById('hist-overlay');
   if (!ov) return;
   ov.style.display = 'flex';
-  if (_logPin) loadHistory();      // already unlocked this session
+  if (_logPin) loadHistory();
   else showHistPin();
 }
 function closeHistory() {
@@ -1287,7 +1426,7 @@ function renderHistory(rows) {
     var veh = [r.year, r.make, r.model].filter(Boolean).join(' ');
     var who = [r.customer, r.phone].filter(Boolean).join(' · ');
     var total = (r.total || r.total === 0) ? ('$' + Number(r.total).toFixed(2)) : '';
-    var metaBits = [fmtDate(r.timestamp), r.notes, r.keyName, r.sku].filter(Boolean);
+    var metaBits = [fmtDate(r.timestamp), r.notes, r.keyName, r.sku, (r.po ? 'PO ' + r.po : '')].filter(Boolean);
     return '<div class="hist-row">' +
         '<div class="hist-row-top"><span class="hist-veh">' + (esc(veh) || '—') + '</span><span class="hist-total">' + esc(total) + '</span></div>' +
         (who ? '<div class="hist-who">' + esc(who) + '</div>' : '') +
@@ -1300,7 +1439,7 @@ function filterHistory() {
   var q = el ? (el.value || '').toLowerCase().trim() : '';
   if (!q) { renderHistory(_histRows); return; }
   var f = _histRows.filter(function (r) {
-    return [r.customer, r.phone, r.year, r.make, r.model, r.keyName, r.sku, r.notes]
+    return [r.customer, r.phone, r.year, r.make, r.model, r.keyName, r.sku, r.po, r.notes]
       .filter(Boolean).join(' ').toLowerCase().indexOf(q) !== -1;
   });
   renderHistory(f);
@@ -1317,7 +1456,6 @@ if (IS_CUSTOMER_VIEW) {
   initYearDropdown();
   autoPopulate();
 }
-
 </script>
 </body>
 </html>
