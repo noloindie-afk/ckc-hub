@@ -165,6 +165,16 @@
   .stock-btn { padding: 11px; border: 2px solid var(--border); background: #111; border-radius: 9px; cursor: pointer; text-align: center; font-family: 'Barlow', sans-serif; font-size: 0.85rem; font-weight: 600; color: var(--muted2); transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
   .stock-btn.on { border-color: var(--gold); background: var(--gold-dim); color: var(--gold-light); }
 
+  /* ── Read-only stock status (replaces the old tappable buttons) ── */
+  .stock-status { border-radius: 10px; padding: 12px 15px; font-size: 0.9rem; font-weight: 600; margin-bottom: 10px; border: 1px solid var(--border); background: #111; color: var(--muted2); line-height: 1.45; }
+  .stock-status.instock { border-color: rgba(74,222,128,0.35); background: var(--green-bg); color: var(--green); }
+  .stock-status.order   { border-color: rgba(245,158,11,0.35); background: var(--amber-bg); color: var(--amber); }
+  .stock-status.checking { color: var(--muted); }
+  .rks-reminder { border: 1px solid rgba(96,165,250,0.3); background: var(--blue-bg); border-radius: 10px; padding: 12px 15px; margin-bottom: 14px; font-size: 0.85rem; color: #a9c9f5; line-height: 1.5; }
+  .rks-reminder-title { font-weight: 700; color: var(--blue); margin-bottom: 6px; }
+  .rks-reminder a { display: inline-block; margin-top: 8px; background: var(--blue); color: #06213f; font-family: 'Barlow', sans-serif; font-weight: 700; font-size: 0.85rem; padding: 8px 14px; border-radius: 8px; text-decoration: none; -webkit-tap-highlight-color: transparent; }
+  .rks-reminder a:hover { filter: brightness(1.08); }
+
   .send-quote-btn { width: 100%; padding: 15px; background: var(--gold); color: #111; border: none; border-radius: 11px; font-family: 'Barlow', sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; -webkit-tap-highlight-color: transparent; }
   .send-quote-btn:hover { background: var(--gold-light); transform: translateY(-1px); }
   .send-quote-btn:disabled { background: #333; color: #555; cursor: not-allowed; transform: none; }
@@ -670,6 +680,11 @@ var _seedSku = '', _seedKey = '', _seedKeyType = '', _seedKeyTitle = '', _seedSt
 var LOG_ENDPOINT      = 'https://ckc-blade-proxy.noloindie.workers.dev/log';
 var QUOTELOG_ENDPOINT = 'https://ckc-blade-proxy.noloindie.workers.dev/quotelog';
 var WORKER_INVOICE    = 'https://ckc-blade-proxy.noloindie.workers.dev/invoice';
+var WORKER_STOCK      = 'https://ckc-blade-proxy.noloindie.workers.dev/stock';
+var RKS_SEARCH        = 'https://royalkeysupply.com/search?q=';
+var _stockQty   = null;    // live CKC on-hand for the current SKU (null = unknown)
+var _stockChecked = false; // has a live check completed for the current SKU
+var _skuTimer   = null;    // debounce for SKU re-checks
 var _lookupModel = '';
 var _quoteId = '';
 var _logTimer = null;
@@ -874,6 +889,12 @@ function choosePath(path) {
           '<input class="qb-input" id="qb-key" type="number" inputmode="decimal" min="0" placeholder="0" value="' + (_seedKey || '') + '" oninput="recalcQuote()"></div></div>' +
       '</div>' +
       '<div class="qb-row">' +
+        '<div><label class="qb-field-label">Key quantity</label>' +
+          '<input class="qb-input" id="qb-qty" type="number" inputmode="numeric" min="1" step="1" value="1" oninput="recalcQuote()"></div>' +
+        '<div><label class="qb-field-label">&nbsp;</label>' +
+          '<div style="font-size:0.75rem;color:var(--muted);line-height:1.4;padding-top:11px;">Number of keys sold — scales key price, tax &amp; stock decrement.</div></div>' +
+      '</div>' +
+      '<div class="qb-row">' +
         '<div><label class="qb-field-label">' + acc.subscriptionLabel + '</label>' +
           '<div class="qb-input-wrap"><span class="qb-prefix">$</span>' +
           '<input class="qb-input" id="qb-sub" type="number" inputmode="decimal" min="0" value="' + (acc.subscription || '') + '" placeholder="0" oninput="recalcQuote()"></div></div>' +
@@ -882,7 +903,7 @@ function choosePath(path) {
           '<input class="qb-input" id="qb-keycode" type="number" inputmode="decimal" min="0" value="' + (acc.keyCode || '') + '" placeholder="0" oninput="recalcQuote()"></div></div>' +
       '</div>' +
       '<label class="qb-field-label">SKU (optional)</label>' +
-      '<input class="qb-input" id="qb-sku" type="text" autocapitalize="characters" spellcheck="false" placeholder="part number" value="' + (_seedSku || '') + '" style="width:100%;margin-bottom:12px;letter-spacing:1px;">' +
+      '<input class="qb-input" id="qb-sku" type="text" autocapitalize="characters" spellcheck="false" placeholder="part number" value="' + (_seedSku || '') + '" style="width:100%;margin-bottom:12px;letter-spacing:1px;" oninput="onSkuChange()">' +
       '<label class="qb-field-label">PO number (optional)</label>' +
       '<input class="qb-input qb-plain" id="qb-po" type="text" autocomplete="off" placeholder="dealer / fleet PO — prints on invoice" value="" style="width:100%;margin-bottom:12px;" oninput="recalcQuote()">' +
       '<div class="allin-card"><div class="allin-label">All-in price to customer</div><div class="allin-val" id="qb-allin">$0</div></div>' +
@@ -894,11 +915,9 @@ function choosePath(path) {
         '<div class="savings-card-left">Customer saves vs dealer</div>' +
         '<div class="savings-card-right"><div class="savings-card-amt" id="qb-save-amt">—</div><div class="savings-card-pct" id="qb-save-pct"></div></div>' +
       '</div>' +
-      '<label class="qb-field-label">Key availability</label>' +
-      '<div class="stock-row">' +
-        '<div class="stock-btn" id="stock-instock" onclick="setStock(\'instock\')">🟢 In stock — same day</div>' +
-        '<div class="stock-btn" id="stock-order" onclick="setStock(\'order\')">📦 Order — 2–3 days</div>' +
-      '</div>' +
+      '<label class="qb-field-label">Key availability (live — read-only)</label>' +
+      '<div class="stock-status checking" id="stock-status">Checking your stock\u2026</div>' +
+      '<div id="rks-reminder"></div>' +
       '<div class="qb-preview-label">📱 Preview — what the customer sees</div>' +
       '<div id="qb-preview"></div>' +
       '<button class="send-quote-btn" id="qb-send" onclick="textQuote()">📲 Text Quote to Customer</button>' +
@@ -909,14 +928,87 @@ function choosePath(path) {
 
   setStock(_stockState);
   recalcQuote();
+  checkStock();
   area.scrollIntoView({ behavior:'smooth', block:'nearest' });
 }
 
-function setStock(s) {
-  _stockState = s;
-  document.getElementById('stock-instock').classList.toggle('on', s === 'instock');
-  document.getElementById('stock-order').classList.toggle('on', s === 'order');
+// ── Read-only stock: live CKC check, RKS fallback + reminder ──
+function applyStock(state) {
+  _stockState = state;
+  var el = document.getElementById('stock-status');
+  var rem = document.getElementById('rks-reminder');
+  if (!el) return;
+  el.classList.remove('checking', 'instock', 'order');
+  if (rem) rem.innerHTML = '';
+
+  if (state === 'instock') {
+    el.classList.add('instock');
+    var qtyTxt = (_stockQty != null) ? (' \u2014 ' + _stockQty + ' on hand') : '';
+    el.textContent = '\uD83D\uDFE2 In your stock' + qtyTxt + ' \u00b7 same-day service';
+  } else if (state === 'order') {
+    el.classList.add('order');
+    el.textContent = '\uD83D\uDCE6 Not in your stock \u2014 three to four days shipping required';
+    if (rem) {
+      var sku = (document.getElementById('qb-sku') || {}).value || '';
+      sku = (sku || '').trim();
+      var link = sku
+        ? '<a href="' + RKS_SEARCH + encodeURIComponent(sku) + '" target="_blank" rel="noopener">\uD83D\uDD0D Check ' + sku + ' at RKS</a>'
+        : '<a href="https://royalkeysupply.com" target="_blank" rel="noopener">\uD83D\uDD0D Open RKS</a>';
+      rem.innerHTML =
+        '<div class="rks-reminder">' +
+          '<div class="rks-reminder-title">Verify RKS stock before you quote</div>' +
+          'This SKU is not in your inventory, so it falls to a Royal Key Supply order. Confirm RKS actually has it in stock before you present this quote to the customer.' +
+          link +
+        '</div>';
+    }
+  } else {
+    el.classList.add('checking');
+    el.textContent = 'Enter a SKU to check availability.';
+  }
   recalcQuote();
+}
+
+function checkStock() {
+  var skuEl = document.getElementById('qb-sku');
+  var sku = skuEl ? (skuEl.value || '').trim() : '';
+  var el = document.getElementById('stock-status');
+  _stockChecked = false;
+  _stockQty = null;
+
+  if (!sku) { applyStock('order'); return; }   // no SKU → treat as order/RKS
+
+  if (el) { el.className = 'stock-status checking'; el.textContent = 'Checking your stock for ' + sku + '\u2026'; }
+
+  fetch(WORKER_STOCK + '?sku=' + encodeURIComponent(sku))
+    .then(function (r) { return r.json(); })
+    .then(function (res) {
+      _stockChecked = true;
+      if (res && res.ok) {
+        _stockQty = (typeof res.qty === 'number') ? res.qty : null;
+        applyStock(res.inStock ? 'instock' : 'order');
+      } else {
+        // couldn't confirm — fall back to the finder's flag, note it
+        applyStock(_seedStock === '0' ? 'order' : (_seedStock === '1' ? 'instock' : 'order'));
+        var e2 = document.getElementById('stock-status');
+        if (e2) e2.textContent += ' (live check unavailable \u2014 using finder\u2019s flag)';
+      }
+    })
+    .catch(function () {
+      _stockChecked = true;
+      applyStock(_seedStock === '0' ? 'order' : (_seedStock === '1' ? 'instock' : 'order'));
+      var e3 = document.getElementById('stock-status');
+      if (e3) e3.textContent += ' (couldn\u2019t reach live stock \u2014 using finder\u2019s flag)';
+    });
+}
+
+function onSkuChange() {
+  if (_skuTimer) clearTimeout(_skuTimer);
+  _skuTimer = setTimeout(checkStock, 600);
+}
+
+function setStock(s) {
+  // retained for the initial provisional state before the live check returns
+  _stockState = s;
 }
 
 function recalcQuote() {
@@ -966,7 +1058,10 @@ function buildQuoteText(d) {
   L.push(d.vehicle);
   L.push(svcName);
   L.push('');
-  if (!isNaN(d.key) && d.key > 0) L.push('- ' + keyLabel + ': $' + d.key.toFixed(2));
+  var keyUnitT = (typeof d.keyUnit === 'number') ? d.keyUnit : (isNaN(d.key) ? 0 : d.key);
+  var qtyT = d.qty || 1;
+  var keyTotalT = (typeof d.keyTotal === 'number') ? d.keyTotal : keyUnitT * qtyT;
+  if (keyUnitT > 0) L.push('- ' + keyLabel + (qtyT > 1 ? (' x' + qtyT) : '') + ': $' + keyTotalT.toFixed(2));
   if (!isNaN(d.labor) && d.labor > 0) L.push('- Mobile service (program + cut): $' + d.labor.toFixed(2));
   if (d.subscription > 0) L.push('- ' + d.subscriptionLabel + ': $' + d.subscription.toFixed(2));
   if (d.keyCode > 0) L.push('- ' + d.keyCodeLabel + ': $' + d.keyCode.toFixed(2));
@@ -979,7 +1074,7 @@ function buildQuoteText(d) {
     if (d.path === 'akl') L.push('Plus no tow — the dealer needs the car towed in.');
   }
   L.push('');
-  L.push(d.stock === 'instock' ? 'Key: in stock — same-day service' : 'Key: ordered — arrives in 2-3 days, then we install');
+  L.push(d.stock === 'instock' ? 'Key: in stock — same-day service' : 'Key: three to four days shipping required');
   if (d.sku) L.push('Part #: ' + d.sku);
   if (d.po) L.push('PO #: ' + d.po);
   L.push('');
@@ -1091,6 +1186,8 @@ function gatherQuote() {
   function str(id){ var el = document.getElementById(id); return el ? (el.value || '').trim() : ''; }
   var labor = num('qb-labor');
   var key = num('qb-key');
+  var qtyRaw = num('qb-qty');
+  var qty = (isNaN(qtyRaw) || qtyRaw < 1) ? 1 : Math.floor(qtyRaw);
   var sub = num('qb-sub');
   var keyCode = num('qb-keycode');
   var dealer = num('qb-dealer');
@@ -1100,14 +1197,15 @@ function gatherQuote() {
   var phone = str('qb-phone');
   var acc = _ctx ? computeAccess(_ctx.make, _ctx.year, _ctx.tier, _chosenPath) : { subscriptionLabel:'Subscription / access', keyCodeLabel:'Key code' };
 
-  var subV     = isNaN(sub) ? 0 : sub;
-  var keyCodeV = isNaN(keyCode) ? 0 : keyCode;
-  var taxable  = isNaN(key) ? 0 : key;
-  var tax      = taxable * TAX_RATE;
-  var allin    = (isNaN(labor) ? 0 : labor) + subV + keyCodeV + taxable + tax;
+  var subV      = isNaN(sub) ? 0 : sub;
+  var keyCodeV  = isNaN(keyCode) ? 0 : keyCode;
+  var keyUnit   = isNaN(key) ? 0 : key;
+  var keyTotal  = keyUnit * qty;               // key price scales with quantity
+  var tax       = keyTotal * TAX_RATE;          // tax on the keys only, scaled
+  var allin     = (isNaN(labor) ? 0 : labor) + subV + keyCodeV + keyTotal + tax;
 
   return { vehicle: _ctx ? _ctx.label : '', path: _chosenPath, rate: _rate,
-           key: key, labor: labor,
+           key: key, keyUnit: keyUnit, qty: qty, keyTotal: keyTotal, labor: labor,
            subscription: subV, subscriptionLabel: acc.subscriptionLabel,
            keyCode: keyCodeV, keyCodeLabel: acc.keyCodeLabel,
            tax: tax, allin: allin, dealer: dealer, stock: _stockState,
@@ -1119,7 +1217,13 @@ function buildCustomerQuoteHTML(d, showCTA) {
   var svcName = (d.path === 'aak') ? 'Add-a-Key (working key present)' : 'All Keys Lost';
   var img = d.img ? '<img src="' + d.img + '" alt="" class="cust-quote-img">' : '';
   var lines = '';
-  if (!isNaN(d.key) && d.key > 0) lines += '<div class="cql"><span>' + (d.keyType || d.keyTitle || 'Key') + '</span><span>$' + d.key.toFixed(2) + '</span></div>';
+  var keyUnit = (typeof d.keyUnit === 'number') ? d.keyUnit : (isNaN(d.key) ? 0 : d.key);
+  var qty = d.qty || 1;
+  var keyTotal = (typeof d.keyTotal === 'number') ? d.keyTotal : keyUnit * qty;
+  if (keyUnit > 0) {
+    var keyLabel = (d.keyType || d.keyTitle || 'Key') + (qty > 1 ? (' \u00d7 ' + qty) : '');
+    lines += '<div class="cql"><span>' + keyLabel + '</span><span>$' + keyTotal.toFixed(2) + '</span></div>';
+  }
   if (!isNaN(d.labor) && d.labor > 0) lines += '<div class="cql"><span>Mobile service (program + cut)</span><span>$' + d.labor.toFixed(2) + '</span></div>';
   if (d.subscription > 0) lines += '<div class="cql"><span>' + d.subscriptionLabel + '</span><span>$' + d.subscription.toFixed(2) + '</span></div>';
   if (d.keyCode > 0) lines += '<div class="cql"><span>' + d.keyCodeLabel + '</span><span>$' + d.keyCode.toFixed(2) + '</span></div>';
@@ -1131,7 +1235,7 @@ function buildCustomerQuoteHTML(d, showCTA) {
     var towLine = (d.path === 'akl') ? ' &middot; no tow required' : '';
     savings = '<div class="cust-quote-savings">Dealer price ~$' + d.dealer.toFixed(0) + ' &middot; You save ~$' + s.toFixed(0) + ' (' + p + '% less)' + towLine + '</div>';
   }
-  var stock = '<div class="cust-quote-stock">' + (d.stock === 'instock' ? '🟢 In stock — same-day service available' : '📦 Key ordered — arrives in 2-3 days, then we install') + '</div>';
+  var stock = '<div class="cust-quote-stock">' + (d.stock === 'instock' ? '\uD83D\uDFE2 In stock — same-day service available' : '\uD83D\uDCE6 Three to four days shipping required') + '</div>';
   var part = d.sku ? '<div class="cust-quote-part">Part #: ' + d.sku + '</div>' : '';
   var poLine = d.po ? '<div class="cust-quote-po">PO #: ' + d.po + '</div>' : '';
   var payLabel = (d.allin > 0) ? ('💳 Pay Now — $' + d.allin.toFixed(2)) : '💳 Pay Now';
@@ -1188,7 +1292,9 @@ function payNow() {
   var laborTitle = 'Mobile service (program + cut)';
   var payload = {
     keyTitle:          keyTitle,
-    keyPrice:          (isNaN(d.key) ? 0 : d.key),
+    keyPrice:          (isNaN(d.key) ? 0 : d.key),   // UNIT price; Worker applies quantity
+    keyQuantity:       (d.qty && d.qty > 0 ? d.qty : 1),
+    stock:             (d.stock === 'instock' ? 'instock' : 'order'),
     laborTitle:        laborTitle,
     labor:             (isNaN(d.labor) ? 0 : d.labor),
     subscription:      (d.subscription > 0 ? d.subscription : 0),
@@ -1223,6 +1329,7 @@ function buildCustomerViewURL(d) {
   p.set('v', d.vehicle || '');
   p.set('p', d.path || '');
   if (!isNaN(d.key)) p.set('kp', d.key);
+  if (d.qty && d.qty > 1) p.set('qty', d.qty);
   if (!isNaN(d.labor)) p.set('lb', d.labor);
   if (d.subscription > 0) { p.set('sub', d.subscription); p.set('subl', d.subscriptionLabel); }
   if (d.keyCode > 0) { p.set('kc', d.keyCode); p.set('kcl', d.keyCodeLabel); }
@@ -1239,19 +1346,22 @@ function buildCustomerViewURL(d) {
 function renderCustomerFullView() {
   var q = new URLSearchParams(window.location.search);
   var key = parseFloat(q.get('kp'));
+  var qtyRaw = parseInt(q.get('qty'));
+  var qty = (isNaN(qtyRaw) || qtyRaw < 1) ? 1 : qtyRaw;
   var labor = parseFloat(q.get('lb'));
   var sub = parseFloat(q.get('sub'));
   var keyCode = parseFloat(q.get('kc'));
   var subV = isNaN(sub) ? 0 : sub;
   var keyCodeV = isNaN(keyCode) ? 0 : keyCode;
-  var taxable = isNaN(key) ? 0 : key;
-  var tax = taxable * TAX_RATE;
+  var keyUnit = isNaN(key) ? 0 : key;
+  var keyTotal = keyUnit * qty;
+  var tax = keyTotal * TAX_RATE;
   var d = { vehicle: q.get('v') || '', path: q.get('p') || '',
-            key: key, labor: labor,
+            key: key, keyUnit: keyUnit, qty: qty, keyTotal: keyTotal, labor: labor,
             subscription: subV, subscriptionLabel: q.get('subl') || 'Subscription / access',
             keyCode: keyCodeV, keyCodeLabel: q.get('kcl') || 'Key code',
             tax: tax,
-            allin: (isNaN(labor) ? 0 : labor) + subV + keyCodeV + taxable + tax,
+            allin: (isNaN(labor) ? 0 : labor) + subV + keyCodeV + keyTotal + tax,
             dealer: parseFloat(q.get('dl')), stock: q.get('st') || 'instock',
             sku: q.get('sku') || '', po: q.get('po') || '',
             keyType: q.get('kt') || '', keyTitle: q.get('ktitle') || '', img: q.get('img') || '' };
