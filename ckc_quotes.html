@@ -256,6 +256,44 @@
   .hist-who { font-size: 0.88rem; color: var(--blue); margin-top: 3px; }
   .hist-meta { font-size: 0.76rem; color: var(--muted); margin-top: 4px; line-height: 1.4; }
   .hist-empty { font-size: 0.9rem; color: var(--muted); text-align: center; padding: 24px 0; }
+
+  /* ── Pricing throttle button + panel ── */
+  .price-open-btn { background: #1a1a1a; color: var(--gold); border: 1px solid var(--gold); border-radius: 8px; padding: 7px 13px; font-family: 'Barlow Condensed', sans-serif; font-size: 0.82rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
+  .price-open-btn:hover { background: var(--gold-dim); }
+  .price-open-btn.throttled { background: var(--amber); color: #111; border-color: var(--amber); }
+
+  .pp-body { padding: 18px; }
+  .pp-benchmark { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; background: #111; border: 1px solid var(--border); border-radius: 10px; padding: 11px 14px; margin-bottom: 14px; }
+  .pp-benchmark-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.72rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+  .pp-benchmark-val { font-size: 0.8rem; color: var(--muted2); }
+  .pp-dial { background: #111; border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; }
+  .pp-dial-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .pp-dial-name { font-family: 'Barlow Condensed', sans-serif; font-size: 1.05rem; font-weight: 800; letter-spacing: 0.5px; }
+  .pp-dial.retail .pp-dial-name { color: var(--gold-light); }
+  .pp-dial.dealer .pp-dial-name { color: var(--blue); }
+  .pp-dial-eff { font-size: 0.78rem; color: var(--muted2); }
+  .pp-dial-row { display: flex; align-items: center; gap: 10px; }
+  .pp-dial-input-wrap { position: relative; flex: 1; }
+  .pp-dial-input { width: 100%; background: #1e1e1e; border: 2px solid var(--border); border-radius: 10px; padding: 12px 34px 12px 14px; color: var(--text); font-family: 'Barlow Semi Condensed', sans-serif; font-size: 1.3rem; font-weight: 800; outline: none; }
+  .pp-dial-input:focus { border-color: var(--gold); }
+  .pp-dial-suffix { position: absolute; right: 13px; top: 50%; transform: translateY(-50%); color: var(--muted2); font-weight: 700; font-size: 1.1rem; }
+  .pp-dir { font-size: 0.72rem; color: var(--muted); margin-top: 6px; }
+
+  .pp-lock { display: flex; align-items: center; gap: 12px; background: #111; border: 1px solid var(--border); border-radius: 10px; padding: 12px 15px; margin-bottom: 12px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .pp-lock-box { width: 44px; height: 26px; border-radius: 999px; background: #333; position: relative; flex-shrink: 0; transition: background 0.15s; }
+  .pp-lock-box::after { content:''; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:#888; transition: all 0.15s; }
+  .pp-lock.on .pp-lock-box { background: var(--gold); }
+  .pp-lock.on .pp-lock-box::after { left:21px; background:#111; }
+  .pp-lock-text { font-size: 0.88rem; color: var(--text); font-weight: 600; }
+  .pp-lock-sub { font-size: 0.75rem; color: var(--muted); }
+
+  .pp-warn { background: var(--red-bg); border: 1px solid rgba(248,113,113,0.4); color: var(--red); border-radius: 10px; padding: 11px 14px; margin-bottom: 12px; font-size: 0.82rem; line-height: 1.5; display: none; }
+  .pp-actions { display: flex; gap: 10px; margin-top: 4px; }
+  .pp-save { flex: 2; background: var(--gold); color: #111; border: none; border-radius: 10px; padding: 13px; font-family: 'Barlow', sans-serif; font-weight: 700; font-size: 0.95rem; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .pp-save:hover { background: var(--gold-light); }
+  .pp-reset { flex: 1; background: #1a1a1a; color: var(--muted2); border: 1px solid var(--border); border-radius: 10px; padding: 13px; font-family: 'Barlow', sans-serif; font-weight: 600; font-size: 0.88rem; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .pp-reset:hover { color: var(--text); border-color: var(--muted2); }
+  .pp-note { font-size: 0.74rem; color: var(--muted); margin-top: 12px; line-height: 1.5; text-align: center; }
 </style>
 </head>
 <body>
@@ -266,6 +304,7 @@
     <div class="header-sub">CKC Quotes — James</div>
   </div>
   <div class="header-right">
+    <button class="price-open-btn" id="price-open-btn" onclick="openPricing()">⚙️ Pricing</button>
     <button class="hist-open-btn" onclick="openHistory()">📋 History</button>
     <div class="header-phone">(336) 510-9816</div>
   </div>
@@ -343,6 +382,67 @@
   </div>
 </div>
 <div class="log-toast" id="log-toast">✓ Saved to log</div>
+
+<!-- Pricing throttle (operator only) -->
+<div class="hist-overlay" id="price-overlay">
+  <div class="hist-panel">
+    <div class="hist-head">
+      <span class="hist-title">⚙️ Pricing</span>
+      <button class="hist-close" onclick="closePricing()">&times;</button>
+    </div>
+    <div id="pp-pin-area"></div>
+    <div class="pp-body" id="pp-body-area" style="display:none;">
+      <div class="pp-benchmark">
+        <span class="pp-benchmark-label">Benchmark = full price</span>
+        <span class="pp-benchmark-val" id="pp-bench-date">set —</span>
+      </div>
+
+      <div class="pp-dial retail">
+        <div class="pp-dial-top">
+          <span class="pp-dial-name">Retail</span>
+          <span class="pp-dial-eff" id="pp-retail-eff">full price</span>
+        </div>
+        <div class="pp-dial-row">
+          <div class="pp-dial-input-wrap">
+            <input class="pp-dial-input" id="pp-retail" type="number" inputmode="numeric" min="0" max="90" step="1" value="0" oninput="ppOnDial('retail')">
+            <span class="pp-dial-suffix">%</span>
+          </div>
+        </div>
+        <div class="pp-dir">% below benchmark for walk-up customers (0 = full price)</div>
+      </div>
+
+      <div class="pp-dial dealer">
+        <div class="pp-dial-top">
+          <span class="pp-dial-name">Dealer</span>
+          <span class="pp-dial-eff" id="pp-dealer-eff">full price</span>
+        </div>
+        <div class="pp-dial-row">
+          <div class="pp-dial-input-wrap">
+            <input class="pp-dial-input" id="pp-dealer" type="number" inputmode="numeric" min="0" max="90" step="1" value="0" oninput="ppOnDial('dealer')">
+            <span class="pp-dial-suffix">%</span>
+          </div>
+        </div>
+        <div class="pp-dir">% below benchmark for trade / dealer rate (0 = full price)</div>
+      </div>
+
+      <div class="pp-lock" id="pp-lock" onclick="ppToggleLock()">
+        <div class="pp-lock-box"></div>
+        <div>
+          <div class="pp-lock-text">Lock dials together</div>
+          <div class="pp-lock-sub">Move retail &amp; dealer by the same amount</div>
+        </div>
+      </div>
+
+      <div class="pp-warn" id="pp-warn"></div>
+
+      <div class="pp-actions">
+        <button class="pp-save" onclick="ppSave()">Apply</button>
+        <button class="pp-reset" onclick="ppReset()">Reset to full</button>
+      </div>
+      <div class="pp-note">Adjusts the <b>service (labor)</b> line only — never the key, subscription, or key-code (those are your costs). Saved on this device until you change it. Reset returns both dials to full price.</div>
+    </div>
+  </div>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
@@ -661,6 +761,50 @@ function computeAccess(make, year, tier, path) {
 var _ctx = null;            // { make, year, label, rule, tier }
 var _chosenPath = '';       // 'aak' | 'akl'
 var _rate = 'retail';       // 'retail' | 'dealer' — quotes open on retail
+
+// ── Pricing throttle: % reductions off the benchmark (the card prices) ──
+// Persisted on this device. retail/dealer are whole-number percentages
+// (0 = full price). benchmarkDate is when full price was last established.
+var _priceAdj = { retail: 0, dealer: 0, locked: false, benchmarkDate: '' };
+var _ppPin = '';
+(function loadPricing() {
+  try {
+    var raw = localStorage.getItem('ckc_price_adj');
+    if (raw) {
+      var o = JSON.parse(raw);
+      if (o && typeof o === 'object') {
+        _priceAdj.retail = clampAdj(o.retail);
+        _priceAdj.dealer = clampAdj(o.dealer);
+        _priceAdj.locked = !!o.locked;
+        _priceAdj.benchmarkDate = o.benchmarkDate || '';
+      }
+    }
+    if (!_priceAdj.benchmarkDate) {
+      _priceAdj.benchmarkDate = new Date().toISOString().slice(0, 10);
+      savePricing();
+    }
+    _ppPin = localStorage.getItem('ckc_price_pin') || '';
+  } catch (e) { /* private mode / storage blocked — throttle just won't persist */ }
+})();
+
+function clampAdj(v) {
+  var n = parseInt(v);
+  if (isNaN(n) || n < 0) return 0;
+  if (n > 90) return 90;
+  return n;
+}
+function savePricing() {
+  try { localStorage.setItem('ckc_price_adj', JSON.stringify(_priceAdj)); } catch (e) {}
+}
+
+// Apply the active throttle to a benchmark labor number for the given rate.
+function applyAdj(base, rate) {
+  if (!base || base <= 0) return base || 0;
+  var pct = (rate === 'dealer') ? _priceAdj.dealer : _priceAdj.retail;
+  if (!pct) return base;
+  return Math.round(base * (1 - pct / 100));
+}
+function throttleActive() { return _priceAdj.retail > 0 || _priceAdj.dealer > 0; }
 var _stockState = 'instock';
 var _lookupHadVIN = false;
 
@@ -730,9 +874,10 @@ function ruleNeedsVIN(r) { return (r.flags || []).some(function(f){ return /vin/
 // Labor for the current rate + path (returns a number)
 function laborFor(r, path, rate) {
   if (!r) return 0;
-  if (path === 'aak') return rate === 'dealer' ? r.aakDealer : r.aakRetail;
-  if (path === 'akl') return rate === 'dealer' ? r.aklDealer : r.aklRetail;
-  return 0;
+  var base = 0;
+  if (path === 'aak') base = (rate === 'dealer') ? r.aakDealer : r.aakRetail;
+  else if (path === 'akl') base = (rate === 'dealer') ? r.aklDealer : r.aklRetail;
+  return applyAdj(base, rate);
 }
 
 function renderResult(make, year, label, sourceNote) {
@@ -768,7 +913,11 @@ function renderResult(make, year, label, sourceNote) {
     return;
   }
 
-  const aakR = r.aakRetail, aakD = r.aakDealer, aklR = r.aklRetail, aklD = r.aklDealer;
+  const aakR = applyAdj(r.aakRetail, 'retail'), aakD = applyAdj(r.aakDealer, 'dealer');
+  const aklR = applyAdj(r.aklRetail, 'retail'), aklD = applyAdj(r.aklDealer, 'dealer');
+  const throttleBadge = throttleActive()
+    ? '<div style="font-size:0.72rem;color:var(--amber);margin-top:6px;">⚙️ Throttle active — Retail −' + _priceAdj.retail + '% · Dealer −' + _priceAdj.dealer + '% (labor only)</div>'
+    : '';
   const aklBox = r.aklRefer
     ? '<div class="price-box akl"><div class="price-box-label">All Keys Lost</div><div class="price-box-val" style="font-size:1.15rem;color:var(--red);">Refer out</div><div class="price-box-note">Not serviceable on this platform</div></div>'
     : '<div class="price-box akl"><div class="price-box-label">All Keys Lost — Labor</div><div class="price-box-val">$' + aklR + '</div><div class="price-box-split"><b>Retail $' + aklR + '</b> · Dealer $' + aklD + '</div><div class="price-box-note">Key + fees separate · confirm with VIN</div></div>';
@@ -778,6 +927,7 @@ function renderResult(make, year, label, sourceNote) {
       '<span class="tier-badge ' + TIER_CLASS[r.tier] + '">' + TIER_LABELS[r.tier] + '</span>' +
       '<div class="tier-vehicle">' + label + '</div>' +
       '<div class="tier-keytype">' + r.keyType + ' &nbsp;&middot;&nbsp; ' + matched.groupName + '</div>' +
+      throttleBadge +
     '</div>' +
     '<div class="price-grid">' +
       '<div class="price-box aak"><div class="price-box-label">Add-a-Key — Labor</div><div class="price-box-val">$' + aakR + '</div><div class="price-box-split"><b>Retail $' + aakR + '</b> · Dealer $' + aakD + '</div><div class="price-box-note">Key + fees separate · ' + r.time.split('/')[0].trim() + '</div></div>' +
@@ -1555,6 +1705,169 @@ function filterHistory() {
   renderHistory(f);
 }
 
+// ═══════════════════════════════════════════════════════════
+//  PRICING THROTTLE PANEL  (operator only, PIN-gated, per device)
+// ═══════════════════════════════════════════════════════════
+function reflectThrottleButton() {
+  var b = document.getElementById('price-open-btn');
+  if (!b) return;
+  if (throttleActive()) {
+    b.classList.add('throttled');
+    b.textContent = '⚙️ −' + Math.max(_priceAdj.retail, _priceAdj.dealer) + '%';
+  } else {
+    b.classList.remove('throttled');
+    b.textContent = '⚙️ Pricing';
+  }
+}
+
+function openPricing() {
+  var ov = document.getElementById('price-overlay');
+  if (!ov) return;
+  ov.style.display = 'flex';
+  if (_ppUnlocked) showPricingBody();
+  else showPricingPin();
+}
+function closePricing() {
+  var ov = document.getElementById('price-overlay');
+  if (ov) ov.style.display = 'none';
+}
+
+var _ppUnlocked = false;
+function showPricingPin(msg) {
+  document.getElementById('pp-body-area').style.display = 'none';
+  var area = document.getElementById('pp-pin-area');
+  area.style.display = 'block';
+  var setMode = !_ppPin;   // no PIN yet → create one
+  area.innerHTML =
+    '<div class="hist-body">' +
+      '<div class="hist-pin-label">' + (setMode
+        ? 'Set a 4-digit PIN to protect your pricing controls.'
+        : 'Enter your pricing PIN.') + '</div>' +
+      (msg ? '<div class="hist-pin-err">' + esc(msg) + '</div>' : '') +
+      '<input class="hist-pin-input" id="pp-pin" type="password" inputmode="numeric" autocomplete="off" placeholder="• • • •" maxlength="8" onkeydown="if(event.key===\'Enter\')submitPricingPin()">' +
+      '<button class="hist-pin-btn" onclick="submitPricingPin()">' + (setMode ? 'Set PIN & open' : 'Open') + '</button>' +
+    '</div>';
+  setTimeout(function () { var el = document.getElementById('pp-pin'); if (el) el.focus(); }, 60);
+}
+function submitPricingPin() {
+  var el = document.getElementById('pp-pin');
+  var pin = el ? el.value.trim() : '';
+  if (!pin || pin.length < 4) { showPricingPin('Use at least 4 digits.'); return; }
+  if (!_ppPin) {
+    _ppPin = pin;
+    try { localStorage.setItem('ckc_price_pin', pin); } catch (e) {}
+    _ppUnlocked = true;
+    showPricingBody();
+  } else if (pin === _ppPin) {
+    _ppUnlocked = true;
+    showPricingBody();
+  } else {
+    showPricingPin('Wrong PIN — try again.');
+  }
+}
+
+function showPricingBody() {
+  document.getElementById('pp-pin-area').style.display = 'none';
+  document.getElementById('pp-body-area').style.display = 'block';
+  document.getElementById('pp-retail').value = _priceAdj.retail;
+  document.getElementById('pp-dealer').value = _priceAdj.dealer;
+  document.getElementById('pp-lock').classList.toggle('on', _priceAdj.locked);
+  document.getElementById('pp-bench-date').textContent = _priceAdj.benchmarkDate ? ('set ' + _priceAdj.benchmarkDate) : '';
+  ppRefresh();
+}
+
+// Live edits inside the panel (not yet saved) use these staged values.
+function ppStaged() {
+  return {
+    retail: clampAdj(document.getElementById('pp-retail').value),
+    dealer: clampAdj(document.getElementById('pp-dealer').value),
+    locked: document.getElementById('pp-lock').classList.contains('on')
+  };
+}
+function ppOnDial(which) {
+  var s = ppStaged();
+  if (s.locked) {
+    // move both together to the value just typed
+    var v = clampAdj(document.getElementById('pp-' + which).value);
+    document.getElementById('pp-retail').value = v;
+    document.getElementById('pp-dealer').value = v;
+  }
+  ppRefresh();
+}
+function ppToggleLock() {
+  var el = document.getElementById('pp-lock');
+  el.classList.toggle('on');
+  if (el.classList.contains('on')) {
+    // on lock, snap dealer up to match retail (preserve retail as the lead)
+    var rv = clampAdj(document.getElementById('pp-retail').value);
+    document.getElementById('pp-dealer').value = rv;
+  }
+  ppRefresh();
+}
+
+// Scan the whole MATRIX: would this adjustment push any tier's retail below its
+// dealer? Returns a list of offending tiers.
+function ppInversions(rAdj, dAdj) {
+  var bad = [];
+  for (var g = 0; g < MATRIX.length; g++) {
+    var grp = MATRIX[g];
+    for (var i = 0; i < grp.rules.length; i++) {
+      var r = grp.rules[i];
+      if (r.refer) continue;
+      var pairs = [['aakRetail', 'aakDealer'], ['aklRetail', 'aklDealer']];
+      for (var p = 0; p < pairs.length; p++) {
+        var rc = r[pairs[p][0]], dc = r[pairs[p][1]];
+        if (!rc || !dc) continue;
+        if (r.aklRefer && pairs[p][0] === 'aklRetail') continue;
+        var rl = Math.round(rc * (1 - rAdj / 100));
+        var dl = Math.round(dc * (1 - dAdj / 100));
+        if (rl < dl) { bad.push(grp.group); break; }
+      }
+    }
+  }
+  return bad;
+}
+
+function ppRefresh() {
+  var s = ppStaged();
+  document.getElementById('pp-retail-eff').textContent = s.retail > 0 ? ('−' + s.retail + '% below full') : 'full price';
+  document.getElementById('pp-dealer-eff').textContent = s.dealer > 0 ? ('−' + s.dealer + '% below full') : 'full price';
+
+  var warn = document.getElementById('pp-warn');
+  var inv = ppInversions(s.retail, s.dealer);
+  if (inv.length) {
+    var uniq = inv.filter(function (v, i) { return inv.indexOf(v) === i; });
+    warn.style.display = 'block';
+    warn.innerHTML = '⚠️ This retail cut drops <b>retail below your dealer price</b> on: ' +
+      uniq.slice(0, 4).join(', ') + (uniq.length > 4 ? ', …' : '') +
+      '. A walk-up would be quoted less than your trade rate. Ease the retail cut or deepen the dealer cut.';
+  } else {
+    warn.style.display = 'none';
+  }
+}
+
+function ppSave() {
+  var s = ppStaged();
+  _priceAdj.retail = s.retail;
+  _priceAdj.dealer = s.dealer;
+  _priceAdj.locked = s.locked;
+  savePricing();
+  reflectThrottleButton();
+  // re-render the current result so new prices show immediately
+  if (_ctx) {
+    renderResult(_ctx.make, _ctx.year, _ctx.label, document.getElementById('decoded-pill').innerHTML);
+  }
+  var btn = document.querySelector('.pp-save');
+  if (btn) { var o = btn.textContent; btn.textContent = '✓ Applied'; setTimeout(function () { btn.textContent = o; closePricing(); }, 650); }
+}
+
+function ppReset() {
+  document.getElementById('pp-retail').value = 0;
+  document.getElementById('pp-dealer').value = 0;
+  document.getElementById('pp-lock').classList.remove('on');
+  ppRefresh();
+}
+
 // ═══ BOOTSTRAP ═══
 var IS_CUSTOMER_VIEW = new URLSearchParams(window.location.search).get('view') === 'quote';
 if (IS_CUSTOMER_VIEW) {
@@ -1565,6 +1878,7 @@ if (IS_CUSTOMER_VIEW) {
   document.getElementById('ymm-make').addEventListener('change', checkYMMReady);
   initYearDropdown();
   autoPopulate();
+  reflectThrottleButton();
 }
 </script>
 </body>
