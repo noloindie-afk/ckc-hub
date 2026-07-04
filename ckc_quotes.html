@@ -294,6 +294,14 @@
   .pp-reset { flex: 1; background: #1a1a1a; color: var(--muted2); border: 1px solid var(--border); border-radius: 10px; padding: 13px; font-family: 'Barlow', sans-serif; font-weight: 600; font-size: 0.88rem; cursor: pointer; -webkit-tap-highlight-color: transparent; }
   .pp-reset:hover { color: var(--text); border-color: var(--muted2); }
   .pp-note { font-size: 0.74rem; color: var(--muted); margin-top: 12px; line-height: 1.5; text-align: center; }
+
+  /* ── Floating, movable pricing panel (non-blocking) ── */
+  .pp-float { display: none; position: fixed; top: 68px; right: 18px; width: 360px; max-width: 94vw; z-index: 500; }
+  .pp-float-inner { background: var(--card); border: 1px solid var(--gold); border-radius: 14px; box-shadow: 0 14px 48px rgba(0,0,0,0.6); overflow: hidden; max-height: 88vh; overflow-y: auto; }
+  .pp-drag { cursor: move; user-select: none; -webkit-user-select: none; touch-action: none; }
+  @media (max-width: 520px) {
+    .pp-float { top: 60px; right: 3vw; left: 3vw; width: auto; max-width: none; }
+  }
 </style>
 </head>
 <body>
@@ -384,10 +392,10 @@
 <div class="log-toast" id="log-toast">✓ Saved to log</div>
 
 <!-- Pricing throttle (operator only) -->
-<div class="hist-overlay" id="price-overlay">
-  <div class="hist-panel">
-    <div class="hist-head">
-      <span class="hist-title">⚙️ Pricing</span>
+<div class="pp-float" id="price-overlay">
+  <div class="pp-float-inner">
+    <div class="hist-head pp-drag" id="pp-drag-handle">
+      <span class="hist-title">⚙️ Pricing <span style="font-size:0.7rem;color:var(--muted);font-weight:400;">· drag to move</span></span>
       <button class="hist-close" onclick="closePricing()">&times;</button>
     </div>
     <div id="pp-pin-area"></div>
@@ -404,11 +412,11 @@
         </div>
         <div class="pp-dial-row">
           <div class="pp-dial-input-wrap">
-            <input class="pp-dial-input" id="pp-retail" type="number" inputmode="numeric" min="0" max="90" step="1" value="0" oninput="ppOnDial('retail')">
+            <input class="pp-dial-input" id="pp-retail" type="number" inputmode="numeric" min="-90" max="50" step="1" value="0" oninput="ppOnDial('retail')">
             <span class="pp-dial-suffix">%</span>
           </div>
         </div>
-        <div class="pp-dir">% below benchmark for walk-up customers (0 = full price)</div>
+        <div class="pp-dir">➖ down = lower · ➕ up = raise · 0 = full price (walk-up customers)</div>
       </div>
 
       <div class="pp-dial dealer">
@@ -418,11 +426,11 @@
         </div>
         <div class="pp-dial-row">
           <div class="pp-dial-input-wrap">
-            <input class="pp-dial-input" id="pp-dealer" type="number" inputmode="numeric" min="0" max="90" step="1" value="0" oninput="ppOnDial('dealer')">
+            <input class="pp-dial-input" id="pp-dealer" type="number" inputmode="numeric" min="-90" max="50" step="1" value="0" oninput="ppOnDial('dealer')">
             <span class="pp-dial-suffix">%</span>
           </div>
         </div>
-        <div class="pp-dir">% below benchmark for trade / dealer rate (0 = full price)</div>
+        <div class="pp-dir">➖ down = lower · ➕ up = raise · 0 = full price (trade / dealer rate)</div>
       </div>
 
       <div class="pp-lock" id="pp-lock" onclick="ppToggleLock()">
@@ -436,10 +444,10 @@
       <div class="pp-warn" id="pp-warn"></div>
 
       <div class="pp-actions">
-        <button class="pp-save" onclick="ppSave()">Apply</button>
+        <button class="pp-save" onclick="ppSave()">Done</button>
         <button class="pp-reset" onclick="ppReset()">Reset to full</button>
       </div>
-      <div class="pp-note">Adjusts the <b>service (labor)</b> line only — never the key, subscription, or key-code (those are your costs). Saved on this device until you change it. Reset returns both dials to full price.</div>
+      <div class="pp-note">Changes apply <b>live</b> to the quote as you dial — drag this panel aside to watch. Adjusts the <b>service (labor)</b> line only. Saved on this device until you change it.</div>
     </div>
   </div>
 </div>
@@ -789,8 +797,9 @@ var _ppPin = '';
 
 function clampAdj(v) {
   var n = parseInt(v);
-  if (isNaN(n) || n < 0) return 0;
-  if (n > 90) return 90;
+  if (isNaN(n)) return 0;
+  if (n > 50) return 50;     // +50% = max raise above full
+  if (n < -90) return -90;   // -90% = max cut below full
   return n;
 }
 function savePricing() {
@@ -798,11 +807,12 @@ function savePricing() {
 }
 
 // Apply the active throttle to a benchmark labor number for the given rate.
+// Signed: +pct raises above full price, -pct lowers below it, 0 = full.
 function applyAdj(base, rate) {
   if (!base || base <= 0) return base || 0;
   var pct = (rate === 'dealer') ? _priceAdj.dealer : _priceAdj.retail;
   if (!pct) return base;
-  return Math.round(base * (1 - pct / 100));
+  return Math.round(base * (1 + pct / 100));
 }
 function throttleActive() { return _priceAdj.retail > 0 || _priceAdj.dealer > 0; }
 var _stockState = 'instock';
@@ -889,7 +899,7 @@ function renderResult(make, year, label, sourceNote) {
   const r = matched.rule;
 
   _ctx = { make: make, year: year, label: label, rule: r, tier: r.tier };
-  _chosenPath = ''; _rate = 'retail'; _stockState = 'instock';
+  _chosenPath = ''; _rate = 'retail'; _stockState = 'instock'; _lockedQuote = null;
   _quoteId = ''; _logLastSig = '';
 
   pill.innerHTML = sourceNote; pill.style.display = 'block';
@@ -916,11 +926,11 @@ function renderResult(make, year, label, sourceNote) {
   const aakR = applyAdj(r.aakRetail, 'retail'), aakD = applyAdj(r.aakDealer, 'dealer');
   const aklR = applyAdj(r.aklRetail, 'retail'), aklD = applyAdj(r.aklDealer, 'dealer');
   const throttleBadge = throttleActive()
-    ? '<div style="font-size:0.72rem;color:var(--amber);margin-top:6px;">⚙️ Throttle active — Retail −' + _priceAdj.retail + '% · Dealer −' + _priceAdj.dealer + '% (labor only)</div>'
-    : '';
+    ? '<div id="throttle-badge" style="font-size:0.72rem;color:var(--amber);margin-top:6px;">⚙️ Throttle active — Retail ' + ppSigned(_priceAdj.retail) + ' · Dealer ' + ppSigned(_priceAdj.dealer) + ' (labor only)</div>'
+    : '<div id="throttle-badge" style="display:none;font-size:0.72rem;color:var(--amber);margin-top:6px;"></div>';
   const aklBox = r.aklRefer
     ? '<div class="price-box akl"><div class="price-box-label">All Keys Lost</div><div class="price-box-val" style="font-size:1.15rem;color:var(--red);">Refer out</div><div class="price-box-note">Not serviceable on this platform</div></div>'
-    : '<div class="price-box akl"><div class="price-box-label">All Keys Lost — Labor</div><div class="price-box-val">$' + aklR + '</div><div class="price-box-split"><b>Retail $' + aklR + '</b> · Dealer $' + aklD + '</div><div class="price-box-note">Key + fees separate · confirm with VIN</div></div>';
+    : '<div class="price-box akl"><div class="price-box-label">All Keys Lost — Labor</div><div class="price-box-val" id="pb-akl-val">$' + aklR + '</div><div class="price-box-split"><b>Retail $<span id="pb-akl-r">' + aklR + '</span></b> · Dealer $<span id="pb-akl-d">' + aklD + '</span></div><div class="price-box-note">Key + fees separate · confirm with VIN</div></div>';
 
   card.innerHTML =
     '<div class="tier-bar">' +
@@ -930,7 +940,7 @@ function renderResult(make, year, label, sourceNote) {
       throttleBadge +
     '</div>' +
     '<div class="price-grid">' +
-      '<div class="price-box aak"><div class="price-box-label">Add-a-Key — Labor</div><div class="price-box-val">$' + aakR + '</div><div class="price-box-split"><b>Retail $' + aakR + '</b> · Dealer $' + aakD + '</div><div class="price-box-note">Key + fees separate · ' + r.time.split('/')[0].trim() + '</div></div>' +
+      '<div class="price-box aak"><div class="price-box-label">Add-a-Key — Labor</div><div class="price-box-val" id="pb-aak-val">$' + aakR + '</div><div class="price-box-split"><b>Retail $<span id="pb-aak-r">' + aakR + '</span></b> · Dealer $<span id="pb-aak-d">' + aakD + '</span></div><div class="price-box-note">Key + fees separate · ' + r.time.split('/')[0].trim() + '</div></div>' +
       aklBox +
     '</div>' +
     '<div class="info-grid">' +
@@ -1070,9 +1080,13 @@ function choosePath(path) {
       '<div id="rks-reminder"></div>' +
       '<div class="qb-preview-label">📱 Preview — what the customer sees</div>' +
       '<div id="qb-preview"></div>' +
-      '<button class="send-quote-btn" id="qb-send" onclick="textQuote()">📲 Text Quote to Customer</button>' +
-      '<button class="copy-quote-btn" id="qb-copy" onclick="copyQuote()">📋 Copy Quote (for desktop)</button>' +
-      '<div class="qr-wrap" id="qb-qr-wrap"><div class="qr-label">📱 Or scan with your iPhone to send it from your phone</div><div class="qr-box" id="qb-qr"></div></div>' +
+      '<button class="send-quote-btn" id="qb-createqr" onclick="createQR()">🔒 Create QR Code — locks this price</button>' +
+      '<div id="qb-locked-area" style="display:none;">' +
+        '<div class="qr-wrap" id="qb-qr-wrap"><div class="qr-label">📱 Scan with your phone to send it to the customer</div><div class="qr-box" id="qb-qr"></div></div>' +
+        '<button class="send-quote-btn" id="qb-send" onclick="textQuote()" style="margin-top:14px;">📲 Text Quote to Customer</button>' +
+        '<button class="copy-quote-btn" id="qb-copy" onclick="copyQuote()">📋 Copy Quote (for desktop)</button>' +
+        '<div class="qb-hint" style="color:var(--amber);">🔒 Price locked. Change any field or the throttle and you\'ll need to Create QR Code again.</div>' +
+      '</div>' +
       '<div class="qb-hint">All-in = service + subscription + key code + key + tax (tax on the key only). Subscription and key-code are pre-filled by make/year/service and show as their own lines on the Shopify receipt. Everything is editable — zero out anything a job does not need.</div>' +
     '</div>';
 
@@ -1163,6 +1177,8 @@ function setStock(s) {
 
 function recalcQuote() {
   if (!document.getElementById('qb-allin')) return;
+  // Any recalc means a field or the throttle changed — a live QR lock is now stale.
+  if (_lockedQuote) invalidateLock();
   var d = gatherQuote();
   document.getElementById('qb-allin').textContent = '$' + (d.allin > 0 ? d.allin.toFixed(2) : '0.00');
 
@@ -1181,8 +1197,8 @@ function recalcQuote() {
   var card = document.getElementById('qb-savings');
   var amtEl = document.getElementById('qb-save-amt');
   var pctEl = document.getElementById('qb-save-pct');
-  var sendBtn = document.getElementById('qb-send');
-  sendBtn.disabled = !(d.allin > 0);
+  var createBtn = document.getElementById('qb-createqr');
+  if (createBtn) createBtn.disabled = !(d.allin > 0);
 
   if (d.allin > 0 && d.dealer > d.allin) {
     var save = d.dealer - d.allin;
@@ -1196,8 +1212,31 @@ function recalcQuote() {
     card.classList.add('zero');
   }
   updatePreview();
-  renderQR();
   scheduleLog();
+}
+
+// ── QR / price lock ──
+var _lockedQuote = null;
+function createQR() {
+  var d = gatherQuote();
+  if (!(d.allin > 0)) return;
+  _lockedQuote = d;                       // snapshot: this exact price is now locked
+  var area = document.getElementById('qb-locked-area');
+  if (area) area.style.display = 'block';
+  var btn = document.getElementById('qb-createqr');
+  if (btn) { btn.textContent = '🔒 Price locked — QR ready below'; btn.disabled = true; }
+  renderQR();
+  var sb = document.getElementById('qb-send'); if (sb) sb.disabled = false;
+  var area2 = document.getElementById('qb-locked-area');
+  if (area2) area2.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+function invalidateLock() {
+  _lockedQuote = null;
+  var area = document.getElementById('qb-locked-area');
+  if (area) area.style.display = 'none';
+  var box = document.getElementById('qb-qr'); if (box) box.innerHTML = '';
+  var btn = document.getElementById('qb-createqr');
+  if (btn) { btn.textContent = '🔒 Create QR Code — locks this price'; btn.disabled = false; }
 }
 
 function buildQuoteText(d) {
@@ -1237,11 +1276,11 @@ function buildQuoteText(d) {
 }
 
 function textQuote() {
-  if (!_ctx || !_chosenPath) return;
-  var d = gatherQuote();
+  var d = _lockedQuote || gatherQuote();
   if (!(d.allin > 0)) return;
   var to = d.phone ? d.phone.replace(/[^\d+]/g, '') : '';
-  window.location.href = 'sms:' + to + '&body=' + encodeURIComponent(buildQuoteText(d));
+  // iOS/Android SMS deep link, pre-addressed to the captured number when present
+  window.location.href = 'sms:' + to + (to ? '&' : '') + 'body=' + encodeURIComponent(buildQuoteText(d));
 }
 
 function fallbackCopy(txt) {
@@ -1253,8 +1292,7 @@ function fallbackCopy(txt) {
 }
 
 function copyQuote() {
-  if (!_ctx || !_chosenPath) return;
-  var d = gatherQuote();
+  var d = _lockedQuote || gatherQuote();
   if (!(d.allin > 0)) return;
   var txt = buildQuoteText(d);
   var btn = document.getElementById('qb-copy');
@@ -1413,7 +1451,7 @@ function renderQR() {
   var box = document.getElementById('qb-qr');
   if (!box) return;
   box.innerHTML = '';
-  var d = gatherQuote();
+  var d = _lockedQuote || gatherQuote();
   if (!(d.allin > 0)) return;
   if (typeof QRCode === 'undefined') {
     box.innerHTML = '<span style="font-size:0.74rem;color:#888;">QR couldn\'t load — use Copy Quote instead.</span>';
@@ -1429,7 +1467,8 @@ function renderQR() {
 var _cvData = null;
 function textFromCustomerView() {
   if (!_cvData) return;
-  window.location.href = 'sms:&body=' + encodeURIComponent(buildQuoteText(_cvData));
+  var to = _cvData.phone ? _cvData.phone.replace(/[^\d+]/g, '') : '';
+  window.location.href = 'sms:' + to + (to ? '&' : '') + 'body=' + encodeURIComponent(buildQuoteText(_cvData));
 }
 
 function payNow() {
@@ -1487,6 +1526,7 @@ function buildCustomerViewURL(d) {
   p.set('st', d.stock || '');
   if (d.sku) p.set('sku', d.sku);
   if (d.po) p.set('po', d.po);
+  if (d.phone) p.set('ph', d.phone);
   if (d.keyType) p.set('kt', d.keyType);
   if (d.keyTitle) p.set('ktitle', d.keyTitle);
   if (d.img) p.set('img', d.img);
@@ -1513,7 +1553,7 @@ function renderCustomerFullView() {
             tax: tax,
             allin: (isNaN(labor) ? 0 : labor) + subV + keyCodeV + keyTotal + tax,
             dealer: parseFloat(q.get('dl')), stock: q.get('st') || 'instock',
-            sku: q.get('sku') || '', po: q.get('po') || '',
+            sku: q.get('sku') || '', po: q.get('po') || '', phone: q.get('ph') || '',
             keyType: q.get('kt') || '', keyTitle: q.get('ktitle') || '', img: q.get('img') || '' };
   _cvData = d;
   var isMe = q.get('me') === '1';
@@ -1708,12 +1748,56 @@ function filterHistory() {
 // ═══════════════════════════════════════════════════════════
 //  PRICING THROTTLE PANEL  (operator only, PIN-gated, per device)
 // ═══════════════════════════════════════════════════════════
+function ppSigned(v) { return (v > 0 ? '+' + v : '' + v) + '%'; }
+
+// ── Make the pricing panel draggable (mouse + touch) ──
+var _ppDrag = { on: false, dx: 0, dy: 0 };
+function ppDragStart(e) {
+  var panel = document.getElementById('price-overlay');
+  if (!panel) return;
+  var pt = e.touches ? e.touches[0] : e;
+  var rect = panel.getBoundingClientRect();
+  _ppDrag.on = true;
+  _ppDrag.dx = pt.clientX - rect.left;
+  _ppDrag.dy = pt.clientY - rect.top;
+  // switch to left/top positioning so we can move freely
+  panel.style.left = rect.left + 'px';
+  panel.style.top = rect.top + 'px';
+  panel.style.right = 'auto';
+  document.addEventListener('mousemove', ppDragMove);
+  document.addEventListener('mouseup', ppDragEnd);
+  document.addEventListener('touchmove', ppDragMove, { passive: false });
+  document.addEventListener('touchend', ppDragEnd);
+  e.preventDefault();
+}
+function ppDragMove(e) {
+  if (!_ppDrag.on) return;
+  var panel = document.getElementById('price-overlay');
+  var pt = e.touches ? e.touches[0] : e;
+  var x = pt.clientX - _ppDrag.dx;
+  var y = pt.clientY - _ppDrag.dy;
+  // keep it on screen
+  x = Math.max(4, Math.min(x, window.innerWidth - 60));
+  y = Math.max(4, Math.min(y, window.innerHeight - 40));
+  panel.style.left = x + 'px';
+  panel.style.top = y + 'px';
+  if (e.cancelable) e.preventDefault();
+}
+function ppDragEnd() {
+  _ppDrag.on = false;
+  document.removeEventListener('mousemove', ppDragMove);
+  document.removeEventListener('mouseup', ppDragEnd);
+  document.removeEventListener('touchmove', ppDragMove);
+  document.removeEventListener('touchend', ppDragEnd);
+}
 function reflectThrottleButton() {
   var b = document.getElementById('price-open-btn');
   if (!b) return;
   if (throttleActive()) {
     b.classList.add('throttled');
-    b.textContent = '⚙️ −' + Math.max(_priceAdj.retail, _priceAdj.dealer) + '%';
+    // show the dial that's furthest from zero
+    var lead = (Math.abs(_priceAdj.retail) >= Math.abs(_priceAdj.dealer)) ? _priceAdj.retail : _priceAdj.dealer;
+    b.textContent = '⚙️ ' + ppSigned(lead);
   } else {
     b.classList.remove('throttled');
     b.textContent = '⚙️ Pricing';
@@ -1723,7 +1807,13 @@ function reflectThrottleButton() {
 function openPricing() {
   var ov = document.getElementById('price-overlay');
   if (!ov) return;
-  ov.style.display = 'flex';
+  ov.style.display = 'block';
+  var handle = document.getElementById('pp-drag-handle');
+  if (handle && !handle._dragBound) {
+    handle.addEventListener('mousedown', ppDragStart);
+    handle.addEventListener('touchstart', ppDragStart, { passive: false });
+    handle._dragBound = true;
+  }
   if (_ppUnlocked) showPricingBody();
   else showPricingPin();
 }
@@ -1777,6 +1867,11 @@ function showPricingBody() {
 }
 
 // Live edits inside the panel (not yet saved) use these staged values.
+function ppEffLabel(v) {
+  if (!v) return 'full price';
+  if (v > 0) return '+' + v + '% above full (raised)';
+  return v + '% below full (lowered)';
+}
 function ppStaged() {
   return {
     retail: clampAdj(document.getElementById('pp-retail').value),
@@ -1787,22 +1882,59 @@ function ppStaged() {
 function ppOnDial(which) {
   var s = ppStaged();
   if (s.locked) {
-    // move both together to the value just typed
     var v = clampAdj(document.getElementById('pp-' + which).value);
     document.getElementById('pp-retail').value = v;
     document.getElementById('pp-dealer').value = v;
   }
   ppRefresh();
+  ppApplyLive();     // real-time: the quote behind the panel updates as you dial
 }
 function ppToggleLock() {
   var el = document.getElementById('pp-lock');
   el.classList.toggle('on');
   if (el.classList.contains('on')) {
-    // on lock, snap dealer up to match retail (preserve retail as the lead)
     var rv = clampAdj(document.getElementById('pp-retail').value);
     document.getElementById('pp-dealer').value = rv;
   }
   ppRefresh();
+  ppApplyLive();
+}
+
+// Live-apply staged dial values to _priceAdj and update the quote IN PLACE
+// (no card rebuild — preserves fields James has already typed).
+function ppApplyLive() {
+  var s = ppStaged();
+  _priceAdj.retail = s.retail;
+  _priceAdj.dealer = s.dealer;
+  _priceAdj.locked = s.locked;
+  savePricing();
+  reflectThrottleButton();
+  updateThrottleDisplay();
+}
+function updateThrottleDisplay() {
+  if (!_ctx || !_ctx.rule) return;
+  var r = _ctx.rule;
+  function setTxt(id, v) { var e = document.getElementById(id); if (e) e.textContent = v; }
+  if (!r.refer) {
+    var aakR = applyAdj(r.aakRetail, 'retail'), aakD = applyAdj(r.aakDealer, 'dealer');
+    setTxt('pb-aak-val', '$' + aakR); setTxt('pb-aak-r', aakR); setTxt('pb-aak-d', aakD);
+    if (!r.aklRefer) {
+      var aklR = applyAdj(r.aklRetail, 'retail'), aklD = applyAdj(r.aklDealer, 'dealer');
+      setTxt('pb-akl-val', '$' + aklR); setTxt('pb-akl-r', aklR); setTxt('pb-akl-d', aklD);
+    }
+  }
+  var badge = document.getElementById('throttle-badge');
+  if (badge) {
+    if (throttleActive()) {
+      badge.style.display = '';
+      badge.textContent = '⚙️ Throttle active — Retail ' + ppSigned(_priceAdj.retail) + ' · Dealer ' + ppSigned(_priceAdj.dealer) + ' (labor only)';
+    } else { badge.style.display = 'none'; }
+  }
+  var laborEl = document.getElementById('qb-labor');
+  if (laborEl && _chosenPath) {
+    laborEl.value = laborFor(r, _chosenPath, _rate) || '';
+    if (typeof recalcQuote === 'function') recalcQuote();
+  }
 }
 
 // Scan the whole MATRIX: would this adjustment push any tier's retail below its
@@ -1819,8 +1951,8 @@ function ppInversions(rAdj, dAdj) {
         var rc = r[pairs[p][0]], dc = r[pairs[p][1]];
         if (!rc || !dc) continue;
         if (r.aklRefer && pairs[p][0] === 'aklRetail') continue;
-        var rl = Math.round(rc * (1 - rAdj / 100));
-        var dl = Math.round(dc * (1 - dAdj / 100));
+        var rl = Math.round(rc * (1 + rAdj / 100));
+        var dl = Math.round(dc * (1 + dAdj / 100));
         if (rl < dl) { bad.push(grp.group); break; }
       }
     }
@@ -1830,8 +1962,8 @@ function ppInversions(rAdj, dAdj) {
 
 function ppRefresh() {
   var s = ppStaged();
-  document.getElementById('pp-retail-eff').textContent = s.retail > 0 ? ('−' + s.retail + '% below full') : 'full price';
-  document.getElementById('pp-dealer-eff').textContent = s.dealer > 0 ? ('−' + s.dealer + '% below full') : 'full price';
+  document.getElementById('pp-retail-eff').textContent = ppEffLabel(s.retail);
+  document.getElementById('pp-dealer-eff').textContent = ppEffLabel(s.dealer);
 
   var warn = document.getElementById('pp-warn');
   var inv = ppInversions(s.retail, s.dealer);
@@ -1847,18 +1979,9 @@ function ppRefresh() {
 }
 
 function ppSave() {
-  var s = ppStaged();
-  _priceAdj.retail = s.retail;
-  _priceAdj.dealer = s.dealer;
-  _priceAdj.locked = s.locked;
-  savePricing();
-  reflectThrottleButton();
-  // re-render the current result so new prices show immediately
-  if (_ctx) {
-    renderResult(_ctx.make, _ctx.year, _ctx.label, document.getElementById('decoded-pill').innerHTML);
-  }
-  var btn = document.querySelector('.pp-save');
-  if (btn) { var o = btn.textContent; btn.textContent = '✓ Applied'; setTimeout(function () { btn.textContent = o; closePricing(); }, 650); }
+  // Dials already applied live; this just confirms and closes.
+  ppApplyLive();
+  closePricing();
 }
 
 function ppReset() {
@@ -1866,6 +1989,7 @@ function ppReset() {
   document.getElementById('pp-dealer').value = 0;
   document.getElementById('pp-lock').classList.remove('on');
   ppRefresh();
+  ppApplyLive();
 }
 
 // ═══ BOOTSTRAP ═══
@@ -1883,4 +2007,3 @@ if (IS_CUSTOMER_VIEW) {
 </script>
 </body>
 </html>
-
