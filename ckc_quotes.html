@@ -631,18 +631,33 @@ const MATRIX = [
       script:'Standard transponder — $95 to add a key, done in under 30 minutes. What part of the Triad are you in?' }
   ]},
   { group:'BMW / MINI', makes:['BMW','MINI'], rules:[
-    { test:v=>true, tier:4, keyType:'Smart Key / CAS · FEM · BDC',
+    { test:v=>v.year>=2014, tier:4, keyType:'Smart Key / CAS4 · FEM · BDC',
       aakRetail:400, aakDealer:300, aklRetail:800, aklDealer:550,
       time:'90–120 min AAK / half-day AKL', tool:'Autel IM508 + XP400 Pro (+ G-BOX3 for AKL ISN read)',
-      flags:['danger:CAS4+ / FEM / BDC — EEPROM/bench access required on all procedures; module usually comes out','danger:AKL has NO independent OBD path — the online authorization is dealer/server-side, so the ISN must be read off the DME on the bench','warn:VIN sets the system (E=CAS · F=CAS4/FEM · G=BDC) and the tool chain — confirm before dispatch','warn:First-of-platform CAS4+ AKL is a half-day job — block the time, do not learn on it live in a driveway','info:NASTF gets the cut code, not the AKL token; NASTF key code added on AKL'],
-      script:'BMW or MINI keys need EEPROM-level access — more involved than most vehicles. Add-a-key runs $400 out the door on labor. All keys lost is a bigger bench job and starts around $800 — I will need your VIN and year to confirm.' }
+      flags:['danger:CAS4+ / FEM / BDC — EEPROM/bench access required; module usually comes out','danger:AKL has NO independent OBD path — ISN read off the DME on the bench','warn:VIN sets the exact system (F=CAS4/FEM · G=BDC) — confirm before dispatch','warn:First-of-platform CAS4+ AKL is a half-day job — block the time','info:NASTF key code added on AKL'],
+      script:'That is a newer BMW with encrypted key access — the involved kind. Add-a-key runs $400, all keys lost starts around $800. I will need your VIN and year to confirm the exact system.' },
+    { test:v=>v.year>=2007, tier:3, keyType:'Smart Key / CAS (CAS2 · CAS3)',
+      aakRetail:250, aakDealer:185, aklRetail:475, aklDealer:350,
+      time:'60–90 min AAK', tool:'Autel IM508 + XP400 Pro (+ G-BOX for AKL ISN)',
+      flags:['warn:CAS2 / CAS3 era — add-a-key often OBD, AKL usually needs the CAS module read on the bench','warn:Confirm CAS version by VIN before quoting AKL','info:NASTF key code added on AKL'],
+      script:'That BMW uses the CAS system. Add-a-key is $250; all keys lost I need the VIN to confirm the procedure and price.' },
+    { test:v=>true, tier:2, keyType:'EWS-3 · HU92 track key (OBD add)',
+      aakRetail:165, aakDealer:120, aklRetail:325, aklDealer:250,
+      time:'30–45 min AAK', tool:'Autel IM508 + XP400 Pro (OBD — no bench for add)',
+      flags:['success:EWS-3 (E46 era) — add-a-key is a straightforward OBD job on the IM508, no bench','info:HU92 2-track blade · PCF7935 / ID44 transponder · use a virgin key (EWS slots don\'t always reuse)','warn:All-keys-lost reads the EWS EEPROM — more involved; confirm before quoting AKL','info:Battery voltage matters on BMW — keep it up during programming'],
+      script:'That is an older BMW on the EWS system — adding a key is a straightforward job I do at your location, no bench work. Add-a-key is $165. Do you still have a working key?' }
   ]},
   { group:'Mercedes-Benz', makes:['MERCEDES-BENZ'], rules:[
-    { test:v=>true, tier:3, keyType:'Smart Key / EIS · EZS',
+    { test:v=>v.year>=2015, tier:4, keyType:'Smart Key / FBS4 (verify)',
       aakRetail:400, aakDealer:300, aklRetail:800, aklDealer:550,
-      time:'90–120 min AAK / half-day AKL', tool:'Autel IM508 + XP400 Pro + G-BOX3',
-      flags:['danger:EIS/EZS access required — not standard OBD','warn:AKL uses the G-BOX3 for the EIS password calculation (DAS3 EIS); can run on-vehicle or bench','warn:VIN required — procedure varies by chassis/year','info:NASTF key code added on AKL'],
-      script:'Mercedes keys work through the EIS module — a more complex job. Add-a-key labor runs $400. All keys lost on a Mercedes is a significant job that starts around $800 — I need the VIN before I can give you a firm price.' }
+      time:'90–120 min AAK / half-day AKL', tool:'Autel IM508 + XP400 Pro + G-BOX3 (verify coverage)',
+      flags:['danger:FBS4 (2015+) — key work is heavily restricted; confirm the exact chassis is even serviceable before committing','warn:Many FBS4 AKL jobs refer out — do not quote firm without verifying','info:NASTF key code added on AKL'],
+      script:'That is a newer Mercedes — the key system on these is locked down, so I need to confirm your exact model is serviceable before I quote it. Can you give me the VIN?' },
+    { test:v=>true, tier:3, keyType:'Smart Key / EIS · EZS (pre-FBS4)',
+      aakRetail:300, aakDealer:225, aklRetail:600, aklDealer:450,
+      time:'75–120 min AAK', tool:'Autel IM508 + XP400 Pro + G-BOX3',
+      flags:['warn:EIS/EZS access required — not standard OBD, but doable on pre-FBS4','warn:AKL uses the G-BOX3 for the EIS password (DAS3); on-vehicle or bench','warn:VIN required — procedure varies by chassis/year','info:NASTF key code added on AKL'],
+      script:'Mercedes keys work through the EIS module — more involved than most. Add-a-key runs $300; all keys lost I need the VIN before I give a firm price.' }
   ]},
   { group:'Volkswagen / Audi', makes:['VOLKSWAGEN','AUDI'], rules:[
     { test:v=>v.year>=2015, tier:3, keyType:'Smart Key / MQB Platform',
