@@ -834,7 +834,7 @@ var _stockState = 'instock';
 var _lookupHadVIN = false;
 
 // Values handed over from command.html (the picked key), if present in the URL.
-var _seedSku = '', _seedKey = '', _seedKeyType = '', _seedKeyTitle = '', _seedStock = '', _seedImg = '';
+var _seedSku = '', _seedKey = '', _seedKeyType = '', _seedKeyTitle = '', _seedStock = '', _seedImg = '', _seedHandle = '';
 (function () {
   var p = new URLSearchParams(window.location.search);
   _seedSku = p.get('sku') || '';
@@ -843,6 +843,7 @@ var _seedSku = '', _seedKey = '', _seedKeyType = '', _seedKeyTitle = '', _seedSt
   _seedKeyTitle = p.get('ktitle') || '';
   _seedStock = p.get('instock') || '';
   _seedImg = p.get('img') || '';
+  _seedHandle = p.get('handle') || '';   // real RKS product handle from command.html (frozen at creation — never rebuilt from title)
 })();
 
 // ── Quote log + invoice endpoints ──
@@ -1131,7 +1132,7 @@ function applyStock(state) {
       var sku = (document.getElementById('qb-sku') || {}).value || '';
       sku = (sku || '').trim();
       var link = sku
-        ? '<a href="' + RKS_SEARCH + encodeURIComponent(sku) + '" target="_blank" rel="noopener">\uD83D\uDD0D Check ' + sku + ' at RKS</a>'
+        ? '<a href="' + RKS_SEARCH + encodeURIComponent(sku) + '" target="_blank" rel="noopener" onclick="return rksProductClick(event);">\uD83D\uDD0D Check ' + sku + ' at RKS</a>'
         : '<a href="https://royalkeysupply.com" target="_blank" rel="noopener">\uD83D\uDD0D Open RKS</a>';
       rem.innerHTML =
         '<div class="rks-reminder">' +
@@ -1145,6 +1146,32 @@ function applyStock(state) {
     el.textContent = 'Enter a SKU to check availability.';
   }
   recalcQuote();
+}
+
+// ── RKS stock-check for an ALREADY-DECIDED key ──
+// The anchor's href is the reliable SKU search (always works, always a new tab —
+// never navigates you away from the quote). When command.html seeded a real RKS
+// handle AND the SKU on the card still matches that seeded key, upgrade to the
+// exact product page. Handles are frozen at product creation and diverge from
+// RKS's later-edited titles, so we NEVER rebuild the handle from a title — we use
+// the stored handle, validate it live, and fall back to SKU search on any miss.
+function rksProductClick(ev) {
+  var skuEl = document.getElementById('qb-sku');
+  var sku = skuEl ? (skuEl.value || '').trim() : '';
+  var handle = (_seedHandle || '').trim();
+  var seededSku = (_seedSku || '').trim();
+  // No handle, or the operator changed the SKU off the seeded key → let the
+  // anchor's normal SKU search proceed (this is a stock-check, not a re-pick).
+  if (!handle || !sku || sku !== seededSku) return true;
+  if (ev && ev.preventDefault) ev.preventDefault();
+  var win = window.open('', '_blank');   // open synchronously so Safari doesn't block after the fetch
+  var productUrl = 'https://royalkeysupply.com/products/' + handle;
+  var searchUrl  = RKS_SEARCH + encodeURIComponent(sku);
+  if (!win) { window.open(searchUrl, '_blank'); return false; }   // popup blocked → reliable search, still a new tab
+  fetch('https://royalkeysupply.com/products/' + encodeURIComponent(handle) + '.json', { signal: AbortSignal.timeout(4000) })
+    .then(function (r) { win.location.href = (r && r.ok) ? productUrl : searchUrl; })
+    .catch(function ()  { win.location.href = searchUrl; });
+  return false;
 }
 
 function checkStock() {
