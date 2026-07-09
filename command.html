@@ -1,6 +1,3 @@
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1321,6 +1318,7 @@ function sendToCustomer() {
     make:    lastSearchParams.make  || '',
     model:   lastSearchParams.model || '',
     sku:     key.sku || '',
+    handle:  key.handle || '',
     kp:      (parseFloat(key.price) || 0).toFixed(2),
     kt:      key.type || '',
     ktitle:  key.title || '',
