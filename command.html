@@ -101,6 +101,16 @@
     .ckc-type-card-img-placeholder { width: 100%; height: 90px; border-radius: 8px; background: linear-gradient(135deg, #252525, #2d2d2d); display: flex; align-items: center; justify-content: center; margin-bottom: 8px; font-size: 2rem; }
     .ckc-type-card-label { font-size: 0.82rem; font-weight: 700; color: var(--ckc-text); margin-bottom: 3px; line-height: 1.3; }
     .ckc-type-card-sub { font-size: 0.68rem; color: var(--ckc-text-muted); line-height: 1.4; }
+    .ckc-type-card-meta { display:flex; flex-direction:column; align-items:center; gap:4px; margin-top:9px; }
+    .ckc-type-card-price { font-size:0.85rem; font-weight:800; color:var(--ckc-gold-light); }
+    .ckc-type-card-stock { font-size:0.63rem; font-weight:800; letter-spacing:0.03em; padding:2px 8px; border-radius:5px; white-space:nowrap; }
+    .ckc-type-card-stock.in { color:#0a2a15; background:var(--ckc-success); }
+    .ckc-type-card-stock.out { color:#2a1a02; background:#f59e0b; }
+    .ckc-buy-actions { margin-top:10px; }
+    .ckc-buy-actions:not(.show) { display:none; }
+    .ckc-buy-actions-inner { background:var(--ckc-card); border:1px solid var(--ckc-border); border-radius:14px; padding:16px; }
+    .ckc-buy-actions-title { font-family:'Outfit',sans-serif; font-size:1.05rem; font-weight:800; color:var(--ckc-gold); margin-bottom:3px; }
+    .ckc-buy-actions-key { font-size:0.82rem; color:var(--ckc-text-muted); margin-bottom:14px; line-height:1.4; }
 
     /* ═══ SCREEN 3 — BLADE/FCC QUALIFIER ═══ */
     .ckc-qual-screen { background: linear-gradient(135deg, #1a1505, #1a1a0a); border: 2px solid var(--ckc-gold); border-radius: var(--ckc-radius); padding: 20px 16px; margin-bottom: 24px; }
@@ -316,6 +326,114 @@
     .ckc-sku-stock.in { color: #4ade80; }
     .ckc-sku-stock.out { color: #d4a054; }
     .ckc-sku-empty { text-align: center; color: #888; font-size: 0.9rem; padding: 24px 8px; }
+
+/* ═══ SCOPE ENGINE (merged into Find-a-Key) v1.1 ═══ */
+.ckc-scope { display:none; margin-top:22px; }
+.ckc-scope.active { display:block; }
+.ckc-scope-card { background:var(--ckc-card); border:1px solid var(--ckc-border); border-radius:var(--ckc-radius); box-shadow:var(--ckc-shadow); padding:18px; margin-bottom:16px; }
+.ckc-scope-hdr { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px; }
+.ckc-scope-title { font-family:'Outfit',sans-serif; font-weight:800; font-size:1.05rem; letter-spacing:.04em; color:var(--ckc-gold); }
+.ckc-scope-veh { font-size:.9rem; color:var(--ckc-text); font-weight:600; margin-bottom:12px; }
+.ckc-scope-veh .yr { color:var(--ckc-text-muted); font-weight:500; }
+.ckc-keyway-badge { display:inline-flex; align-items:center; gap:8px; background:rgba(201,162,39,.12); border:1px solid rgba(201,162,39,.35); color:var(--ckc-gold-light); font-weight:800; font-size:1rem; letter-spacing:.04em; padding:8px 16px; border-radius:100px; margin:2px 0 4px; }
+.ckc-keyway-badge .kw-lbl { font-size:.7rem; font-weight:700; color:var(--ckc-text-muted); letter-spacing:.08em; text-transform:uppercase; }
+.ckc-keyway-badge.multi { background:rgba(245,158,11,.1); border-color:rgba(245,158,11,.4); color:#f59e0b; }
+.ckc-scope-q { margin-bottom:14px; }
+.ckc-scope-q > label { display:block; font-size:.8rem; font-weight:700; color:var(--ckc-text); margin-bottom:6px; }
+.ckc-scope-q .req { color:#f87171; }
+.ckc-btn-row { display:flex; flex-wrap:wrap; gap:8px; }
+.ckc-pill { flex:1 1 auto; min-width:96px; text-align:center; padding:10px 12px; background:#151515; border:1px solid var(--ckc-border); border-radius:9px; color:var(--ckc-text); font-size:.85rem; font-weight:600; cursor:pointer; transition:all .15s; font-family:'DM Sans',sans-serif; }
+.ckc-pill:hover { border-color:var(--ckc-gold); }
+.ckc-pill.on { background:var(--ckc-gold); color:#111; border-color:var(--ckc-gold); }
+.ckc-pill.gate.on { background:var(--ckc-success); border-color:var(--ckc-success); color:#0a2a15; }
+.ckc-pill.gate.off-on { background:#f59e0b; border-color:#f59e0b; color:#2a1a02; }
+.ckc-scope-in { width:100%; padding:11px 12px; background:#151515; border:1px solid var(--ckc-border); border-radius:9px; color:var(--ckc-text); font-size:.9rem; font-family:'DM Sans',sans-serif; }
+.ckc-scope-in::placeholder { color:#5a5a5a; }
+.ckc-scope-in:focus { outline:none; border-color:var(--ckc-gold); }
+select.ckc-scope-in { appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23c9a227' stroke-width='3'><polyline points='6 9 12 15 18 9'/></svg>"); background-repeat:no-repeat; background-position:right 12px center; padding-right:34px; }
+.ckc-vin-row { display:flex; gap:8px; }
+.ckc-vin-row .ckc-scope-in { flex:1; text-transform:uppercase; letter-spacing:.06em; }
+.ckc-vin-btn { padding:0 14px; background:#222; border:1px solid var(--ckc-border); border-radius:9px; color:var(--ckc-gold-light); font-weight:700; font-size:.8rem; cursor:pointer; white-space:nowrap; }
+.ckc-vin-note { font-size:.75rem; color:var(--ckc-text-muted); margin-top:5px; }
+.ckc-scope-run { width:100%; padding:13px; background:var(--ckc-gold); color:#111; border:none; border-radius:9px; font-family:'DM Sans',sans-serif; font-size:.95rem; font-weight:800; cursor:pointer; margin-top:4px; letter-spacing:.02em; }
+.ckc-scope-run:hover { background:var(--ckc-primary-light); }
+.ckc-scope-run:disabled { background:#333; color:#666; cursor:not-allowed; }
+.ckc-scope-send { width:100%; padding:13px; background:transparent; color:var(--ckc-gold); border:1.5px solid var(--ckc-gold); border-radius:9px; font-family:'DM Sans',sans-serif; font-size:.92rem; font-weight:800; cursor:pointer; margin-top:10px; letter-spacing:.04em; }
+.ckc-scope-send:hover { background:rgba(201,162,39,.08); }
+.ckc-scope-send:disabled { border-color:var(--ckc-success); color:var(--ckc-success); background:rgba(74,222,128,.06); cursor:default; }
+.ckc-panel-h { font-size:.72rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--ckc-text-muted); margin-bottom:10px; }
+/* shopping area — selectable key cards w/ thumbnails */
+.ckc-shop-hint { font-size:.78rem; color:var(--ckc-gold-light); margin-bottom:10px; }
+.ckc-key-card { display:flex; align-items:center; gap:11px; padding:10px; border:1px solid var(--ckc-border); border-radius:10px; margin-bottom:9px; cursor:pointer; transition:all .15s; background:#141414; }
+.ckc-key-card:hover { border-color:var(--ckc-gold); }
+.ckc-key-card.sel { border-color:var(--ckc-gold); background:rgba(201,162,39,.08); box-shadow:0 0 0 1px var(--ckc-gold) inset; }
+.ckc-key-thumb { width:52px; height:52px; border-radius:8px; object-fit:contain; background:#0d0d0d; flex-shrink:0; }
+.ckc-key-thumb.ph { display:flex; align-items:center; justify-content:center; font-size:1.5rem; }
+.ckc-key-body { flex:1; min-width:0; }
+.ckc-key-body .ktitle { font-size:.83rem; font-weight:600; color:var(--ckc-text); line-height:1.3; }
+.ckc-key-body .kmeta { font-size:.74rem; color:var(--ckc-text-muted); margin-top:3px; }
+.ckc-key-body .ksku { font-size:.74rem; color:var(--ckc-gold-light); margin-top:3px; font-family:ui-monospace,Menlo,Consolas,monospace; letter-spacing:.02em; }
+.ckc-key-body .ksku b { color:var(--ckc-text); font-weight:800; }
+.ckc-key-right { text-align:right; flex-shrink:0; }
+.ckc-key-right .kprice { font-size:.9rem; font-weight:800; color:var(--ckc-gold-light); }
+.ckc-key-right .kstk { font-size:.66rem; font-weight:800; margin-top:4px; padding:3px 8px; border-radius:6px; display:inline-block; letter-spacing:.03em; white-space:nowrap; }
+.ckc-key-right .kstk.in { color:#0a2a15; background:var(--ckc-success); }
+.ckc-key-right .kstk.out { color:#2a1a02; background:#f59e0b; }
+.ckc-key-card.instock { border-left:4px solid var(--ckc-success); }
+.ckc-key-card.orderonly { border-left:4px solid #f59e0b; }
+.ckc-stock-summary { display:flex; gap:10px; margin-bottom:10px; }
+.ckc-stock-chip { flex:1; text-align:center; padding:9px 8px; border-radius:9px; font-size:.82rem; font-weight:800; letter-spacing:.02em; }
+.ckc-stock-chip.have { background:rgba(74,222,128,.14); border:1px solid rgba(74,222,128,.35); color:var(--ckc-success); }
+.ckc-stock-chip.have.zero { background:rgba(120,120,120,.08); border-color:rgba(120,120,120,.25); color:var(--ckc-text-muted); }
+.ckc-stock-chip.order { background:rgba(245,158,11,.1); border:1px solid rgba(245,158,11,.3); color:#f59e0b; }
+.ckc-key-right .ksel { font-size:.68rem; font-weight:800; color:var(--ckc-gold); margin-top:3px; display:none; }
+.ckc-key-card.sel .ksel { display:block; }
+.ckc-tag { display:inline-block; font-size:.62rem; font-weight:800; letter-spacing:.06em; padding:2px 6px; border-radius:5px; margin-left:6px; vertical-align:middle; }
+.ckc-tag.oem { background:rgba(74,222,128,.14); color:var(--ckc-success); }
+.ckc-tag.aft { background:rgba(96,165,250,.14); color:#93c5fd; }
+.ckc-tag.ref { background:rgba(245,158,11,.14); color:#f59e0b; }
+.ckc-flag { display:flex; gap:8px; align-items:flex-start; font-size:.8rem; padding:9px 11px; border-radius:8px; margin-top:9px; line-height:1.45; }
+.ckc-flag.warn { background:rgba(245,158,11,.08); border:1px solid rgba(245,158,11,.22); color:#f59e0b; }
+.ckc-flag.info { background:rgba(201,162,39,.06); border:1px solid rgba(201,162,39,.18); color:var(--ckc-gold-light); }
+.ckc-flag.photo { background:rgba(96,165,250,.07); border:1px solid rgba(96,165,250,.22); color:#93c5fd; }
+.ckc-verdict { display:flex; align-items:center; gap:12px; padding:14px; border-radius:10px; margin-bottom:12px; }
+.ckc-verdict .dot { width:16px; height:16px; border-radius:50%; flex-shrink:0; }
+.ckc-verdict .vtxt { font-family:'Outfit',sans-serif; font-weight:800; font-size:1.15rem; letter-spacing:.06em; }
+.ckc-verdict .vsub { font-size:.8rem; font-weight:500; opacity:.9; margin-top:2px; }
+.ckc-verdict.green { background:rgba(74,222,128,.08); border:1px solid rgba(74,222,128,.3); }
+.ckc-verdict.green .dot { background:var(--ckc-success); } .ckc-verdict.green .vtxt { color:var(--ckc-success); }
+.ckc-verdict.yellow { background:rgba(245,158,11,.08); border:1px solid rgba(245,158,11,.3); }
+.ckc-verdict.yellow .dot { background:#f59e0b; } .ckc-verdict.yellow .vtxt { color:#f59e0b; }
+.ckc-verdict.red { background:rgba(248,113,113,.08); border:1px solid rgba(248,113,113,.3); }
+.ckc-verdict.red .dot { background:#f87171; } .ckc-verdict.red .vtxt { color:#f87171; }
+.ckc-reasons { list-style:none; padding:0; margin:0; }
+.ckc-reasons li { font-size:.82rem; color:var(--ckc-text); padding:4px 0 4px 18px; position:relative; }
+.ckc-reasons li::before { content:'\203A'; position:absolute; left:4px; color:var(--ckc-gold); font-weight:800; }
+.ckc-steps { list-style:none; padding:0; margin:0; counter-reset:step; }
+.ckc-steps li { font-size:.84rem; color:var(--ckc-text); padding:8px 0 8px 30px; position:relative; border-bottom:1px solid rgba(255,255,255,.04); line-height:1.45; }
+.ckc-steps li:last-child { border-bottom:none; }
+.ckc-steps li::before { counter-increment:step; content:counter(step); position:absolute; left:0; top:8px; width:20px; height:20px; border-radius:50%; background:rgba(201,162,39,.15); color:var(--ckc-gold-light); font-size:.72rem; font-weight:800; display:flex; align-items:center; justify-content:center; }
+.ckc-inv-line { display:flex; justify-content:space-between; font-size:.86rem; padding:6px 0; color:var(--ckc-text); }
+.ckc-inv-line .il-desc { color:var(--ckc-text-muted); }
+.ckc-inv-line.verify .il-amt { color:#f59e0b; font-style:italic; }
+.ckc-inv-leg { font-size:.68rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--ckc-gold-light); margin:12px 0 4px; padding-top:9px; border-top:1px dashed rgba(255,255,255,.08); }
+.ckc-inv-leg.first { border-top:none; padding-top:0; margin-top:2px; }
+.ckc-inv-leg .lg-note { color:var(--ckc-text-muted); font-weight:600; text-transform:none; letter-spacing:0; font-size:.72rem; }
+.ckc-inv-sub { display:flex; justify-content:space-between; font-size:.84rem; font-weight:800; padding:6px 0; margin-top:2px; color:var(--ckc-text); border-top:1px solid rgba(255,255,255,.05); }
+.ckc-inv-sub.paynow { color:var(--ckc-success); } .ckc-inv-sub.paynow .is-amt { color:var(--ckc-success); }
+.ckc-inv-sub .is-amt { color:var(--ckc-gold-light); }
+.ckc-inv-po { font-size:.8rem; color:var(--ckc-text-muted); padding:0 0 8px; margin-bottom:8px; border-bottom:1px dashed rgba(255,255,255,.07); }
+.ckc-inv-po b { color:var(--ckc-gold-light); font-family:monospace; }
+.ckc-scope-textbtn { display:block; width:100%; margin-top:12px; padding:13px; background:rgba(74,222,128,.12); border:1px solid rgba(74,222,128,.4); border-radius:9px; color:var(--ckc-success); font-weight:800; font-size:.9rem; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.ckc-scope-textbtn:active { transform:scale(.98); }
+.ckc-inv-total { display:flex; justify-content:space-between; font-size:1rem; font-weight:800; padding-top:10px; margin-top:6px; border-top:1px solid var(--ckc-border); color:var(--ckc-text); }
+.ckc-inv-total .it-amt { color:var(--ckc-gold-light); }
+.ckc-scope.locked .ckc-pill, .ckc-scope.locked .ckc-scope-in, .ckc-scope.locked .ckc-vin-btn, .ckc-scope.locked .ckc-scope-run, .ckc-scope.locked .ckc-key-card { pointer-events:none; opacity:.55; }
+.ckc-lock-stamp { display:none; align-items:center; gap:8px; font-size:.78rem; font-weight:700; color:var(--ckc-success); background:rgba(74,222,128,.07); border:1px solid rgba(74,222,128,.25); border-radius:8px; padding:9px 12px; margin-bottom:12px; }
+.ckc-scope.locked .ckc-lock-stamp { display:flex; }
+.ckc-scope-results { display:none; }
+.ckc-scope-results.show { display:block; }
+
   </style>
 </head>
 <body>
@@ -428,6 +546,93 @@
 
   <!-- SCREENS 2-6 rendered dynamically into this container -->
   <div id="ckc-wizard-area"></div>
+  <!-- ═══ SCOPE PANEL (merged in-panel) ═══ -->
+  <div class="ckc-scope" id="ckc-scope">
+    <div class="ckc-lock-stamp" id="ckc-scope-lockstamp">&#128274; <span id="ckc-scope-lockmsg">Sheet locked</span></div>
+
+    <div class="ckc-scope-card">
+      <div class="ckc-scope-hdr"><div class="ckc-scope-title">SCOPE</div></div>
+      <div class="ckc-scope-veh" id="ckc-scope-veh"><span class="yr">Pick Year / Make / Model above</span></div>
+      <div id="ckc-scope-keywaywrap"></div>
+
+      <div class="ckc-scope-q">
+        <label>1 &middot; Ignition <span class="req">*</span></label>
+        <div class="ckc-btn-row" data-grp="ign">
+          <button class="ckc-pill" onclick="scopePick('ign','keyed',this)">Keyed</button>
+          <button class="ckc-pill" onclick="scopePick('ign','push',this)">Push-to-Start</button>
+        </div>
+      </div>
+      <div class="ckc-scope-q">
+        <label>2 &middot; Job type <span class="req">*</span></label>
+        <div class="ckc-btn-row" data-grp="job">
+          <button class="ckc-pill" onclick="scopePick('job','addkey',this)">Add Key</button>
+          <button class="ckc-pill" onclick="scopePick('job','akl',this)">All Keys Lost</button>
+          <button class="ckc-pill" onclick="scopePick('job','spare',this)">Spare / Dup</button>
+        </div>
+      </div>
+      <div class="ckc-scope-q">
+        <label>3 &middot; Urgency <span class="req">*</span></label>
+        <div class="ckc-btn-row" data-grp="urg">
+          <button class="ckc-pill" onclick="scopePick('urg','now',this)">Now / ASAP</button>
+          <button class="ckc-pill" onclick="scopePick('urg','sched',this)">Scheduled</button>
+        </div>
+      </div>
+      <div class="ckc-scope-q">
+        <label>4 &middot; Customer name <span class="req">*</span></label>
+        <input class="ckc-scope-in" id="ckc-scope-name" placeholder="First &amp; last" oninput="scopeField()">
+      </div>
+      <div class="ckc-scope-q">
+        <label>5 &middot; Phone number <span class="req">*</span></label>
+        <input class="ckc-scope-in" id="ckc-scope-phone" type="tel" placeholder="(336) 555-0000" oninput="scopeField()">
+      </div>
+      <div class="ckc-scope-q">
+        <label>6 &middot; Vehicle location <span class="req">*</span></label>
+        <input class="ckc-scope-in" id="ckc-scope-loc" placeholder="Address / cross-streets / lot" oninput="scopeField()">
+      </div>
+      <div class="ckc-scope-q">
+        <label>7 &middot; State-issued photo ID? <span class="req">*</span></label>
+        <div class="ckc-btn-row" data-grp="pid">
+          <button class="ckc-pill gate" onclick="scopePick('pid','yes',this)">Yes</button>
+          <button class="ckc-pill gate" onclick="scopePick('pid','no',this)">No</button>
+        </div>
+      </div>
+      <div class="ckc-scope-q">
+        <label>8 &middot; Proof of ownership <span class="req">*</span> <span style="color:var(--ckc-text-muted);font-weight:500;">(verify on-site)</span></label>
+        <select class="ckc-scope-in" id="ckc-scope-proof" onchange="scopeField()">
+          <option value="">Select document &mdash; confirm on arrival</option>
+          <option value="insurance">Insurance card &mdash; customer name + VIN</option>
+          <option value="title">Title &mdash; customer name + VIN</option>
+          <option value="registration">Registration &mdash; customer name + VIN</option>
+        </select>
+      </div>
+      <div class="ckc-scope-q">
+        <label>9 &middot; VIN <span style="color:var(--ckc-text-muted);font-weight:500;">(optional)</span></label>
+        <div class="ckc-vin-row">
+          <input class="ckc-scope-in" id="ckc-scope-vin" maxlength="17" placeholder="Optional &mdash; confirm on-site" oninput="scopeVinInput()">
+          <button class="ckc-vin-btn" onclick="scopeVinCheck()">Check</button>
+        </div>
+        <div class="ckc-vin-note" id="ckc-scope-vinnote">VIN isn&rsquo;t required to scope &mdash; capture it to flag key/blade conflicts and cross-check the proof-of-ownership doc on-site.</div>
+      </div>
+      <div class="ckc-scope-q">
+        <label>10 &middot; PO number <span style="color:var(--ckc-text-muted);font-weight:500;">(optional &mdash; dealer / fleet)</span></label>
+        <input class="ckc-scope-in" id="ckc-scope-po" placeholder="Optional &mdash; dealer or fleet PO#" oninput="scopeField()">
+      </div>
+
+      <button class="ckc-scope-run" id="ckc-scope-run" onclick="scopeRun()" disabled>Run SCOPE</button>
+      <button class="ckc-scope-send" id="ckc-scope-send" onclick="scopeSend()" disabled>SEND TO SCOPE &mdash; LOCK SHEET</button>
+    </div>
+
+    <div class="ckc-scope-results" id="ckc-scope-results">
+      <div class="ckc-scope-card"><div class="ckc-panel-h">Verdict</div><div id="ckc-scope-verdict"></div></div>
+      <div class="ckc-scope-card"><div class="ckc-panel-h">Keys</div><div id="ckc-scope-keys"></div></div>
+      <div class="ckc-scope-card"><div class="ckc-panel-h">Field Steps</div><div id="ckc-scope-steps"></div></div>
+      <div class="ckc-scope-card"><div class="ckc-panel-h">Invoice</div><div id="ckc-scope-invoice"></div></div>
+    </div>
+  </div>
+
+
+
+  <div id="ckc-buy-actions" class="ckc-buy-actions"></div>
 
   </div>
 
@@ -856,6 +1061,7 @@ function startWizard() {
 
   lastSearchParams = { year: year, make: make, model: model };
   _wiz = { screen: 1, typeAnswer: '', bladeAnswer: '', tierAnswer: '', finalKey: null, aklMode: false, _bladeImgLoaded: false, _bladeKeywaySKUs: {} };
+  (function(){ var _ba=document.getElementById('ckc-buy-actions'); if(_ba){_ba.innerHTML='';_ba.classList.remove('show');} })();
   _byType = {}; _bladeGroup = []; _fccGroup = []; _buttonsGroup = []; _progToggle = {};
 
   var matches = [];
@@ -917,10 +1123,18 @@ function renderScreen2() {
       : '<div class="ckc-type-card-img-placeholder" id="ckc-typeimg-' + rep.sku.replace(/[^a-z0-9]/gi,'') + '" data-sku="' + rep.sku + '" data-handle="' + (rep.handle||'') + '">' + _typeIcon(type) + '</div>';
 
     var sel = _wiz.typeAnswer === type ? ' selected' : '';
+    var _inAny  = group.some(function(k){ return k.inStock; });
+    var _priced = group.filter(function(k){ return (parseFloat(k.price)||0) > 0; });
+    var _minP   = _priced.length ? Math.min.apply(null, _priced.map(function(k){ return parseFloat(k.price)||0; })) : 0;
+    var _priceLbl = _minP>0 ? ((group.length>1?'from ':'')+'$'+_minP.toFixed(2)) : 'Call for price';
     html += '<div class="ckc-type-card' + sel + '" onclick="onTypeSelected(\'' + _escAttr(type) + '\')">' +
       imgHTML +
       '<div class="ckc-type-card-label">' + type + '</div>' +
       '<div class="ckc-type-card-sub">' + _typeSubLabel(type) + '</div>' +
+      '<div class="ckc-type-card-meta">' +
+        '<span class="ckc-type-card-price">' + _priceLbl + '</span>' +
+        '<span class="ckc-type-card-stock ' + (_inAny?'in':'out') + '">' + (_inAny?'\u2713 In stock':'Order-only') + '</span>' +
+      '</div>' +
       '</div>';
   });
 
@@ -1260,14 +1474,12 @@ function renderScreen5() {
     var cfqMsg = isSmart
       ? 'Smart Key programming varies by vehicle — call us for an exact quote.'
       : 'We\'ll identify the exact key using your VIN. Call us and we\'ll have everything ready.';
-    html += '<div class="ckc-cfq-notice">' + cfqMsg + '</div>' +
-      '<div class="ckc-price-summary" style="margin-bottom:16px;">' +
+    html += '<div class="ckc-price-summary" style="margin-bottom:16px;">' +
       '<div class="ckc-price-line"><span>Key price</span><span>$' + keyPrice.toFixed(2) + '</span></div>' +
       '<div class="ckc-price-line"><span>Programming</span><span style="color:var(--ckc-gold);">Quoted on call</span></div>' +
       '</div>' +
       '<div class="ckc-cfq-vin-hint">📋 Have your VIN ready — dashboard lower-left or door jamb sticker.</div>' +
-      '<a href="tel:+13365109816" class="ckc-call-to-order-btn">📞 Call to Order · (336) 510-9816</a>' +
-      '<button class="ckc-send-customer-btn" onclick="sendToCustomer()">💰 Build Quote →</button>';
+      '';
   } else {
     html += '<div style="background:rgba(201,162,39,0.06);border:1px solid rgba(201,162,39,0.15);border-radius:12px;padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:12px;">' +
       '<span style="font-size:1.1rem;">🔧</span>' +
@@ -1285,20 +1497,20 @@ function renderScreen5() {
       html += (key.inStock
         ? '<div style="padding:12px;background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.2);border-radius:10px;font-size:0.85rem;color:var(--ckc-text-muted);margin-bottom:14px;text-align:center;">🟢 In stock and ready to order.</div>'
         : '<div style="padding:12px;background:rgba(201,162,39,0.07);border:1px solid rgba(201,162,39,0.2);border-radius:10px;font-size:0.85rem;color:var(--ckc-text-muted);margin-bottom:14px;text-align:center;">📦 We\'ll source this key — programming after it arrives.</div>') +
-        '<button class="ckc-buy-now-btn" onclick="openCheckoutFromS5()">Buy Now →</button>' +
-        '<button class="ckc-send-customer-btn" onclick="sendToCustomer()">💰 Build Quote →</button>';
+        '' +
+        '';
     } else {
       html += (key.inStock
         ? '<div style="padding:12px;background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.2);border-radius:10px;font-size:0.85rem;color:var(--ckc-text-muted);margin-bottom:14px;text-align:center;">🟢 In stock. Call to place your order.</div>'
         : '<div style="padding:12px;background:rgba(201,162,39,0.07);border:1px solid rgba(201,162,39,0.2);border-radius:10px;font-size:0.85rem;color:var(--ckc-text-muted);margin-bottom:14px;text-align:center;">📋 Call with your VIN and we\'ll get everything set up.</div>') +
-        '<a href="tel:+13365109816" class="ckc-call-to-order-btn">📞 Call to Order · (336) 510-9816</a>' +
-        '<button class="ckc-send-customer-btn" onclick="sendToCustomer()">💰 Build Quote →</button>';
+        '';
     }
   }
 
   html += '</div>';
   document.getElementById('ckc-wizard-area').innerHTML = html;
   showScreen(5);
+  renderBuyActions();
   var phEl = document.getElementById('ckc-buynow-img-' + sku.replace(/[^a-z0-9]/gi,''));
   if (phEl && phEl.dataset.sku) {
     tryFetchRKSImage(phEl.dataset.handle, phEl.dataset.sku).then(function(url) {
@@ -1323,9 +1535,31 @@ function sendToCustomer() {
     kt:      key.type || '',
     ktitle:  key.title || '',
     instock: key.inStock ? '1' : '0',
-    img:     (key.image && key.image.indexOf('http') === 0) ? key.image : ''
+    img:     (key.image && key.image.indexOf('http') === 0) ? key.image : '',
+    po:      (typeof scopeState !== 'undefined' && scopeState.po) ? scopeState.po : ''
   });
   window.open(base + '?' + params.toString(), '_blank');
+}
+
+function renderBuyActions() {
+  var el = document.getElementById('ckc-buy-actions');
+  if (!el) return;
+  var key = _wiz.finalKey;
+  if (!key) { el.innerHTML = ''; el.classList.remove('show'); return; }
+  var isSmart  = isSmartKeyType(key.type);
+  var isCFQ    = isSmart || _wiz.bladeAnswer === 'none';
+  var eligible = isBuyNowEligible();
+  var keyLine  = (key.type||'Key') + (key.title? ' \u00B7 '+key.title : '') + (key.sku? ' \u00B7 '+key.sku : '');
+  var btns = '';
+  if (!isCFQ && eligible) btns += '<button class="ckc-buy-now-btn" onclick="openCheckoutFromS5()">Buy Now \u2192</button>';
+  btns += '<button class="ckc-send-customer-btn" onclick="sendToCustomer()">\uD83D\uDCB0 Build Quote \u2192</button>';
+  el.innerHTML =
+    '<div class="ckc-buy-actions-inner">' +
+      '<div class="ckc-buy-actions-title">Order / Quote</div>' +
+      '<div class="ckc-buy-actions-key">' + keyLine + '</div>' +
+      btns +
+    '</div>';
+  el.classList.add('show');
 }
 
 function openCheckoutFromS5() {
@@ -1550,6 +1784,7 @@ function initMagnifiers(group) { /* disabled on mobile */ }
 
 function resetFinder() {
   _wiz = { screen: 1, typeAnswer: '', bladeAnswer: '', tierAnswer: '', finalKey: null, aklMode: false, _bladeImgLoaded: false, _bladeKeywaySKUs: {} };
+  (function(){ var _ba=document.getElementById('ckc-buy-actions'); if(_ba){_ba.innerHTML='';_ba.classList.remove('show');} })();
   lastSearchParams = {}; _ckcMatches = []; _progToggle = {}; _customerVIN = ''; _cfqCardData = {};
   _byType = {}; _bladeGroup = []; _fccGroup = []; _buttonsGroup = [];
   document.getElementById('ckc-wizard-area').innerHTML = '';
@@ -1813,6 +2048,329 @@ function postHeight() { /* not needed — standalone page */ }
 function pauseResize() {}
 function resumeResize() {}
 function initResizeObserver() {}
+
+
+// ═══════════════════════════════════════════════════════════════════════
+// SCOPE ENGINE — merged into Find-a-Key. Inherits Y/M/M, reuses getDB()/
+// conflict detectors, carries thumbnails+descriptions into a selectable
+// shopping area. v1.1
+// ═══════════════════════════════════════════════════════════════════════
+var scopeState = { year:'', make:'', model:'', ign:'', job:'', urg:'',
+  name:'', phone:'', loc:'', pid:'', proof:'', vin:'', po:'',
+  matches:[], keyways:[], selectedSku:'', locked:false, _verdict:'' };
+
+function scopeMatchYMM(year, make, model) {
+  year = parseInt(year);
+  var db = (typeof getDB === 'function') ? getDB() : [];
+  var out = [];
+  db.forEach(function(key){
+    if (!key.vehicles || key.type === 'KEY BLADE') return;
+    var hit = false;
+    key.vehicles.forEach(function(v){
+      if (v.make !== make) return;
+      if (v.model !== model && v.model !== 'All Models') return;
+      if (v.years) { var p = v.years.split('-').map(Number); if (year >= p[0] && year <= p[1]) hit = true; }
+    });
+    if (hit) out.push(key);
+  });
+  return out;
+}
+
+function scopeTag(k){
+  var t = ((k.title||'') + ' ' + (k.vendor||'')).toLowerCase();
+  if (t.indexOf('refurb')>-1 || t.indexOf('reman')>-1 || t.indexOf('used')>-1) return '<span class="ckc-tag ref">REFURB</span>';
+  if (t.indexOf('oem')>-1 || t.indexOf('original')>-1 || t.indexOf('genuine')>-1) return '<span class="ckc-tag oem">OEM</span>';
+  if (t.indexOf('aftermarket')>-1 || (k.sku||'').toUpperCase().indexOf('-AM')>-1 || (k.sku||'').toUpperCase().indexOf('AM')===((k.sku||'').length-2)) return '<span class="ckc-tag aft">AFTERMARKET</span>';
+  return '';
+}
+
+function scopeSyncFromDropdowns() {
+  if (scopeState.locked) return;
+  var y = (document.getElementById('ckc-year')||{}).value || '';
+  var mk = (document.getElementById('ckc-make')||{}).value || '';
+  var mo = (document.getElementById('ckc-model')||{}).value || '';
+  var panel = document.getElementById('ckc-scope');
+  if (!y || !mk || !mo) { panel.classList.remove('active'); return; }
+  scopeState.year=y; scopeState.make=mk; scopeState.model=mo;
+  panel.classList.add('active');
+  document.getElementById('ckc-scope-veh').innerHTML = '<span class="yr">'+y+'</span> '+mk+' '+mo;
+
+  var matches = scopeMatchYMM(y, mk, mo);
+  scopeState.matches = matches;
+  scopeState.selectedSku = '';
+  var kws = [];
+  matches.forEach(function(k){ if (k.keyway && k.keyway!=='N/A' && k.keyway!=='' && k.keyway.toUpperCase()!=='UNIVERSAL' && kws.indexOf(k.keyway)<0) kws.push(k.keyway); });
+  scopeState.keyways = kws;
+  var kwWrap = document.getElementById('ckc-scope-keywaywrap');
+  if (kws.length===0) kwWrap.innerHTML = '<div class="ckc-keyway-badge"><span class="kw-lbl">Keyway</span> &mdash; verify on-site</div>';
+  else if (kws.length===1) kwWrap.innerHTML = '<div class="ckc-keyway-badge"><span class="kw-lbl">Keyway</span> '+kws[0]+'</div>';
+  else kwWrap.innerHTML = '<div class="ckc-keyway-badge multi"><span class="kw-lbl">Keyway &#9888; conflict</span> '+kws.join(' / ')+'</div>';
+
+  if (document.getElementById('ckc-scope-results').classList.contains('show')) scopeRun();
+  scopeCheckReady();
+}
+
+function scopePick(grp, val, el) {
+  if (scopeState.locked) return;
+  scopeState[grp] = val;
+  var row = el.parentNode;
+  Array.prototype.forEach.call(row.querySelectorAll('.ckc-pill'), function(b){ b.classList.remove('on'); b.classList.remove('off-on'); });
+  el.classList.add('on');
+  if (grp === 'pid') el.classList.toggle('off-on', val === 'no');
+  scopeCheckReady();
+  if (document.getElementById('ckc-scope-results').classList.contains('show')) scopeRun();
+}
+
+function scopeReadFields(){
+  scopeState.name  = (document.getElementById('ckc-scope-name').value||'').trim();
+  scopeState.phone = (document.getElementById('ckc-scope-phone').value||'').trim();
+  scopeState.loc   = (document.getElementById('ckc-scope-loc').value||'').trim();
+  scopeState.proof = (document.getElementById('ckc-scope-proof').value||'');
+  scopeState.po    = (document.getElementById('ckc-scope-po').value||'').trim();
+  scopeCheckReady();
+}
+function scopeField(){
+  scopeReadFields();
+  if (document.getElementById('ckc-scope-results').classList.contains('show')) scopeRun();
+}
+
+function scopeVinInput() {
+  var v = (document.getElementById('ckc-scope-vin').value||'').toUpperCase();
+  document.getElementById('ckc-scope-vin').value = v; scopeState.vin = v;
+}
+function scopeVinCheck() {
+  var note = document.getElementById('ckc-scope-vinnote'); var v = scopeState.vin || '';
+  if (v.length===0){ note.style.color='var(--ckc-text-muted)'; note.textContent='No VIN entered — fine. Confirm key/blade + ownership doc on-site.'; return; }
+  if (v.length!==17){ note.style.color='#f59e0b'; note.textContent='\u26A0 VIN is '+v.length+' chars (need 17). Re-check or confirm on-site.'; return; }
+  note.style.color='var(--ckc-gold-light)';
+  var msg='\u2713 VIN captured. Match it to the '+(scopeState.proof||'ownership')+' doc and cross-check the '+(scopeState.keyways.length?scopeState.keyways.join(' / '):'catalog')+' keyway';
+  msg += scopeState.keyways.length>1 ? ' — BLADE CONFLICT in catalog, so decode from the lock.' : ' before cutting.';
+  note.textContent = msg;
+}
+
+function scopeCheckReady() {
+  var ready = scopeState.year && scopeState.make && scopeState.model &&
+              scopeState.ign && scopeState.job && scopeState.urg &&
+              scopeState.name && scopeState.phone && scopeState.loc &&
+              scopeState.pid && scopeState.proof;
+  document.getElementById('ckc-scope-run').disabled = !ready;
+}
+
+function scopeLabor() {
+  var j = scopeState.job, ig = scopeState.ign;
+  if (j === 'akl')    return ig === 'push' ? 225 : 165;
+  if (j === 'addkey') return ig === 'push' ? 120 : 95;
+  return 65;
+}
+function scopeChosenKey() {
+  if (scopeState.selectedSku) {
+    var f = scopeState.matches.filter(function(k){return k.sku===scopeState.selectedSku;});
+    if (f.length) return f[0];
+  }
+  var m = scopeState.matches;
+  return m.filter(function(k){return k.inStock && k.price>0;})[0]
+      || m.filter(function(k){return k.price>0;})[0]
+      || m.filter(function(k){return k.inStock;})[0]
+      || m[0] || null;
+}
+function scopeSelectKey(sku){
+  if (scopeState.locked) return;
+  scopeState.selectedSku = (scopeState.selectedSku===sku ? '' : sku);
+  scopeRun();
+}
+function scopeProofLabel(){
+  return { insurance:'Insurance card', title:'Title', registration:'Registration' }[scopeState.proof] || 'Ownership doc';
+}
+
+function scopeTextInvoice(){
+  var ck = scopeChosenKey();
+  var labor = scopeLabor();
+  var urg = (scopeState.urg==='now') ? 25 : 0;
+  var part = (ck && ck.price>0) ? ck.price : 0;
+  var jobLabel = scopeState.job==='akl'?'All-keys-lost':scopeState.job==='addkey'?'Add-key':'Spare/duplicate';
+  var L = [];
+  L.push('Carolina Key Cutters');
+  L.push(((scopeState.year||'')+' '+(scopeState.make||'')+' '+(scopeState.model||'')).trim()+' \u2014 '+jobLabel);
+  if (ck) L.push('Key: '+(ck.title||ck.type||'')+(ck.sku?' ('+ck.sku+')':''));
+  L.push('Due now (key): '+(part>0?'$'+part.toFixed(2):'TBD on-site'));
+  L.push('On completion (programming): $'+(labor+urg).toFixed(2));
+  if (scopeState.po) L.push('PO #: '+scopeState.po);
+  if (ck){
+    var handle = (ck.handle||'').toLowerCase().replace(/[^a-z0-9]+/g,'-');
+    var payLink = handle ? 'https://'+SHOPIFY_DOMAIN+'/products/'+handle
+                         : 'https://'+SHOPIFY_DOMAIN+'/search?q='+encodeURIComponent(ck.sku||'');
+    L.push('Secure your key: '+payLink);
+  }
+  var num = (scopeState.phone||'').replace(/[^0-9]/g,'');
+  if (num.length===10) num = '1'+num;
+  window.location.href = 'sms:'+(num?'+'+num:'')+'?&body='+encodeURIComponent(L.join('\n'));
+}
+
+function scopeKeyClass(t){
+  t=(t||'').toLowerCase();
+  if (t.indexOf('smart')>-1 || t.indexOf('fobik')>-1) return 'smart';
+  if (t.indexOf('remote head')>-1) return 'remotehead';
+  if (t.indexOf('flip')>-1) return 'flip';
+  if (t.indexOf('remote')>-1) return 'remoteonly';      // Remote (Keyless Entry)
+  if (t.indexOf('transponder')>-1) return 'transponder';
+  if (t.indexOf('shell')>-1 || t.indexOf('blade')>-1) return 'shell';
+  return 'unknown';
+}
+
+function scopeKeyCard(k){
+  var sel = (scopeState.selectedSku===k.sku) ? ' sel' : '';
+  var thumb = (k.image && k.image.indexOf('http')===0)
+     ? '<img class="ckc-key-thumb" src="'+k.image+'" alt="" onerror="this.outerHTML=\'<div class=&quot;ckc-key-thumb ph&quot;>'+_typeIcon(k.type)+'</div>\'">'
+     : '<div class="ckc-key-thumb ph">'+_typeIcon(k.type)+'</div>';
+  var meta = [];
+  if (k.keyway && k.keyway!=='N/A') meta.push('Blade '+k.keyway);
+  if (k.fcc && k.fcc!=='N/A' && k.fcc!=='') meta.push('FCC '+k.fcc);
+  if (k.buttonCount) meta.push(k.buttonCount+'-btn');
+  return '<div class="ckc-key-card'+sel+(k.inStock?' instock':' orderonly')+'" onclick="scopeSelectKey(\''+_escAttr(k.sku)+'\')">' +
+    thumb +
+    '<div class="ckc-key-body"><div class="ktitle">'+(k.title||k.type||'Key')+scopeTag(k)+'</div>'+
+    '<div class="ksku">RKS SKU: <b>'+(k.sku||'\u2014')+'</b></div>'+
+    '<div class="kmeta">'+meta.join(' \u00B7 ')+'</div></div>' +
+    '<div class="ckc-key-right"><div class="kprice">$'+(k.price!=null?k.price.toFixed(2):'\u2014')+'</div>'+
+    '<div class="kstk '+(k.inStock?'in':'out')+'">'+(k.inStock?'\u2713 IN STOCK':'ORDER-ONLY')+'</div>'+
+    '<div class="ksel">\u2713 SELECTED</div></div></div>';
+}
+
+function scopeRun() {
+  scopeReadFields();
+  var reasons = [], verdict='green', vsub='Cleared to schedule';
+
+  if (!scopeState.loc){ verdict='red'; vsub='No vehicle location'; reasons.push('No vehicle location captured — cannot dispatch.'); }
+
+  var chosen = scopeChosenKey();
+  var fccConflict = (typeof detectFCCConflict==='function') ? detectFCCConflict(scopeState.matches) : false;
+  var bladeConflict = scopeState.keyways.length > 1;
+
+  if (verdict !== 'red') {
+    if (!scopeState.matches.length){ verdict='yellow'; vsub='No catalog match — verify on-site'; reasons.push('No catalog key matched this Y/M/M — confirm key type & keyway on the vehicle before quoting parts.'); }
+    else if (scopeState.job==='akl' && scopeState.ign==='push'){ verdict='yellow'; vsub='Smart AKL — confirm path'; reasons.push('All-keys-lost on push-to-start: confirm OBD relearn vs. bench/EEPROM path & ISN before committing.'); }
+    else reasons.push('Capability confirmed against in-house tooling for a '+(scopeState.job==='addkey'?'add-key':(scopeState.job==='akl'?'all-keys-lost':'spare/dup'))+' on a '+(scopeState.ign==='push'?'push-to-start':'keyed')+' vehicle.');
+    if (bladeConflict){ if(verdict==='green'){verdict='yellow'; vsub='Blade conflict — decode on-site';} reasons.push('BLADE CONFLICT: catalog lists '+scopeState.keyways.join(' / ')+'. Decode from the lock — do not assume.'); }
+    if (fccConflict){ if(verdict==='green'){verdict='yellow'; vsub='FCC conflict — verify remote';} reasons.push('FCC CONFLICT across matched remotes — verify the exact FCC on the customer\'s fob.'); }
+    if (scopeState.pid==='no'){ if(verdict==='green'){verdict='yellow'; vsub='No photo ID — verify identity';} reasons.push('No state-issued photo ID — verify identity before any work (caution, not a hard stop).'); }
+  }
+  reasons.push('Proof plan: '+scopeProofLabel()+' with customer name + VIN — VERIFY ON ARRIVAL before cutting/programming.');
+  if (!scopeState.vin) reasons.push('VIN not captured — confirm on-site from the ownership doc.');
+
+  var vlabel = verdict==='green'?'GREEN':verdict==='yellow'?'YELLOW':'RED';
+  document.getElementById('ckc-scope-verdict').innerHTML =
+    '<div class="ckc-verdict '+verdict+'"><div class="dot"></div><div><div class="vtxt">'+vlabel+'</div><div class="vsub">'+vsub+'</div></div></div>' +
+    '<ul class="ckc-reasons">'+reasons.map(function(r){return '<li>'+r+'</li>';}).join('')+'</ul>';
+
+  // ── Keys (shopping area) ──
+  var khtml = '';
+  if (scopeState.keyways.length===1) khtml += '<div class="ckc-keyway-badge" style="margin-bottom:10px;"><span class="kw-lbl">Keyway</span> '+scopeState.keyways[0]+'</div>';
+  else if (scopeState.keyways.length>1) khtml += '<div class="ckc-keyway-badge multi" style="margin-bottom:10px;"><span class="kw-lbl">Keyway \u26A0</span> '+scopeState.keyways.join(' / ')+'</div>';
+  else khtml += '<div class="ckc-keyway-badge" style="margin-bottom:10px;"><span class="kw-lbl">Keyway</span> verify on-site</div>';
+  if (!scopeState.matches.length){
+    khtml += '<div class="ckc-flag info">No catalog match. Identify key type & cut code on-site, then source.</div>';
+  } else {
+    var inCount = scopeState.matches.filter(function(k){return k.inStock;}).length;
+    var outCount = scopeState.matches.length - inCount;
+    khtml += '<div class="ckc-stock-summary"><div class="ckc-stock-chip have'+(inCount?'':' zero')+'">'+inCount+' IN STOCK NOW</div><div class="ckc-stock-chip order">'+outCount+' ORDER-ONLY</div></div>';
+    khtml += '<div class="ckc-shop-hint">\uD83D\uDC46 In-stock keys listed first \u2014 tap one to load it into the invoice.</div>';
+    var sorted = scopeState.matches.slice().sort(function(a,b){ return (b.inStock?1:0)-(a.inStock?1:0); });
+    sorted.slice(0,10).forEach(function(k){ khtml += scopeKeyCard(k); });
+  }
+  if (bladeConflict) khtml += '<div class="ckc-flag warn">\u26A0 Blade conflict — decode from the lock before cutting.</div>';
+  if (fccConflict)   khtml += '<div class="ckc-flag warn">\u26A0 FCC conflict — verify the exact remote FCC on the customer\'s fob.</div>';
+  khtml += '<div class="ckc-flag info">Confirm VIN on-site & verify decoded blade against the keyway above before cutting.</div>';
+  if (scopeState.job==='addkey') khtml += '<div class="ckc-flag photo">\uD83D\uDCF7 Add-key: photograph the existing key (both sides) and the ignition/lock face before you start.</div>';
+  document.getElementById('ckc-scope-keys').innerHTML = khtml;
+
+  // ── Field Steps — require a chosen key; procedure depends on key TYPE + job ──
+  var jobName = scopeState.job==='akl'?'all-keys-lost':scopeState.job==='addkey'?'add-key':'duplicate';
+  if (!scopeState.selectedSku) {
+    document.getElementById('ckc-scope-steps').innerHTML =
+      '<div class="ckc-flag info">\u2699\uFE0F Tap a key in the shopping area to build the field procedure. This YMM can carry more than one key type \u2014 smart-key, transponder, and remote jobs run different steps, and a '+jobName+' job changes them again. Steps generate once the exact key is chosen.</div>';
+  } else {
+    var ck = scopeChosenKey();
+    var cls = scopeKeyClass(ck ? ck.type : '');
+    var kw  = (ck && ck.keyway && ck.keyway!=='N/A') ? ck.keyway : 'decode on-site';
+    var steps = [];
+    // gates
+    steps.push('Verify '+scopeProofLabel()+' shows '+(scopeState.name||'customer name')+' + VIN'+(scopeState.pid==='yes'?' and check state photo ID':' \u2014 NO photo ID, verify identity carefully'));
+    steps.push('Confirm VIN from dash/doc; confirm chosen key is correct \u2014 '+(ck.type||'key')+' \u00B7 RKS '+(ck.sku||''));
+    // access — job-driven
+    if (scopeState.job==='addkey') steps.push('ADD-KEY: read customer\u2019s working key; use onboard/add-key relearn where the platform supports it');
+    else if (scopeState.job==='akl') steps.push('ALL-KEYS-LOST: pull code / decode lock; obtain PIN/ISN & security access as required (may force bench/EEPROM path)');
+    else steps.push('DUPLICATE/SPARE: cut to code from the existing key or lock');
+    // cut — blade-driven (key type)
+    if (cls==='smart') steps.push('Emergency blade only if the fob carries one ('+kw+') \u2014 no ignition blade to cut on push-to-start');
+    else if (cls==='remoteonly') steps.push('No blade \u2014 remote/keyless unit only, nothing to cut');
+    else steps.push('Cut blade to code ('+kw+') and test fit in the lock');
+    // program — key-type-driven
+    if (cls==='smart') steps.push('Program SMART KEY: register fob via OBD relearn (or bench per the AKL path); sync proximity');
+    else if (cls==='remotehead' || cls==='flip') steps.push('Program TRANSPONDER + REMOTE: write chip and pair remote buttons');
+    else if (cls==='remoteonly') steps.push('Program REMOTE only: pair lock/unlock/panic \u2014 no transponder or crank step');
+    else if (cls==='transponder') steps.push('Program TRANSPONDER: onboard relearn or tool-write; confirm chip is accepted');
+    else steps.push('Program per key type \u2014 confirm the exact procedure on-site');
+    // verify — key-type-driven
+    if (cls==='smart') steps.push('Verify: push-to-start crank x3, proximity lock/unlock, all remote functions');
+    else if (cls==='remoteonly') steps.push('Verify: lock / unlock / panic all cycle');
+    else steps.push('Verify: crank x3, key turns freely, lock cycle, no dash warnings');
+    steps.push('Collect payment from '+(scopeState.name||'customer')+', deliver invoice, log job');
+    document.getElementById('ckc-scope-steps').innerHTML = '<ol class="ckc-steps">'+steps.map(function(s){return '<li>'+s+'</li>';}).join('')+'</ol>';
+  }
+
+  // ── Invoice — SPLIT: Key leg (paid now, = RKS/Buy Now) vs Programming leg (on completion) ──
+  var labor = scopeLabor();
+  var urg = (scopeState.urg==='now') ? 25 : 0;
+  var jobLabel = scopeState.job==='akl'?'All-keys-lost programming':scopeState.job==='addkey'?'Add-key programming':'Spare / duplicate';
+
+  var partTotal=0, haveParts=false, keyLegLine='';
+  if (chosen && chosen.price>0){ haveParts=true; partTotal=chosen.price;
+    keyLegLine = '<div class="ckc-inv-line"><span class="il-desc">'+(chosen.title||chosen.type||'Key')+(chosen.sku?' &middot; '+chosen.sku:'')+(scopeState.selectedSku?' &#10003; selected':' (auto)')+'</span><span>$'+partTotal.toFixed(2)+'</span></div>';
+  } else if (chosen){
+    keyLegLine = '<div class="ckc-inv-line verify"><span class="il-desc">'+(chosen.title||chosen.type||'Key')+(chosen.sku?' &middot; '+chosen.sku:'')+(scopeState.selectedSku?' &#10003; selected':' (auto)')+' &mdash; no catalog price</span><span class="il-amt">verify</span></div>';
+  } else {
+    keyLegLine = '<div class="ckc-inv-line verify"><span class="il-desc">Key part &mdash; TBD on-site</span><span class="il-amt">verify</span></div>';
+  }
+
+  var ihtml = '';
+  if (scopeState.po) ihtml += '<div class="ckc-inv-po">PO #: <b>'+scopeState.po.replace(/[<>]/g,'')+'</b></div>';
+  // ── KEY LEG (deposit, charged now) ──
+  ihtml += '<div class="ckc-inv-leg first">Key leg <span class="lg-note">&mdash; charged now (RKS part &middot; Buy Now)</span></div>';
+  ihtml += keyLegLine;
+  ihtml += '<div class="ckc-inv-sub paynow"><span>Customer pays now</span><span class="is-amt">'+(haveParts?'$'+partTotal.toFixed(2):'verify on-site')+'</span></div>';
+  // ── PROGRAMMING LEG (billed on completion) ──
+  ihtml += '<div class="ckc-inv-leg">Programming leg <span class="lg-note">&mdash; billed on completion</span></div>';
+  ihtml += '<div class="ckc-inv-line"><span class="il-desc">'+jobLabel+' ('+(scopeState.ign==='push'?'push-start':'keyed')+')</span><span>$'+labor.toFixed(2)+'</span></div>';
+  if (urg) ihtml += '<div class="ckc-inv-line"><span class="il-desc">Same-day / ASAP</span><span>$'+urg.toFixed(2)+'</span></div>';
+  ihtml += '<div class="ckc-inv-sub"><span>Programming leg</span><span class="is-amt">$'+(labor+urg).toFixed(2)+'</span></div>';
+  // ── JOB TOTAL ──
+  var total = labor + urg + partTotal;
+  ihtml += '<div class="ckc-inv-total"><span>'+(haveParts?'Job total (both legs)':'Job total (parts TBD)')+'</span><span class="it-amt">$'+total.toFixed(2)+(haveParts?'':'+')+'</span></div>';
+  if (!scopeState.selectedSku && scopeState.matches.length) ihtml += '<div class="ckc-inv-line verify" style="padding-top:8px;"><span class="il-desc">Tap a key above to lock the part &amp; the key-leg charge</span><span></span></div>';
+  if (scopeState.phone) ihtml += '<button class="ckc-scope-textbtn" onclick="scopeTextInvoice()">\uD83D\uDCE9 Text this invoice to '+(scopeState.name?scopeState.name.split(' ')[0].replace(/[<>]/g,''):'customer')+'</button>';
+  document.getElementById('ckc-scope-invoice').innerHTML = ihtml;
+
+  document.getElementById('ckc-scope-results').classList.add('show');
+  document.getElementById('ckc-scope-send').disabled = false;
+  scopeState._verdict = vlabel;
+}
+
+function scopeSend() {
+  if (scopeState.locked) return;
+  scopeState.locked = true;
+  document.getElementById('ckc-scope').classList.add('locked');
+  var stamp = new Date();
+  document.getElementById('ckc-scope-lockmsg').textContent =
+    'Sheet LOCKED \u00B7 '+(scopeState._verdict||'')+' \u00B7 '+scopeState.name+' \u00B7 '+scopeState.year+' '+scopeState.make+' '+scopeState.model+' \u00B7 '+stamp.toLocaleString();
+  ['ckc-year','ckc-make','ckc-model'].forEach(function(id){ var e=document.getElementById(id); if(e) e.disabled=true; });
+  var sb=document.getElementById('ckc-scope-send'); sb.disabled=true; sb.textContent='\u2713 LOCKED — sheet committed';
+}
+
+['ckc-year','ckc-make','ckc-model'].forEach(function(id){
+  var el=document.getElementById(id);
+  if (el) el.addEventListener('change', function(){ setTimeout(scopeSyncFromDropdowns, 0); });
+});
+
 
 (async function init() {
   await syncFromSheet();
