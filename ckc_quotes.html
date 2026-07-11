@@ -834,7 +834,7 @@ var _stockState = 'instock';
 var _lookupHadVIN = false;
 
 // Values handed over from command.html (the picked key), if present in the URL.
-var _seedSku = '', _seedKey = '', _seedKeyType = '', _seedKeyTitle = '', _seedStock = '', _seedImg = '', _seedHandle = '';
+var _seedSku = '', _seedKey = '', _seedKeyType = '', _seedKeyTitle = '', _seedStock = '', _seedImg = '', _seedHandle = '', _seedPO = '';
 (function () {
   var p = new URLSearchParams(window.location.search);
   _seedSku = p.get('sku') || '';
@@ -843,6 +843,7 @@ var _seedSku = '', _seedKey = '', _seedKeyType = '', _seedKeyTitle = '', _seedSt
   _seedKeyTitle = p.get('ktitle') || '';
   _seedStock = p.get('instock') || '';
   _seedImg = p.get('img') || '';
+  _seedPO = p.get('po') || '';
   _seedHandle = p.get('handle') || '';   // real RKS product handle from command.html (frozen at creation — never rebuilt from title)
 })();
 
@@ -1081,7 +1082,7 @@ function choosePath(path) {
       '<label class="qb-field-label">SKU (optional)</label>' +
       '<input class="qb-input" id="qb-sku" type="text" autocapitalize="characters" spellcheck="false" placeholder="part number" value="' + (_seedSku || '') + '" style="width:100%;margin-bottom:12px;letter-spacing:1px;" oninput="onSkuChange()">' +
       '<label class="qb-field-label">PO number (optional)</label>' +
-      '<input class="qb-input qb-plain" id="qb-po" type="text" autocomplete="off" placeholder="dealer / fleet PO — prints on invoice" value="" style="width:100%;margin-bottom:12px;" oninput="recalcQuote()">' +
+      '<input class="qb-input qb-plain" id="qb-po" type="text" autocomplete="off" placeholder="dealer / fleet PO — prints on invoice" value="' + (_seedPO || '') + '" style="width:100%;margin-bottom:12px;" oninput="recalcQuote()">' +
       '<div class="allin-card"><div class="allin-label">All-in price to customer</div><div class="allin-val" id="qb-allin">$0</div></div>' +
       '<div class="qb-tax-note" id="qb-tax"></div>' +
       '<label class="qb-field-label">Dealer price (est.)</label>' +
@@ -1614,11 +1615,13 @@ function autoPopulate() {
   if (year && make) {
     switchTab('ymm');
     var yearSel = document.getElementById('ymm-year');
+    if (!Array.from(yearSel.options).some(function(o){return o.value===String(year);})) { var yo=document.createElement('option'); yo.value=year; yo.textContent=year; yearSel.appendChild(yo); }
     yearSel.value = year;
     onYearChange();
     setTimeout(function() {
       var makeSel = document.getElementById('ymm-make');
-      makeSel.value = make;
+      var mkMatch = Array.from(makeSel.options).find(function(o){ return o.value.toLowerCase() === String(make).toLowerCase(); });
+      if (mkMatch) { makeSel.value = mkMatch.value; } else { var mo=document.createElement('option'); mo.value=make; mo.textContent=make; makeSel.appendChild(mo); makeSel.value=make; }
       onMakeChange();
       setTimeout(function() {
         if (model) {
