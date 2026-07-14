@@ -1242,6 +1242,11 @@ function _typeSubLabel(type) {
   return '';
 }
 function _escAttr(s) { return (s||'').replace(/'/g,"\\'"); }
+function _rksSanityURL(){
+  var y=lastSearchParams.year||'', mk=lastSearchParams.make||'', mo=lastSearchParams.model||'';
+  var q=[y,mk,mo].filter(Boolean).join(' ');
+  return 'https://www.royalkeysupply.com/search?q=' + encodeURIComponent(q);
+}
 
 function onTypeSelected(type) {
   _wiz.typeAnswer = type;
@@ -1559,6 +1564,8 @@ function renderScreen5() {
     '<div class="ckc-buynow-info-details">' + detailParts.join(' · ') + '</div>' +
     matchBadge +
     '</div></div>';
+
+  html += '<a href="' + _rksSanityURL() + '" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(201,162,39,0.08);border:1px solid rgba(201,162,39,0.3);border-radius:10px;padding:11px;margin-bottom:16px;color:var(--ckc-gold);font-weight:700;font-size:0.85rem;text-decoration:none;">&#128269; Sanity-check this vehicle on RKS &#8599;</a>';
 
   if (isCFQ) {
     var cfqMsg = isSmart
@@ -2190,7 +2197,7 @@ function scopeSyncFromDropdowns() {
 
   var matches = scopeMatchYMM(y, mk, mo);
   scopeState.matches = matches;
-  scopeState.selectedSku = '';
+  scopeState.selectedSku = ''; scopeState.keyPriceManual = '';
   var kws = [];
   matches.forEach(function(k){ if (k.keyway && k.keyway!=='N/A' && k.keyway!=='' && k.keyway.toUpperCase()!=='UNIVERSAL' && kws.indexOf(k.keyway)<0) kws.push(k.keyway); });
   scopeState.keyways = kws;
@@ -2263,7 +2270,19 @@ function scopeChosenKey() {
 }
 function scopeSelectKey(sku){
   if (scopeState.locked) return;
-  scopeState.selectedSku = (scopeState.selectedSku===sku ? '' : sku);
+  if (scopeState.selectedSku === sku) {
+    scopeState.selectedSku = '';
+    scopeState.keyPriceManual = '';                                   // deselect clears the key leg
+  } else {
+    scopeState.selectedSku = sku;
+    var k = (scopeState.matches||[]).filter(function(x){return x.sku===sku;})[0];
+    scopeState.keyPriceManual = (k && k.price>0) ? String(k.price) : '';  // seed from the tapped key; editable below
+  }
+  scopeRun();
+}
+function scopeKeyPriceInput(el){
+  if (scopeState.locked) return;
+  scopeState.keyPriceManual = el.value;
   scopeRun();
 }
 function scopeProofLabel(){
@@ -2409,13 +2428,19 @@ function scopeRun() {
   var urg = (scopeState.urg==='now') ? 25 : 0;
   var jobLabel = scopeState.job==='akl'?'All-keys-lost programming':scopeState.job==='addkey'?'Add-key programming':'Spare / duplicate';
 
-  var partTotal=0, haveParts=false, keyLegLine='';
-  if (chosen && chosen.price>0){ haveParts=true; partTotal=chosen.price;
-    keyLegLine = '<div class="ckc-inv-line"><span class="il-desc">'+(chosen.title||chosen.type||'Key')+(chosen.sku?' &middot; '+chosen.sku:'')+(scopeState.selectedSku?' &#10003; selected':' (auto)')+'</span><span>$'+partTotal.toFixed(2)+'</span></div>';
-  } else if (chosen){
-    keyLegLine = '<div class="ckc-inv-line verify"><span class="il-desc">'+(chosen.title||chosen.type||'Key')+(chosen.sku?' &middot; '+chosen.sku:'')+(scopeState.selectedSku?' &#10003; selected':' (auto)')+' &mdash; no catalog price</span><span class="il-amt">verify</span></div>';
+  // Key leg prices out only from the editable value, which is seeded when James
+  // taps a key (P2) or typed in by hand — never auto-picked. Overridable for an
+  // RKS-sourced key found on the sanity check.
+  var _kpRaw = (scopeState.keyPriceManual!=null) ? String(scopeState.keyPriceManual).trim() : '';
+  var _kp = _kpRaw==='' ? NaN : parseFloat(_kpRaw);
+  var priced = !isNaN(_kp) && _kp>0;
+  var partTotal = priced ? _kp : 0, haveParts = priced, keyLegLine='';
+  var _selKey = scopeState.selectedSku ? (scopeState.matches||[]).filter(function(x){return x.sku===scopeState.selectedSku;})[0] : null;
+  if (priced){
+    var _kd = _selKey ? ((_selKey.title||_selKey.type||'Key')+(_selKey.sku?' &middot; '+_selKey.sku:'')+' &#10003; selected') : 'Key part &#10003; manual price';
+    keyLegLine = '<div class="ckc-inv-line"><span class="il-desc">'+_kd+'</span><span>$'+partTotal.toFixed(2)+'</span></div>';
   } else {
-    keyLegLine = '<div class="ckc-inv-line verify"><span class="il-desc">Key part &mdash; TBD on-site</span><span class="il-amt">verify</span></div>';
+    keyLegLine = '<div class="ckc-inv-line verify"><span class="il-desc">Pick a key above or enter a price &mdash; key leg not set</span><span class="il-amt">&mdash;</span></div>';
   }
 
   var ihtml = '';
@@ -2423,6 +2448,7 @@ function scopeRun() {
   // ── KEY LEG (deposit, charged now) ──
   ihtml += '<div class="ckc-inv-leg first">Key leg <span class="lg-note">&mdash; charged now (RKS part &middot; Buy Now)</span></div>';
   ihtml += keyLegLine;
+  ihtml += '<div class="ckc-inv-line" style="align-items:center;"><span class="il-desc">Key price (editable)</span><span><input id="ckc-scope-keyprice" type="number" inputmode="decimal" min="0" placeholder="0.00" value="'+_kpRaw+'" onchange="scopeKeyPriceInput(this)" style="width:96px;text-align:right;background:#1e1e1e;border:1px solid var(--ckc-border);border-radius:6px;padding:6px 8px;color:var(--ckc-text);font-size:0.9rem;"></span></div>';
   ihtml += '<div class="ckc-inv-sub paynow"><span>Customer pays now</span><span class="is-amt">'+(haveParts?'$'+partTotal.toFixed(2):'verify on-site')+'</span></div>';
   // ── PROGRAMMING LEG (billed on completion) ──
   ihtml += '<div class="ckc-inv-leg">Programming leg <span class="lg-note">&mdash; billed on completion</span></div>';
@@ -2432,7 +2458,7 @@ function scopeRun() {
   // ── JOB TOTAL ──
   var total = labor + urg + partTotal;
   ihtml += '<div class="ckc-inv-total"><span>'+(haveParts?'Job total (both legs)':'Job total (parts TBD)')+'</span><span class="it-amt">$'+total.toFixed(2)+(haveParts?'':'+')+'</span></div>';
-  if (!scopeState.selectedSku && scopeState.matches.length) ihtml += '<div class="ckc-inv-line verify" style="padding-top:8px;"><span class="il-desc">Tap a key above to lock the part &amp; the key-leg charge</span><span></span></div>';
+  if (!priced && scopeState.matches.length) ihtml += '<div class="ckc-inv-line verify" style="padding-top:8px;"><span class="il-desc">Tap a key above (or type a price) to set the key leg</span><span></span></div>';
   if (scopeState.phone) ihtml += '<button class="ckc-scope-textbtn" onclick="scopeTextInvoice()">\uD83D\uDCE9 Text this invoice to '+(scopeState.name?scopeState.name.split(' ')[0].replace(/[<>]/g,''):'customer')+'</button>';
   document.getElementById('ckc-scope-invoice').innerHTML = ihtml;
 
