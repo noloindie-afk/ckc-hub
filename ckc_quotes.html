@@ -453,6 +453,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 const WMI_MAP = {
   '1FA':'FORD','1FB':'FORD','1FC':'FORD','1FD':'FORD','1FE':'FORD','1FF':'FORD',
@@ -834,7 +835,7 @@ var _stockState = 'instock';
 var _lookupHadVIN = false;
 
 // Values handed over from command.html (the picked key), if present in the URL.
-var _seedSku = '', _seedKey = '', _seedKeyType = '', _seedKeyTitle = '', _seedStock = '', _seedImg = '', _seedHandle = '', _seedPO = '';
+var _seedSku = '', _seedKey = '', _seedKeyType = '', _seedKeyTitle = '', _seedStock = '', _seedImg = '', _seedHandle = '', _seedPO = '', _seedPhone = '', _seedVIN = '', _seedKeyway = '';
 (function () {
   var p = new URLSearchParams(window.location.search);
   _seedSku = p.get('sku') || '';
@@ -844,6 +845,9 @@ var _seedSku = '', _seedKey = '', _seedKeyType = '', _seedKeyTitle = '', _seedSt
   _seedStock = p.get('instock') || '';
   _seedImg = p.get('img') || '';
   _seedPO = p.get('po') || '';
+  _seedPhone = p.get('phone') || p.get('ph') || '';   // inherited callback # from the finder — enter once, never twice
+  _seedVIN = (p.get('vin') || '').toUpperCase();
+  _seedKeyway = (p.get('keyway') || '').toUpperCase();
   _seedHandle = p.get('handle') || '';   // real RKS product handle from command.html (frozen at creation — never rebuilt from title)
 })();
 
@@ -1055,7 +1059,7 @@ function choosePath(path) {
         '<div><label class="qb-field-label">Customer name</label>' +
           '<input class="qb-input qb-plain" id="qb-customer" type="text" autocomplete="off" placeholder="optional" value="" oninput="recalcQuote()"></div>' +
         '<div><label class="qb-field-label">Phone</label>' +
-          '<input class="qb-input qb-plain" id="qb-phone" type="tel" inputmode="tel" autocomplete="off" placeholder="optional" value="" oninput="recalcQuote()"></div>' +
+          '<input class="qb-input qb-plain" id="qb-phone" type="tel" inputmode="tel" autocomplete="off" placeholder="optional" value="' + (_seedPhone || '') + '" oninput="recalcQuote()"></div>' +
       '</div>' +
       '<div class="qb-row">' +
         '<div><label class="qb-field-label">Service (labor)</label>' +
@@ -1098,6 +1102,7 @@ function choosePath(path) {
       '<div class="qb-preview-label">📱 Preview — what the customer sees</div>' +
       '<div id="qb-preview"></div>' +
       '<button class="send-quote-btn" id="qb-createqr" onclick="createQR()">🔒 Create QR Code — locks this price</button>' +
+      '<button class="send-quote-btn" id="qb-scopesheet" onclick="makeScopeSheetPDF()" style="margin-top:14px;background:#242424;color:var(--gold);border:1px solid var(--gold);">&#128196; Scope Sheet PDF (field reference)</button>' +
       '<div id="qb-locked-area" style="display:none;">' +
         '<div class="qr-wrap" id="qb-qr-wrap"><div class="qr-label">📱 Scan with your phone to send it to the customer</div><div class="qr-box" id="qb-qr"></div></div>' +
         '<button class="send-quote-btn" id="qb-send" onclick="textQuote()" style="margin-top:14px;">📲 Text Quote to Customer</button>' +
@@ -1443,6 +1448,220 @@ function gatherQuote() {
            sku: sku, po: po, customer: customer, phone: phone,
            keyTitle: _seedKeyTitle, keyType: _seedKeyType, img: _seedImg };
 }
+
+// ============ CKC SCOPE SHEET GENERATOR (locked format) ============
+// ============================================================================
+//  CKC SCOPE SHEET — canonical field-sheet PDF generator (LOCKED FORMAT)
+//  This is the single source of truth for the layout. Same function runs in the
+//  browser (ckc_quotes.html) and here in node for verification. Do not fork it.
+//  Flat clean sheet: no dark headers, no cards, no chips. Header / Scope Sheet /
+//  Field Instructions / Footer, top to bottom.
+// ============================================================================
+function CKC_buildScopeSheet(doc, job) {
+  var L = 54, R = 558, W = R - L, y = 58;
+  var INK = [26,26,26], MUT = [110,110,110], LINE = [205,205,205];
+  var GREEN = [34,150,78], AMBER = [200,140,20], RED = [196,60,52];
+  function vc(level){ return level==='GREEN'?GREEN:(level==='RED'?RED:AMBER); }
+  function ink(){ doc.setTextColor(INK[0],INK[1],INK[2]); }
+  function mut(){ doc.setTextColor(MUT[0],MUT[1],MUT[2]); }
+  function rule(yy){ doc.setDrawColor(LINE[0],LINE[1],LINE[2]); doc.setLineWidth(0.7); doc.line(L,yy,R,yy); }
+  function need(h){ if (y + h > 748){ doc.addPage(); y = 58; } }
+  function sectionLabel(t){
+    need(30); y += 6; mut(); doc.setFont('helvetica','bold'); doc.setFontSize(8);
+    doc.text(t.toUpperCase(), L, y, {charSpace:1.4}); y += 5; rule(y); y += 14;
+  }
+  function subLabel(t){
+    need(20); ink(); doc.setFont('helvetica','bold'); doc.setFontSize(8.5);
+    doc.text(t, L, y); y += 13;
+  }
+  // rows: label at L, value at a fixed column so the sheet reads like a spec
+  function kv(label, value, valColor){
+    need(16); ink(); doc.setFont('helvetica','normal'); doc.setFontSize(9);
+    mut(); doc.text(label, L, y);
+    var vx = L + 118;
+    if (valColor){ doc.setTextColor(valColor[0],valColor[1],valColor[2]); doc.setFont('helvetica','bold'); }
+    else { ink(); doc.setFont('helvetica','normal'); }
+    var lines = doc.splitTextToSize(String(value==null?'':value), R - vx);
+    doc.text(lines, vx, y);
+    y += Math.max(16, lines.length*12);
+  }
+  function fillLine(label){
+    need(20); mut(); doc.setFont('helvetica','normal'); doc.setFontSize(9);
+    doc.text(label, L, y);
+    doc.setDrawColor(190,190,190); doc.setLineWidth(0.6);
+    doc.line(L+96, y+2, R, y+2); y += 20;
+  }
+  function checkbox(txt, muted){
+    need(16); doc.setDrawColor(120,120,120); doc.setLineWidth(0.8);
+    doc.rect(L, y-7.5, 8.5, 8.5);
+    if (muted) mut(); else ink();
+    doc.setFont('helvetica', muted?'italic':'normal'); doc.setFontSize(9);
+    var lines = doc.splitTextToSize(txt, W - 16);
+    doc.text(lines, L+15, y); y += Math.max(15, lines.length*12);
+  }
+  function numbered(n, txt){
+    need(16); ink(); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+    doc.text(n+'.', L, y);
+    doc.setFont('helvetica','normal');
+    var lines = doc.splitTextToSize(txt, W - 18);
+    doc.text(lines, L+16, y); y += Math.max(15, lines.length*12);
+  }
+  function bullet(txt){
+    need(16); doc.setFillColor(150,150,150); doc.rect(L+1, y-6.5, 5.5, 5.5, 'F');
+    ink(); doc.setFont('helvetica','normal'); doc.setFontSize(9);
+    var lines = doc.splitTextToSize(txt, W - 16);
+    doc.text(lines, L+15, y); y += Math.max(15, lines.length*12);
+  }
+
+  // ── HEADER ────────────────────────────────────────────────────────────────
+  ink(); doc.setFont('helvetica','bold'); doc.setFontSize(17);
+  var head = job.vehicle + '  \u2014  ' + job.jobType;
+  doc.text(doc.splitTextToSize(head, W), L, y); y += 20;
+  mut(); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+  doc.text('CAROLINA KEY CUTTERS', L, y, {charSpace:1.2}); y += 13;
+  mut(); doc.setFont('helvetica','italic'); doc.setFontSize(8.5);
+  doc.text('Job Sheet \u00b7 field reference \u2014 ' + (job.doItNow||''), L, y); y += 8;
+  rule(y); y += 8;
+
+  // ── SCOPE SHEET ─────────────────────────────────────────────────────────────
+  sectionLabel('Scope Sheet');
+  fillLine('Customer'); fillLine('Callback'); fillLine('Date scheduled');
+  y += 4;
+  kv('Vehicle', job.vehicle);
+  kv('Job', job.jobLong);
+  kv('System', job.system + (job.tier?('  \u00b7  Tier '+job.tier):''));
+  // Verdict row with colored dot
+  need(16); mut(); doc.setFont('helvetica','normal'); doc.setFontSize(9);
+  doc.text('Verdict', L, y);
+  var vx = L + 118, c = vc(job.verdict.level);
+  doc.setFillColor(c[0],c[1],c[2]); doc.circle(vx+3, y-3, 3.2, 'F');
+  doc.setTextColor(c[0],c[1],c[2]); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+  var vtext = job.verdict.level + '  \u00b7  ' + job.verdict.doable + '  \u00b7  ' + job.verdict.reason;
+  var vlines = doc.splitTextToSize(vtext, R - (vx+12));
+  doc.text(vlines, vx+12, y); y += Math.max(16, vlines.length*12);
+  kv('On-site time', job.onsiteTime);
+  kv('Key code', job.keyCode);
+  kv('CAN FD', job.canfd);
+  kv('Access', job.access);
+  kv('Key', job.key);
+  if (job.physicalKey && job.keyway) kv('Keyway', job.keyway, INK);  // prominent, physical-key jobs only
+
+  // ── FIELD INSTRUCTIONS ──────────────────────────────────────────────────────
+  sectionLabel('Field Instructions');
+  subLabel('Equipment');
+  (job.equipment||[]).forEach(function(e){ checkbox(e, false); });
+  (job.notNeeded||[]).forEach(function(e){ checkbox(e + '  \u2014  leave it behind', true); });
+  y += 4; subLabel('On-site');
+  (job.steps||[]).forEach(function(s,i){ numbered(i+1, s); });
+  if (job.alternate){ y += 4; subLabel('Alternate / backup'); ink(); doc.setFont('helvetica','normal'); doc.setFontSize(9);
+    var al = doc.splitTextToSize(job.alternate, W); need(al.length*12); doc.text(al, L, y); y += al.length*12 + 2; }
+  if (job.watchouts && job.watchouts.length){ y += 4; subLabel('Watch-outs');
+    job.watchouts.forEach(function(w){ bullet(w); }); }
+
+  // ── FOOTER ──────────────────────────────────────────────────────────────────
+  y += 8; need(24); rule(y); y += 13;
+  mut(); doc.setFont('helvetica','italic'); doc.setFontSize(8);
+  doc.text(doc.splitTextToSize('Scope: ' + job.summary, W), L, y);
+  return doc;
+}
+
+
+// ── SCOPE SHEET — gather live job state, derive fields, render via CKC_buildScopeSheet ──
+function _ssTimeFor(timeStr, path){
+  if(!timeStr) return '';
+  var parts = String(timeStr).split('/');
+  var want = path==='akl' ? /AKL/i : /AAK|add/i;
+  for(var i=0;i<parts.length;i++){ if(want.test(parts[i])) return parts[i].replace(/AAK|AKL/ig,'').trim(); }
+  return String(timeStr).trim();
+}
+function _ssKeyway(keyType, seed){
+  if(seed && seed.trim() && seed.toUpperCase()!=='N/A' && seed.toUpperCase()!=='UNIVERSAL') return seed.trim().toUpperCase();
+  var m = String(keyType||'').match(/\b(HU\d+[A-Z]?|HON?\d+|HY\d+|NSN\d+|TOY\d+|B\d+[A-Z]?|GM\d+|FO\d+|CH\d+|DA\d+|VA\d+[A-Z]?|SIP\d+|MIT\d+|KK\d+|KYM\d+)(?:\/(HU\d+[A-Z]?|HON?\d+|HY\d+|NSN\d+|TOY\d+))?\b/i);
+  return m ? m[0].toUpperCase() : '';
+}
+function _ssPhysical(keyType, keyway){
+  return /transponder|remote[- ]?head|track key|PATS|metal key|bladed|FOBIK/i.test(String(keyType||'')) || !!keyway;
+}
+function _ssCleanFlag(f){ return String(f).replace(/^(danger|warn|info|success)\s*:/i,'').trim(); }
+function _ssVerdict(rule, path){
+  if(!rule) return {level:'YELLOW', doable:'verify', reason:'No rule matched \u2014 confirm manually.'};
+  if(rule.refer) return {level:'RED', doable:'refer out \u2014 not serviced', reason:(rule.referReason || 'Refer to dealer / specialist.')};
+  var flags = (rule.flags||[]).filter(function(f){
+    var aklOnly = /(all keys lost|all-keys-lost|AKL)/i.test(f) && !/(add.?key|AAK)/i.test(f);
+    if(path==='aak' && aklOnly) return false; return true;
+  });
+  var referRed = flags.filter(function(f){ return /^danger:/i.test(f) && /(refer out|refer to the dealer|refer you to the dealer)/i.test(f); });
+  if(referRed.length) return {level:'RED', doable:'refer out \u2014 not on-site', reason:_ssCleanFlag(referRed[0])};
+  var cautions = flags.filter(function(f){ return /^(danger|warn):/i.test(f); });
+  if(cautions.length) return {level:'YELLOW', doable:(path==='akl'?'all-keys-lost on-site':'add-key on-site')+' \u2014 one condition', reason:_ssCleanFlag(cautions[0])};
+  return {level:'GREEN', doable:(path==='akl'?'all-keys-lost on-site':'add-key on-site'), reason:'clean go'};
+}
+function _ssEquipment(toolStr){
+  return String(toolStr||'').split(/\s*\+\s*/).map(function(s){return s.trim();}).filter(Boolean);
+}
+function _ssNotNeeded(rule, path){
+  var out=[]; var tool=String(rule&&rule.tool||'');
+  if(path==='aak' && !/bench|EEPROM|G-BOX|ISN/i.test(tool)) out.push('Bench / EEPROM rig, ISN tools (add-key runs on OBD)');
+  return out;
+}
+function _ssSteps(rule, path, keyway){
+  var kt=String(rule&&rule.keyType||''); var smart=/smart|proximity|prox/i.test(kt);
+  var s=['Connect to OBD; confirm stable 12V (battery maintainer if needed).'];
+  if(path==='aak') s.push('Read the customer\u2019s working key.');
+  if(keyway) s.push('Cut the ' + keyway + ' blade to the vehicle (decode from lock or key code).');
+  s.push('Program the new ' + (smart?'fob via OBD relearn':'key (onboard relearn / tool write)') + '.');
+  if(path==='akl') s.push('Obtain PIN / security access as required; pull and enter the NASTF key code.');
+  s.push('Verify crank / run and all remote functions; hand off.');
+  return s;
+}
+function _ssAlternate(rule, path){
+  var kt=String(rule&&rule.keyType||'');
+  if(/CAS4|FEM|BDC|EWS|CAS2|CAS3|EIS|EZS|FBS|MED|EDC/i.test(kt)) return 'If the OBD path is rejected, read the module on the bench (EEPROM / solder-free adapter) and write the key from the dump.';
+  if(/Ford|PATS/i.test(kt)) return 'If FDRS errors out, start a clean module session and retry; confirm the NASTF VSP token is active.';
+  return '';
+}
+function _ssWatchouts(rule, path){
+  var flags=(rule&&rule.flags||[]).filter(function(f){
+    var aklOnly=/(all keys lost|all-keys-lost|AKL)/i.test(f) && !/(add.?key|AAK)/i.test(f);
+    if(path==='aak' && aklOnly) return false; return /^(danger|warn):/i.test(f);
+  }).map(_ssCleanFlag);
+  return flags.slice(0,5);
+}
+function makeScopeSheetPDF(){
+  if(!_ctx || !_ctx.rule){ alert('Pick a vehicle first so the sheet knows the system and tooling.'); return; }
+  if(!_chosenPath){ alert('Choose Add-a-key or All-keys-lost first.'); return; }
+  if(!window.jspdf || !window.jspdf.jsPDF){ alert('PDF engine still loading \u2014 try again in a second.'); return; }
+  var d = gatherQuote(); var rule=_ctx.rule; var path=_chosenPath;
+  var seedKw = (typeof _seedKeyway!=='undefined') ? _seedKeyway : '';
+  var keyway=_ssKeyway(rule.keyType, seedKw);
+  var physical=_ssPhysical(rule.keyType, keyway);
+  var dispKeyway = keyway || (physical?'\u2014 confirm on-site':'');
+  var canfd = /CAN.?FD/i.test(rule.keyType||'') ? 'Yes' : 'No';
+  var onsite = _ssTimeFor(rule.time, path);
+  var keyCode = (d.keyCode>0) ? (d.keyCodeLabel+' \u2014 $'+d.keyCode.toFixed(0)) : (path==='akl'?'None required':'Not required (add-key)');
+  var access  = (d.subscription>0) ? (d.subscriptionLabel+' \u2014 $'+d.subscription.toFixed(0)) : 'None';
+  var keyLine = [ (d.keyType||'Key'), (d.keyTitle||''), (d.sku||''), (d.keyUnit>0?('$'+d.keyUnit.toFixed(2)):'') ].filter(Boolean).join('  \u00b7  ');
+  var verdict=_ssVerdict(rule, path);
+  var primaryTool=_ssEquipment(rule.tool)[0]||rule.tool||'';
+  var doItNow=[ keyway||'', (d.keyCode>0?'code':'no code'), (canfd==='Yes'?'CAN-FD':'no CAN-FD'), (onsite?('~'+onsite):'') ].filter(Boolean).join(' \u00b7 ');
+  var jobType = path==='akl'?'All Keys Lost':'Add-Key';
+  var jobLong = path==='akl'?'All keys lost (no working key)':'Add-a-key (working key present)';
+  var summary = verdict.level+' \u00b7 '+(path==='akl'?'AKL':'add-key')+(keyway?(' \u00b7 '+keyway):'')+' \u00b7 '+doItNow+' \u00b7 '+primaryTool+'.';
+  var job = {
+    vehicle:d.vehicle||_ctx.label, jobType:jobType, jobLong:jobLong,
+    system:rule.keyType||'', tier:rule.tier||'', verdict:verdict,
+    onsiteTime:onsite||'\u2014', keyCode:keyCode, canfd:canfd, access:access, key:keyLine||'\u2014',
+    keyway:dispKeyway, physicalKey:physical,
+    equipment:_ssEquipment(rule.tool), notNeeded:_ssNotNeeded(rule,path),
+    steps:_ssSteps(rule,path,keyway), alternate:_ssAlternate(rule,path), watchouts:_ssWatchouts(rule,path),
+    summary:summary, doItNow:doItNow
+  };
+  var doc=new window.jspdf.jsPDF({unit:'pt', format:'letter'});
+  CKC_buildScopeSheet(doc, job);
+  var fn=(d.vehicle||_ctx.label||'scope').replace(/[^a-z0-9]+/ig,'_').replace(/^_+|_+$/g,'')+'_'+(path==='akl'?'AKL':'AddKey')+'_ScopeSheet.pdf';
+  doc.save(fn);
+}
+
 
 function buildCustomerQuoteHTML(d, showCTA) {
   var svcName = (d.path === 'aak') ? 'Add-a-Key (working key present)' : 'All Keys Lost';
@@ -2047,6 +2266,7 @@ if (IS_CUSTOMER_VIEW) {
   document.getElementById('ymm-make').addEventListener('change', checkYMMReady);
   initYearDropdown();
   autoPopulate();
+  if (_seedVIN) { var _vi = document.getElementById('vin-input'); if (_vi && !_vi.value) _vi.value = _seedVIN; }
   reflectThrottleButton();
 }
 </script>
