@@ -656,6 +656,7 @@ var CKC_STOCK        = { ready: false, set: null };  // live Shopify in-stock SK
 var lastSearchParams = {};
 var _ckcMatches      = [];
 var _customerVIN     = '';
+var _customerPhone   = '';
 var _cfqCardData     = {};
 var _progToggle      = {};
 
@@ -1009,6 +1010,109 @@ function detectBladeConflict(group) {
   });
   return kws.size > 1;
 }
+function detectChipConflict(group) {
+  var chips = new Set();
+  group.forEach(function(k) {
+    var c = (k.chip || '').trim();
+    if (c && c.toUpperCase() !== 'N/A') chips.add(c);
+  });
+  return chips.size > 1;
+}
+// The finder decides when a VIN is unavoidable. Blade / FCC / chip differences
+// can't be eyeballed by a customer even with a key in hand, so they always gate
+// on the VIN. (Button count is handled separately — see advanceFromType.)
+function conflictNeedsVIN(group) {
+  return (_getBladeConflictGroup(group).length > 1) ||
+         (_getFCCConflictGroup(group).length > 1) ||
+         detectChipConflict(group);
+}
+
+// ── VIN-CONFLICT BLOCK — James' "hang up and call back" gate ──────────────
+function renderVINConflict(type, group) {
+  _wiz._pendingType = type;
+  var ymm = lastSearchParams.year + ' ' + lastSearchParams.make + ' ' + lastSearchParams.model;
+  var kinds = [];
+  if (_getBladeConflictGroup(group).length > 1) kinds.push('key blades');
+  if (_getFCCConflictGroup(group).length > 1)   kinds.push('remote / FCC versions');
+  if (detectChipConflict(group))                kinds.push('transponder chips');
+  var kindStr = kinds.length ? kinds.join(' and ') : 'key versions';
+  var vinPre  = (_customerVIN && _customerVIN.length === 17) ? _customerVIN : '';
+  var phPre   = _customerPhone || '';
+  var html =
+    '<div class="ckc-qual-screen">' +
+      '<div class="ckc-screen-header"><button class="ckc-back-btn-wiz" onclick="goBack()">&#8592; Back</button><div class="ckc-screen-title">VIN needed</div></div>' +
+      '<div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.4);border-radius:12px;padding:16px;margin-bottom:16px;">' +
+        '<div style="font-weight:800;color:#f59e0b;font-size:0.95rem;margin-bottom:6px;">&#9888; This one came more than one way</div>' +
+        '<div style="font-size:0.9rem;color:var(--ckc-text);line-height:1.55;">The <strong>' + ymm + '</strong> shipped with different <strong>' + kindStr + '</strong>. There\'s no safe way to pick the exact key from year / make / model alone &mdash; pull the VIN and you\'ll never guess.</div>' +
+      '</div>' +
+      '<label style="display:block;font-size:0.72rem;font-weight:700;color:var(--ckc-text-muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;">Customer VIN &middot; required</label>' +
+      '<input type="text" id="ckc-vinx-inp" maxlength="17" placeholder="17-DIGIT VIN" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" value="' + vinPre + '" oninput="onVinxInput(this)" onkeydown="if(event.key===\'Enter\')vinxContinue()" style="width:100%;box-sizing:border-box;background:#1e1e1e;border:2px solid var(--ckc-border);border-radius:10px;padding:12px 14px;font-family:monospace;font-size:1.1rem;letter-spacing:2px;color:var(--ckc-text);text-transform:uppercase;margin-bottom:14px;outline:none;">' +
+      '<label style="display:block;font-size:0.72rem;font-weight:700;color:var(--ckc-text-muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;">Best callback number &middot; required</label>' +
+      '<input type="tel" id="ckc-vinx-phone" inputmode="tel" placeholder="(336) 555-0000" autocomplete="off" value="' + phPre + '" oninput="onVinxPhone(this)" style="width:100%;box-sizing:border-box;background:#1e1e1e;border:2px solid var(--ckc-border);border-radius:10px;padding:12px 14px;font-size:1.05rem;color:var(--ckc-text);margin-bottom:14px;outline:none;">' +
+      '<div style="background:var(--ckc-card);border:1px solid var(--ckc-border);border-radius:10px;padding:13px 14px;margin-bottom:14px;font-size:0.86rem;color:var(--ckc-text-muted);line-height:1.55;">&#128248; <strong style="color:var(--ckc-text);">Have them text the VIN.</strong> Snap a photo &mdash; the insurance card is the easiest spot &mdash; and text it to <strong style="color:var(--ckc-gold);">(336)&nbsp;510-9816</strong>. (Insurance card beats reading it off the windshield.)</div>' +
+      '<details style="margin-bottom:16px;"><summary style="cursor:pointer;font-size:0.8rem;color:var(--ckc-gold);font-weight:700;list-style:none;">Callback script &#9662;</summary>' +
+        '<div style="margin-top:8px;padding:12px 14px;background:rgba(201,162,39,.08);border:1px solid rgba(201,162,39,.25);border-radius:10px;font-size:0.88rem;color:var(--ckc-text);line-height:1.6;font-style:italic;">&ldquo;That vehicle came a couple different ways, so I need your VIN to pull the exact key. Snap a photo &mdash; your insurance card\'s the easiest spot &mdash; and text it to this number. Let me get your best callback number and I\'ll confirm the moment I\'ve got it.&rdquo;</div>' +
+      '</details>' +
+      '<button id="ckc-vinx-go" class="ckc-send-customer-btn" disabled onclick="vinxContinue()" style="width:100%;">Got the VIN &mdash; continue &#8594;</button>' +
+      '<div style="text-align:center;margin-top:12px;"><a onclick="vinxOnsite()" style="cursor:pointer;font-size:0.8rem;color:var(--ckc-text-muted);text-decoration:underline;">I\'ll confirm on-site instead</a></div>' +
+    '</div>';
+  document.getElementById('ckc-wizard-area').innerHTML = html;
+  showScreen(3);
+  _vinxSync();
+}
+
+// Button-count-only difference — light note, not a hang-up. AKL escalation is one tap.
+function renderButtonNote(type, group) {
+  _wiz._pendingType = type;
+  var ymm = lastSearchParams.year + ' ' + lastSearchParams.make + ' ' + lastSearchParams.model;
+  var counts = Array.from(new Set(group.map(function(k){return k.buttonCount;}).filter(function(b){return b>0;}))).sort(function(a,b){return a-b;});
+  var countStr = counts.join(' and ') + '-button';
+  var html =
+    '<div class="ckc-qual-screen">' +
+      '<div class="ckc-screen-header"><button class="ckc-back-btn-wiz" onclick="goBack()">&#8592; Back</button><div class="ckc-screen-title">Button count</div></div>' +
+      '<div style="background:var(--ckc-card);border:1px solid var(--ckc-border);border-radius:12px;padding:16px;margin-bottom:16px;">' +
+        '<div style="font-weight:800;color:var(--ckc-gold);font-size:0.95rem;margin-bottom:6px;">Came in ' + countStr + '</div>' +
+        '<div style="font-size:0.9rem;color:var(--ckc-text);line-height:1.55;">This <strong>' + ymm + '</strong> shipped with different button counts. On an <strong>add-key</strong> that\'s a ten-second check &mdash; count the buttons on the customer\'s existing fob. No VIN needed.</div>' +
+      '</div>' +
+      '<button class="ckc-send-customer-btn" onclick="btnNoteContinue()" style="width:100%;margin-bottom:12px;">Continue &#8594;</button>' +
+      '<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:10px;padding:13px 14px;font-size:0.86rem;color:var(--ckc-text-muted);line-height:1.55;">' +
+        'No existing key to count? <a onclick="btnNoteEscalate()" style="cursor:pointer;color:#f59e0b;font-weight:700;text-decoration:underline;">This is an all-keys-lost &#8594;</a> &mdash; then you\'ll need the VIN to pick the right count.' +
+      '</div>' +
+    '</div>';
+  document.getElementById('ckc-wizard-area').innerHTML = html;
+  showScreen(3);
+}
+
+function _vinxSync() {
+  var vin = ((document.getElementById('ckc-vinx-inp')  || {}).value || '').replace(/\s/g,'');
+  var ph  = ((document.getElementById('ckc-vinx-phone')|| {}).value || '').trim();
+  var go  = document.getElementById('ckc-vinx-go');
+  if (go) go.disabled = !(vin.length === 17 && ph.length >= 7);
+}
+function onVinxInput(el) { el.value = el.value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g,''); _vinxSync(); }
+function onVinxPhone(el) { _vinxSync(); }
+function vinxContinue() {
+  var vin = ((document.getElementById('ckc-vinx-inp')  || {}).value || '').trim();
+  var ph  = ((document.getElementById('ckc-vinx-phone')|| {}).value || '').trim();
+  if (vin.length !== 17 || ph.length < 7) return;
+  _customerVIN = vin; _customerPhone = ph;
+  var type = _wiz._pendingType; var group = _byType[type] || [];
+  _routeAfterType(type, group); scrollToWizard();
+}
+function vinxOnsite() {
+  var ph = ((document.getElementById('ckc-vinx-phone') || {}).value || '').trim();
+  if (ph) _customerPhone = ph;
+  var type = _wiz._pendingType; var group = _byType[type] || [];
+  _routeAfterType(type, group); scrollToWizard();
+}
+function btnNoteContinue() {
+  var type = _wiz._pendingType; var group = _byType[type] || [];
+  _routeAfterType(type, group); scrollToWizard();
+}
+function btnNoteEscalate() {
+  var type = _wiz._pendingType; var group = _byType[type] || [];
+  renderVINConflict(type, group); scrollToWizard();
+}
 
 function showScreen(n) {
   _wiz.screen = n;
@@ -1194,6 +1298,27 @@ function advanceFromType() {
   var type = _wiz.typeAnswer;
   var group = _byType[type] || [];
 
+  // Blade / FCC / chip differences can't be resolved without the VIN — gate first.
+  if (conflictNeedsVIN(group)) {
+    renderVINConflict(type, group);
+    scrollToWizard();
+    return;
+  }
+  // Button-count difference alone: confirm off the customer's fob on an add-key;
+  // only an all-keys-lost forces the VIN (offered as a one-tap escalation).
+  if (detectButtonConflict(group)) {
+    renderButtonNote(type, group);
+    scrollToWizard();
+    return;
+  }
+
+  _routeAfterType(type, group);
+  scrollToWizard();
+}
+
+// The original post-type routing (qualifier vs. straight-through), reused after
+// the VIN gate so a resolved conflict continues into the normal pick flow.
+function _routeAfterType(type, group) {
   if (isSmartKeyType(type)) {
     // Smart keys: if this year/make/model carries more than one FCC variant,
     // let the user pick the correct one (confirm against the VIN) instead of
@@ -1201,14 +1326,12 @@ function advanceFromType() {
     if (detectFCCConflict(group)) {
       showScreen(3);
       renderScreen3();
-      scrollToWizard();
       return;
     }
     _wiz.finalKey = group.find(function(k){return k.inStock;}) || group[0];
     _wiz.aklMode = false;
     showScreen(5);
     renderScreen5();
-    scrollToWizard();
     return;
   }
 
@@ -1223,7 +1346,6 @@ function advanceFromType() {
   } else {
     advanceFromBlade(group[0] ? group[0].sku : '');
   }
-  scrollToWizard();
 }
 
 function _getBladeConflictGroup(group) {
@@ -1536,7 +1658,10 @@ function sendToCustomer() {
     ktitle:  key.title || '',
     instock: key.inStock ? '1' : '0',
     img:     (key.image && key.image.indexOf('http') === 0) ? key.image : '',
-    po:      (typeof scopeState !== 'undefined' && scopeState.po) ? scopeState.po : ''
+    po:      (typeof scopeState !== 'undefined' && scopeState.po) ? scopeState.po : '',
+    phone:   _customerPhone || '',
+    vin:     _customerVIN || '',
+    keyway:  (key && key.keyway && key.keyway.toUpperCase() !== 'N/A' && key.keyway.toUpperCase() !== 'UNIVERSAL') ? key.keyway : ''
   });
   window.open(base + '?' + params.toString(), '_blank');
 }
@@ -1785,7 +1910,7 @@ function initMagnifiers(group) { /* disabled on mobile */ }
 function resetFinder() {
   _wiz = { screen: 1, typeAnswer: '', bladeAnswer: '', tierAnswer: '', finalKey: null, aklMode: false, _bladeImgLoaded: false, _bladeKeywaySKUs: {} };
   (function(){ var _ba=document.getElementById('ckc-buy-actions'); if(_ba){_ba.innerHTML='';_ba.classList.remove('show');} })();
-  lastSearchParams = {}; _ckcMatches = []; _progToggle = {}; _customerVIN = ''; _cfqCardData = {};
+  lastSearchParams = {}; _ckcMatches = []; _progToggle = {}; _customerVIN = ''; _customerPhone = ''; _cfqCardData = {};
   _byType = {}; _bladeGroup = []; _fccGroup = []; _buttonsGroup = [];
   document.getElementById('ckc-wizard-area').innerHTML = '';
   document.getElementById('ckc-screen-1').classList.add('active');
