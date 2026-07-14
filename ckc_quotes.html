@@ -984,6 +984,24 @@ function customerSectionHTML() {
       '<div class="path-btn akl" id="path-akl" onclick="choosePath(\'akl\')"><div class="path-btn-q">All keys lost</div><div class="path-btn-t">AKL</div></div>' +
     '</div>' +
     '<div id="qb-area"></div>' +
+    '<details class="rks-add" style="margin-top:14px;border:1px solid var(--border);border-radius:12px;padding:0 14px;">' +
+      '<summary style="cursor:pointer;padding:12px 0;font-weight:700;color:var(--gold);font-size:0.9rem;">+ Add a key from RKS (catalog came up short)</summary>' +
+      '<div style="padding-bottom:14px;">' +
+        '<div style="font-size:0.78rem;color:var(--muted);margin-bottom:8px;">Two pastes: the RKS info block (SKU + title + price), then the image link. Your cost marks up automatically.</div>' +
+        '<label class="qb-field-label">1 &middot; Paste the RKS info block</label>' +
+        '<textarea id="rks-paste" rows="3" placeholder="SKU: HYU-184-NO&#10;HYUNDAI NEW OEM 2023-2026 G70 SMART KEY 5B ...&#10;$116.47" oninput="parseRksPaste()" style="width:100%;box-sizing:border-box;background:#141416;border:1px solid var(--border);border-radius:9px;padding:10px;color:var(--text);font-size:0.85rem;margin-bottom:10px;font-family:inherit;"></textarea>' +
+        '<div class="qb-row">' +
+          '<div><label class="qb-field-label">SKU</label><input class="qb-input" id="rks-sku" type="text" placeholder="auto" style="width:100%;"></div>' +
+          '<div><label class="qb-field-label">Your RKS cost ($)</label><input class="qb-input" id="rks-cost" type="number" inputmode="decimal" placeholder="auto" style="width:100%;"></div>' +
+        '</div>' +
+        '<label class="qb-field-label">Title</label>' +
+        '<input class="qb-input" id="rks-title" type="text" placeholder="auto" style="width:100%;margin-bottom:10px;">' +
+        '<label class="qb-field-label">2 &middot; Image link (right-click the RKS photo &rarr; Copy image link)</label>' +
+        '<input class="qb-input" id="rks-img" type="text" placeholder="paste image URL" style="width:100%;margin-bottom:12px;">' +
+        '<button class="search-btn" onclick="addRksKey()" style="width:100%;">Add this key to the invoice</button>' +
+        '<div id="rks-msg" style="font-size:0.78rem;color:var(--muted);margin-top:8px;line-height:1.4;"></div>' +
+      '</div>' +
+    '</details>' +
   '</div>';
 }
 
@@ -1441,6 +1459,49 @@ function checkYMMReady() {
 }
 
 // ── Quote data + customer-facing card ──
+
+// ── Add a key from RKS (catalog came up short) — two pastes, marks up your cost ──
+function ckcBracket(cost){
+  cost=parseFloat(cost)||0; if(cost<=0) return 0;
+  var m = cost<20?2.00 : cost<50?1.75 : cost<100?1.55 : cost<200?1.35 : 1.20;
+  var raw=cost*m, minPrice=cost+20, preRound=Math.max(raw,minPrice);
+  var sell=Math.ceil(preRound)-0.01; if(sell<preRound) sell+=1;
+  return sell;
+}
+function parseRksPaste(){
+  var t=(document.getElementById('rks-paste')||{}).value||''; if(!t.trim()) return;
+  var sku=(t.match(/SKU:?\s*([A-Z0-9][A-Z0-9\-\/]{3,})/i)||[])[1]||'';
+  var price=(t.match(/\$?\s*(\d{1,4}\.\d{2})/)||[])[1]||'';
+  var title=t.replace(/SKU:?\s*[A-Z0-9][A-Z0-9\-\/]{3,}/i,'')
+             .replace(/\$\s*\d{1,4}\.\d{2}/,'')
+             .replace(/ONLY\s+\d+\s+LEFT|IN STOCK[^\n]*|OEM\s+NEW|Add to cart/ig,'')
+             .replace(/\s+/g,' ').trim();
+  if(sku){ var e=document.getElementById('rks-sku'); if(e) e.value=sku; }
+  if(price){ var c=document.getElementById('rks-cost'); if(c) c.value=price; }
+  if(title){ var ti=document.getElementById('rks-title'); if(ti) ti.value=title; }
+}
+function addRksKey(){
+  var msg=document.getElementById('rks-msg');
+  if(!_ctx){ msg.style.color='#f87171'; msg.textContent='Look up the vehicle first (YMM or VIN), then add the RKS key.'; return; }
+  var sku=(document.getElementById('rks-sku').value||'').trim().toUpperCase();
+  var cost=parseFloat(document.getElementById('rks-cost').value)||0;
+  var title=(document.getElementById('rks-title').value||'').trim();
+  var img=(document.getElementById('rks-img').value||'').trim();
+  if(!sku && !title){ msg.style.color='#f87171'; msg.textContent='Paste the RKS info block first.'; return; }
+  if(cost<=0){ msg.style.color='#f87171'; msg.textContent='Enter your RKS cost so it can mark up.'; return; }
+  var sell=ckcBracket(cost);
+  _seedSku=sku;
+  _seedKey=sell.toFixed(2);
+  _seedKeyTitle=title||('RKS '+sku);
+  _seedKeyType=/smart|prox/i.test(title)?'Smart Key':/remote head/i.test(title)?'Remote Head Key':/transponder/i.test(title)?'Transponder Key':'Key';
+  _seedImg=(img.indexOf('http')===0)?img:'';
+  _seedStock='0';
+  _seedHandle='';
+  choosePath(_chosenPath||'aak');
+  msg.style.color='var(--gold)';
+  msg.innerHTML='Added \u2713  Cost $'+cost.toFixed(2)+' \u2192 customer $'+sell.toFixed(2)+' (CKC bracket). Off-catalog \u2014 will not touch Shopify stock. Edit the Key price above if you need to.';
+}
+
 function gatherQuote() {
   function num(id){ var el = document.getElementById(id); return el ? parseFloat(el.value) : NaN; }
   function str(id){ var el = document.getElementById(id); return el ? (el.value || '').trim() : ''; }
