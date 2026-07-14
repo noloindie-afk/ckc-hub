@@ -2458,6 +2458,7 @@ function scopeRun() {
   // ── JOB TOTAL ──
   var total = labor + urg + partTotal;
   ihtml += '<div class="ckc-inv-total"><span>'+(haveParts?'Job total (both legs)':'Job total (parts TBD)')+'</span><span class="it-amt">$'+total.toFixed(2)+(haveParts?'':'+')+'</span></div>';
+  if (priced) ihtml += '<button class="ckc-scope-send" style="margin-top:14px;width:100%;background:var(--ckc-gold);color:#111;font-weight:800;" onclick="scopeCheckout()">Take Payment &mdash; QR &amp; Pay Now &#8594;</button>';
   if (!priced && scopeState.matches.length) ihtml += '<div class="ckc-inv-line verify" style="padding-top:8px;"><span class="il-desc">Tap a key above (or type a price) to set the key leg</span><span></span></div>';
   if (scopeState.phone) ihtml += '<button class="ckc-scope-textbtn" onclick="scopeTextInvoice()">\uD83D\uDCE9 Text this invoice to '+(scopeState.name?scopeState.name.split(' ')[0].replace(/[<>]/g,''):'customer')+'</button>';
   document.getElementById('ckc-scope-invoice').innerHTML = ihtml;
@@ -2476,6 +2477,34 @@ function scopeSend() {
     'Sheet LOCKED \u00B7 '+(scopeState._verdict||'')+' \u00B7 '+(scopeState.name||'')+' \u00B7 '+scopeState.year+' '+scopeState.make+' '+scopeState.model+' \u00B7 '+stamp.toLocaleString();
   ['ckc-year','ckc-make','ckc-model'].forEach(function(id){ var e=document.getElementById(id); if(e) e.disabled=true; });
   var sb=document.getElementById('ckc-scope-send'); sb.disabled=true; sb.textContent='\u2713 LOCKED — sheet committed';
+}
+
+// Carry the scoped vehicle + chosen key into ckc_quotes.html, which owns the
+// invoice, QR, and Shopify Pay Now. This is the handoff that ends the dead-end:
+// the Finder finds the key, the Quote page takes the money.
+function scopeCheckout() {
+  var key = (typeof scopeChosenKey==='function') ? scopeChosenKey() : null;
+  var kpRaw = (scopeState.keyPriceManual!=null && String(scopeState.keyPriceManual).trim()!=='')
+              ? parseFloat(scopeState.keyPriceManual)
+              : (key && key.price ? parseFloat(key.price) : 0);
+  var base = 'https://noloindie-afk.github.io/ckc-hub/ckc_quotes.html';
+  var params = new URLSearchParams({
+    year:    scopeState.year  || '',
+    make:    scopeState.make  || '',
+    model:   scopeState.model || '',
+    sku:     (key && key.sku)    || '',
+    handle:  (key && key.handle) || '',
+    kp:      (kpRaw || 0).toFixed(2),
+    kt:      (key && key.type)   || '',
+    ktitle:  (key && key.title)  || '',
+    instock: (key && key.inStock) ? '1' : '0',
+    img:     (key && key.image && key.image.indexOf('http')===0) ? key.image : '',
+    po:      scopeState.po    || '',
+    phone:   scopeState.phone || (typeof _customerPhone!=='undefined'?_customerPhone:'') || '',
+    vin:     scopeState.vin   || (typeof _customerVIN!=='undefined'?_customerVIN:'')   || '',
+    keyway:  (key && key.keyway && key.keyway.toUpperCase()!=='N/A' && key.keyway.toUpperCase()!=='UNIVERSAL') ? key.keyway : ''
+  });
+  window.open(base + '?' + params.toString(), '_blank');
 }
 
 ['ckc-year','ckc-make','ckc-model'].forEach(function(id){
