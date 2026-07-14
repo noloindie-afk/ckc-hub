@@ -1056,12 +1056,6 @@ function choosePath(path) {
     '</div>' +
     '<div class="qb">' +
       '<div class="qb-row">' +
-        '<div><label class="qb-field-label">Customer name</label>' +
-          '<input class="qb-input qb-plain" id="qb-customer" type="text" autocomplete="off" placeholder="optional" value="" oninput="recalcQuote()"></div>' +
-        '<div><label class="qb-field-label">Phone</label>' +
-          '<input class="qb-input qb-plain" id="qb-phone" type="tel" inputmode="tel" autocomplete="off" placeholder="optional" value="' + (_seedPhone || '') + '" oninput="recalcQuote()"></div>' +
-      '</div>' +
-      '<div class="qb-row">' +
         '<div><label class="qb-field-label">Service (labor)</label>' +
           '<div class="qb-input-wrap"><span class="qb-prefix">$</span>' +
           '<input class="qb-input" id="qb-labor" type="number" inputmode="decimal" min="0" value="' + (defLabor || '') + '" oninput="recalcQuote()"></div></div>' +
@@ -1085,8 +1079,6 @@ function choosePath(path) {
       '</div>' +
       '<label class="qb-field-label">SKU (optional)</label>' +
       '<input class="qb-input" id="qb-sku" type="text" autocapitalize="characters" spellcheck="false" placeholder="part number" value="' + (_seedSku || '') + '" style="width:100%;margin-bottom:12px;letter-spacing:1px;" oninput="onSkuChange()">' +
-      '<label class="qb-field-label">PO number (optional)</label>' +
-      '<input class="qb-input qb-plain" id="qb-po" type="text" autocomplete="off" placeholder="dealer / fleet PO — prints on invoice" value="' + (_seedPO || '') + '" style="width:100%;margin-bottom:12px;" oninput="recalcQuote()">' +
       '<div class="allin-card"><div class="allin-label">All-in price to customer</div><div class="allin-val" id="qb-allin">$0</div></div>' +
       '<div class="qb-tax-note" id="qb-tax"></div>' +
       '<label class="qb-field-label">Dealer price (est.)</label>' +
@@ -1104,6 +1096,22 @@ function choosePath(path) {
       '<button class="send-quote-btn" id="qb-createqr" onclick="createQR()">🔒 Create QR Code — locks this price</button>' +
       '<button class="send-quote-btn" id="qb-scopesheet" onclick="makeScopeSheetPDF()" style="margin-top:14px;background:#242424;color:var(--gold);border:1px solid var(--gold);">&#128196; Scope Sheet PDF (field reference)</button>' +
       '<div id="qb-locked-area" style="display:none;">' +
+        '<div style="background:rgba(201,162,39,.06);border:1px solid rgba(201,162,39,.25);border-radius:12px;padding:14px;margin-bottom:14px;">' +
+          '<div style="font-weight:800;color:var(--gold);font-size:0.9rem;margin-bottom:2px;">Customer accepted — buyer details</div>' +
+          '<div class="qb-hint" style="margin-bottom:12px;">Collected now that they are buying — not before.</div>' +
+          '<div class="qb-row">' +
+            '<div><label class="qb-field-label">First name</label><input class="qb-input qb-plain" id="qb-fname" type="text" autocomplete="off" value="" oninput="syncCommit()"></div>' +
+            '<div><label class="qb-field-label">Last name</label><input class="qb-input qb-plain" id="qb-lname" type="text" autocomplete="off" value="" oninput="syncCommit()"></div>' +
+          '</div>' +
+          '<label class="qb-field-label">Phone</label>' +
+          '<input class="qb-input qb-plain" id="qb-phone" type="tel" inputmode="tel" autocomplete="off" value="' + (_seedPhone || '') + '" style="width:100%;margin-bottom:12px;" oninput="syncCommit()">' +
+          '<label class="qb-field-label">Vehicle location</label>' +
+          '<input class="qb-input qb-plain" id="qb-loc" type="text" autocomplete="off" placeholder="address / cross-streets / lot" value="" style="width:100%;margin-bottom:12px;" oninput="syncCommit()">' +
+          '<label class="qb-field-label">PO number (optional)</label>' +
+          '<input class="qb-input qb-plain" id="qb-po" type="text" autocomplete="off" placeholder="dealer / fleet PO — prints on invoice" value="' + (_seedPO || '') + '" style="width:100%;margin-bottom:12px;" oninput="syncCommit()">' +
+          '<label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:0.9rem;cursor:pointer;color:var(--text);"><input type="checkbox" id="qb-idck" onchange="syncCommit()"> State-issued photo ID verified</label>' +
+          '<label style="display:flex;align-items:center;gap:8px;font-size:0.9rem;cursor:pointer;color:var(--text);"><input type="checkbox" id="qb-proofck" onchange="syncCommit()"> Proof of ownership confirmed</label>' +
+        '</div>' +
         '<div class="qr-wrap" id="qb-qr-wrap"><div class="qr-label">📱 Scan with your phone to send it to the customer</div><div class="qr-box" id="qb-qr"></div></div>' +
         '<button class="send-quote-btn" id="qb-send" onclick="textQuote()" style="margin-top:14px;">📲 Text Quote to Customer</button>' +
         '<button class="copy-quote-btn" id="qb-copy" onclick="copyQuote()">📋 Copy Quote (for desktop)</button>' +
@@ -1287,6 +1295,22 @@ function invalidateLock() {
   if (btn) { btn.textContent = '🔒 Create QR Code — locks this price'; btn.disabled = false; }
 }
 
+// Commit fields (buyer details) are collected AFTER Create QR. They never change
+// the price, so they update the locked snapshot in place instead of invalidating it.
+function syncCommit(){
+  function g(id){ var el=document.getElementById(id); return el?(el.value||'').trim():''; }
+  function c(id){ var el=document.getElementById(id); return el?!!el.checked:false; }
+  if(_lockedQuote){
+    _lockedQuote.customer = (g('qb-fname')+' '+g('qb-lname')).trim();
+    _lockedQuote.phone = g('qb-phone');
+    _lockedQuote.po = g('qb-po');
+    _lockedQuote.location = g('qb-loc');
+    _lockedQuote.idVerified = c('qb-idck');
+    _lockedQuote.proof = c('qb-proofck');
+  }
+  if(typeof scheduleLog==='function') scheduleLog();
+}
+
 function buildQuoteText(d) {
   var svcName = (d.path === 'aak') ? 'Add-a-Key (working key present)' : 'All Keys Lost';
   var keyLabel = d.keyType || d.keyTitle || 'Key';
@@ -1420,6 +1444,7 @@ function checkYMMReady() {
 function gatherQuote() {
   function num(id){ var el = document.getElementById(id); return el ? parseFloat(el.value) : NaN; }
   function str(id){ var el = document.getElementById(id); return el ? (el.value || '').trim() : ''; }
+  function chk(id){ var el = document.getElementById(id); return el ? !!el.checked : false; }
   var labor = num('qb-labor');
   var key = num('qb-key');
   var qtyRaw = num('qb-qty');
@@ -1429,7 +1454,7 @@ function gatherQuote() {
   var dealer = num('qb-dealer');
   var sku = str('qb-sku');
   var po = str('qb-po');
-  var customer = str('qb-customer');
+  var customer = (str('qb-fname') + ' ' + str('qb-lname')).trim();
   var phone = str('qb-phone');
   var acc = _ctx ? computeAccess(_ctx.make, _ctx.year, _ctx.tier, _chosenPath) : { subscriptionLabel:'Subscription / access', keyCodeLabel:'Key code' };
 
@@ -1446,6 +1471,7 @@ function gatherQuote() {
            keyCode: keyCodeV, keyCodeLabel: acc.keyCodeLabel,
            tax: tax, allin: allin, dealer: dealer, stock: _stockState,
            sku: sku, po: po, customer: customer, phone: phone,
+           location: str('qb-loc'), idVerified: chk('qb-idck'), proof: chk('qb-proofck'),
            keyTitle: _seedKeyTitle, keyType: _seedKeyType, img: _seedImg };
 }
 
