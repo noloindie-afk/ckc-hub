@@ -2343,6 +2343,66 @@ function scopeKeyCard(k){
     '<div class="ksel">\u2713 SELECTED</div></div></div>';
 }
 
+// ── CKC scope method resolver: for ANY vehicle, decide the real path from tool
+//    capability (full in-house inventory assumed). Returns {tier, line}. Never
+//    punts "confirm OBD vs bench" — it makes the call or says what's unmapped.
+function ckcScopeMethod(make, year, job, ign){
+  make=(make||'').toUpperCase().trim(); var y=parseInt(year)||0;
+  var akl=(job==='akl'); var smart=(ign==='push');
+  function R(t,l){ return {tier:t, line:l}; }
+
+  if(make==='VOLVO') return R('red','Volvo - refer out (standing decision; no in-house path).');
+
+  if(make==='BMW'){
+    if(y<=2004) return R('green','EWS3 '+(akl?'AKL':'add-key')+' - bench read solder-free on XDNP50, write a virgin key.');
+    if(y<=2010) return R('green','CAS3/3+ '+(akl?'AKL':'add-key')+' - bench solder-free on XDNP11'+(akl?' + ISN.':'.'));
+    if(y<=2013) return R('green','CAS4/4+ '+(akl?'AKL':'add-key')+' - bench solder-free on XDNP12'+(akl?' + ISN. First-of-platform = half-day.':'.'));
+    return akl ? R('yellow','FEM/BDC AKL - bench read on IM508 + XP400 (soldered; no solder-free XDNP). Block extra bench time.')
+               : R('green','FEM/BDC add-key - OBD on the IM508.');
+  }
+  if(make==='TOYOTA'||make==='LEXUS'){
+    if(y<=2017) return R('green',(akl?'8A all-keys-lost':'add-key')+' on the IM508 (8A cable + G-BOX). On-site.');
+    if(y>=2020 && akl) return R('yellow','Smart AKL - CarDAQ-3 + Techstream reset (seed->passcode). Needs your Toyota Security Professional credential.');
+    return R('green','Smart '+(akl?'AKL':'add-key')+' - OBD on the IM508'+(akl?' (2018-19 era; confirm Smart Access with VIN).':'.'));
+  }
+  if(make==='HONDA'||make==='ACURA'){
+    if(akl && y>=2013) return R('yellow','Smart AKL - PIN + EEPROM likely (2013+ often needs a bench read). Confirm chip family is Mini-Prog/XP400 supported.');
+    return R('green',(akl?'AKL':'add-key')+' - OBD on the IM508'+(akl?' with PIN.':'.'));
+  }
+  if(make==='NISSAN'||make==='INFINITI'){
+    return akl ? R('green','AKL - IM508 + PIN (3rd-party ~$20 or APB131 BCM dump). NATS 5/6 - not standard OBD but in-house.')
+               : R('green','Add-key - OBD on the IM508.');
+  }
+  if(['CHEVROLET','GMC','BUICK','CADILLAC','PONTIAC','SATURN','OLDSMOBILE','HUMMER'].indexOf(make)>=0){
+    if(akl && y>=2021) return R('green','2021+ AKL - IM508 + CAN-FD + 3rd-party ECM/BCM security code (~$40). Needs the CAN-FD adapter.');
+    return R('green',(akl?'AKL':'add-key')+' - OBD on the IM508 (PassLock / SKIM).');
+  }
+  if(make==='FORD'||make==='LINCOLN'||make==='MERCURY'){
+    return R('green',(akl?'AKL':'add-key')+' - CarDAQ-3 + '+(y>=2020?'FDRS':'FJDS')+' (NASTF VSP). Autel dropped Ford immo.');
+  }
+  if(['CHRYSLER','DODGE','JEEP','RAM','FIAT'].indexOf(make)>=0){
+    var sgw=(y>=2018)?' + 12+8 SGW bypass':'';
+    return akl ? R('yellow','FOBIK / smart AKL - IM508'+sgw+'. EEPROM on some trims - confirm with VIN.')
+               : R('green','Add-key - OBD on the IM508'+sgw+'.');
+  }
+  if(['HYUNDAI','KIA','GENESIS'].indexOf(make)>=0){
+    return R('green',(akl?'Smart AKL':'Add-key')+' - OBD relearn on the IM508'+(akl?' + PIN & Hyundai/Kia/Genesis gateway validation (NASTF Diagnostic Technician Access).':'.'));
+  }
+  if(make.indexOf('MERCEDES')>=0){
+    if(akl && y>=2015) return R('red','FBS4 AKL (2015+) - refer out / specialist. No standard in-house path.');
+    return akl ? R('yellow','FBS3 AKL - IR + password read (APB125 Benz IR). Bench/IR path; block time.')
+               : R('green','Add-key - OBD / IR on the IM508.');
+  }
+  if(['VOLKSWAGEN','AUDI','VW','SEAT','SKODA','PORSCHE'].indexOf(make)>=0){
+    return akl ? R('yellow','MQB / immo5 AKL - OBD or bench depending on generation. Confirm immo gen with VIN.')
+               : R('green','Add-key - OBD on the IM508.');
+  }
+  // Everything else (Subaru, Mazda, Mitsubishi, etc.) - default, never a punt.
+  if(akl) return smart ? R('yellow','Smart AKL - OBD relearn on the IM508 is the default path; add a PIN if the platform gates it. Not fully mapped - confirm gateway with VIN.')
+                       : R('green','Transponder AKL - OBD on the IM508.');
+  return R('green','Add-key - OBD on the IM508.');
+}
+
 function scopeRun() {
   scopeReadFields();
   var reasons = [], verdict='green', vsub='Cleared to schedule';
@@ -2352,9 +2412,11 @@ function scopeRun() {
   var bladeConflict = scopeState.keyways.length > 1;
 
   if (verdict !== 'red') {
-    if (!scopeState.matches.length){ verdict='yellow'; vsub='No catalog match — verify on-site'; reasons.push('No catalog key matched this Y/M/M — confirm key type & keyway on the vehicle before quoting parts.'); }
-    else if (scopeState.job==='akl' && scopeState.ign==='push'){ verdict='yellow'; vsub='Smart AKL — confirm path'; reasons.push('All-keys-lost on push-to-start: confirm OBD relearn vs. bench/EEPROM path & ISN before committing.'); }
-    else reasons.push('Capability confirmed against in-house tooling for a '+(scopeState.job==='addkey'?'add-key':(scopeState.job==='akl'?'all-keys-lost':'spare/dup'))+' on a '+(scopeState.ign==='push'?'push-to-start':'keyed')+' vehicle.');
+    if (!scopeState.matches.length){ if(verdict==='green'){verdict='yellow'; vsub='No catalog match — verify on-site';} reasons.push('No catalog key matched this Y/M/M — confirm key type & keyway on the vehicle before quoting parts.'); }
+    var _det = ckcScopeMethod(scopeState.make, scopeState.year, scopeState.job, scopeState.ign);
+    reasons.push('Method \u2014 '+_det.line);
+    if (_det.tier==='red'){ verdict='red'; vsub='Refer / bench specialist'; }
+    else if (_det.tier==='yellow' && verdict!=='red'){ verdict='yellow'; if(vsub==='Cleared to schedule') vsub='On-site \u2014 one condition to clear'; }
     if (bladeConflict){ if(verdict==='green'){verdict='yellow'; vsub='Blade conflict — decode on-site';} reasons.push('BLADE CONFLICT: catalog lists '+scopeState.keyways.join(' / ')+'. Decode from the lock — do not assume.'); }
     if (fccConflict){ if(verdict==='green'){verdict='yellow'; vsub='FCC conflict — verify remote';} reasons.push('FCC CONFLICT across matched remotes — verify the exact FCC on the customer\'s fob.'); }
     if (scopeState.pid==='no'){ if(verdict==='green'){verdict='yellow'; vsub='No photo ID — verify identity';} reasons.push('No state-issued photo ID — verify identity before any work (caution, not a hard stop).'); }
