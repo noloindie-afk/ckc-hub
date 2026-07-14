@@ -578,44 +578,12 @@ select.ckc-scope-in { appearance:none; -webkit-appearance:none; background-image
         </div>
       </div>
       <div class="ckc-scope-q">
-        <label>4 &middot; Customer name <span class="req">*</span></label>
-        <input class="ckc-scope-in" id="ckc-scope-name" placeholder="First &amp; last" oninput="scopeField()">
-      </div>
-      <div class="ckc-scope-q">
-        <label>5 &middot; Phone number <span class="req">*</span></label>
-        <input class="ckc-scope-in" id="ckc-scope-phone" type="tel" placeholder="(336) 555-0000" oninput="scopeField()">
-      </div>
-      <div class="ckc-scope-q">
-        <label>6 &middot; Vehicle location <span class="req">*</span></label>
-        <input class="ckc-scope-in" id="ckc-scope-loc" placeholder="Address / cross-streets / lot" oninput="scopeField()">
-      </div>
-      <div class="ckc-scope-q">
-        <label>7 &middot; State-issued photo ID? <span class="req">*</span></label>
-        <div class="ckc-btn-row" data-grp="pid">
-          <button class="ckc-pill gate" onclick="scopePick('pid','yes',this)">Yes</button>
-          <button class="ckc-pill gate" onclick="scopePick('pid','no',this)">No</button>
-        </div>
-      </div>
-      <div class="ckc-scope-q">
-        <label>8 &middot; Proof of ownership <span class="req">*</span> <span style="color:var(--ckc-text-muted);font-weight:500;">(verify on-site)</span></label>
-        <select class="ckc-scope-in" id="ckc-scope-proof" onchange="scopeField()">
-          <option value="">Select document &mdash; confirm on arrival</option>
-          <option value="insurance">Insurance card &mdash; customer name + VIN</option>
-          <option value="title">Title &mdash; customer name + VIN</option>
-          <option value="registration">Registration &mdash; customer name + VIN</option>
-        </select>
-      </div>
-      <div class="ckc-scope-q">
-        <label>9 &middot; VIN <span style="color:var(--ckc-text-muted);font-weight:500;">(optional)</span></label>
+        <label>4 &middot; VIN <span style="color:var(--ckc-text-muted);font-weight:500;">(optional)</span></label>
         <div class="ckc-vin-row">
           <input class="ckc-scope-in" id="ckc-scope-vin" maxlength="17" placeholder="Optional &mdash; confirm on-site" oninput="scopeVinInput()">
           <button class="ckc-vin-btn" onclick="scopeVinCheck()">Check</button>
         </div>
         <div class="ckc-vin-note" id="ckc-scope-vinnote">VIN isn&rsquo;t required to scope &mdash; capture it to flag key/blade conflicts and cross-check the proof-of-ownership doc on-site.</div>
-      </div>
-      <div class="ckc-scope-q">
-        <label>10 &middot; PO number <span style="color:var(--ckc-text-muted);font-weight:500;">(optional &mdash; dealer / fleet)</span></label>
-        <input class="ckc-scope-in" id="ckc-scope-po" placeholder="Optional &mdash; dealer or fleet PO#" oninput="scopeField()">
       </div>
 
       <button class="ckc-scope-run" id="ckc-scope-run" onclick="scopeRun()" disabled>Run SCOPE</button>
@@ -1049,7 +1017,7 @@ function renderVINConflict(type, group) {
       '<input type="text" id="ckc-vinx-inp" maxlength="17" placeholder="17-DIGIT VIN" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" value="' + vinPre + '" oninput="onVinxInput(this)" onkeydown="if(event.key===\'Enter\')vinxContinue()" style="width:100%;box-sizing:border-box;background:#1e1e1e;border:2px solid var(--ckc-border);border-radius:10px;padding:12px 14px;font-family:monospace;font-size:1.1rem;letter-spacing:2px;color:var(--ckc-text);text-transform:uppercase;margin-bottom:14px;outline:none;">' +
       '<label style="display:block;font-size:0.72rem;font-weight:700;color:var(--ckc-text-muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;">Best callback number &middot; required</label>' +
       '<input type="tel" id="ckc-vinx-phone" inputmode="tel" placeholder="(336) 555-0000" autocomplete="off" value="' + phPre + '" oninput="onVinxPhone(this)" style="width:100%;box-sizing:border-box;background:#1e1e1e;border:2px solid var(--ckc-border);border-radius:10px;padding:12px 14px;font-size:1.05rem;color:var(--ckc-text);margin-bottom:14px;outline:none;">' +
-      '<div style="background:var(--ckc-card);border:1px solid var(--ckc-border);border-radius:10px;padding:13px 14px;margin-bottom:14px;font-size:0.86rem;color:var(--ckc-text-muted);line-height:1.55;">&#128248; <strong style="color:var(--ckc-text);">Have them text the VIN.</strong> Snap a photo &mdash; the insurance card is the easiest spot &mdash; and text it to <strong style="color:var(--ckc-gold);">(336)&nbsp;510-9816</strong>. (Insurance card beats reading it off the windshield.)</div>' +
+      '<div style="background:var(--ckc-card);border:1px solid var(--ckc-border);border-radius:10px;padding:13px 14px;margin-bottom:14px;font-size:0.86rem;color:var(--ckc-text-muted);line-height:1.55;">&#128248; <strong style="color:var(--ckc-text);">Have them text the VIN.</strong> Snap a photo &mdash; the insurance card is the easiest spot &mdash; and text it to <strong style="color:var(--ckc-gold);">(336)&nbsp;287-1720</strong>. (Insurance card beats reading it off the windshield.)</div>' +
       '<details style="margin-bottom:16px;"><summary style="cursor:pointer;font-size:0.8rem;color:var(--ckc-gold);font-weight:700;list-style:none;">Callback script &#9662;</summary>' +
         '<div style="margin-top:8px;padding:12px 14px;background:rgba(201,162,39,.08);border:1px solid rgba(201,162,39,.25);border-radius:10px;font-size:0.88rem;color:var(--ckc-text);line-height:1.6;font-style:italic;">&ldquo;That vehicle came a couple different ways, so I need your VIN to pull the exact key. Snap a photo &mdash; your insurance card\'s the easiest spot &mdash; and text it to this number. Let me get your best callback number and I\'ll confirm the moment I\'ve got it.&rdquo;</div>' +
       '</details>' +
@@ -2247,11 +2215,8 @@ function scopePick(grp, val, el) {
 }
 
 function scopeReadFields(){
-  scopeState.name  = (document.getElementById('ckc-scope-name').value||'').trim();
-  scopeState.phone = (document.getElementById('ckc-scope-phone').value||'').trim();
-  scopeState.loc   = (document.getElementById('ckc-scope-loc').value||'').trim();
-  scopeState.proof = (document.getElementById('ckc-scope-proof').value||'');
-  scopeState.po    = (document.getElementById('ckc-scope-po').value||'').trim();
+  // Personal/commit fields (name, phone, location, ID, proof, PO) are no longer
+  // collected in the preliminary scope — they belong at checkout on the quote page.
   scopeCheckReady();
 }
 function scopeField(){
@@ -2275,9 +2240,7 @@ function scopeVinCheck() {
 
 function scopeCheckReady() {
   var ready = scopeState.year && scopeState.make && scopeState.model &&
-              scopeState.ign && scopeState.job && scopeState.urg &&
-              scopeState.name && scopeState.phone && scopeState.loc &&
-              scopeState.pid && scopeState.proof;
+              scopeState.ign && scopeState.job && scopeState.urg;
   document.getElementById('ckc-scope-run').disabled = !ready;
 }
 
@@ -2365,8 +2328,6 @@ function scopeRun() {
   scopeReadFields();
   var reasons = [], verdict='green', vsub='Cleared to schedule';
 
-  if (!scopeState.loc){ verdict='red'; vsub='No vehicle location'; reasons.push('No vehicle location captured — cannot dispatch.'); }
-
   var chosen = scopeChosenKey();
   var fccConflict = (typeof detectFCCConflict==='function') ? detectFCCConflict(scopeState.matches) : false;
   var bladeConflict = scopeState.keyways.length > 1;
@@ -2419,7 +2380,7 @@ function scopeRun() {
     var kw  = (ck && ck.keyway && ck.keyway!=='N/A') ? ck.keyway : 'decode on-site';
     var steps = [];
     // gates
-    steps.push('Verify '+scopeProofLabel()+' shows '+(scopeState.name||'customer name')+' + VIN'+(scopeState.pid==='yes'?' and check state photo ID':' \u2014 NO photo ID, verify identity carefully'));
+    steps.push('On arrival: verify proof of ownership + state photo ID against the VIN before cutting/programming (identity is collected at checkout).');
     steps.push('Confirm VIN from dash/doc; confirm chosen key is correct \u2014 '+(ck.type||'key')+' \u00B7 RKS '+(ck.sku||''));
     // access — job-driven
     if (scopeState.job==='addkey') steps.push('ADD-KEY: read customer\u2019s working key; use onboard/add-key relearn where the platform supports it');
@@ -2486,7 +2447,7 @@ function scopeSend() {
   document.getElementById('ckc-scope').classList.add('locked');
   var stamp = new Date();
   document.getElementById('ckc-scope-lockmsg').textContent =
-    'Sheet LOCKED \u00B7 '+(scopeState._verdict||'')+' \u00B7 '+scopeState.name+' \u00B7 '+scopeState.year+' '+scopeState.make+' '+scopeState.model+' \u00B7 '+stamp.toLocaleString();
+    'Sheet LOCKED \u00B7 '+(scopeState._verdict||'')+' \u00B7 '+(scopeState.name||'')+' \u00B7 '+scopeState.year+' '+scopeState.make+' '+scopeState.model+' \u00B7 '+stamp.toLocaleString();
   ['ckc-year','ckc-make','ckc-model'].forEach(function(id){ var e=document.getElementById(id); if(e) e.disabled=true; });
   var sb=document.getElementById('ckc-scope-send'); sb.disabled=true; sb.textContent='\u2713 LOCKED — sheet committed';
 }
