@@ -1211,7 +1211,8 @@ function renderScreen2() {
   });
 
   html += '</div>' +
-    '<div style="margin-top:16px;padding:12px 14px;background:rgba(201,162,39,0.06);border:1px solid rgba(201,162,39,0.15);border-radius:8px;font-size:0.82rem;color:var(--ckc-text-muted);">🔑 <strong style="color:var(--ckc-text);">Need a plain metal key?</strong> We cut those too — <a href="tel:+13365109816" style="color:var(--ckc-gold);">(336) 510-9816</a>.</div>' +
+    '<a href="' + _rksSanityURL() + '" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;background:rgba(201,162,39,0.08);border:1px solid rgba(201,162,39,0.3);border-radius:10px;padding:11px;color:var(--ckc-gold);font-weight:700;font-size:0.85rem;text-decoration:none;">&#128269; Sanity-check this vehicle on RKS &#8599;</a>' +
+    '<div style="margin-top:12px;padding:12px 14px;background:rgba(201,162,39,0.06);border:1px solid rgba(201,162,39,0.15);border-radius:8px;font-size:0.82rem;color:var(--ckc-text-muted);">🔑 <strong style="color:var(--ckc-text);">Need a plain metal key?</strong> We cut those too — <a href="tel:+13365109816" style="color:var(--ckc-gold);">(336) 510-9816</a>.</div>' +
     '<div class="ckc-none-match-opt" style="margin-top:12px;" onclick="onKeyNotShown()">' +
     '<span style="font-size:1.2rem;">🔍</span>' +
     '<div><strong style="color:var(--ckc-text);font-size:0.9rem;">I don\'t see my key type</strong><div style="font-size:0.78rem;margin-top:2px;">We\'ll source the right key for you</div></div>' +
