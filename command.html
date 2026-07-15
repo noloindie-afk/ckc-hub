@@ -435,6 +435,7 @@ select.ckc-scope-in { appearance:none; -webkit-appearance:none; background-image
 .ckc-scope-results.show { display:block; }
 
   </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
@@ -1709,6 +1710,7 @@ function sendToCustomer() {
     instock: key.inStock ? '1' : '0',
     img:     (key.image && key.image.indexOf('http') === 0) ? key.image : '',
     po:      (typeof scopeState !== 'undefined' && scopeState.po) ? scopeState.po : '',
+    job:     (typeof scopeState !== 'undefined' && scopeState.job) ? (scopeState.job==='akl'?'akl':'aak') : (_wiz.aklMode?'akl':'aak'),
     phone:   _customerPhone || '',
     vin:     _customerVIN || '',
     keyway:  (key && key.keyway && key.keyway.toUpperCase() !== 'N/A' && key.keyway.toUpperCase() !== 'UNIVERSAL') ? key.keyway : ''
@@ -2572,6 +2574,7 @@ function scopeRun() {
     else steps.push('Verify: crank x3, key turns freely, lock cycle, no dash warnings');
     steps.push('Collect payment from '+(scopeState.name||'customer')+', deliver invoice, log job');
     document.getElementById('ckc-scope-steps').innerHTML = '<ol class="ckc-steps">'+steps.map(function(s){return '<li>'+s+'</li>';}).join('')+'</ol>';
+    scopeState._steps = steps.slice();
   }
 
   // ── Invoice — SPLIT: Key leg (paid now, = RKS/Buy Now) vs Programming leg (on completion) ──
@@ -2610,6 +2613,7 @@ function scopeRun() {
   var total = labor + urg + partTotal;
   ihtml += '<div class="ckc-inv-total"><span>'+(haveParts?'Job total (both legs)':'Job total (parts TBD)')+'</span><span class="it-amt">$'+total.toFixed(2)+(haveParts?'':'+')+'</span></div>';
   if (priced) ihtml += '<button class="ckc-scope-send" style="margin-top:14px;width:100%;background:var(--ckc-gold);color:#111;font-weight:800;" onclick="scopeCheckout()">Take Payment &mdash; QR &amp; Pay Now &#8594;</button>';
+  ihtml += '<button class="ckc-scope-send" style="margin-top:10px;width:100%;background:#242424;color:var(--ckc-gold);border:1px solid var(--ckc-gold);font-weight:800;" onclick="scopeSheetPDF()">\uD83D\uDCC4 Scope Sheet + Field Instructions (PDF)</button>';
   if (!priced && scopeState.matches.length) ihtml += '<div class="ckc-inv-line verify" style="padding-top:8px;"><span class="il-desc">Tap a key above (or type a price) to set the key leg</span><span></span></div>';
   if (scopeState.phone) ihtml += '<button class="ckc-scope-textbtn" onclick="scopeTextInvoice()">\uD83D\uDCE9 Text this invoice to '+(scopeState.name?scopeState.name.split(' ')[0].replace(/[<>]/g,''):'customer')+'</button>';
   document.getElementById('ckc-scope-invoice').innerHTML = ihtml;
@@ -2617,6 +2621,109 @@ function scopeRun() {
   document.getElementById('ckc-scope-results').classList.add('show');
   document.getElementById('ckc-scope-send').disabled = false;
   scopeState._verdict = vlabel;
+  scopeState._vsub = vsub;
+  scopeState._reasons = reasons.slice();
+  scopeState._selKeyObj = _selKey || null;
+  scopeState._keyPrice = priced ? partTotal : 0;
+  scopeState._labor = labor; scopeState._urg = urg; scopeState._total = total;
+}
+
+
+// ── Scope Sheet + Field Instructions PDF — prints from THIS panel, using exactly
+//    what scopeRun just computed (verdict, method, reasons, steps, key). Locked
+//    flat format: header / SCOPE SHEET / FIELD INSTRUCTIONS / footer.
+function scopeSheetPDF(){
+  if(!window.jspdf || !window.jspdf.jsPDF){ alert('PDF engine still loading \u2014 try again in a second.'); return; }
+  if(!scopeState._verdict){ alert('Run SCOPE first.'); return; }
+  var doc=new window.jspdf.jsPDF({unit:'pt',format:'letter'});
+  var L=54,R=558,W=R-L,y=58;
+  var INK=[26,26,26],MUT=[110,110,110],LINE=[205,205,205];
+  var COL={GREEN:[34,150,78],YELLOW:[200,140,20],RED:[196,60,52]};
+  var lvl=(scopeState._verdict||'YELLOW').toUpperCase();
+  var vc=COL[lvl]||COL.YELLOW;
+  function ink(){doc.setTextColor(INK[0],INK[1],INK[2]);}
+  function mut(){doc.setTextColor(MUT[0],MUT[1],MUT[2]);}
+  function rule(yy){doc.setDrawColor(LINE[0],LINE[1],LINE[2]);doc.setLineWidth(0.7);doc.line(L,yy,R,yy);}
+  function need(h){if(y+h>748){doc.addPage();y=58;}}
+  function sect(t){need(30);y+=6;mut();doc.setFont('helvetica','bold');doc.setFontSize(8);doc.text(t.toUpperCase(),L,y,{charSpace:1.4});y+=5;rule(y);y+=14;}
+  function sub(t){need(20);ink();doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.text(t,L,y);y+=13;}
+  function kv(label,value){need(16);mut();doc.setFont('helvetica','normal');doc.setFontSize(9);doc.text(label,L,y);
+    ink();var vx=L+118;var ls=doc.splitTextToSize(String(value==null?'':value),R-vx);doc.text(ls,vx,y);y+=Math.max(16,ls.length*12);}
+  function fill(label){need(20);mut();doc.setFont('helvetica','normal');doc.setFontSize(9);doc.text(label,L,y);
+    doc.setDrawColor(190,190,190);doc.setLineWidth(0.6);doc.line(L+96,y+2,R,y+2);y+=20;}
+  function box(txt,muted){need(16);doc.setDrawColor(120,120,120);doc.setLineWidth(0.8);doc.rect(L,y-7.5,8.5,8.5);
+    if(muted)mut();else ink();doc.setFont('helvetica',muted?'italic':'normal');doc.setFontSize(9);
+    var ls=doc.splitTextToSize(txt,W-16);doc.text(ls,L+15,y);y+=Math.max(15,ls.length*12);}
+  function num(i,txt){need(16);ink();doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text(i+'.',L,y);
+    doc.setFont('helvetica','normal');var ls=doc.splitTextToSize(txt,W-18);doc.text(ls,L+16,y);y+=Math.max(15,ls.length*12);}
+  function bul(txt){need(16);doc.setFillColor(150,150,150);doc.rect(L+1,y-6.5,5.5,5.5,'F');ink();doc.setFont('helvetica','normal');doc.setFontSize(9);
+    var ls=doc.splitTextToSize(txt,W-16);doc.text(ls,L+15,y);y+=Math.max(15,ls.length*12);}
+  function strip(s){return String(s||'').replace(/<[^>]*>/g,'').replace(/&middot;/g,'\u00b7').replace(/&mdash;/g,'\u2014').replace(/&amp;/g,'&').replace(/&#10003;/g,'').trim();}
+
+  var veh=(scopeState.year||'')+' '+(scopeState.make||'')+' '+(scopeState.model||'');
+  var jobLbl=scopeState.job==='akl'?'ALL KEYS LOST':scopeState.job==='addkey'?'ADD-KEY':'SPARE / DUPLICATE';
+  var key=scopeState._selKeyObj;
+  var reasons=(scopeState._reasons||[]).map(strip);
+  var method=(reasons.filter(function(r){return r.indexOf('Method')===0;})[0]||'').replace(/^Method\s*\u2014\s*/,'');
+  var others=reasons.filter(function(r){return r.indexOf('Method')!==0;});
+
+  // HEADER
+  ink();doc.setFont('helvetica','bold');doc.setFontSize(17);
+  doc.text(doc.splitTextToSize(veh+'  \u2014  '+jobLbl,W),L,y);y+=20;
+  mut();doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text('CAROLINA KEY CUTTERS',L,y,{charSpace:1.2});y+=13;
+  mut();doc.setFont('helvetica','italic');doc.setFontSize(8.5);
+  doc.text('Job Sheet \u00b7 field reference \u2014 '+(method||scopeState._vsub||''),L,y);y+=8;rule(y);y+=8;
+
+  // SCOPE SHEET
+  sect('Scope Sheet');
+  fill('Customer');fill('Callback');fill('Date scheduled');y+=4;
+  kv('Vehicle',veh);
+  kv('Job',jobLbl+'  \u00b7  '+(scopeState.ign==='push'?'push-to-start':'keyed'));
+  need(16);mut();doc.setFont('helvetica','normal');doc.setFontSize(9);doc.text('Verdict',L,y);
+  var vx=L+118;doc.setFillColor(vc[0],vc[1],vc[2]);doc.circle(vx+3,y-3,3.2,'F');
+  doc.setTextColor(vc[0],vc[1],vc[2]);doc.setFont('helvetica','bold');doc.setFontSize(9);
+  var vt=lvl+'  \u00b7  '+strip(scopeState._vsub||'');
+  var vls=doc.splitTextToSize(vt,R-(vx+12));doc.text(vls,vx+12,y);y+=Math.max(16,vls.length*12);
+  if(method) kv('Method',method);
+  kv('Urgency',scopeState.urg==='now'?'Same-day / ASAP':'Scheduled');
+  kv('VIN',scopeState.vin||'\u2014 confirm on-site from the ownership doc');
+  if(key){
+    kv('Key',[key.title||key.type||'Key',key.sku||''].filter(Boolean).join('  \u00b7  '));
+    if(key.fcc) kv('FCC',key.fcc);
+    var kw=key.keyway&&key.keyway.toUpperCase()!=='N/A'&&key.keyway.toUpperCase()!=='UNIVERSAL'?key.keyway:'';
+    if(kw) kv('Keyway',kw);
+  } else if(scopeState._keyPrice>0){ kv('Key','Manual price \u2014 confirm part on-site'); }
+
+  // FIELD INSTRUCTIONS
+  sect('Field Instructions');
+  sub('Equipment');
+  var eq=[];var ml=(method||'').toLowerCase();
+  if(ml.indexOf('im508')>=0||ml.indexOf('obd')>=0){eq.push('Autel IM508 + XP400 Pro');}
+  if(ml.indexOf('cardaq')>=0||ml.indexOf('fdrs')>=0||ml.indexOf('fjds')>=0||ml.indexOf('techstream')>=0){eq.push('CarDAQ-Plus 3 (J2534) + laptop');}
+  if(ml.indexOf('xdnp')>=0||ml.indexOf('bench')>=0){eq.push('Xhorse Mini Prog + XDNP adapter');eq.push('Bench harness / power');}
+  if(ml.indexOf('8a')>=0){eq.push('Autel 8A control-box cable');eq.push('G-BOX3');}
+  if(ml.indexOf('sgw')>=0){eq.push('FCA 12+8 SGW bypass cable');}
+  if(ml.indexOf('can-fd')>=0||ml.indexOf('can fd')>=0){eq.push('CAN-FD adapter');}
+  if(scopeState.ign!=='push') eq.push('Key cutter (Condor XC-Mini Plus II)');
+  eq.push('Battery maintainer');
+  if(!eq.length) eq.push('Autel IM508 + XP400 Pro');
+  eq.forEach(function(e){box(e,false);});
+  if(scopeState.ign==='push') box('Key cutter \u2014 not needed (push-to-start, no ignition blade)',true);
+  if(ml.indexOf('bench')<0) box('Bench / EEPROM rig \u2014 not needed (OBD path)',true);
+
+  y+=4;sub('On-site');
+  (scopeState._steps||[]).forEach(function(s,i){num(i+1,strip(s));});
+
+  if(others.length){ y+=4;sub('Watch-outs'); others.forEach(function(o){bul(o);}); }
+
+  // FOOTER
+  y+=8;need(24);rule(y);y+=13;mut();doc.setFont('helvetica','italic');doc.setFontSize(8);
+  var ft='Scope: '+lvl+' \u00b7 '+jobLbl.toLowerCase()+(method?(' \u00b7 '+method):'')+
+         (scopeState._total?(' \u00b7 job total $'+scopeState._total.toFixed(2)):'');
+  doc.text(doc.splitTextToSize(ft,W),L,y);
+
+  var fn=veh.replace(/[^a-z0-9]+/ig,'_').replace(/^_+|_+$/g,'')+'_'+(scopeState.job==='akl'?'AKL':'AddKey')+'_ScopeSheet.pdf';
+  doc.save(fn);
 }
 
 function scopeSend() {
@@ -2651,6 +2758,7 @@ function scopeCheckout() {
     instock: (key && key.inStock) ? '1' : '0',
     img:     (key && key.image && key.image.indexOf('http')===0) ? key.image : '',
     po:      scopeState.po    || '',
+    job:     scopeState.job==='akl' ? 'akl' : (scopeState.job==='addkey' ? 'aak' : ''),
     phone:   scopeState.phone || (typeof _customerPhone!=='undefined'?_customerPhone:'') || '',
     vin:     scopeState.vin   || (typeof _customerVIN!=='undefined'?_customerVIN:'')   || '',
     keyway:  (key && key.keyway && key.keyway.toUpperCase()!=='N/A' && key.keyway.toUpperCase()!=='UNIVERSAL') ? key.keyway : ''
