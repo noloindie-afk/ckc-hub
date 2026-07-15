@@ -2176,6 +2176,20 @@ function renderNoResults(year, make, model) {
     '<div class="ckc-calc-result-row"><span>Profit</span><span id="ckc-calc-profit-val" style="color:var(--ckc-success);"></span></div>' +
     '<div class="ckc-calc-result-row total"><span style="font-weight:700;color:var(--ckc-text);font-size:1rem;">Your sell price</span>' +
     '<span class="ckc-calc-result-price" id="ckc-calc-sell-val"></span></div></div></div>' +
+    '<div class="ckc-rks-section"><div class="ckc-rks-section-label">Step 3 &mdash; Use the RKS key</div>' +
+      '<div style="font-size:0.78rem;color:var(--ckc-text-muted);margin-bottom:8px;line-height:1.45;">Found it on RKS? Paste it here &mdash; it becomes your key and rides through scope to checkout.</div>' +
+      '<label style="display:block;font-size:0.7rem;font-weight:700;color:var(--ckc-text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">1 &middot; Paste the RKS info block</label>' +
+      '<textarea id="rkp-paste" rows="3" placeholder="SKU: GMC-01-NO&#10;GMC New OEM 2015-2020 Yukon Smart Key 6B...&#10;$205.99" oninput="rkpParse()" style="width:100%;box-sizing:border-box;background:#141416;border:1px solid var(--ckc-border);border-radius:8px;padding:9px;color:var(--ckc-text);font-size:0.82rem;font-family:inherit;margin-bottom:8px;"></textarea>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">' +
+        '<div><label style="display:block;font-size:0.68rem;color:var(--ckc-text-muted);text-transform:uppercase;margin-bottom:3px;">SKU</label><input id="rkp-sku" placeholder="auto" style="width:100%;box-sizing:border-box;background:#141416;border:1px solid var(--ckc-border);border-radius:8px;padding:8px;color:var(--ckc-text);font-size:0.85rem;"></div>' +
+        '<div><label style="display:block;font-size:0.68rem;color:var(--ckc-text-muted);text-transform:uppercase;margin-bottom:3px;">Your RKS cost ($)</label><input id="rkp-cost" type="number" inputmode="decimal" placeholder="auto" oninput="rkpPreview()" style="width:100%;box-sizing:border-box;background:#141416;border:1px solid var(--ckc-border);border-radius:8px;padding:8px;color:var(--ckc-text);font-size:0.85rem;"></div>' +
+      '</div>' +
+      '<input id="rkp-title" placeholder="Title (auto)" style="width:100%;box-sizing:border-box;background:#141416;border:1px solid var(--ckc-border);border-radius:8px;padding:8px;color:var(--ckc-text);font-size:0.85rem;margin-bottom:8px;">' +
+      '<label style="display:block;font-size:0.7rem;font-weight:700;color:var(--ckc-text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">2 &middot; Image link (right-click the RKS photo &rarr; Copy image link)</label>' +
+      '<input id="rkp-img" placeholder="paste image URL" style="width:100%;box-sizing:border-box;background:#141416;border:1px solid var(--ckc-border);border-radius:8px;padding:8px;color:var(--ckc-text);font-size:0.85rem;margin-bottom:10px;">' +
+      '<button onclick="rkpUseKey()" style="width:100%;background:var(--ckc-gold);color:#111;border:none;border-radius:8px;padding:11px;font-weight:800;font-size:0.87rem;cursor:pointer;">Use this key &#8594;</button>' +
+      '<div id="rkp-msg" style="font-size:0.78rem;color:var(--ckc-text-muted);margin-top:8px;line-height:1.45;"></div>' +
+    '</div>' +
     '<div style="padding:20px;text-align:center;">' +
     '<a href="tel:+13365109816" class="ckc-call-btn" style="margin-bottom:16px;display:inline-flex;">' +
     '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>' +
