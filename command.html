@@ -1260,6 +1260,17 @@ function _typeSubLabel(type) {
   return '';
 }
 function _escAttr(s) { return (s||'').replace(/'/g,"\\'"); }
+function ckcImgFail(el){
+  try{
+    el.onerror=null; el.style.display='none';
+    var p=el.parentNode; if(!p || p.querySelector('.ckc-img-fallback')) return;
+    var d=document.createElement('div');
+    d.className='ckc-img-fallback';
+    d.style.cssText='display:flex;align-items:center;justify-content:center;gap:8px;padding:26px 12px;color:#888;font-size:0.78rem;text-align:center;';
+    d.textContent='\uD83D\uDD11 Photo unavailable \u2014 key details still apply';
+    p.appendChild(d);
+  }catch(e){}
+}
 function _rksSanityURL(){
   var y=lastSearchParams.year||'', mk=lastSearchParams.make||'', mo=lastSearchParams.model||'';
   var q=[y,mk,mo].filter(Boolean).join(' ');
@@ -1549,8 +1560,9 @@ function rkpParse(){
   var price=(t.match(/\$?\s*(\d{1,4}\.\d{2})/)||[])[1]||'';
   var title=t.replace(/SKU:?\s*[A-Z0-9][A-Z0-9\-\/]{3,}/i,'')
              .replace(/\$\s*\d{1,4}\.\d{2}/,'')
-             .replace(/ONLY\s+\d+\s+LEFT|IN STOCK[^\n]*|OEM\s+NEW|AFTERMARKET|Add to cart/ig,'')
-             .replace(/\s+/g,' ').trim();
+             .replace(/ONLY\s+\d+\s+LEFT|IN STOCK[^\n]*|OEM\s+NEW|OEM\s+REFURBISHED|AFTERMARKET|Add to cart/ig,'')
+             .replace(/Regular\s+price|Sale\s+price|Unit\s+price|Sold out|View full details|Quick view/ig,'')
+             .replace(/\s{2,}/g,' ').replace(/[\s\u00b7,;:-]+$/,'').trim();
   if(sku){ var a=document.getElementById('rkp-sku'); if(a) a.value=sku; }
   if(price){ var b=document.getElementById('rkp-cost'); if(b) b.value=price; }
   if(title){ var d=document.getElementById('rkp-title'); if(d) d.value=title; }
@@ -1569,6 +1581,8 @@ function rkpUseKey(){
   var cost=parseFloat((document.getElementById('rkp-cost')||{}).value)||0;
   var title=((document.getElementById('rkp-title')||{}).value||'').trim();
   var img=((document.getElementById('rkp-img')||{}).value||'').trim();
+  if(img.indexOf('//')===0) img='https:'+img;
+  img=img.replace(/([?&])width=\d+/,'$1').replace(/[?&]$/,'');
   if(!sku && !title){ m.style.color='#f87171'; m.textContent='Paste the RKS info block first.'; return; }
   if(cost<=0){ m.style.color='#f87171'; m.textContent='Need your RKS cost so it can mark up.'; return; }
   var r=calcSellPrice(cost); if(!r){ m.style.color='#f87171'; m.textContent='Cost not valid.'; return; }
@@ -1598,7 +1612,7 @@ function renderScreen5() {
   var isCFQ   = isSmart || _wiz.bladeAnswer === 'none';
 
   var imgHTML = (key.image && key.image.startsWith('http'))
-    ? '<img src="' + key.image + '" alt="' + key.title + '" class="ckc-buynow-img">'
+    ? '<img src="' + key.image + '" alt="" class="ckc-buynow-img" onerror="ckcImgFail(this)">'
     : '<div class="ckc-buynow-img-ph" id="ckc-buynow-img-' + sku.replace(/[^a-z0-9]/gi,'') + '" data-sku="' + sku + '" data-handle="' + (key.handle||'') + '">🔑</div>';
 
   var stockHTML = key.inStock
