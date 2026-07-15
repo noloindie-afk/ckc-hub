@@ -1575,9 +1575,11 @@ function rkpUseKey(){
   var ttl=title||('RKS '+sku);
   var type=/smart|prox/i.test(ttl)?'Smart Key':/remote head/i.test(ttl)?'Remote Head Key':/flip/i.test(ttl)?'Remote Flip Key':/fobik/i.test(ttl)?'FOBIK':/transponder/i.test(ttl)?'Transponder Key':'Key';
   var fcc=(ttl.match(/FCC\s*ID:?\s*([A-Z0-9\-]+)/i)||[])[1]||'';
+  var _vy = (lastSearchParams.year||''), _vm = (lastSearchParams.make||''), _vmo = (lastSearchParams.model||'');
   _wiz.finalKey = { sku:sku, title:ttl, type:type, price:r.sellPrice, cost:cost,
                     image:(img.indexOf('http')===0?img:''), handle:'', inStock:false,
-                    keyway:'', fcc:fcc, chip:'', buttonCount:0, _rks:true };
+                    keyway:'', fcc:fcc, chip:'', buttonCount:0, _rks:true,
+                    vehicles:[{years:_vy, make:_vm, model:_vmo}] };
   _wiz.typeAnswer=_wiz.typeAnswer||type;
   showScreen(5); renderScreen5(); scrollToWizard();
 }
@@ -1591,7 +1593,7 @@ function renderScreen5() {
   var keyPrice  = parseFloat(key.price) || 0;
   var total     = keyPrice + PROGRAMMING_FEE;
   var totalStr  = total.toFixed(2);
-  var compatList = key.vehicles.map(function(v){return v.years+' '+v.make+' '+v.model;}).join(' · ');
+  var compatList = (key.vehicles||[]).map(function(v){return v.years+' '+v.make+' '+v.model;}).join(' \u00b7 ');
   var isSmart = isSmartKeyType(key.type);
   var isCFQ   = isSmart || _wiz.bladeAnswer === 'none';
 
