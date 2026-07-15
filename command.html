@@ -1212,6 +1212,23 @@ function renderScreen2() {
 
   html += '</div>' +
     '<a href="' + _rksSanityURL() + '" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;background:rgba(201,162,39,0.08);border:1px solid rgba(201,162,39,0.3);border-radius:10px;padding:11px;color:var(--ckc-gold);font-weight:700;font-size:0.85rem;text-decoration:none;">&#128269; Sanity-check this vehicle on RKS &#8599;</a>' +
+    '<details style="margin-top:10px;border:1px solid var(--ckc-border);border-radius:10px;padding:0 12px;background:var(--ckc-card);">' +
+      '<summary style="cursor:pointer;padding:11px 0;font-weight:700;color:var(--ckc-gold);font-size:0.85rem;list-style:none;">&#43; Use a key from RKS instead &#9662;</summary>' +
+      '<div style="padding-bottom:12px;">' +
+        '<div style="font-size:0.78rem;color:var(--ckc-text-muted);margin-bottom:8px;line-height:1.45;">Catalog came up short? Pick the right key on RKS, then paste it here \u2014 it becomes your key and rides through scope to checkout.</div>' +
+        '<label style="display:block;font-size:0.7rem;font-weight:700;color:var(--ckc-text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">1 &middot; Paste the RKS info block</label>' +
+        '<textarea id="rkp-paste" rows="3" placeholder="SKU: HYU-184-NO&#10;HYUNDAI NEW OEM 2023-2026 G70 SMART KEY 5B...&#10;$116.47" oninput="rkpParse()" style="width:100%;box-sizing:border-box;background:#141416;border:1px solid var(--ckc-border);border-radius:8px;padding:9px;color:var(--ckc-text);font-size:0.82rem;font-family:inherit;margin-bottom:8px;"></textarea>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">' +
+          '<div><label style="display:block;font-size:0.68rem;color:var(--ckc-text-muted);text-transform:uppercase;margin-bottom:3px;">SKU</label><input id="rkp-sku" placeholder="auto" style="width:100%;box-sizing:border-box;background:#141416;border:1px solid var(--ckc-border);border-radius:8px;padding:8px;color:var(--ckc-text);font-size:0.85rem;"></div>' +
+          '<div><label style="display:block;font-size:0.68rem;color:var(--ckc-text-muted);text-transform:uppercase;margin-bottom:3px;">Your RKS cost ($)</label><input id="rkp-cost" type="number" inputmode="decimal" placeholder="auto" oninput="rkpPreview()" style="width:100%;box-sizing:border-box;background:#141416;border:1px solid var(--ckc-border);border-radius:8px;padding:8px;color:var(--ckc-text);font-size:0.85rem;"></div>' +
+        '</div>' +
+        '<input id="rkp-title" placeholder="Title (auto)" style="width:100%;box-sizing:border-box;background:#141416;border:1px solid var(--ckc-border);border-radius:8px;padding:8px;color:var(--ckc-text);font-size:0.85rem;margin-bottom:8px;">' +
+        '<label style="display:block;font-size:0.7rem;font-weight:700;color:var(--ckc-text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">2 &middot; Image link (right-click the RKS photo &rarr; Copy image link)</label>' +
+        '<input id="rkp-img" placeholder="paste image URL" style="width:100%;box-sizing:border-box;background:#141416;border:1px solid var(--ckc-border);border-radius:8px;padding:8px;color:var(--ckc-text);font-size:0.85rem;margin-bottom:10px;">' +
+        '<button onclick="rkpUseKey()" style="width:100%;background:var(--ckc-gold);color:#111;border:none;border-radius:8px;padding:11px;font-weight:800;font-size:0.87rem;cursor:pointer;">Use this key &#8594;</button>' +
+        '<div id="rkp-msg" style="font-size:0.78rem;color:var(--ckc-text-muted);margin-top:8px;line-height:1.45;"></div>' +
+      '</div>' +
+    '</details>' +
     '<div style="margin-top:12px;padding:12px 14px;background:rgba(201,162,39,0.06);border:1px solid rgba(201,162,39,0.15);border-radius:8px;font-size:0.82rem;color:var(--ckc-text-muted);">🔑 <strong style="color:var(--ckc-text);">Need a plain metal key?</strong> We cut those too — <a href="tel:+13365109816" style="color:var(--ckc-gold);">(336) 510-9816</a>.</div>' +
     '<div class="ckc-none-match-opt" style="margin-top:12px;" onclick="onKeyNotShown()">' +
     '<span style="font-size:1.2rem;">🔍</span>' +
@@ -1522,6 +1539,47 @@ function onTierSelected(sku) {
   showScreen(5);
   renderScreen5();
   scrollToWizard();
+}
+
+// ── RKS key pick: paste an RKS key at the finder; it becomes _wiz.finalKey and
+//    rides the normal handoff (scope -> quote -> checkout) like a catalog key.
+function rkpParse(){
+  var t=(document.getElementById('rkp-paste')||{}).value||''; if(!t.trim()) return;
+  var sku=(t.match(/SKU:?\s*([A-Z0-9][A-Z0-9\-\/]{3,})/i)||[])[1]||'';
+  var price=(t.match(/\$?\s*(\d{1,4}\.\d{2})/)||[])[1]||'';
+  var title=t.replace(/SKU:?\s*[A-Z0-9][A-Z0-9\-\/]{3,}/i,'')
+             .replace(/\$\s*\d{1,4}\.\d{2}/,'')
+             .replace(/ONLY\s+\d+\s+LEFT|IN STOCK[^\n]*|OEM\s+NEW|AFTERMARKET|Add to cart/ig,'')
+             .replace(/\s+/g,' ').trim();
+  if(sku){ var a=document.getElementById('rkp-sku'); if(a) a.value=sku; }
+  if(price){ var b=document.getElementById('rkp-cost'); if(b) b.value=price; }
+  if(title){ var d=document.getElementById('rkp-title'); if(d) d.value=title; }
+  rkpPreview();
+}
+function rkpPreview(){
+  var cost=parseFloat((document.getElementById('rkp-cost')||{}).value)||0;
+  var m=document.getElementById('rkp-msg'); if(!m) return;
+  if(cost>0){ var r=calcSellPrice(cost);
+    if(r){ m.style.color='var(--ckc-text-muted)'; m.innerHTML='Cost $'+cost.toFixed(2)+' \u2192 customer <strong style="color:var(--ckc-gold);">$'+r.sellPrice.toFixed(2)+'</strong> \u00b7 '+r.bracket; }
+  } else m.textContent='';
+}
+function rkpUseKey(){
+  var m=document.getElementById('rkp-msg');
+  var sku=((document.getElementById('rkp-sku')||{}).value||'').trim().toUpperCase();
+  var cost=parseFloat((document.getElementById('rkp-cost')||{}).value)||0;
+  var title=((document.getElementById('rkp-title')||{}).value||'').trim();
+  var img=((document.getElementById('rkp-img')||{}).value||'').trim();
+  if(!sku && !title){ m.style.color='#f87171'; m.textContent='Paste the RKS info block first.'; return; }
+  if(cost<=0){ m.style.color='#f87171'; m.textContent='Need your RKS cost so it can mark up.'; return; }
+  var r=calcSellPrice(cost); if(!r){ m.style.color='#f87171'; m.textContent='Cost not valid.'; return; }
+  var ttl=title||('RKS '+sku);
+  var type=/smart|prox/i.test(ttl)?'Smart Key':/remote head/i.test(ttl)?'Remote Head Key':/flip/i.test(ttl)?'Remote Flip Key':/fobik/i.test(ttl)?'FOBIK':/transponder/i.test(ttl)?'Transponder Key':'Key';
+  var fcc=(ttl.match(/FCC\s*ID:?\s*([A-Z0-9\-]+)/i)||[])[1]||'';
+  _wiz.finalKey = { sku:sku, title:ttl, type:type, price:r.sellPrice, cost:cost,
+                    image:(img.indexOf('http')===0?img:''), handle:'', inStock:false,
+                    keyway:'', fcc:fcc, chip:'', buttonCount:0, _rks:true };
+  _wiz.typeAnswer=_wiz.typeAnswer||type;
+  showScreen(5); renderScreen5(); scrollToWizard();
 }
 
 function renderScreen5() {
