@@ -760,6 +760,7 @@ const SUB_FORD        = 40;
 const SUB_GM_PIN      = 40;   // 2021+ AKL only
 const SUB_STELLANTIS  = 35;   // FOBIK/flash trims
 const KEYCODE_NASTF   = 30;
+const SERVICE_CALL    = 85;   // mobile dispatch — industry midline; editable per job
 
 // Returns { subscription, subscriptionLabel, keyCode, keyCodeLabel }
 function computeAccess(make, year, tier, path) {
@@ -835,7 +836,7 @@ var _stockState = 'instock';
 var _lookupHadVIN = false;
 
 // Values handed over from command.html (the picked key), if present in the URL.
-var _seedSku = '', _seedKey = '', _seedKeyType = '', _seedKeyTitle = '', _seedStock = '', _seedImg = '', _seedHandle = '', _seedPO = '', _seedPhone = '', _seedVIN = '', _seedKeyway = '';
+var _seedSku = '', _seedKey = '', _seedKeyType = '', _seedKeyTitle = '', _seedStock = '', _seedImg = '', _seedHandle = '', _seedPO = '', _seedPhone = '', _seedVIN = '', _seedKeyway = '', _seedJob = '';
 (function () {
   var p = new URLSearchParams(window.location.search);
   _seedSku = p.get('sku') || '';
@@ -848,6 +849,7 @@ var _seedSku = '', _seedKey = '', _seedKeyType = '', _seedKeyTitle = '', _seedSt
   _seedPhone = p.get('phone') || p.get('ph') || '';   // inherited callback # from the finder — enter once, never twice
   _seedVIN = (p.get('vin') || '').toUpperCase();
   _seedKeyway = (p.get('keyway') || '').toUpperCase();
+  _seedJob = (p.get('job') || p.get('svc') || '').toLowerCase();   // job type already answered on the finder — don't ask twice
   _seedHandle = p.get('handle') || '';   // real RKS product handle from command.html (frozen at creation — never rebuilt from title)
 })();
 
@@ -960,10 +962,13 @@ function renderResult(make, year, label, sourceNote) {
       '<div class="tier-keytype">' + r.keyType + ' &nbsp;&middot;&nbsp; ' + matched.groupName + '</div>' +
       throttleBadge +
     '</div>' +
-    '<div class="price-grid">' +
-      '<div class="price-box aak"><div class="price-box-label">Add-a-Key — Labor</div><div class="price-box-val" id="pb-aak-val">$' + aakR + '</div><div class="price-box-split"><b>Retail $<span id="pb-aak-r">' + aakR + '</span></b> · Dealer $<span id="pb-aak-d">' + aakD + '</span></div><div class="price-box-note">Key + fees separate · ' + r.time.split('/')[0].trim() + '</div></div>' +
-      aklBox +
-    '</div>' +
+    (function(){
+      // Job type already answered on the finder — show ONE price, not both.
+      var aakBox = '<div class="price-box aak"><div class="price-box-label">Add-a-Key — Labor</div><div class="price-box-val" id="pb-aak-val">$' + aakR + '</div><div class="price-box-split"><b>Retail $<span id="pb-aak-r">' + aakR + '</span></b> · Dealer $<span id="pb-aak-d">' + aakD + '</span></div><div class="price-box-note">Key + fees separate · ' + r.time.split('/')[0].trim() + '</div></div>';
+      var known = (_seedJob === 'aak' || _seedJob === 'akl') ? _seedJob : '';
+      var boxes = known === 'aak' ? aakBox : known === 'akl' ? aklBox : (aakBox + aklBox);
+      return '<div class="price-grid"' + (known ? ' style="grid-template-columns:1fr;"' : '') + '>' + boxes + '</div>';
+    })() +
     '<div class="info-grid">' +
       '<div class="info-cell"><div class="info-cell-label">Tool required</div><div class="info-cell-value">' + r.tool + '</div></div>' +
       '<div class="info-cell"><div class="info-cell-label">Est. time on-site</div><div class="info-cell-value">' + r.time + '</div></div>' +
@@ -976,13 +981,23 @@ function renderResult(make, year, label, sourceNote) {
 }
 
 function customerSectionHTML() {
+  var _known = (_seedJob === 'aak' || _seedJob === 'akl') ? _seedJob : '';
+  var _pathBlock = _known
+    ? '<div class="cust-q" style="display:flex;align-items:center;gap:8px;">Job: <strong style="color:var(--gold);">' + (_known==='akl'?'All Keys Lost':'Add-a-Key') + '</strong>' +
+      '<span style="color:var(--muted);font-size:.85em;">\u2014 from the scope sheet</span>' +
+      '<a onclick="switchPath()" style="cursor:pointer;color:var(--muted);font-size:.8em;text-decoration:underline;margin-left:auto;">change</a></div>' +
+      '<div class="path-row" id="path-row" style="display:none;">' +
+        '<div class="path-btn aak" id="path-aak" onclick="choosePath(\'aak\')"><div class="path-btn-q">Has a working key</div><div class="path-btn-t">Add-a-Key</div></div>' +
+        '<div class="path-btn akl" id="path-akl" onclick="choosePath(\'akl\')"><div class="path-btn-q">All keys lost</div><div class="path-btn-t">AKL</div></div>' +
+      '</div>'
+    : '<div class="cust-q">Ask: <strong style="color:var(--text);">"Do you have a working key?"</strong> — then pick one.</div>' +
+      '<div class="path-row" id="path-row">' +
+        '<div class="path-btn aak" id="path-aak" onclick="choosePath(\'aak\')"><div class="path-btn-q">Has a working key</div><div class="path-btn-t">Add-a-Key</div></div>' +
+        '<div class="path-btn akl" id="path-akl" onclick="choosePath(\'akl\')"><div class="path-btn-q">All keys lost</div><div class="path-btn-t">AKL</div></div>' +
+      '</div>';
   return '<div class="cust-section">' +
     '<div class="cust-label">Build customer quote</div>' +
-    '<div class="cust-q">Ask: <strong style="color:var(--text);">"Do you have a working key?"</strong> — then pick one.</div>' +
-    '<div class="path-row">' +
-      '<div class="path-btn aak" id="path-aak" onclick="choosePath(\'aak\')"><div class="path-btn-q">Has a working key</div><div class="path-btn-t">Add-a-Key</div></div>' +
-      '<div class="path-btn akl" id="path-akl" onclick="choosePath(\'akl\')"><div class="path-btn-q">All keys lost</div><div class="path-btn-t">AKL</div></div>' +
-    '</div>' +
+    _pathBlock +
     '<div id="qb-area"></div>' +
     '<details class="rks-add" style="margin-top:14px;border:1px solid var(--border);border-radius:12px;padding:0 14px;">' +
       '<summary style="cursor:pointer;padding:12px 0;font-weight:700;color:var(--gold);font-size:0.9rem;">+ Add a key from RKS (catalog came up short)</summary>' +
@@ -1024,6 +1039,7 @@ function setRate(rate) {
   recalcQuote();
 }
 
+function switchPath(){ var r=document.getElementById('path-row'); if(r) r.style.display='grid'; }
 function choosePath(path) {
   if (!_ctx) return;
   var r = _ctx.rule;
@@ -1074,6 +1090,9 @@ function choosePath(path) {
     '</div>' +
     '<div class="qb">' +
       '<div class="qb-row">' +
+        '<div><label class="qb-field-label">Service call</label>' +
+          '<div class="qb-input-wrap"><span class="qb-prefix">$</span>' +
+          '<input class="qb-input" id="qb-svccall" type="number" inputmode="decimal" min="0" value="' + SERVICE_CALL + '" oninput="recalcQuote()"></div></div>' +
         '<div><label class="qb-field-label">Service (labor)</label>' +
           '<div class="qb-input-wrap"><span class="qb-prefix">$</span>' +
           '<input class="qb-input" id="qb-labor" type="number" inputmode="decimal" min="0" value="' + (defLabor || '') + '" oninput="recalcQuote()"></div></div>' +
@@ -1524,10 +1543,11 @@ function gatherQuote() {
   var keyUnit   = isNaN(key) ? 0 : key;
   var keyTotal  = keyUnit * qty;               // key price scales with quantity
   var tax       = keyTotal * TAX_RATE;          // tax on the keys only, scaled
-  var allin     = (isNaN(labor) ? 0 : labor) + subV + keyCodeV + keyTotal + tax;
+  var svcCall   = num('qb-svccall'); var svcCallV = isNaN(svcCall) ? 0 : svcCall;
+  var allin     = svcCallV + (isNaN(labor) ? 0 : labor) + subV + keyCodeV + keyTotal + tax;
 
   return { vehicle: _ctx ? _ctx.label : '', path: _chosenPath, rate: _rate,
-           key: key, keyUnit: keyUnit, qty: qty, keyTotal: keyTotal, labor: labor,
+           key: key, keyUnit: keyUnit, qty: qty, keyTotal: keyTotal, labor: labor, serviceCall: svcCallV,
            subscription: subV, subscriptionLabel: acc.subscriptionLabel,
            keyCode: keyCodeV, keyCodeLabel: acc.keyCodeLabel,
            tax: tax, allin: allin, dealer: dealer, stock: _stockState,
@@ -1834,6 +1854,7 @@ function payNow() {
     keyQuantity:       (d.qty && d.qty > 0 ? d.qty : 1),
     stock:             (d.stock === 'instock' ? 'instock' : 'order'),
     laborTitle:        laborTitle,
+    serviceCall:       (isNaN(d.serviceCall) ? 0 : d.serviceCall),
     labor:             (isNaN(d.labor) ? 0 : d.labor),
     subscription:      (d.subscription > 0 ? d.subscription : 0),
     subscriptionLabel: d.subscriptionLabel || 'Subscription / access',
@@ -2353,6 +2374,7 @@ if (IS_CUSTOMER_VIEW) {
   document.getElementById('ymm-make').addEventListener('change', checkYMMReady);
   initYearDropdown();
   autoPopulate();
+  if (_seedJob === 'aak' || _seedJob === 'akl') { setTimeout(function(){ if(_ctx && !_chosenPath) choosePath(_seedJob); }, 0); }
   if (_seedVIN) { var _vi = document.getElementById('vin-input'); if (_vi && !_vi.value) _vi.value = _seedVIN; }
   reflectThrottleButton();
 }
