@@ -248,6 +248,10 @@
   .hist-pin-btn { width: 100%; background: var(--gold); color: #111; border: none; border-radius: 10px; padding: 13px; font-family: 'Barlow', sans-serif; font-weight: 700; font-size: 0.95rem; cursor: pointer; }
   .hist-search { width: 100%; background: #1e1e1e; border: 2px solid var(--border); border-radius: 10px; padding: 11px 15px; color: var(--text); font-family: 'Barlow', sans-serif; font-size: 0.95rem; outline: none; margin-bottom: 14px; }
   .hist-search:focus { border-color: var(--gold); }
+  .hist-sort-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .hist-sort { flex: 1; background: #1e1e1e; border: 2px solid var(--border); border-radius: 10px; padding: 9px 13px; color: var(--text); font-family: 'Barlow', sans-serif; font-size: 0.88rem; outline: none; cursor: pointer; }
+  .hist-sort:focus { border-color: var(--gold); }
+  .hist-count { font-family: 'Barlow Condensed', sans-serif; font-size: 0.72rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
   .hist-rows { display: flex; flex-direction: column; gap: 9px; max-height: 60vh; overflow-y: auto; }
   .hist-row { background: #111; border: 1px solid var(--border); border-radius: 10px; padding: 11px 14px; }
   .hist-row-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
@@ -383,7 +387,14 @@
     <div class="hist-body">
       <div id="hist-pin-area"></div>
       <div id="hist-list-area" style="display:none;">
-        <input class="hist-search" id="hist-search" placeholder="Search name, phone, vehicle…" oninput="filterHistory()">
+        <input class="hist-search" id="hist-search" placeholder="Search name, phone, vehicle, PO, PAID…" oninput="filterHistory()">
+        <div class="hist-sort-row">
+          <select class="hist-sort" id="hist-sort" onchange="filterHistory()">
+            <option value="new">📅 Newest first</option>
+            <option value="old">📅 Oldest first</option>
+          </select>
+          <span class="hist-count" id="hist-count"></span>
+        </div>
         <div class="hist-rows" id="hist-rows"></div>
       </div>
     </div>
@@ -2079,7 +2090,7 @@ function loadHistory(pin) {
       document.getElementById('hist-list-area').style.display = 'block';
       var search = document.getElementById('hist-search');
       if (search) search.value = '';
-      renderHistory(_histRows);
+      filterHistory();
     })
     .catch(function () { showHistPin('Could not load — check your connection.'); });
 }
@@ -2095,7 +2106,7 @@ function renderHistory(rows) {
   if (!box) return;
   if (!rows || !rows.length) { box.innerHTML = '<div class="hist-empty">No quotes logged yet.</div>'; return; }
   box.innerHTML = rows.map(function (r) {
-    var veh = [r.year, r.make, r.model].filter(Boolean).join(' ');
+    var veh = [r.year, r.make, r.model].filter(Boolean).join(' ') || r.keyName || '';
     var who = [r.customer, r.phone].filter(Boolean).join(' · ');
     var total = (r.total || r.total === 0) ? ('$' + Number(r.total).toFixed(2)) : '';
     var metaBits = [fmtDate(r.timestamp), r.notes, r.keyName, r.sku, (r.po ? 'PO ' + r.po : '')].filter(Boolean);
@@ -2106,15 +2117,28 @@ function renderHistory(rows) {
       '</div>';
   }).join('');
 }
+function _histSorted(rows) {
+  var el = document.getElementById('hist-sort');
+  var mode = el ? el.value : 'new';
+  return rows.slice().sort(function (a, b) {
+    var ta = new Date(a.timestamp).getTime(); if (isNaN(ta)) ta = 0;
+    var tb = new Date(b.timestamp).getTime(); if (isNaN(tb)) tb = 0;
+    return mode === 'old' ? ta - tb : tb - ta;
+  });
+}
 function filterHistory() {
   var el = document.getElementById('hist-search');
   var q = el ? (el.value || '').toLowerCase().trim() : '';
-  if (!q) { renderHistory(_histRows); return; }
-  var f = _histRows.filter(function (r) {
-    return [r.customer, r.phone, r.year, r.make, r.model, r.keyName, r.sku, r.po, r.notes]
-      .filter(Boolean).join(' ').toLowerCase().indexOf(q) !== -1;
-  });
-  renderHistory(f);
+  var f = _histRows;
+  if (q) {
+    f = _histRows.filter(function (r) {
+      return [r.customer, r.phone, r.year, r.make, r.model, r.keyName, r.sku, r.po, r.notes]
+        .filter(Boolean).join(' ').toLowerCase().indexOf(q) !== -1;
+    });
+  }
+  var c = document.getElementById('hist-count');
+  if (c) c.textContent = f.length + (f.length === 1 ? ' record' : ' records');
+  renderHistory(_histSorted(f));
 }
 
 // ═══════════════════════════════════════════════════════════
