@@ -98,6 +98,8 @@
   .paid-stamp { background: var(--green-bg); border: 1px solid rgba(74,222,128,0.35); border-radius: 10px; padding: 12px 14px; margin-top: 14px; text-align: center; }
   .paid-stamp-t { font-family: 'Barlow Condensed', sans-serif; font-size: 1.5rem; font-weight: 900; letter-spacing: 4px; color: var(--green); }
   .paid-stamp-s { font-size: 0.8rem; color: var(--muted2); }
+  .log-toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(20px); background: #14331f; border: 1px solid rgba(74,222,128,0.4); color: var(--green); font-size: 0.85rem; font-weight: 600; padding: 9px 18px; border-radius: 999px; opacity: 0; pointer-events: none; transition: all 0.25s; z-index: 300; }
+  .log-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
@@ -190,10 +192,13 @@
 
 </div>
 
+<div class="log-toast" id="log-toast">✓ Saved to log</div>
+
 <script>
 // ── Constants — carried from command.html / ckc_quotes.html, do not fork ──
 var BOOKING_URL    = 'https://calendar.app.google/xqirB3Dpfmub5rAb6';
 var WORKER_INVOICE = 'https://ckc-blade-proxy.noloindie.workers.dev/invoice';
+var LOG_ENDPOINT   = 'https://ckc-blade-proxy.noloindie.workers.dev/log';
 var CKC_PHONE      = '(336) 510-9816';
 var CKC_TEL        = '+13365109816';
 var TAX_RATE       = 0.07;
@@ -308,6 +313,51 @@ function validate(d) {
   return '';
 }
 
+// ── Log to the same /log the quote engine writes to, so Quick Invoices
+// show up in the PIN-gated History viewer in ckc_quotes.html. Same schema
+// as sendLog() — no Worker change needed.
+var _logLastSig = '';
+function showLogSaved() {
+  var t = document.getElementById('log-toast');
+  if (!t) return;
+  t.classList.add('show');
+  clearTimeout(showLogSaved._t);
+  showLogSaved._t = setTimeout(function () { t.classList.remove('show'); }, 1500);
+}
+function logInvoice(d) {
+  var L = d.lines;
+  var notes = ['Quick Invoice'];
+  notes.push(d.paid ? ('PAID ' + d.method + (d.paidDate ? ' ' + d.paidDate : '')) : 'UNPAID');
+  if (d.co) notes.push(d.co);
+  if (d.addr) notes.push(d.addr);
+  var payload = {
+    quoteId:      d.inv || ('INV' + Date.now()),
+    customer:     (d.fname + ' ' + d.lname).trim(),
+    phone:        d.phone || '',
+    year: '', make: '', model: '',
+    keyType: '',
+    keyName:      L[0] ? L[0].desc : '',
+    fcc: '', sku: '',
+    po:           d.po || '',
+    rate: '',
+    stock:        'order',
+    keyPrice:     L[0] ? L[0].price : 0,
+    labor:        L[1] ? L[1].ext : 0,
+    subscription: L[2] ? L[2].ext : 0,
+    keyCode:      L[3] ? L[3].ext : 0,
+    total:        d.total || 0,
+    notes:        notes.join(' \u00b7 ')
+  };
+  var sig = JSON.stringify(payload);
+  if (sig === _logLastSig) return;
+  _logLastSig = sig;
+  fetch(LOG_ENDPOINT, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: sig
+  }).then(function (r) { return r.json(); })
+    .then(function (res) { if (res && res.ok) showLogSaved(); })
+    .catch(function () {});
+}
+
 // ── Customer-facing URL ──
 function buildURL(d) {
   var p = new URLSearchParams();
@@ -334,6 +384,7 @@ function createLink() {
   var v = validate(d);
   if (v) { showErr(v); return; }
   _locked = d;
+  logInvoice(d);
   var btn = document.getElementById('mk-btn');
   btn.disabled = true;
   btn.textContent = _locked.paid ? '🔒 Receipt locked — ready to send' : '🔒 Invoice locked — ready to send';
