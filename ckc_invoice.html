@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -161,11 +160,11 @@
       <div class="grid2">
         <div>
           <label class="qb-field-label">Paid by</label>
-          <select class="qb-input" id="f-method" onchange="recalc()">
+          <select class="qb-input" id="f-method" onchange="paidFieldChanged()">
             <option>Cash</option><option>Card</option><option>Check</option><option>Zelle</option><option>Other</option>
           </select>
         </div>
-        <div><label class="qb-field-label">Paid on</label><input class="qb-input" id="f-paiddate" type="date" oninput="recalc()"></div>
+        <div><label class="qb-field-label">Paid on</label><input class="qb-input" id="f-paiddate" type="date" oninput="paidFieldChanged()"></div>
       </div>
       <div class="qb-hint">Paid invoices drop the Pay Now button and send as a receipt instead.</div>
     </div>
@@ -279,9 +278,17 @@ function applyKeyTax() {
   recalc();
 }
 function clearTax() { document.getElementById('f-tax').value = ''; recalc(); }
+
+// Payment status does not change the money, so it must not drop the price lock.
+// It rebuilds it — the QR just refreshes into a receipt QR in place.
+function paidFieldChanged() {
+  var wasLocked = !!_locked;
+  recalc();
+  if (wasLocked) createLink();
+}
 function togglePaid() {
   document.getElementById('paid-fields').classList.toggle('on', document.getElementById('f-paid').checked);
-  recalc();
+  paidFieldChanged();
 }
 
 function showErr(m) {
