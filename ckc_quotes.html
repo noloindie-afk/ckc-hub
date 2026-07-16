@@ -745,7 +745,7 @@ const TIER_CLASS  = ['','t1','t2','t3','t4'];
 // ═══════════════════════════════════════════════════════════
 //  CUSTOMER-QUOTE LAYER
 // ═══════════════════════════════════════════════════════════
-const BOOKING_URL = 'https://calendar.app.google/xqirB3Dpfmub5rAb6';
+const BOOKING_URL = 'https://calendly.com/noloindie/mobile-key-programming';   // Calendly — replaced Google 07-2026
 const AUTOSMART_URL = 'itms-apps://itunes.apple.com/app/id1459540790';
 
 // Typical DEALER all-in price (key + programming + cut) the customer would
@@ -850,6 +850,7 @@ var _lookupHadVIN = false;
 
 // Values handed over from command.html (the picked key), if present in the URL.
 var _seedSku = '', _seedKey = '', _seedKeyType = '', _seedKeyTitle = '', _seedStock = '', _seedImg = '', _seedHandle = '', _seedPO = '', _seedPhone = '', _seedVIN = '', _seedKeyway = '', _seedJob = '';
+var _seedFname = '', _seedLname = '', _seedEmail = '';
 (function () {
   var p = new URLSearchParams(window.location.search);
   _seedSku = p.get('sku') || '';
@@ -860,6 +861,9 @@ var _seedSku = '', _seedKey = '', _seedKeyType = '', _seedKeyTitle = '', _seedSt
   _seedImg = p.get('img') || '';
   _seedPO = p.get('po') || '';
   _seedPhone = p.get('phone') || p.get('ph') || '';   // inherited callback # from the finder — enter once, never twice
+  _seedFname = p.get('fn') || '';   // customer identity captured in SCOPE — never retyped here
+  _seedLname = p.get('ln') || '';
+  _seedEmail = p.get('em') || '';
   _seedVIN = (p.get('vin') || '').toUpperCase();
   _seedKeyway = (p.get('keyway') || '').toUpperCase();
   _seedJob = (p.get('job') || p.get('svc') || '').toLowerCase();   // job type already answered on the finder — don't ask twice
@@ -1150,11 +1154,13 @@ function choosePath(path) {
           '<div style="font-weight:800;color:var(--gold);font-size:0.9rem;margin-bottom:2px;">Customer accepted — buyer details</div>' +
           '<div class="qb-hint" style="margin-bottom:12px;">Collected now that they are buying — not before.</div>' +
           '<div class="qb-row">' +
-            '<div><label class="qb-field-label">First name</label><input class="qb-input qb-plain" id="qb-fname" type="text" autocomplete="off" value="" oninput="syncCommit()"></div>' +
-            '<div><label class="qb-field-label">Last name</label><input class="qb-input qb-plain" id="qb-lname" type="text" autocomplete="off" value="" oninput="syncCommit()"></div>' +
+            '<div><label class="qb-field-label">First name</label><input class="qb-input qb-plain" id="qb-fname" type="text" autocomplete="off" value="' + (_seedFname || '') + '" oninput="syncCommit()"></div>' +
+            '<div><label class="qb-field-label">Last name</label><input class="qb-input qb-plain" id="qb-lname" type="text" autocomplete="off" value="' + (_seedLname || '') + '" oninput="syncCommit()"></div>' +
           '</div>' +
           '<label class="qb-field-label">Phone</label>' +
           '<input class="qb-input qb-plain" id="qb-phone" type="tel" inputmode="tel" autocomplete="off" value="' + (_seedPhone || '') + '" style="width:100%;margin-bottom:12px;" oninput="syncCommit()">' +
+          '<label class="qb-field-label">Email</label>' +
+          '<input class="qb-input qb-plain" id="qb-email" type="email" inputmode="email" autocomplete="off" placeholder="for scheduling + receipt" value="' + (_seedEmail || '') + '" style="width:100%;margin-bottom:12px;" oninput="syncCommit()">' +
           '<label class="qb-field-label">Vehicle location</label>' +
           '<input class="qb-input qb-plain" id="qb-loc" type="text" autocomplete="off" placeholder="address / cross-streets / lot" value="" style="width:100%;margin-bottom:12px;" oninput="syncCommit()">' +
           '<label class="qb-field-label">PO number (optional)</label>' +
@@ -1548,6 +1554,7 @@ function gatherQuote() {
   var sku = str('qb-sku');
   var po = str('qb-po');
   var customer = (str('qb-fname') + ' ' + str('qb-lname')).trim();
+  var email = str('qb-email');
   var phone = str('qb-phone');
   var acc = _ctx ? computeAccess(_ctx.make, _ctx.year, _ctx.tier, _chosenPath) : { subscriptionLabel:'Subscription / access', keyCodeLabel:'Key code' };
 
@@ -1564,7 +1571,7 @@ function gatherQuote() {
            subscription: subV, subscriptionLabel: acc.subscriptionLabel,
            keyCode: keyCodeV, keyCodeLabel: acc.keyCodeLabel,
            tax: tax, allin: allin, dealer: dealer, stock: _stockState,
-           sku: sku, po: po, customer: customer, phone: phone,
+           sku: sku, po: po, customer: customer, phone: phone, email: email,
            location: str('qb-loc'), idVerified: chk('qb-idck'), proof: chk('qb-proofck'),
            keyTitle: _seedKeyTitle, keyType: _seedKeyType, img: _seedImg };
 }
@@ -1783,6 +1790,14 @@ function makeScopeSheetPDF(){
 }
 
 
+function bookingLink(d) {
+  var p = new URLSearchParams();
+  if (d && d.customer) p.set('name', d.customer);
+  if (d && d.email) p.set('email', d.email);
+  if (d && d.phone) p.set('a1', d.phone);
+  var qs = p.toString();
+  return BOOKING_URL + (qs ? '?' + qs : '');
+}
 function buildCustomerQuoteHTML(d, showCTA) {
   var svcName = (d.path === 'aak') ? 'Add-a-Key (working key present)' : 'All Keys Lost';
   var img = d.img ? '<img src="' + d.img + '" alt="" class="cust-quote-img">' : '';
@@ -1811,7 +1826,7 @@ function buildCustomerQuoteHTML(d, showCTA) {
   var payLabel = (d.allin > 0) ? ('💳 Pay Now — $' + d.allin.toFixed(2)) : '💳 Pay Now';
   var cta = showCTA ? '<div class="cust-quote-cta">' +
       '<button id="cq-pay-btn" class="cust-quote-pay" onclick="payNow()">' + payLabel + '</button>' +
-      '<a class="cust-quote-book" href="' + BOOKING_URL + '">📅 Book My Appointment</a>' +
+      '<a class="cust-quote-book" href="' + bookingLink(d) + '">📅 Book My Appointment</a>' +
       '<a class="cust-quote-call" href="tel:+13365109816">📞 Call / Text (336) 510-9816</a>' +
     '</div>' : '';
   return '<div class="cust-quote">' +
@@ -1910,6 +1925,8 @@ function buildCustomerViewURL(d) {
   if (d.sku) p.set('sku', d.sku);
   if (d.po) p.set('po', d.po);
   if (d.phone) p.set('ph', d.phone);
+  if (d.customer) p.set('cu', d.customer);
+  if (d.email) p.set('em', d.email);
   if (d.keyType) p.set('kt', d.keyType);
   if (d.keyTitle) p.set('ktitle', d.keyTitle);
   if (d.img) p.set('img', d.img);
@@ -1937,6 +1954,7 @@ function renderCustomerFullView() {
             allin: (isNaN(labor) ? 0 : labor) + subV + keyCodeV + keyTotal + tax,
             dealer: parseFloat(q.get('dl')), stock: q.get('st') || 'instock',
             sku: q.get('sku') || '', po: q.get('po') || '', phone: q.get('ph') || '',
+            customer: q.get('cu') || '', email: q.get('em') || '',
             keyType: q.get('kt') || '', keyTitle: q.get('ktitle') || '', img: q.get('img') || '' };
   _cvData = d;
   var isMe = q.get('me') === '1';
