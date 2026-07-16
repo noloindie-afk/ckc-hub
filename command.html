@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -562,6 +561,17 @@ select.ckc-scope-in { appearance:none; -webkit-appearance:none; background-image
       <div id="ckc-scope-keywaywrap"></div>
 
       <div class="ckc-scope-q">
+        <label>Customer <span style="color:var(--ckc-text-muted);font-weight:500;">(optional to scope &mdash; carries to the quote + invoice)</span></label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <input class="ckc-scope-in" id="ckc-scope-fname" placeholder="First name" oninput="scopeField()">
+          <input class="ckc-scope-in" id="ckc-scope-lname" placeholder="Last name" oninput="scopeField()">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <input class="ckc-scope-in" id="ckc-scope-phone" type="tel" inputmode="tel" placeholder="Callback number" oninput="scopeField()">
+          <input class="ckc-scope-in" id="ckc-scope-email" type="email" inputmode="email" placeholder="Email" oninput="scopeField()">
+        </div>
+      </div>
+      <div class="ckc-scope-q">
         <label>1 &middot; Ignition <span class="req">*</span></label>
         <div class="ckc-btn-row" data-grp="ign">
           <button class="ckc-pill" onclick="scopePick('ign','keyed',this)">Keyed</button>
@@ -619,7 +629,7 @@ const SCRIPT_URL           = 'https://script.google.com/macros/s/AKfycbxDw7dtdoh
 const BLADE_PROXY_URL      = 'https://ckc-blade-proxy.noloindie.workers.dev';
 const PROGRAMMING_FEE      = 75;
 const SHOPIFY_DOMAIN       = 'carolina-key-cutters.myshopify.com';
-const BOOKING_URL          = 'https://calendar.app.google/xqirB3Dpfmub5rAb6';
+const BOOKING_URL          = 'https://calendly.com/noloindie/mobile-key-programming';   // Calendly — replaced Google appointment schedule 07-2026 (prefill; Google had none)
 const PROGRAMMING_VARIANT  = '45908511228101';
 const INTERNAL_TOOL_URL    = 'https://carolinakeycutters.com/tools';
 const CKC_VERSION          = 'v8.92-command';
@@ -2252,7 +2262,7 @@ function initResizeObserver() {}
 // shopping area. v1.1
 // ═══════════════════════════════════════════════════════════════════════
 var scopeState = { year:'', make:'', model:'', ign:'', job:'', urg:'',
-  name:'', phone:'', loc:'', pid:'', proof:'', vin:'', po:'',
+  name:'', fname:'', lname:'', phone:'', email:'', loc:'', pid:'', proof:'', vin:'', po:'',
   matches:[], keyways:[], selectedSku:'', locked:false, _verdict:'' };
 
 function scopeMatchYMM(year, make, model) {
@@ -2318,8 +2328,15 @@ function scopePick(grp, val, el) {
 }
 
 function scopeReadFields(){
-  // Personal/commit fields (name, phone, location, ID, proof, PO) are no longer
-  // collected in the preliminary scope — they belong at checkout on the quote page.
+  // Customer identity IS captured in scope (ruled 07-2026, reversing the earlier
+  // "collect at checkout" rule). It rides the handoff so nothing is retyped.
+  // Still optional — it never gates Run SCOPE.
+  var g = function(id){ var e=document.getElementById(id); return e ? (e.value||'').trim() : ''; };
+  scopeState.fname = g('ckc-scope-fname');
+  scopeState.lname = g('ckc-scope-lname');
+  scopeState.name  = (scopeState.fname + ' ' + scopeState.lname).trim();
+  scopeState.phone = g('ckc-scope-phone');
+  scopeState.email = g('ckc-scope-email');
   scopeCheckReady();
 }
 function scopeField(){
@@ -2764,6 +2781,9 @@ function scopeCheckout() {
     img:     (key && key.image && key.image.indexOf('http')===0) ? key.image : '',
     po:      scopeState.po    || '',
     job:     scopeState.job==='akl' ? 'akl' : (scopeState.job==='addkey' ? 'aak' : ''),
+    fn:      scopeState.fname || '',
+    ln:      scopeState.lname || '',
+    em:      scopeState.email || '',
     phone:   scopeState.phone || (typeof _customerPhone!=='undefined'?_customerPhone:'') || '',
     vin:     scopeState.vin   || (typeof _customerVIN!=='undefined'?_customerVIN:'')   || '',
     keyway:  (key && key.keyway && key.keyway.toUpperCase()!=='N/A' && key.keyway.toUpperCase()!=='UNIVERSAL') ? key.keyway : ''
