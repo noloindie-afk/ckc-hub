@@ -100,6 +100,7 @@
   .paid-stamp { background: var(--green-bg); border: 1px solid rgba(74,222,128,0.35); border-radius: 10px; padding: 12px 14px; margin-top: 14px; text-align: center; }
   .paid-stamp-t { font-family: 'Barlow Condensed', sans-serif; font-size: 1.5rem; font-weight: 900; letter-spacing: 4px; color: var(--green); }
   .paid-stamp-s { font-size: 0.8rem; color: var(--muted2); }
+  .bal-note { background: var(--amber-bg); border: 1px solid rgba(245,158,11,0.32); border-radius: 9px; padding: 10px 14px; margin-top: 10px; font-size: 0.84rem; font-weight: 600; color: var(--amber); text-align: center; }
   .log-toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(20px); background: #14331f; border: 1px solid rgba(74,222,128,0.4); color: var(--green); font-size: 0.85rem; font-weight: 600; padding: 9px 18px; border-radius: 999px; opacity: 0; pointer-events: none; transition: all 0.25s; z-index: 300; }
   .log-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 </style>
@@ -175,6 +176,14 @@
         </div>
         <div><label class="qb-field-label">Paid on</label><input class="qb-input" id="f-paiddate" type="date" oninput="paidFieldChanged()"></div>
       </div>
+      <label class="paid-toggle" style="margin-top:12px;">
+        <input type="checkbox" id="f-bal" checked onchange="paidFieldChanged()">
+        <span class="paid-toggle-t">Balance due for programming</span>
+      </label>
+      <div class="grid1" style="margin-top:10px;">
+        <label class="qb-field-label">Balance amount <span class="opt">OPTIONAL</span></label>
+        <div class="qb-input-wrap"><span class="qb-prefix">$</span><input class="qb-input money" id="f-bal-amt" type="number" inputmode="decimal" min="0" step="0.01" placeholder="blank = no dollar figure shown" oninput="paidFieldChanged()"></div>
+      </div>
       <div class="qb-hint">Paid invoices drop the Pay Now button and send as a receipt instead.</div>
     </div>
   </div>
@@ -190,6 +199,7 @@
     <div class="qr-label">📱 Scan to open it on your phone, or use the buttons below</div>
     <div class="qr-box" id="qr-box"></div>
     <button class="send-quote-btn" style="margin-top:14px;" onclick="textToCustomer()">📲 Text this to the customer</button>
+    <button class="ghost-btn" id="bal-text-btn" style="display:none;" onclick="textBalance()">📲 Text the balance invoice</button>
     <button class="ghost-btn" onclick="copyLink()" id="copy-btn">🔗 Copy link</button>
     <button class="ghost-btn" onclick="openCustomerView()">👁 Open customer view</button>
   </div>
@@ -217,6 +227,7 @@ var PAGE_URL = (function () {
 
 var LINES = 4;
 var _locked = null;
+var _balanced = null;
 
 function esc(s) {
   return String(s == null ? '' : s)
@@ -260,7 +271,8 @@ function gather() {
     city: str('f-city'), state: str('f-state').toUpperCase(), zip: str('f-zip'), phone: str('f-phone'),
     co: str('f-co'), po: str('f-po'), inv: str('f-inv'), date: str('f-date'),
     lines: lines, sub: sub, tax: tax, total: sub + tax,
-    paid: paid, method: paid ? str('f-method') : '', paidDate: paid ? str('f-paiddate') : ''
+    paid: paid, method: paid ? str('f-method') : '', paidDate: paid ? str('f-paiddate') : '',
+    bal: paid && document.getElementById('f-bal').checked, balAmt: num('f-bal-amt')
   };
 }
 
@@ -284,6 +296,7 @@ function recalc() {
   // Any change invalidates a live lock.
   if (_locked) {
     _locked = null;
+    _balanced = null;
     document.getElementById('qr-wrap').classList.remove('on');
     var b = document.getElementById('mk-btn');
     b.disabled = false;
@@ -334,7 +347,7 @@ function validate(d) {
 // ── Log to the same /log the quote engine writes to, so Quick Invoices
 // show up in the PIN-gated History viewer in ckc_quotes.html. Same schema
 // as sendLog() — no Worker change needed.
-var _logLastSig = '';
+var _logSigs = {};
 function showLogSaved() {
   var t = document.getElementById('log-toast');
   if (!t) return;
@@ -342,10 +355,12 @@ function showLogSaved() {
   clearTimeout(showLogSaved._t);
   showLogSaved._t = setTimeout(function () { t.classList.remove('show'); }, 1500);
 }
-function logInvoice(d) {
+function logInvoice(d, opts) {
+  opts = opts || {};
   var L = d.lines;
-  var notes = ['Quick Invoice'];
+  var notes = [opts.tag || 'Quick Invoice'];
   notes.push(d.paid ? ('PAID ' + d.method + (d.paidDate ? ' ' + d.paidDate : '')) : 'UNPAID');
+  if (d.paid && d.bal) notes.push('Balance due' + (d.balAmt > 0 ? ' ' + money(d.balAmt) : '') + ' \u2014 programming');
   if (d.co) notes.push(d.co);
   if (fullAddr(d)) notes.push(fullAddr(d));
   var payload = {
@@ -364,16 +379,34 @@ function logInvoice(d) {
     subscription: L[2] ? L[2].ext : 0,
     keyCode:      L[3] ? L[3].ext : 0,
     total:        d.total || 0,
-    notes:        notes.join(' \u00b7 ')
+    notes:        ''
   };
+  // The whole invoice is re-openable from this URL — no re-entry in the field.
+  notes.push(buildURL(d) + '&me=1');
+  payload.notes = notes.join(' \u00b7 ');
+  var key = opts.tag || 'invoice';
   var sig = JSON.stringify(payload);
-  if (sig === _logLastSig) return;
-  _logLastSig = sig;
+  if (_logSigs[key] === sig) return;
+  _logSigs[key] = sig;
   fetch(LOG_ENDPOINT, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: sig
   }).then(function (r) { return r.json(); })
     .then(function (res) { if (res && res.ok) showLogSaved(); })
     .catch(function () {});
+}
+
+// Invoice B — the programming balance, built from A at lock time. Same
+// customer, same PO, no tax (labor is not key tax), unpaid so Pay Now works.
+function balanceInvoiceData(d) {
+  if (!d.paid || !d.bal || !(d.balAmt > 0)) return null;
+  return {
+    fname: d.fname, lname: d.lname, addr: d.addr, city: d.city, state: d.state,
+    zip: d.zip, phone: d.phone, co: d.co, po: d.po,
+    inv: (d.inv || 'INV') + '-B', date: d.date,
+    lines: [{ desc: 'Mobile programming \u2014 balance due', qty: 1, price: d.balAmt, ext: d.balAmt }],
+    sub: d.balAmt, tax: 0, total: d.balAmt,
+    paid: false, method: '', paidDate: '', bal: false, balAmt: 0
+  };
 }
 
 // ── Customer-facing URL ──
@@ -393,7 +426,10 @@ function buildURL(d) {
     p.set('p' + n, d.lines[i].price);
   }
   if (d.tax > 0) p.set('tx', d.tax);
-  if (d.paid) { p.set('paid', '1'); p.set('pm', d.method); p.set('pdt', d.paidDate); }
+  if (d.paid) {
+    p.set('paid', '1'); p.set('pm', d.method); p.set('pdt', d.paidDate);
+    if (d.bal) { p.set('bal', '1'); if (d.balAmt > 0) p.set('ba', d.balAmt); }
+  }
   return PAGE_URL + '?' + p.toString();
 }
 
@@ -404,6 +440,13 @@ function createLink() {
   if (v) { showErr(v); return; }
   _locked = d;
   logInvoice(d);
+  _balanced = balanceInvoiceData(d);
+  if (_balanced) logInvoice(_balanced, { tag: 'PROGRAMMING BALANCE' });
+  var bb = document.getElementById('bal-text-btn');
+  if (bb) {
+    bb.style.display = _balanced ? 'block' : 'none';
+    if (_balanced) bb.textContent = '\uD83D\uDCF2 Text the balance invoice \u2014 ' + money(_balanced.total);
+  }
   var btn = document.getElementById('mk-btn');
   btn.disabled = true;
   btn.textContent = _locked.paid ? '🔒 Receipt locked — ready to send' : '🔒 Invoice locked — ready to send';
@@ -437,6 +480,12 @@ function textToCustomer() {
   location.href = 'sms:' + to + (to ? '&' : '') + 'body=' + encodeURIComponent(smsBody(_locked));
 }
 
+function textBalance() {
+  if (!_balanced) return;
+  var to = _balanced.phone.replace(/[^\d+]/g, '');
+  location.href = 'sms:' + to + (to ? '&' : '') + 'body=' + encodeURIComponent(smsBody(_balanced));
+}
+
 function copyLink() {
   if (!_locked) return;
   var url = buildURL(_locked);
@@ -459,6 +508,12 @@ function openCustomerView() {
 }
 
 // ── The invoice card (used for preview and for the customer view) ──
+function balNote(d) {
+  if (!d.paid || !d.bal) return '';
+  var amt = d.balAmt > 0 ? ' of ' + money(d.balAmt) : '';
+  return '<div class="bal-note">Remaining balance' + amt +
+         ' for programming is due after the job is complete.</div>';
+}
 function buildInvoiceHTML(d, showCTA) {
   var name = (d.fname + ' ' + d.lname).trim();
   var bill = '<div class="billto">' +
@@ -490,6 +545,8 @@ function buildInvoiceHTML(d, showCTA) {
       '<div class="paid-stamp-s">' + esc(d.method || '') + (d.paidDate ? ' &middot; ' + esc(d.paidDate) : '') + ' &middot; Thank you</div>' +
     '</div>' : '';
 
+  var note = balNote(d);
+
   var cta = '';
   if (showCTA) {
     var pay = d.paid ? '' :
@@ -507,7 +564,7 @@ function buildInvoiceHTML(d, showCTA) {
     '</div>' +
     bill +
     '<div class="cust-quote-lines">' + lines + '</div>' +
-    poLine + stamp + cta +
+    poLine + stamp + note + cta +
   '</div>';
 }
 
@@ -594,7 +651,8 @@ function renderCustomerView() {
     addr: q.get('ad') || '', city: q.get('ct') || '', state: q.get('st') || '', zip: q.get('zp') || '',
     co: q.get('co') || '', po: q.get('po') || '', inv: q.get('inv') || '', date: q.get('dt') || '',
     lines: lines, sub: sub, tax: tax, total: sub + tax,
-    paid: q.get('paid') === '1', method: q.get('pm') || '', paidDate: q.get('pdt') || ''
+    paid: q.get('paid') === '1', method: q.get('pm') || '', paidDate: q.get('pdt') || '',
+    bal: q.get('bal') === '1', balAmt: (parseFloat(q.get('ba')) > 0 ? parseFloat(q.get('ba')) : 0)
   };
   _cvData = d;
 
