@@ -36,6 +36,7 @@
 
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
   .grid1 { margin-bottom: 12px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 76px 108px; gap: 10px; margin-bottom: 12px; }
   .opt { font-size: 0.66rem; color: #4a4a4a; letter-spacing: 1px; }
 
   .li-row { display: grid; grid-template-columns: 1fr 62px 96px 80px; gap: 8px; align-items: end; margin-bottom: 9px; }
@@ -44,6 +45,7 @@
   @media (max-width: 640px) {
     .li-row { grid-template-columns: 1fr 54px 84px 68px; gap: 6px; }
     .grid2 { grid-template-columns: 1fr; }
+    .grid3 { grid-template-columns: 1fr 64px 90px; gap: 6px; }
   }
 
   .allin-card { background: var(--gold-dim); border: 1px solid rgba(201,162,39,0.35); border-radius: 12px; padding: 13px 18px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
@@ -122,7 +124,12 @@
       <div><label class="qb-field-label">First name</label><input class="qb-input" id="f-fname" type="text" autocomplete="off" placeholder="John" oninput="recalc()"></div>
       <div><label class="qb-field-label">Last name</label><input class="qb-input" id="f-lname" type="text" autocomplete="off" placeholder="Smith" oninput="recalc()"></div>
     </div>
-    <div class="grid1"><label class="qb-field-label">Address</label><input class="qb-input" id="f-addr" type="text" autocomplete="off" placeholder="123 Main St, Winston-Salem, NC 27101" oninput="recalc()"></div>
+    <div class="grid1"><label class="qb-field-label">Street address</label><input class="qb-input" id="f-addr" type="text" autocomplete="off" placeholder="123 Main St" oninput="recalc()"></div>
+    <div class="grid3">
+      <div><label class="qb-field-label">City</label><input class="qb-input" id="f-city" type="text" autocomplete="off" placeholder="Winston-Salem" oninput="recalc()"></div>
+      <div><label class="qb-field-label">State</label><input class="qb-input" id="f-state" type="text" autocomplete="off" maxlength="2" placeholder="NC" style="text-transform:uppercase;" oninput="recalc()"></div>
+      <div><label class="qb-field-label">ZIP</label><input class="qb-input" id="f-zip" type="text" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="27101" oninput="recalc()"></div>
+    </div>
     <div class="grid1"><label class="qb-field-label">Telephone</label><input class="qb-input" id="f-phone" type="tel" inputmode="tel" autocomplete="off" placeholder="336-555-0100" oninput="recalc()"></div>
     <div class="grid2">
       <div><label class="qb-field-label">Company <span class="opt">OPTIONAL</span></label><input class="qb-input" id="f-co" type="text" autocomplete="off" placeholder="dealer / fleet name" oninput="recalc()"></div>
@@ -249,12 +256,20 @@ function gather() {
   var tax = num('f-tax');
   var paid = document.getElementById('f-paid').checked;
   return {
-    fname: str('f-fname'), lname: str('f-lname'), addr: str('f-addr'), phone: str('f-phone'),
+    fname: str('f-fname'), lname: str('f-lname'), addr: str('f-addr'),
+    city: str('f-city'), state: str('f-state').toUpperCase(), zip: str('f-zip'), phone: str('f-phone'),
     co: str('f-co'), po: str('f-po'), inv: str('f-inv'), date: str('f-date'),
     lines: lines, sub: sub, tax: tax, total: sub + tax,
     paid: paid, method: paid ? str('f-method') : '', paidDate: paid ? str('f-paiddate') : ''
   };
 }
+
+// "Winston-Salem, NC 27101"
+function cityLine(d) {
+  var csz = [d.city, d.state].filter(Boolean).join(', ');
+  return (csz + ' ' + (d.zip || '')).trim();
+}
+function fullAddr(d) { return [d.addr, cityLine(d)].filter(Boolean).join(', '); }
 
 function recalc() {
   for (var i = 1; i <= LINES; i++) {
@@ -306,7 +321,10 @@ function hideErr() { document.getElementById('err').style.display = 'none'; }
 function validate(d) {
   if (!d.fname) return 'First name is required.';
   if (!d.lname) return 'Last name is required.';
-  if (!d.addr)  return 'Address is required.';
+  if (!d.addr)  return 'Street address is required.';
+  if (!d.city)  return 'City is required.';
+  if (!d.state) return 'State is required.';
+  if (!d.zip)   return 'ZIP code is required.';
   if (!d.phone) return 'Telephone is required.';
   if (!d.lines.length) return 'Add at least one line item with a description and a price.';
   if (d.paid && !d.paidDate) return 'Pick the date this invoice was paid.';
@@ -329,7 +347,7 @@ function logInvoice(d) {
   var notes = ['Quick Invoice'];
   notes.push(d.paid ? ('PAID ' + d.method + (d.paidDate ? ' ' + d.paidDate : '')) : 'UNPAID');
   if (d.co) notes.push(d.co);
-  if (d.addr) notes.push(d.addr);
+  if (fullAddr(d)) notes.push(fullAddr(d));
   var payload = {
     quoteId:      d.inv || ('INV' + Date.now()),
     customer:     (d.fname + ' ' + d.lname).trim(),
@@ -362,7 +380,8 @@ function logInvoice(d) {
 function buildURL(d) {
   var p = new URLSearchParams();
   p.set('view', 'inv');
-  p.set('fn', d.fname); p.set('ln', d.lname); p.set('ad', d.addr); p.set('ph', d.phone);
+  p.set('fn', d.fname); p.set('ln', d.lname); p.set('ph', d.phone);
+  p.set('ad', d.addr); p.set('ct', d.city); p.set('st', d.state); p.set('zp', d.zip);
   if (d.co) p.set('co', d.co);
   if (d.po) p.set('po', d.po);
   if (d.inv) p.set('inv', d.inv);
@@ -446,6 +465,7 @@ function buildInvoiceHTML(d, showCTA) {
     (name ? '<b>' + esc(name) + '</b><br>' : '') +
     (d.co ? esc(d.co) + '<br>' : '') +
     (d.addr ? esc(d.addr) + '<br>' : '') +
+    (cityLine(d) ? esc(cityLine(d)) + '<br>' : '') +
     (d.phone ? esc(d.phone) : '') +
   '</div>';
 
@@ -570,7 +590,8 @@ function renderCustomerView() {
   if (isNaN(tax) || tax < 0) tax = 0;
 
   var d = {
-    fname: q.get('fn') || '', lname: q.get('ln') || '', addr: q.get('ad') || '', phone: q.get('ph') || '',
+    fname: q.get('fn') || '', lname: q.get('ln') || '', phone: q.get('ph') || '',
+    addr: q.get('ad') || '', city: q.get('ct') || '', state: q.get('st') || '', zip: q.get('zp') || '',
     co: q.get('co') || '', po: q.get('po') || '', inv: q.get('inv') || '', date: q.get('dt') || '',
     lines: lines, sub: sub, tax: tax, total: sub + tax,
     paid: q.get('paid') === '1', method: q.get('pm') || '', paidDate: q.get('pdt') || ''
@@ -603,6 +624,7 @@ function textFromCustomerView() {
   function pad(n) { return (n < 10 ? '0' : '') + n; }
   var ymd = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
   document.getElementById('f-date').value = ymd;
+  document.getElementById('f-state').value = 'NC';
   document.getElementById('f-paiddate').value = ymd;
   document.getElementById('f-inv').value = 'INV-' +
     String(now.getFullYear()).slice(2) + pad(now.getMonth() + 1) + pad(now.getDate()) + '-' +
