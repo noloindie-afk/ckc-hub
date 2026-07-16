@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -67,6 +68,13 @@
   .paid-fields.on { display: block; }
 
   .qb-hint { font-size: 0.78rem; color: var(--muted); margin-top: 8px; }
+  .tpl-box { width: 100%; background: #1e1e1e; border: 2px solid var(--border); border-radius: 10px; padding: 11px 13px; color: var(--text); font-family: 'Barlow', sans-serif; font-size: 0.9rem; line-height: 1.45; outline: none; resize: vertical; min-height: 84px; }
+  .tpl-box:focus { border-color: var(--gold); }
+  .tpl-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; gap: 8px; }
+  .tpl-reset { background: none; border: none; color: var(--muted); font-family: 'Barlow', sans-serif; font-size: 0.72rem; text-decoration: underline; cursor: pointer; padding: 0; }
+  .tpl-reset:hover { color: var(--gold-light); }
+  .tpl-tok { font-family: 'Barlow Semi Condensed', monospace; font-size: 0.74rem; color: var(--muted2); background: #141414; border: 1px solid var(--border); border-radius: 8px; padding: 8px 11px; margin-bottom: 12px; line-height: 1.7; }
+  .tpl-tok b { color: var(--gold-light); font-family: 'Barlow Semi Condensed', monospace; }
   .err-bar { background: var(--red-bg); border: 1px solid rgba(248,113,113,0.25); border-radius: 8px; padding: 10px 16px; font-size: 0.88rem; color: var(--red); margin-bottom: 14px; display: none; }
   .qb-preview-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.68rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin: 18px 0 8px; }
 
@@ -202,6 +210,22 @@
     <button class="ghost-btn" id="bal-text-btn" style="display:none;" onclick="textBalance()">📲 Text the balance invoice</button>
     <button class="ghost-btn" onclick="copyLink()" id="copy-btn">🔗 Copy link</button>
     <button class="ghost-btn" onclick="openCustomerView()">👁 Open customer view</button>
+  </div>
+
+  <div class="search-card" style="margin-top:16px;">
+    <span class="field-label">Text messages</span>
+    <div class="tpl-tok">
+      <b>{first}</b> first name &middot; <b>{last}</b> last name &middot; <b>{name}</b> full name<br>
+      <b>{amount}</b> that invoice's total &middot; <b>{link}</b> the invoice link<br>
+      <b>{inv}</b> invoice # &middot; <b>{po}</b> PO # &middot; <b>{co}</b> company
+    </div>
+    <div class="tpl-head"><label class="qb-field-label" style="margin:0;">Unpaid invoice</label><button class="tpl-reset" onclick="resetTpl('inv')">reset</button></div>
+    <textarea class="tpl-box" id="tpl-inv" oninput="saveTpl('inv')" style="margin-bottom:12px;"></textarea>
+    <div class="tpl-head"><label class="qb-field-label" style="margin:0;">Paid receipt</label><button class="tpl-reset" onclick="resetTpl('rcpt')">reset</button></div>
+    <textarea class="tpl-box" id="tpl-rcpt" oninput="saveTpl('rcpt')" style="margin-bottom:12px;"></textarea>
+    <div class="tpl-head"><label class="qb-field-label" style="margin:0;">Balance invoice — key has arrived</label><button class="tpl-reset" onclick="resetTpl('bal')">reset</button></div>
+    <textarea class="tpl-box" id="tpl-bal" oninput="saveTpl('bal')"></textarea>
+    <div class="qb-hint">Saved on this device as you type. Tokens fill themselves in.</div>
   </div>
 
   <div class="qb-preview-label">📱 Preview — what the customer sees</div>
@@ -464,14 +488,60 @@ function createLink() {
   }
 }
 
+var TPL_DEFAULTS = {
+  inv:  'Hi {first} \u2014 here is your invoice from Carolina Key Cutters.\n\nTotal: {amount}\n\nView and pay here: {link}',
+  rcpt: 'Hi {first} \u2014 thanks very much. Your receipt from Carolina Key Cutters is here: {link}\n\nPaid: {amount}',
+  bal:  'Hi {first} \u2014 your key has arrived. Here is your invoice for the programming balance of {amount}, and a link to pick a time that works for you:\n\n{link}'
+};
+function tplStore(k, v) {
+  try {
+    if (v === undefined) return localStorage.getItem('ckc_sms_' + k);
+    localStorage.setItem('ckc_sms_' + k, v);
+  } catch (e) { /* private mode / blocked — fall back to defaults */ }
+  return null;
+}
+function readTpl(k) {
+  var el = document.getElementById('tpl-' + k);
+  if (el && el.value.trim()) return el.value;
+  var s = tplStore(k);
+  return (s && s.trim()) ? s : TPL_DEFAULTS[k];
+}
+function saveTpl(k) {
+  var el = document.getElementById('tpl-' + k);
+  if (el) tplStore(k, el.value);
+}
+function resetTpl(k) {
+  var el = document.getElementById('tpl-' + k);
+  if (el) el.value = TPL_DEFAULTS[k];
+  tplStore(k, TPL_DEFAULTS[k]);
+}
+function loadTpls() {
+  ['inv', 'rcpt', 'bal'].forEach(function (k) {
+    var el = document.getElementById('tpl-' + k);
+    if (!el) return;
+    var s = tplStore(k);
+    el.value = (s && s.trim()) ? s : TPL_DEFAULTS[k];
+  });
+}
+
+// Invoice B always carries the '-B' suffix, so it picks its own template.
+function isBalanceInv(d) { return /-B$/.test(d.inv || ''); }
+
 function smsBody(d) {
-  var what = d.paid ? 'receipt' : 'invoice';
-  var L = [];
-  L.push('Carolina Key Cutters — ' + what + (d.inv ? ' ' + d.inv : ''));
-  L.push('Total: ' + money(d.total) + (d.paid ? ' — PAID (' + d.method + ')' : ''));
-  L.push(d.paid ? 'Your receipt: ' : 'View and pay: ');
-  L.push(buildURL(d));
-  return L.join('\n');
+  var tpl = readTpl(isBalanceInv(d) ? 'bal' : (d.paid ? 'rcpt' : 'inv'));
+  var map = {
+    '{first}':  d.fname || '',
+    '{last}':   d.lname || '',
+    '{name}':   (d.fname + ' ' + d.lname).trim(),
+    '{amount}': money(d.total),
+    '{link}':   buildURL(d),
+    '{inv}':    d.inv || '',
+    '{po}':     d.po || '',
+    '{co}':     d.co || ''
+  };
+  var out = tpl;
+  Object.keys(map).forEach(function (k) { out = out.split(k).join(map[k]); });
+  return out;
 }
 
 function textToCustomer() {
@@ -687,6 +757,7 @@ function textFromCustomerView() {
   document.getElementById('f-inv').value = 'INV-' +
     String(now.getFullYear()).slice(2) + pad(now.getMonth() + 1) + pad(now.getDate()) + '-' +
     pad(now.getHours()) + pad(now.getMinutes());
+  loadTpls();
   recalc();
 })();
 </script>
