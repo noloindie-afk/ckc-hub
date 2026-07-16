@@ -251,6 +251,8 @@
   .hist-sort-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
   .hist-sort { flex: 1; background: #1e1e1e; border: 2px solid var(--border); border-radius: 10px; padding: 9px 13px; color: var(--text); font-family: 'Barlow', sans-serif; font-size: 0.88rem; outline: none; cursor: pointer; }
   .hist-sort:focus { border-color: var(--gold); }
+  .hist-open-link { display: inline-block; margin-top: 8px; background: rgba(201,162,39,0.08); border: 1px solid rgba(201,162,39,0.32); border-radius: 8px; padding: 7px 13px; color: var(--gold-light); font-family: 'Barlow', sans-serif; font-size: 0.8rem; font-weight: 700; text-decoration: none; }
+  .hist-open-link:hover { background: rgba(201,162,39,0.16); }
   .hist-count { font-family: 'Barlow Condensed', sans-serif; font-size: 0.72rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
   .hist-rows { display: flex; flex-direction: column; gap: 9px; max-height: 60vh; overflow-y: auto; }
   .hist-row { background: #111; border: 1px solid var(--border); border-radius: 10px; padding: 11px 14px; }
@@ -2109,11 +2111,21 @@ function renderHistory(rows) {
     var veh = [r.year, r.make, r.model].filter(Boolean).join(' ') || r.keyName || '';
     var who = [r.customer, r.phone].filter(Boolean).join(' · ');
     var total = (r.total || r.total === 0) ? ('$' + Number(r.total).toFixed(2)) : '';
-    var metaBits = [fmtDate(r.timestamp), r.notes, r.keyName, r.sku, (r.po ? 'PO ' + r.po : '')].filter(Boolean);
+    // Quick Invoices log their own re-openable URL into notes. Pull it out,
+    // show it as a button, and keep the rest of the note readable.
+    var noteTxt = r.notes || '';
+    var m = noteTxt.match(/https?:\/\/\S+/);
+    var link = m ? m[0] : '';
+    if (link) noteTxt = noteTxt.replace(link, '').replace(/\s*\u00b7\s*$/, '').trim();
+    var openBtn = link
+      ? '<a class="hist-open-link" href="' + esc(link) + '" target="_blank" rel="noopener">\u2197 Open \u2014 ready to text</a>'
+      : '';
+    var metaBits = [fmtDate(r.timestamp), noteTxt, r.keyName, r.sku, (r.po ? 'PO ' + r.po : '')].filter(Boolean);
     return '<div class="hist-row">' +
         '<div class="hist-row-top"><span class="hist-veh">' + (esc(veh) || '—') + '</span><span class="hist-total">' + esc(total) + '</span></div>' +
         (who ? '<div class="hist-who">' + esc(who) + '</div>' : '') +
         '<div class="hist-meta">' + metaBits.map(esc).join(' · ') + '</div>' +
+        openBtn +
       '</div>';
   }).join('');
 }
