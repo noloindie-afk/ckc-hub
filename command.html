@@ -1020,6 +1020,20 @@ function renderVINConflict(type, group) {
   if (_getFCCConflictGroup(group).length > 1)   kinds.push('remote / FCC versions');
   if (detectChipConflict(group))                kinds.push('transponder chips');
   var kindStr = kinds.length ? kinds.join(' and ') : 'key versions';
+  var _rks = rksConflictSync(lastSearchParams.year, lastSearchParams.make, lastSearchParams.model);
+  var _ckcHas = kinds.length > 0;
+  function _srcRow(label, on, txt, unknown){
+    var col = on ? '#f59e0b' : (unknown ? '#9a9a9a' : '#4ade80');
+    var ic  = on ? '&#9888;' : (unknown ? '&#8230;' : '&#10003;');
+    return '<div style="display:flex;justify-content:space-between;gap:10px;font-size:0.85rem;padding:4px 0;border-top:1px solid rgba(255,255,255,0.06);">' +
+             '<span style="color:var(--ckc-text-muted);">' + label + '</span>' +
+             '<span style="color:' + col + ';font-weight:700;text-align:right;">' + ic + ' ' + txt + '</span></div>';
+  }
+  var _ckcTxt = _ckcHas ? ('Conflict \u2014 ' + kindStr) : 'One version on your shelf';
+  var _rksTxt = _rks.state === 'conflict' ? ('Conflict \u2014 ' + _rks.fccs.length + ' remotes')
+              : (_rks.state === 'clear' ? 'One remote' : "Couldn't check \u2014 verify manually");
+  var _srcRows = _srcRow('Your inventory (CKC)', _ckcHas, _ckcTxt, false) +
+                 _srcRow('Royal Key Supply', _rks.state === 'conflict', _rksTxt, _rks.state === 'unknown');
   var vinPre  = (_customerVIN && _customerVIN.length === 17) ? _customerVIN : '';
   var phPre   = _customerPhone || '';
   var html =
@@ -1027,7 +1041,8 @@ function renderVINConflict(type, group) {
       '<div class="ckc-screen-header"><button class="ckc-back-btn-wiz" onclick="goBack()">&#8592; Back</button><div class="ckc-screen-title">VIN needed</div></div>' +
       '<div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.4);border-radius:12px;padding:16px;margin-bottom:16px;">' +
         '<div style="font-weight:800;color:#f59e0b;font-size:0.95rem;margin-bottom:6px;">&#9888; This one came more than one way</div>' +
-        '<div style="font-size:0.9rem;color:var(--ckc-text);line-height:1.55;">The <strong>' + ymm + '</strong> shipped with different <strong>' + kindStr + '</strong>. There\'s no safe way to pick the exact key from year / make / model alone &mdash; pull the VIN and you\'ll never guess.</div>' +
+        _srcRows +
+        '<div style="font-size:0.88rem;color:var(--ckc-text);line-height:1.55;margin-top:10px;">There\'s no safe way to pick the exact key from year / make / model alone &mdash; pull the VIN and you\'ll never guess.</div>' +
       '</div>' +
       '<label style="display:block;font-size:0.72rem;font-weight:700;color:var(--ckc-text-muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;">Customer VIN &middot; required</label>' +
       '<input type="text" id="ckc-vinx-inp" maxlength="17" placeholder="17-DIGIT VIN" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" value="' + vinPre + '" oninput="onVinxInput(this)" onkeydown="if(event.key===\'Enter\')vinxContinue()" style="width:100%;box-sizing:border-box;background:#1e1e1e;border:2px solid var(--ckc-border);border-radius:10px;padding:12px 14px;font-family:monospace;font-size:1.1rem;letter-spacing:2px;color:var(--ckc-text);text-transform:uppercase;margin-bottom:14px;outline:none;">' +
@@ -1312,12 +1327,85 @@ function onKeyNotShown() {
   showScreen(2);
 }
 
+// ═══ Royal Key Supply conflict check ═══════════════════════════════════════
+// Pulls RKS's full catalog once (cached for the day), then checks any vehicle
+// against RKS's OWN fitment tags — the same way their site does. Fails LOUD:
+// if it can't check, state is 'unknown', never a false 'clear'.
+// Qualified end-to-end against RKS's live site, 07-2026.
+var _rksCatalog = null;   // [{title, tags}]
+var _rksReady   = false;
+var _rksLoading = false;
+var RKS_CACHE_KEY = 'ckc_rks_catalog_v1';
+
+function _rksFccsOf(title){
+  var m = title.match(/FCC\s*ID?:?\s*([A-Z0-9\- ]+?)\s*(?:PN\s*#|PT\s*#|P\/N|$)/i);
+  if(!m) return [];
+  return m[1].toUpperCase().split(/[^A-Z0-9-]+/).filter(function(x){ return x && x !== '-' && x.length >= 3; });
+}
+function _rksTagFits(tags, yr, mk, md){
+  if(!tags || !tags.length) return false;
+  var y = parseInt(yr,10), MK = String(mk).toUpperCase().trim(), MD = String(md).toUpperCase().trim();
+  for(var i=0;i<tags.length;i++){
+    var tag = String(tags[i]), T = tag.toUpperCase();
+    if(T.indexOf(MK) === -1 || T.indexOf(MD) === -1) continue;
+    var rng = tag.match(/\b(19|20)\d{2}\s*[-\u2013]\s*(19|20)\d{2}\b/);
+    if(rng){ var p = rng[0].split(/[-\u2013]/); if(y >= parseInt(p[0],10) && y <= parseInt(p[1],10)) return true; }
+    else { var s = tag.match(/\b(19|20)\d{2}\b/); if(s && parseInt(s[0],10) === y) return true; }
+  }
+  return false;
+}
+async function loadRKSCatalog(){
+  if(_rksReady || _rksLoading) return;
+  _rksLoading = true;
+  try{
+    var raw = localStorage.getItem(RKS_CACHE_KEY);
+    if(raw){
+      var c = JSON.parse(raw);
+      if(c && c.date === new Date().toISOString().slice(0,10) && c.products && c.products.length){
+        _rksCatalog = c.products; _rksReady = true; _rksLoading = false; return;
+      }
+    }
+  }catch(e){}
+  try{
+    var all = [], page = 1, MAX = 80;
+    while(page <= MAX){
+      var r = await fetch('https://royalkeysupply.com/products.json?limit=250&page=' + page, { signal: AbortSignal.timeout(12000) });
+      if(!r.ok) throw new Error('status ' + r.status);
+      var data = await r.json();
+      var prods = (data && data.products) || [];
+      if(!prods.length) break;
+      for(var i=0;i<prods.length;i++) all.push({ title: prods[i].title || '', tags: prods[i].tags || [] });
+      if(prods.length < 250) break;
+      page++;
+    }
+    if(!all.length) throw new Error('empty');
+    _rksCatalog = all; _rksReady = true;
+    try{ localStorage.setItem(RKS_CACHE_KEY, JSON.stringify({ date: new Date().toISOString().slice(0,10), products: all })); }catch(e){}
+  }catch(err){
+    _rksReady = false;   // stays unknown — never a false clear
+  }
+  _rksLoading = false;
+}
+// Synchronous verdict from the loaded catalog. If not ready, returns 'unknown'
+// and quietly kicks a load so it's ready next time.
+function rksConflictSync(yr, mk, md){
+  if(!_rksReady || !_rksCatalog){ if(!_rksLoading) loadRKSCatalog(); return { state:'unknown', fccs:[], count:0 }; }
+  var matched = _rksCatalog.filter(function(p){ return _rksTagFits(p.tags, yr, mk, md); });
+  var set = {};
+  matched.forEach(function(p){ _rksFccsOf(p.title).forEach(function(f){ set[f] = 1; }); });
+  var fccs = Object.keys(set);
+  return { state: (fccs.length > 1 ? 'conflict' : 'clear'), fccs: fccs, count: matched.length };
+}
+// ═══════════════════════════════════════════════════════════════════════════
+
 function advanceFromType() {
   var type = _wiz.typeAnswer;
   var group = _byType[type] || [];
+  var rks = rksConflictSync(lastSearchParams.year, lastSearchParams.make, lastSearchParams.model);
 
   // Blade / FCC / chip differences can't be resolved without the VIN — gate first.
-  if (conflictNeedsVIN(group)) {
+  // Fire on a conflict in EITHER list: your inventory OR Royal Key Supply's.
+  if (conflictNeedsVIN(group) || rks.state === 'conflict') {
     renderVINConflict(type, group);
     scrollToWizard();
     return;
@@ -2800,6 +2888,7 @@ function scopeCheckout() {
 (async function init() {
   await syncFromSheet();
   if (!isLive) initDropdowns();
+  loadRKSCatalog();   // background: Royal Key Supply conflict-check catalog
 })();
 </script>
 </body>
