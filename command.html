@@ -439,6 +439,27 @@ select.ckc-scope-in { appearance:none; -webkit-appearance:none; background-image
 </head>
 <body>
 
+<style id="ckc-nav-style">
+#ckc-nav{position:sticky;top:0;z-index:9999;display:flex;align-items:stretch;
+  background:#14161A;border-bottom:2px solid #000;font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;}
+#ckc-nav a{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:11px 6px;text-decoration:none;color:#8B9199;font-size:11px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;border-right:1px solid #2A2E35;
+  -webkit-tap-highlight-color:transparent;transition:background .12s,color .12s;}
+#ckc-nav a:last-child{border-right:0;}
+#ckc-nav a:active{background:#000;}
+#ckc-nav a.on{color:#fff;background:#22262E;box-shadow:inset 0 -2px 0 #C9A227;}
+#ckc-nav a .ic{font-size:13px;line-height:1;}
+@media (max-width:360px){#ckc-nav a{font-size:10px;letter-spacing:.04em;}}
+</style>
+
+<div id="ckc-nav" role="navigation" aria-label="CKC tools">
+  <a href="https://noloindie-afk.github.io/ckc-hub/ckc_phone_matrix.html"><span class="ic">&#9889;</span> Quote</a>
+  <a href="https://noloindie-afk.github.io/ckc-hub/command.html" class="on"><span class="ic">&#128269;</span> Command</a>
+  <a href="https://noloindie-afk.github.io/ckc-hub/ckc_invoice.html"><span class="ic">&#129534;</span> Invoice</a>
+</div>
+
+
 <!-- ═══ PRICE A KEY CALCULATOR SHEET ═══ -->
 <div class="ckc-pak-overlay" id="ckc-pak-overlay" style="display:none;" onclick="if(event.target===this)closePAK()">
   <div class="ckc-pak-sheet">
@@ -2885,10 +2906,40 @@ function scopeCheckout() {
 });
 
 
+// Prefill the scope dropdowns from URL params (?year=&make=&model=), firing the
+// cascade so makes/models populate. Used by the phone matrix "Check stock" handoff.
+// Retries briefly because the dropdowns populate only after the live catalog loads.
+function prefillFromURL() {
+  var q = new URLSearchParams(location.search);
+  var y = q.get('year'), mk = q.get('make'), mo = q.get('model');
+  if (!y && !mk && !mo) return;
+  function fire(el, evt) {
+    if (el) el.dispatchEvent(new Event(evt, { bubbles: true }));
+  }
+  var tries = 0;
+  (function attempt() {
+    var yEl = document.getElementById('ckc-year');
+    // Wait until the year dropdown is actually populated (more than the placeholder).
+    if ((!yEl || yEl.options.length <= 1) && tries < 40) {
+      tries++; setTimeout(attempt, 150); return;
+    }
+    var mkEl = document.getElementById('ckc-make');
+    var moEl = document.getElementById('ckc-model');
+    if (y && yEl)  { yEl.value = y;   fire(yEl, 'change'); }
+    if (mk && mkEl){ mkEl.value = mk; fire(mkEl, 'change'); }
+    if (mo && moEl){ moEl.value = mo; fire(moEl, 'change'); }
+    if (q.get('scope') === '1') {
+      var sb = document.getElementById('ckc-search-btn');
+      if (sb && !sb.disabled) sb.click();
+    }
+  })();
+}
+
 (async function init() {
   await syncFromSheet();
   if (!isLive) initDropdowns();
   loadRKSCatalog();   // background: Royal Key Supply conflict-check catalog
+  try { prefillFromURL(); } catch (e) { /* never block init on a bad param */ }
 })();
 </script>
 </body>
