@@ -114,6 +114,27 @@
 </head>
 <body>
 
+<style id="ckc-nav-style">
+#ckc-nav{position:sticky;top:0;z-index:9999;display:flex;align-items:stretch;
+  background:#14161A;border-bottom:2px solid #000;font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;}
+#ckc-nav a{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:11px 6px;text-decoration:none;color:#8B9199;font-size:11px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;border-right:1px solid #2A2E35;
+  -webkit-tap-highlight-color:transparent;transition:background .12s,color .12s;}
+#ckc-nav a:last-child{border-right:0;}
+#ckc-nav a:active{background:#000;}
+#ckc-nav a.on{color:#fff;background:#22262E;box-shadow:inset 0 -2px 0 #C9A227;}
+#ckc-nav a .ic{font-size:13px;line-height:1;}
+@media (max-width:360px){#ckc-nav a{font-size:10px;letter-spacing:.04em;}}
+</style>
+
+<div id="ckc-nav" role="navigation" aria-label="CKC tools">
+  <a href="https://noloindie-afk.github.io/ckc-hub/ckc_phone_matrix.html"><span class="ic">&#9889;</span> Quote</a>
+  <a href="https://noloindie-afk.github.io/ckc-hub/command.html"><span class="ic">&#128269;</span> Command</a>
+  <a href="https://noloindie-afk.github.io/ckc-hub/ckc_invoice.html" class="on"><span class="ic">&#129534;</span> Invoice</a>
+</div>
+
+
 <div class="header">
   <div>
     <div class="header-logo">Carolina Key Cutters</div>
@@ -747,22 +768,11 @@ function renderCustomerView() {
   };
   _cvData = d;
 
-  var isMe = q.get('me') === '1';
-  var meBtn = isMe
-    ? '<button class="cust-quote-book" style="margin-top:14px;" onclick="textFromCustomerView()">📲 Text this to the customer</button>'
-    : '';
-
   document.body.innerHTML =
     '<div class="header"><div><div class="header-logo">Carolina Key Cutters</div>' +
     '<div class="header-sub">' + (d.paid ? 'Your Receipt' : 'Your Invoice') + '</div></div>' +
     '<div class="header-phone">' + CKC_PHONE + '</div></div>' +
-    '<div class="cust-view-wrap">' + buildInvoiceHTML(d, true) + meBtn + '</div>';
-}
-
-function textFromCustomerView() {
-  if (!_cvData) return;
-  var to = _cvData.phone ? _cvData.phone.replace(/[^\d+]/g, '') : '';
-  location.href = 'sms:' + to + (to ? '&' : '?&') + 'body=' + encodeURIComponent(smsBody(_cvData));
+    '<div class="cust-view-wrap">' + buildInvoiceHTML(d, true) + '</div>';
 }
 
 // ── Boot ──
@@ -780,11 +790,21 @@ function seedBuilder() {
     var el = document.getElementById(id);
     if (el) { el.value = v; seeded = true; }
   });
-  // A vehicle/key handed over becomes line 1 — still fully editable.
+  // Lines handed over become line items — still fully editable.
+  // Line 1 keeps the ktitle/kp aliases for backward compatibility with older links.
   var d1 = q.get('d1') || q.get('ktitle');
   if (d1) { document.getElementById('f-d1').value = d1; seeded = true; }
   var p1 = q.get('p1') || q.get('kp');
   if (p1) { document.getElementById('f-p1').value = p1; seeded = true; }
+  // Additional lines 2..4 (e.g. the key as its own line from the phone matrix)
+  for (var i = 2; i <= LINES; i++) {
+    var dv = q.get('d' + i);
+    if (dv) { document.getElementById('f-d' + i).value = dv; seeded = true; }
+    var pv = q.get('p' + i);
+    if (pv) { document.getElementById('f-p' + i).value = pv; seeded = true; }
+    var qv = q.get('q' + i);
+    if (qv) { document.getElementById('f-q' + i).value = qv; seeded = true; }
+  }
   return seeded;
 }
 
