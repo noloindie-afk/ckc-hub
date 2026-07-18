@@ -106,6 +106,13 @@ h1{margin:0;font:700 14px/1 var(--mono);letter-spacing:.14em;text-transform:uppe
   font:700 13px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;cursor:pointer;}
 .ckstock:active{background:var(--ink);color:#fff;}
 .ckstock[disabled]{color:var(--muted);border-color:var(--line);cursor:default;}
+.savequote{width:100%;margin-bottom:10px;padding:14px;border:1px solid var(--green);background:var(--green-bg);
+  color:var(--green);font:700 13px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;cursor:pointer;}
+.savequote:active{background:var(--green);color:#fff;}
+.qsaved-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);
+  background:var(--green);color:#fff;font:700 12px/1 var(--mono);letter-spacing:.04em;padding:11px 20px;
+  border-radius:999px;opacity:0;pointer-events:none;transition:all .25s;z-index:9999;}
+.qsaved-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 footer{padding:8px 2px 16px;font:500 10px/1.6 var(--mono);letter-spacing:.05em;color:var(--muted);text-transform:uppercase;}
 @media (max-width:380px){.cards{grid-template-columns:1fr 1fr;}.card .big{font-size:28px;}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;}}
@@ -162,6 +169,16 @@ footer{padding:8px 2px 16px;font:500 10px/1.6 var(--mono);letter-spacing:.05em;c
     </table>
     <p class="hint">Say the all-in number first. The key is the only thing you add &mdash; and it's yours to work.</p>
   </div>
+  <div class="addon">
+    <div class="lab">Customer &middot; optional</div>
+    <table>
+      <tr><td class="k">Name</td><td><input type="text" id="c-name" autocomplete="off" placeholder="who am I speaking with?"></td></tr>
+      <tr><td class="k">Callback #</td><td><input type="tel" id="c-phone" inputmode="tel" autocomplete="off" placeholder="in case we get cut off"></td></tr>
+    </table>
+    <p class="hint">Ask after you give the number. Travels to the invoice so you don't retype.</p>
+  </div>
+  <button class="savequote" id="savequote" type="button">Save quote to log</button>
+  <div class="qsaved-toast" id="qsaved"></div>
   <button class="mkinv" id="mkinv" type="button">Make invoice &rarr;</button>
   <button class="ckstock" id="ckstock" type="button">Check stock &rarr;</button>
 </div>
@@ -184,6 +201,48 @@ const $=id=>document.getElementById(id);
 const usd=n=>'$'+Math.round(n).toLocaleString();
 
 let state={make:null,model:null,dealer:false,job:'aak',override:{aak:null,akl:null}};
+
+// ---- Working memory ----
+// Persist the current quote so tabbing to Command/Invoice and back doesn't wipe it.
+// Uses sessionStorage: survives navigation within the browser session, and clears
+// naturally when you fully close the browser. Fresh car overwrites it (see showResult).
+var MEM_KEY='ckc_matrix_current';
+function saveMemory(){
+  try{
+    if(!state.make) return;
+    var snap={
+      make:state.make, model:state.model, year:($('yr')?$('yr').value:''),
+      dealer:state.dealer, job:state.job, override:state.override,
+      key:($('a-key')?$('a-key').value:''),
+      cname:($('c-name')?$('c-name').value:''),
+      cphone:($('c-phone')?$('c-phone').value:'')
+    };
+    sessionStorage.setItem(MEM_KEY, JSON.stringify(snap));
+  }catch(e){/* storage blocked — feature just no-ops, quoting still works */}
+}
+function restoreMemory(){
+  try{
+    var raw=sessionStorage.getItem(MEM_KEY);
+    if(!raw) return false;
+    var s=JSON.parse(raw);
+    if(!s || !s.make) return false;
+    state.make=s.make; state.model=s.model; state.dealer=!!s.dealer;
+    state.job=s.job||'aak'; state.override=s.override||{aak:null,akl:null};
+    // paint the result screen
+    $('picker').innerHTML='';
+    $('result').classList.add('on');
+    if($('yr')&&s.year) $('yr').value=s.year;
+    if($('rt')){ $('rt').textContent=state.dealer?'Dealer':'Retail'; $('rt').classList.toggle('on',!state.dealer); }
+    compute();
+    if($('a-key')) $('a-key').value=s.key||'';
+    if($('c-name')) $('c-name').value=s.cname||'';
+    if($('c-phone')) $('c-phone').value=s.cphone||'';
+    tally();
+    renderCrumb();
+    return true;
+  }catch(e){ return false; }
+}
+function clearMemory(){ try{ sessionStorage.removeItem(MEM_KEY); }catch(e){} }
 
 // The quotable all-in for a job: the operator's override if set, else the standard.
 function quoted(r, which){
@@ -254,7 +313,11 @@ function showResult(){
   state.job='aak';
   state.override={aak:null,akl:null};   // fresh car = standard prices; overrides never carry across calls
   $('a-key').value='';   // fresh car = fresh key entry; never carry a price across calls
+  if($('c-name')) $('c-name').value='';   // fresh car = fresh customer
+  if($('c-phone')) $('c-phone').value='';
+  clearMemory();          // drop the previous car's saved quote
   compute();
+  saveMemory();           // seed memory for this new car
 }
 function compute(){
   const year=parseInt($('yr').value)||new Date().getFullYear();
@@ -280,7 +343,7 @@ function compute(){
   // tapping the card body (not the number) selects the job
   $('cards').querySelectorAll('[data-job]').forEach(c=>c.addEventListener('click',(e)=>{
     if(e.target.classList.contains('editable')) return; // let edits happen without switching
-    state.job=c.dataset.job; compute();
+    state.job=c.dataset.job; compute(); saveMemory();
   }));
   // editable price: commit on blur or Enter; empty/invalid clears the override
   $('cards').querySelectorAll('.editable').forEach(el=>{
@@ -293,7 +356,7 @@ function compute(){
       const std=labor(res.r,which);
       if(raw==='' || isNaN(v) || v===std){ state.override[which]=null; }
       else { state.override[which]=Math.round(v); }
-      compute();
+      compute(); saveMemory();
     });
   });
 
@@ -331,7 +394,12 @@ function updateNavLinks(year){
   p.set('year', year);
   p.set('make', state.make);
   if(state.model && state.model!=='Other') p.set('model', state.model);
+  var cname=($('c-name')?$('c-name').value.trim():'');
+  var cphone=($('c-phone')?$('c-phone').value.trim():'');
   var qs=p.toString();
+  var invP=new URLSearchParams(p);
+  if(cname){ var pp=cname.split(/\s+/); invP.set('fn',pp.shift()||''); if(pp.length) invP.set('ln',pp.join(' ')); }
+  if(cphone) invP.set('ph',cphone);
   var nav=document.getElementById('ckc-nav');
   if(!nav) return;
   nav.querySelectorAll('a').forEach(function(a){
@@ -340,7 +408,7 @@ function updateNavLinks(year){
     if(file==='command.html'){
       a.setAttribute('href', href.split('?')[0]+'?'+qs+'&scope=1');
     } else if(file==='ckc_invoice.html'){
-      a.setAttribute('href', href.split('?')[0]+'?'+qs);
+      a.setAttribute('href', href.split('?')[0]+'?'+invP.toString());
     }
     // Quote tab (this page) stays plain.
   });
@@ -357,10 +425,12 @@ function tally(){
 }
 
 // wiring
-$('ydn').addEventListener('click',()=>{$('yr').value=(parseInt($('yr').value)||2017)-1;compute();});
-$('yup').addEventListener('click',()=>{$('yr').value=(parseInt($('yr').value)||2017)+1;compute();});
-$('yr').addEventListener('input',compute);
-$('a-key').addEventListener('input',tally);
+$('ydn').addEventListener('click',()=>{$('yr').value=(parseInt($('yr').value)||2017)-1;compute();saveMemory();});
+$('yup').addEventListener('click',()=>{$('yr').value=(parseInt($('yr').value)||2017)+1;compute();saveMemory();});
+$('yr').addEventListener('input',()=>{compute();saveMemory();});
+$('a-key').addEventListener('input',()=>{tally();saveMemory();});
+$('c-name').addEventListener('input',saveMemory);
+$('c-phone').addEventListener('input',saveMemory);
 
 // ---- handoff to ckc_invoice.html ----
 var INVOICE_URL = 'https://noloindie-afk.github.io/ckc-hub/ckc_invoice.html';
@@ -388,6 +458,16 @@ function makeInvoice(){
   p.set('d2', 'Service call \u2014 mobile dispatch');
   p.set('p2', svc);
   if(key>0){ p.set('d3','Key'); p.set('p3', key); }
+  // carry the customer so the invoice doesn't make you retype it
+  var cname=($('c-name')?$('c-name').value.trim():'');
+  var cphone=($('c-phone')?$('c-phone').value.trim():'');
+  if(cname){
+    var parts=cname.split(/\s+/);
+    p.set('fn', parts.shift()||'');
+    if(parts.length) p.set('ln', parts.join(' '));
+  }
+  if(cphone) p.set('ph', cphone);
+  logQuote('made invoice');   // a quote that becomes an invoice is definitely worth logging
   window.open(INVOICE_URL+'?'+p.toString(), '_blank');
 }
 $('mkinv').addEventListener('click', makeInvoice);
@@ -405,6 +485,61 @@ function checkStock(){
   window.open(COMMAND_URL+'?'+p.toString(), '_blank');
 }
 $('ckstock').addEventListener('click', checkStock);
+
+// ---- Quote log (the John Doe fix) ----
+// Writes the quote to the same Worker /log the invoice uses, so a quote you gave
+// weeks ago is findable in History even if it never became an invoice.
+var LOG_ENDPOINT = 'https://ckc-blade-proxy.noloindie.workers.dev/log';
+var _lastLogSig = '';
+function logQuote(reason){
+  if(!state.make) return;
+  var year=parseInt($('yr').value)||new Date().getFullYear();
+  var res=resolve(state.make,year); if(!res) return;
+  var r=res.r;
+  var isRefer=r.refer||(state.job==='akl'&&r.aklRefer);
+  var allin=isRefer?0:quoted(r,state.job);
+  var key=parseFloat($('a-key').value)||0;
+  var name=($('c-name')?$('c-name').value.trim():'');
+  var phone=($('c-phone')?$('c-phone').value.trim():'');
+  var jobName=(state.job==='akl'?'All keys lost':'Add-a-key');
+  var adj=(state.override[state.job]!=null)?' (adjusted)':'';
+  var notes=['Phone quote'+adj, reason||'', jobName].filter(Boolean).join(' \u00b7 ');
+  var payload={
+    quoteId: 'Q'+Date.now(),
+    customer: name, phone: phone,
+    year: String(year), make: state.make, model: (state.model==='Other'?'':state.model)||'',
+    keyType: r.keyType||'', keyName:'', fcc:'', sku:'', po:'', rate:'',
+    stock:'quote',
+    keyPrice: key||0, labor: allin||0, subscription:0, keyCode:0,
+    total: (allin+key)||0,
+    notes: notes
+  };
+  var sig=JSON.stringify(payload);
+  if(sig===_lastLogSig) return true; // don't double-log the same quote
+  _lastLogSig=sig;
+  try{
+    fetch(LOG_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:sig})
+      .then(function(res){ if(res&&res.ok) showQuoteSaved(); })
+      .catch(function(){ showQuoteSaved('Saved locally \u2014 will sync'); });
+  }catch(e){}
+  // Belt-and-suspenders: also stash the last few quotes locally so recall works offline.
+  try{
+    var hist=JSON.parse(localStorage.getItem('ckc_quote_log')||'[]');
+    hist.unshift({t:Date.now(), name:name, phone:phone, car:year+' '+state.make+' '+(state.model||''), price:allin, key:key, job:jobName});
+    hist=hist.slice(0,50);
+    localStorage.setItem('ckc_quote_log', JSON.stringify(hist));
+  }catch(e){}
+  return true;
+}
+function showQuoteSaved(msg){
+  var t=$('qsaved'); if(!t) return;
+  t.textContent='\u2713 '+(msg||'Quote saved to log');
+  t.classList.add('show');
+  clearTimeout(showQuoteSaved._t);
+  showQuoteSaved._t=setTimeout(function(){ t.classList.remove('show'); },1800);
+}
+$('savequote').addEventListener('click', function(){ logQuote('saved by hand'); });
+
 $('rt').addEventListener('click',()=>{
   state.dealer=!state.dealer;
   $('rt').textContent=state.dealer?'Dealer':'Retail';
@@ -412,7 +547,8 @@ $('rt').addEventListener('click',()=>{
   compute();
 });
 
-renderMakes();
+// On load: restore the in-progress quote if there is one, else start at make picker.
+if(!restoreMemory()){ renderMakes(); }
 </script>
 </body>
 </html>
