@@ -154,6 +154,9 @@
   .allin-card { background: var(--gold-dim); border: 1px solid rgba(201,162,39,0.35); border-radius: 12px; padding: 13px 18px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
   .allin-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.72rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold-light); }
   .allin-val { font-family: 'Barlow Condensed', sans-serif; font-size: 2rem; font-weight: 900; line-height: 1; color: var(--gold-light); }
+  .floor-note { margin: -8px 0 14px; padding: 10px 14px; border-radius: 10px; font-size: 0.84rem; line-height: 1.45; }
+  .floor-note.under { background: rgba(200,50,50,0.13); border: 1px solid rgba(220,70,70,0.55); color: #ff9d9d; font-weight: 600; }
+  .floor-note.ok { background: transparent; border: none; color: var(--muted2); font-size: 0.72rem; padding: 2px 2px 0; }
   .key-item { background: rgba(96,165,250,0.06); border: 1px solid rgba(96,165,250,0.2); border-radius: 10px; padding: 11px 15px; margin: 14px 0 4px; }
   .key-item.has-img { display: flex; align-items: center; gap: 12px; }
   .key-item-img { width: 54px; height: 54px; object-fit: contain; background: #f9fafb; border-radius: 8px; padding: 4px; flex-shrink: 0; }
@@ -773,6 +776,8 @@ const SUB_FORD        = 40;
 const SUB_GM_PIN      = 40;   // 2021+ AKL only
 const SUB_STELLANTIS  = 35;   // FOBIK/flash trims
 const KEYCODE_NASTF   = 30;
+const DRIVE_HOURS     = 0.75;  // flat drive time on every mobile job
+const FLOOR_RATE      = 50;    // $/hr backstop — quiet on normal jobs; lights up when a price earns less
 const SERVICE_CALL    = 85;   // mobile dispatch — industry midline; editable per job
 
 // Returns { subscription, subscriptionLabel, keyCode, keyCodeLabel }
@@ -1134,6 +1139,7 @@ function choosePath(path) {
       '<label class="qb-field-label">SKU (optional)</label>' +
       '<input class="qb-input" id="qb-sku" type="text" autocapitalize="characters" spellcheck="false" placeholder="part number" value="' + (_seedSku || '') + '" style="width:100%;margin-bottom:12px;letter-spacing:1px;" oninput="onSkuChange()">' +
       '<div class="allin-card"><div class="allin-label">All-in price to customer</div><div class="allin-val" id="qb-allin">$0</div></div>' +
+      '<div class="floor-note" id="qb-floor" style="display:none;"></div>' +
       '<div class="qb-tax-note" id="qb-tax"></div>' +
       '<label class="qb-field-label">Dealer price (est.)</label>' +
       '<div class="qb-input-wrap" style="margin-bottom:12px;"><span class="qb-prefix">$</span>' +
@@ -1287,12 +1293,56 @@ function setStock(s) {
   _stockState = s;
 }
 
+// ── Floor: the least a job can be priced at before the time earns under $FLOOR_RATE/hr ──
+// Reads the job's own time estimate from the matched rule; falls back safely if absent.
+function parseJobHours(rule, path){
+  var fallback = (path === 'akl') ? 1.5 : 1.0;
+  if (!rule || !rule.time) return fallback;
+  var want = (path === 'akl') ? 'AKL' : 'AAK';
+  var segs = rule.time.split('/');
+  var seg = null;
+  for (var i = 0; i < segs.length; i++){ if (segs[i].toUpperCase().indexOf(want) !== -1){ seg = segs[i]; break; } }
+  if (!seg) seg = segs[0] || '';
+  var low = seg.toLowerCase();
+  if (low.indexOf('half') !== -1 && low.indexOf('day') !== -1) return 4.0;   // "half-day"
+  var nums = seg.match(/\d+/g);
+  if (!nums || !nums.length) return fallback;
+  var mins = 0; for (var j = 0; j < nums.length; j++){ var n = parseInt(nums[j], 10); if (n > mins) mins = n; }  // high end = conservative floor
+  return mins / 60;
+}
+function computeFloor(d){
+  var jobHrs = _ctx ? parseJobHours(_ctx.rule, _chosenPath) : ((_chosenPath === 'akl') ? 1.5 : 1.0);
+  var hrs = DRIVE_HOURS + jobHrs;
+  var floor = d.keyTotal + d.tax + d.subscription + d.keyCode + FLOOR_RATE * hrs;
+  return { floor: floor, hrs: hrs };
+}
+
 function recalcQuote() {
   if (!document.getElementById('qb-allin')) return;
   // Any recalc means a field or the throttle changed — a live QR lock is now stale.
   if (_lockedQuote) invalidateLock();
   var d = gatherQuote();
   document.getElementById('qb-allin').textContent = '$' + (d.allin > 0 ? d.allin.toFixed(2) : '0.00');
+
+  // Floor safety net — quiet when the price clears it, loud when it doesn't.
+  var floorEl = document.getElementById('qb-floor');
+  if (floorEl){
+    var fl = computeFloor(d);
+    var hrsTxt = fl.hrs.toFixed(2).replace(/\.?0+$/, '');
+    if (d.allin > 0 && fl.floor > d.allin + 0.005){
+      floorEl.className = 'floor-note under';
+      floorEl.innerHTML = '\u26A0 Below floor \u2014 at $' + d.allin.toFixed(0) + ' this earns under $' + FLOOR_RATE +
+        '/hr for ' + hrsTxt + ' hrs (incl. ' + DRIVE_HOURS + ' hr drive). Floor \u2248 $' + fl.floor.toFixed(0) +
+        '. Raise the price or refer it out.';
+      floorEl.style.display = 'block';
+    } else if (d.allin > 0){
+      floorEl.className = 'floor-note ok';
+      floorEl.innerHTML = '\u2713 Clears the $' + FLOOR_RATE + '/hr floor (\u2248 $' + fl.floor.toFixed(0) + ' incl. drive)';
+      floorEl.style.display = 'block';
+    } else {
+      floorEl.style.display = 'none';
+    }
+  }
 
   var taxEl = document.getElementById('qb-tax');
   if (taxEl) {
