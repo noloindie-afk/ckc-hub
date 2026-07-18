@@ -554,13 +554,13 @@ function smsBody(d) {
 function textToCustomer() {
   if (!_locked) return;
   var to = _locked.phone.replace(/[^\d+]/g, '');
-  location.href = 'sms:' + to + (to ? '&' : '') + 'body=' + encodeURIComponent(smsBody(_locked));
+  location.href = 'sms:' + to + (to ? '&' : '?&') + 'body=' + encodeURIComponent(smsBody(_locked));
 }
 
 function textBalance() {
   if (!_balanced) return;
   var to = _balanced.phone.replace(/[^\d+]/g, '');
-  location.href = 'sms:' + to + (to ? '&' : '') + 'body=' + encodeURIComponent(smsBody(_balanced));
+  location.href = 'sms:' + to + (to ? '&' : '?&') + 'body=' + encodeURIComponent(smsBody(_balanced));
 }
 
 function copyLink() {
@@ -762,7 +762,7 @@ function renderCustomerView() {
 function textFromCustomerView() {
   if (!_cvData) return;
   var to = _cvData.phone ? _cvData.phone.replace(/[^\d+]/g, '') : '';
-  location.href = 'sms:' + to + (to ? '&' : '') + 'body=' + encodeURIComponent(smsBody(_cvData));
+  location.href = 'sms:' + to + (to ? '&' : '?&') + 'body=' + encodeURIComponent(smsBody(_cvData));
 }
 
 // ── Boot ──
