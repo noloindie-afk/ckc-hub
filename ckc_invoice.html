@@ -793,6 +793,13 @@ function seedBuilder() {
   // Lines handed over become line items — still fully editable.
   // Line 1 keeps the ktitle/kp aliases for backward compatibility with older links.
   var d1 = q.get('d1') || q.get('ktitle');
+  // If no explicit line 1, but a vehicle was carried by the nav bar, seed a vehicle line.
+  if (!d1) {
+    var yr = q.get('year'), mk = q.get('make'), mo = q.get('model');
+    if (yr || mk || mo) {
+      d1 = [yr, mk, mo].filter(Boolean).join(' ') + ' \u2014 key service';
+    }
+  }
   if (d1) { document.getElementById('f-d1').value = d1; seeded = true; }
   var p1 = q.get('p1') || q.get('kp');
   if (p1) { document.getElementById('f-p1').value = p1; seeded = true; }
