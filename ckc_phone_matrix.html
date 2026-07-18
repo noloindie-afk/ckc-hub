@@ -318,7 +318,32 @@ function compute(){
   var cs=$('ckstock');
   if(cs){ cs.disabled=!!r.refer; }
 
+  updateNavLinks(year);
+
   tally();
+}
+
+// Carry the current car into the top nav links (Command + Invoice), so tapping a
+// tab brings the vehicle along the same way the handoff buttons do.
+function updateNavLinks(year){
+  if(!state.make) return;
+  var p=new URLSearchParams();
+  p.set('year', year);
+  p.set('make', state.make);
+  if(state.model && state.model!=='Other') p.set('model', state.model);
+  var qs=p.toString();
+  var nav=document.getElementById('ckc-nav');
+  if(!nav) return;
+  nav.querySelectorAll('a').forEach(function(a){
+    var href=a.getAttribute('href')||'';
+    var file=href.split('/').pop().split('?')[0];
+    if(file==='command.html'){
+      a.setAttribute('href', href.split('?')[0]+'?'+qs+'&scope=1');
+    } else if(file==='ckc_invoice.html'){
+      a.setAttribute('href', href.split('?')[0]+'?'+qs);
+    }
+    // Quote tab (this page) stays plain.
+  });
 }
 function tally(){
   const year=parseInt($('yr').value)||new Date().getFullYear();
