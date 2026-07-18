@@ -1408,7 +1408,7 @@ function textQuote() {
   if (!(d.allin > 0)) return;
   var to = d.phone ? d.phone.replace(/[^\d+]/g, '') : '';
   // iOS/Android SMS deep link, pre-addressed to the captured number when present
-  window.location.href = 'sms:' + to + (to ? '&' : '') + 'body=' + encodeURIComponent(buildQuoteText(d));
+  window.location.href = 'sms:' + to + (to ? '&' : '?&') + 'body=' + encodeURIComponent(buildQuoteText(d));
 }
 
 function fallbackCopy(txt) {
@@ -1865,7 +1865,7 @@ var _cvData = null;
 function textFromCustomerView() {
   if (!_cvData) return;
   var to = _cvData.phone ? _cvData.phone.replace(/[^\d+]/g, '') : '';
-  window.location.href = 'sms:' + to + (to ? '&' : '') + 'body=' + encodeURIComponent(buildQuoteText(_cvData));
+  window.location.href = 'sms:' + to + (to ? '&' : '?&') + 'body=' + encodeURIComponent(buildQuoteText(_cvData));
 }
 
 function payNow() {
