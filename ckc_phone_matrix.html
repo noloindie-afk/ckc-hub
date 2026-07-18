@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CKC Phone Matrix</title>
+<meta name="theme-color" content="#14161A">
+<style>
+:root{
+  --ink:#14161A;--ink-2:#2C3038;--panel:#E9EBEA;--card:#FFFFFF;
+  --line:#C9CDCB;--line-2:#DFE3E1;--green:#1F6F3D;--green-bg:#E7F1EA;
+  --amber:#9C5700;--amber-bg:#FDF3E3;--red:#B00020;--red-bg:#FBEAEC;--muted:#6B7280;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{background:var(--panel);color:var(--ink);font:400 16px/1.45 var(--sans);-webkit-text-size-adjust:100%;padding-bottom:40px;}
+:focus-visible{outline:3px solid var(--ink);outline-offset:2px;}
+.wrap{max-width:560px;margin:0 auto;padding:14px 12px 8px;}
+button{font-family:inherit;-webkit-tap-highlight-color:transparent;}
+
+header{border:1px solid var(--line);background:var(--card);padding:11px 13px;margin-bottom:12px;}
+.hd-row{display:flex;justify-content:space-between;align-items:baseline;}
+h1{margin:0;font:700 14px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;}
+.hd-sub{font:400 10px/1.3 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+.hd-note{margin:7px 0 0;font-size:12px;color:var(--ink-2);}
+
+/* breadcrumb / back */
+.crumb{display:flex;align-items:center;gap:9px;margin-bottom:10px;min-height:34px;}
+.back{border:1px solid var(--line);background:var(--card);padding:8px 12px;font:700 11px/1 var(--mono);
+  letter-spacing:.06em;text-transform:uppercase;cursor:pointer;color:var(--ink);}
+.back:active{background:var(--ink);color:#fff;}
+.crumb-txt{font:600 13px/1.2 var(--mono);color:var(--ink-2);}
+.crumb-txt .sep{color:var(--muted);margin:0 5px;}
+
+.step-lab{font:700 10px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:2px 2px 8px;}
+
+/* tap grids */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.tap{border:1px solid var(--line);background:var(--card);padding:15px 12px;text-align:left;
+  font:600 15px/1.15 var(--sans);color:var(--ink);cursor:pointer;min-height:52px;display:flex;align-items:center;}
+.tap:active{background:var(--ink);color:#fff;border-color:var(--ink);}
+.tap.wide{grid-column:1 / -1;}
+.tap.other{color:var(--muted);font-style:italic;font-weight:500;}
+
+/* result */
+.result{display:none;}
+.result.on{display:block;}
+.veh{border:1px solid var(--line);background:var(--card);padding:11px 13px;margin-bottom:10px;font:700 16px/1.25 var(--mono);}
+.veh .kt{display:block;font:500 11px/1.4 var(--mono);color:var(--muted);margin-top:4px;font-weight:500;}
+
+.yearbar{display:flex;align-items:stretch;gap:8px;margin-bottom:12px;}
+.yearbar .yl{flex:1;border:1px solid var(--line);background:var(--card);display:flex;align-items:center;
+  justify-content:space-between;padding:0 6px 0 13px;}
+.yearbar .yl .lab{font:700 10px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+.yearbar .yl .yr{font:700 22px/1 var(--mono);font-variant-numeric:tabular-nums;}
+.yearbar .yl input{width:74px;border:0;font:700 22px/1 var(--mono);text-align:right;padding:12px 4px;background:transparent;color:var(--ink);}
+.ybtn{width:52px;border:1px solid var(--line);background:var(--card);font:700 24px/1 var(--mono);cursor:pointer;color:var(--ink);}
+.ybtn:active{background:var(--ink);color:#fff;}
+.rtbtn{border:1px solid var(--line);background:var(--card);padding:0 14px;font:700 11px/1 var(--mono);
+  letter-spacing:.06em;text-transform:uppercase;cursor:pointer;color:var(--ink-2);}
+.rtbtn.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.card{border:1px solid var(--line);background:var(--card);padding:13px 12px;cursor:pointer;}
+.card .lab{font:700 10px/1 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);}
+.card .big{font:700 32px/1 var(--mono);letter-spacing:-.01em;margin-top:9px;font-variant-numeric:tabular-nums;}
+.card .big.editable{cursor:text;outline:none;border-bottom:2px dashed var(--line);padding-bottom:2px;display:inline-block;min-width:70px;}
+.card .big.editable:focus{border-bottom-color:var(--ink);background:#F4F6F5;}
+.adjm{color:var(--amber);font-weight:700;text-transform:uppercase;letter-spacing:.06em;}
+.card .sub{font:500 11px/1.5 var(--mono);color:var(--muted);margin-top:6px;}
+.card.aak{border-top:3px solid var(--green);}
+.card.akl{border-top:3px solid var(--amber);}
+.card.sel{box-shadow:inset 0 0 0 2px var(--ink);}
+.card.refer{border-top:3px solid var(--red);background:var(--red-bg);cursor:default;}
+.card.refer .big{font-size:20px;color:var(--red);line-height:1.15;}
+
+.flag{border:1px solid var(--line);padding:9px 11px;margin-bottom:8px;font:500 12.5px/1.4 var(--sans);}
+.flag.danger{border-color:#E3A2AC;background:var(--red-bg);}
+.flag.warn{border-color:#E4C489;background:var(--amber-bg);}
+.flag.success{border-color:#A8CDB6;background:var(--green-bg);}
+.flag.info{border-color:var(--line-2);background:#F4F6F5;}
+.flag b{font:700 9px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:3px;}
+.flag.danger b{color:var(--red);}.flag.warn b{color:var(--amber);}.flag.success b{color:var(--green);}.flag.info b{color:var(--muted);}
+
+.say{border:1px solid var(--ink);background:var(--ink);color:#fff;padding:12px 13px;margin-bottom:10px;}
+.say .lab{font:700 9px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:#8B9199;margin-bottom:6px;}
+.say .txt{font:400 14px/1.5 var(--sans);font-style:italic;}
+
+.addon{border:1px solid var(--line);background:var(--card);padding:11px 13px;margin-bottom:10px;}
+.addon .lab{font:700 10px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+.addon table{width:100%;border-collapse:collapse;font:500 13px/1 var(--mono);font-variant-numeric:tabular-nums;}
+.addon td{padding:7px 0;border-bottom:1px solid var(--line-2);}
+.addon td:last-child{text-align:right;}
+.addon tr:last-child td{border-bottom:0;font-weight:700;font-size:15px;}
+.addon .k{color:var(--muted);}
+.addon input{width:96px;text-align:right;font:600 14px/1 var(--mono);padding:6px 7px;border:1px solid var(--line);}
+
+.hint{font-size:11.5px;color:var(--muted);margin:2px 2px 0;}
+.mkinv{width:100%;margin-bottom:10px;padding:15px;border:1px solid var(--ink);background:var(--ink);color:#fff;
+  font:700 13px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;cursor:pointer;}
+.mkinv:active{opacity:.85;}
+.mkinv[disabled]{background:var(--card);color:var(--muted);border-color:var(--line);cursor:default;}
+.ckstock{width:100%;margin-bottom:10px;padding:14px;border:1px solid var(--ink);background:var(--card);color:var(--ink);
+  font:700 13px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;cursor:pointer;}
+.ckstock:active{background:var(--ink);color:#fff;}
+.ckstock[disabled]{color:var(--muted);border-color:var(--line);cursor:default;}
+footer{padding:8px 2px 16px;font:500 10px/1.6 var(--mono);letter-spacing:.05em;color:var(--muted);text-transform:uppercase;}
+@media (max-width:380px){.cards{grid-template-columns:1fr 1fr;}.card .big{font-size:28px;}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;}}
+</style>
+</head>
+<body>
+
+<style id="ckc-nav-style">
+#ckc-nav{position:sticky;top:0;z-index:9999;display:flex;align-items:stretch;
+  background:#14161A;border-bottom:2px solid #000;font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;}
+#ckc-nav a{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:11px 6px;text-decoration:none;color:#8B9199;font-size:11px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;border-right:1px solid #2A2E35;
+  -webkit-tap-highlight-color:transparent;transition:background .12s,color .12s;}
+#ckc-nav a:last-child{border-right:0;}
+#ckc-nav a:active{background:#000;}
+#ckc-nav a.on{color:#fff;background:#22262E;box-shadow:inset 0 -2px 0 #C9A227;}
+#ckc-nav a .ic{font-size:13px;line-height:1;}
+@media (max-width:360px){#ckc-nav a{font-size:10px;letter-spacing:.04em;}}
+</style>
+
+<div id="ckc-nav" role="navigation" aria-label="CKC tools">
+  <a href="https://noloindie-afk.github.io/ckc-hub/ckc_phone_matrix.html" class="on"><span class="ic">&#9889;</span> Quote</a>
+  <a href="https://noloindie-afk.github.io/ckc-hub/command.html"><span class="ic">&#128269;</span> Command</a>
+  <a href="https://noloindie-afk.github.io/ckc-hub/ckc_invoice.html"><span class="ic">&#129534;</span> Invoice</a>
+</div>
+
+<div class="wrap">
+<header>
+  <div class="hd-row"><h1>CKC Phone Matrix</h1><span class="hd-sub">Interim &middot; v0.2</span></div>
+  <p class="hd-note">Tap the make, tap the model, read the number. Labor is mirrored from your quote engine &mdash; add key cost to finish. Green = quote it &middot; Amber = quote, then say the callback line &middot; Red = refer.</p>
+</header>
+
+<div class="crumb" id="crumb"></div>
+<div id="picker"></div>
+
+<div class="result" id="result">
+  <div class="veh" id="veh"></div>
+  <div class="yearbar">
+    <button class="ybtn" id="ydn" type="button">&minus;</button>
+    <label class="yl"><span class="lab">Year</span><input id="yr" type="number" inputmode="numeric" value="2017"></label>
+    <button class="ybtn" id="yup" type="button">+</button>
+    <button class="rtbtn on" id="rt" type="button">Retail</button>
+  </div>
+  <div class="cards" id="cards"></div>
+  <div id="flags"></div>
+  <div class="say" id="saybox"><div class="lab">Callback line</div><div class="txt" id="say"></div></div>
+  <div class="addon">
+    <div class="lab">Build the quote</div>
+    <table>
+      <tr><td class="k">All-in price (tap a card)</td><td id="a-labor">&mdash;</td></tr>
+      <tr><td class="k">+ Key (your lookup &middot; negotiable)</td><td><input type="number" id="a-key" inputmode="decimal" placeholder="0"></td></tr>
+      <tr><td>Quote</td><td id="a-total">&mdash;</td></tr>
+    </table>
+    <p class="hint">Say the all-in number first. The key is the only thing you add &mdash; and it's yours to work.</p>
+  </div>
+  <button class="mkinv" id="mkinv" type="button">Make invoice &rarr;</button>
+  <button class="ckstock" id="ckstock" type="button">Check stock &rarr;</button>
+</div>
+
+<footer>Carolina Key Cutters &middot; labor mirrored from quote engine &middot; a quote is not a scope</footer>
+</div>
+<script>
+const PAYLOAD =
+{"groups":[{"group":"Ford / Lincoln","makes":["FORD","LINCOLN"],"rules":[{"minYear":0,"keyType":"Ford PATS / Smart Key","aak":175,"aakD":125,"akl":350,"aklD":275,"aklRefer":false,"refer":false,"tier":3}]},{"group":"GM \u2014 Chevrolet / GMC / Buick / Cadillac","makes":["CHEVROLET","GMC","BUICK","CADILLAC","PONTIAC","SATURN","OLDSMOBILE"],"rules":[{"minYear":2021,"keyType":"Smart Key (CAN-FD)","aak":200,"aakD":150,"akl":375,"aklD":275,"aklRefer":false,"refer":false,"tier":2},{"minYear":2014,"keyType":"Remote Head Key / Smart Key","aak":200,"aakD":150,"akl":375,"aklD":275,"aklRefer":false,"refer":false,"tier":2},{"minYear":0,"keyType":"Transponder Key","aak":95,"aakD":65,"akl":200,"aklD":150,"aklRefer":false,"refer":false,"tier":1}]},{"group":"Chrysler / Dodge / Jeep / RAM","makes":["CHRYSLER","DODGE","JEEP","RAM"],"rules":[{"minYear":2011,"keyType":"FOBIK / Smart Key","aak":200,"aakD":150,"akl":375,"aklD":275,"aklRefer":false,"refer":false,"tier":2},{"minYear":0,"keyType":"Transponder / Remote Head Key","aak":95,"aakD":65,"akl":200,"aklD":150,"aklRefer":false,"refer":false,"tier":1}]},{"group":"Toyota / Lexus / Scion","makes":["TOYOTA","LEXUS","SCION"],"rules":[{"minYear":2018,"keyType":"Smart Key / Proximity","aak":200,"aakD":150,"akl":0,"aklD":0,"aklRefer":true,"refer":false,"tier":3},{"minYear":0,"keyType":"Transponder Key (TOY43/TOY47)","aak":95,"aakD":65,"akl":200,"aklD":150,"aklRefer":false,"refer":false,"tier":1}]},{"group":"Honda / Acura","makes":["HONDA","ACURA"],"rules":[{"minYear":2013,"keyType":"Smart Key / Proximity","aak":200,"aakD":150,"akl":425,"aklD":325,"aklRefer":false,"refer":false,"tier":2},{"minYear":0,"keyType":"Transponder Key (HO01/HON66)","aak":95,"aakD":65,"akl":200,"aklD":150,"aklRefer":false,"refer":false,"tier":1}]},{"group":"Nissan / Infiniti","makes":["NISSAN","INFINITI"],"rules":[{"minYear":2007,"keyType":"Smart Key / Proximity (NSN14)","aak":200,"aakD":150,"akl":375,"aklD":275,"aklRefer":false,"refer":false,"tier":2},{"minYear":0,"keyType":"Transponder Key (NSN11/NSN14)","aak":95,"aakD":65,"akl":200,"aklD":150,"aklRefer":false,"refer":false,"tier":1}]},{"group":"Hyundai / Kia","makes":["HYUNDAI","KIA"],"rules":[{"minYear":2012,"keyType":"Smart Key / Proximity","aak":200,"aakD":150,"akl":375,"aklD":275,"aklRefer":false,"refer":false,"tier":2},{"minYear":0,"keyType":"Transponder Key (HY20/HY22)","aak":95,"aakD":65,"akl":200,"aklD":150,"aklRefer":false,"refer":false,"tier":1}]},{"group":"Genesis","makes":["GENESIS"],"rules":[{"minYear":0,"keyType":"Smart Key / Proximity","aak":250,"aakD":200,"akl":450,"aklD":350,"aklRefer":false,"refer":false,"tier":3}]},{"group":"Subaru","makes":["SUBARU"],"rules":[{"minYear":2018,"keyType":"Smart Key / Proximity","aak":200,"aakD":150,"akl":375,"aklD":275,"aklRefer":false,"refer":false,"tier":2},{"minYear":0,"keyType":"Transponder Key","aak":95,"aakD":65,"akl":200,"aklD":150,"aklRefer":false,"refer":false,"tier":1}]},{"group":"Mazda / Mitsubishi","makes":["MAZDA","MITSUBISHI"],"rules":[{"minYear":2014,"keyType":"Smart Key / Proximity","aak":200,"aakD":150,"akl":375,"aklD":275,"aklRefer":false,"refer":false,"tier":2},{"minYear":0,"keyType":"Transponder Key","aak":95,"aakD":65,"akl":200,"aklD":150,"aklRefer":false,"refer":false,"tier":1}]},{"group":"BMW / MINI","makes":["BMW","MINI"],"rules":[{"minYear":2014,"keyType":"Smart Key / CAS4 \u00b7 FEM \u00b7 BDC","aak":400,"aakD":300,"akl":800,"aklD":550,"aklRefer":false,"refer":false,"tier":4},{"minYear":2007,"keyType":"Smart Key / CAS (CAS2 \u00b7 CAS3)","aak":250,"aakD":185,"akl":475,"aklD":350,"aklRefer":false,"refer":false,"tier":3},{"minYear":0,"keyType":"EWS-3 \u00b7 HU92 track key (OBD add)","aak":165,"aakD":120,"akl":325,"aklD":250,"aklRefer":false,"refer":false,"tier":2}]},{"group":"Mercedes-Benz","makes":["MERCEDES-BENZ"],"rules":[{"minYear":2015,"keyType":"Smart Key / FBS4 (verify)","aak":400,"aakD":300,"akl":800,"aklD":550,"aklRefer":false,"refer":false,"tier":4},{"minYear":0,"keyType":"Smart Key / EIS \u00b7 EZS (pre-FBS4)","aak":300,"aakD":225,"akl":600,"aklD":450,"aklRefer":false,"refer":false,"tier":3}]},{"group":"Volkswagen / Audi","makes":["VOLKSWAGEN","AUDI"],"rules":[{"minYear":2015,"keyType":"Smart Key / MQB Platform","aak":250,"aakD":200,"akl":550,"aklD":375,"aklRefer":false,"refer":false,"tier":3},{"minYear":0,"keyType":"Transponder / Remote Head (HU66)","aak":175,"aakD":135,"akl":325,"aklD":250,"aklRefer":false,"refer":false,"tier":2}]},{"group":"Land Rover / Jaguar","makes":["Land Rover","Jaguar","Range Rover"],"rules":[{"test":"true","minYear":0,"keyType":"Smart Key / KVM-RFA (bench, solder-free)","aak":399,"aakD":299,"akl":549,"aklD":425,"aklRefer":false,"refer":false,"tier":4}]},{"group":"Volvo","makes":["VOLVO"],"rules":[{"minYear":0,"keyType":"Smart Key / CEM Module","aak":0,"aakD":0,"akl":0,"aklD":0,"aklRefer":false,"refer":true,"tier":4}]}],"ymm":{"Ford":["Bronco","Edge","Escape","Expedition","Explorer","F-150","F-250","F-350","Focus","Fusion","Maverick","Mustang","Ranger","Transit"],"Lincoln":["Aviator","Corsair","MKZ","Nautilus","Navigator"],"Chevrolet":["Blazer","Colorado","Corvette","Equinox","Express","Impala","Malibu","Silverado 1500","Silverado 2500HD","Suburban","Tahoe","Trailblazer","Traverse"],"GMC":["Acadia","Canyon","Envoy","Sierra 1500","Sierra 2500HD","Terrain","Yukon","Yukon XL"],"Buick":["Enclave","Encore","Envision","LaCrosse","Regal"],"Cadillac":["CT4","CT5","Escalade","XT4","XT5","XT6"],"Pontiac":["G6","Grand Prix","Solstice","Vibe"],"Saturn":["Aura","Outlook","Vue"],"Oldsmobile":["Alero","Aurora","Bravada","Silhouette"],"Dodge":["Challenger","Charger","Dart","Durango","Grand Caravan","Journey","Ram 1500","Ram 2500","Viper"],"RAM":["1500","2500","3500","ProMaster"],"Chrysler":["200","300","Pacifica","Town & Country","Voyager"],"Jeep":["Cherokee","Compass","Gladiator","Grand Cherokee","Renegade","Wrangler"],"Toyota":["4Runner","Avalon","Camry","Corolla","FJ Cruiser","Highlander","Land Cruiser","Prius","RAV4","Sequoia","Sienna","Tacoma","Tundra","Venza"],"Lexus":["ES 300h","ES 350","GS 350","GX 460","IS 300","IS 350","LX 570","NX 200t","NX 300","RX 350","RX 450h","UX 200"],"Scion":["FR-S","iA","iM","tC","xA","xB","xD"],"Honda":["Accord","Civic","CR-V","HR-V","Insight","Odyssey","Passport","Pilot","Ridgeline"],"Acura":["ILX","MDX","RDX","RLX","TLX"],"Nissan":["Altima","Armada","Frontier","GT-R","Maxima","Murano","Pathfinder","Quest","Rogue","Rogue Sport","Sentra","Titan","Versa","370Z"],"Infiniti":["G37","Q50","Q60","Q70","QX50","QX60","QX80"],"Hyundai":["Accent","Elantra","IONIQ 5","IONIQ 6","Kona","Palisade","Santa Cruz","Santa Fe","Sonata","Tucson","Veloster"],"Kia":["Carnival","EV6","Forte","K5","Niro","Seltos","Sorento","Soul","Sportage","Stinger","Telluride"],"Genesis":["G70","G80","G90","GV70","GV80"],"Subaru":["Ascent","BRZ","Crosstrek","Forester","Impreza","Legacy","Outback","WRX"],"Mazda":["CX-30","CX-5","CX-50","CX-9","Mazda3","Mazda6","MX-5 Miata"],"Mitsubishi":["Eclipse Cross","Galant","Outlander","Outlander Sport"],"BMW":["1 Series","2 Series","3 Series","4 Series","5 Series","7 Series","M3","M5","X1","X3","X5","X7","Z4"],"MINI":["Clubman","Convertible","Cooper","Cooper S","Countryman","Paceman"],"Mercedes-Benz":["A-Class","C-Class","E-Class","GLC","GLE","GLS","S-Class","SL"],"Audi":["A3","A4","A5","A6","A7","A8","Q3","Q5","Q7","Q8","TT"],"Volkswagen":["Atlas","Golf","Jetta","Passat","Taos","Tiguan"],"Volvo":["S60","S90","V60","V90","XC40","XC60","XC90"],"Land Rover":["Defender","Discovery","Discovery Sport","Range Rover","Range Rover Sport","Range Rover Velar","Range Rover Evoque","LR2","LR4"],"Jaguar":["E-PACE","F-PACE","I-PACE","XE","XF","XJ","F-TYPE"]}}
+;
+const SERVICE_CALL=85, KEYCODE_NASTF=30;
+
+// make -> group
+const GROUP_OF={};
+PAYLOAD.groups.forEach(g=>g.makes.forEach(mk=>GROUP_OF[mk.toUpperCase()]=g));
+// ordered make list (as they appear in ymm)
+const MAKES=Object.keys(PAYLOAD.ymm);
+
+const $=id=>document.getElementById(id);
+const usd=n=>'$'+Math.round(n).toLocaleString();
+
+let state={make:null,model:null,dealer:false,job:'aak',override:{aak:null,akl:null}};
+
+// The quotable all-in for a job: the operator's override if set, else the standard.
+function quoted(r, which){
+  if(which==='aak' && state.override.aak!=null) return state.override.aak;
+  if(which==='akl' && state.override.akl!=null) return state.override.akl;
+  return labor(r, which);
+}
+
+function resolve(make,year){
+  const g=GROUP_OF[make.toUpperCase()];
+  if(!g) return null;
+  for(const r of g.rules){ if(year>=r.minYear) return {g,r}; }
+  return {g,r:g.rules[g.rules.length-1]};
+}
+function labor(r,which){
+  if(which==='aak') return state.dealer?r.aakD:r.aak;
+  return state.dealer?r.aklD:r.akl;
+}
+
+// ---------- picker screens ----------
+function renderCrumb(){
+  const c=$('crumb');
+  if(!state.make){ c.innerHTML=''; return; }
+  const parts=[];
+  parts.push(`<button class="back" id="backbtn" type="button">&larr; Back</button>`);
+  let t=state.make;
+  if(state.model) t+=`<span class="sep">&rsaquo;</span>${state.model}`;
+  parts.push(`<span class="crumb-txt">${t}</span>`);
+  c.innerHTML=parts.join('');
+  $('backbtn').addEventListener('click',goBack);
+}
+function goBack(){
+  if(state.model || $('result').classList.contains('on')){
+    state.model=null; $('result').classList.remove('on'); renderModels();
+  } else if(state.make){
+    state.make=null; renderMakes();
+  }
+  renderCrumb();
+}
+function renderMakes(){
+  state.make=null;state.model=null;$('result').classList.remove('on');
+  const p=$('picker');
+  p.innerHTML=`<div class="step-lab">Step 1 &middot; tap the make</div><div class="grid">`+
+    MAKES.map(mk=>`<button class="tap" data-mk="${mk}" type="button">${mk}</button>`).join('')+
+    `</div>`;
+  p.querySelectorAll('[data-mk]').forEach(b=>b.addEventListener('click',()=>{
+    state.make=b.dataset.mk; renderModels(); renderCrumb();
+  }));
+  renderCrumb();
+}
+function renderModels(){
+  const p=$('picker');
+  const models=PAYLOAD.ymm[state.make]||[];
+  p.innerHTML=`<div class="step-lab">Step 2 &middot; tap the model</div><div class="grid">`+
+    models.map(md=>`<button class="tap" data-md="${md}" type="button">${md}</button>`).join('')+
+    `<button class="tap other wide" data-md="__other__" type="button">Other / not listed &mdash; use ${state.make} default</button>`+
+    `</div>`;
+  p.querySelectorAll('[data-md]').forEach(b=>b.addEventListener('click',()=>{
+    state.model = b.dataset.md==='__other__' ? 'Other' : b.dataset.md;
+    showResult(); renderCrumb();
+  }));
+}
+
+// ---------- result ----------
+function showResult(){
+  $('picker').innerHTML='';
+  $('result').classList.add('on');
+  state.job='aak';
+  state.override={aak:null,akl:null};   // fresh car = standard prices; overrides never carry across calls
+  $('a-key').value='';   // fresh car = fresh key entry; never carry a price across calls
+  compute();
+}
+function compute(){
+  const year=parseInt($('yr').value)||new Date().getFullYear();
+  const res=resolve(state.make,year); if(!res) return;
+  const r=res.r;
+  const otherNote = state.model==='Other' ? ' &middot; default row \u2014 confirm exact key' : '';
+  $('veh').innerHTML=`${year} ${state.make} ${state.model}<span class="kt">${r.keyType} &middot; Tier ${r.tier}${otherNote}</span>`;
+
+  const cards=[];
+  if(r.refer){
+    cards.push(`<div class="card refer"><div class="lab">Add-a-key</div><div class="big">REFER OUT</div><div class="sub">${res.g.group}</div></div>`);
+  }else{
+    const adj=state.override.aak!=null;
+    cards.push(`<div class="card aak${state.job==='aak'?' sel':''}" data-job="aak"><div class="lab">Add-a-key &middot; all-in</div><div class="big editable" data-edit="aak" contenteditable="true" inputmode="numeric">${usd(quoted(r,'aak'))}</div><div class="sub">${adj?'<span class=\"adjm\">adjusted</span> &middot; ':''}plus the key</div></div>`);
+  }
+  if(r.refer||r.aklRefer){
+    cards.push(`<div class="card refer"><div class="lab">All keys lost</div><div class="big">REFER OUT</div><div class="sub">${r.aklRefer?'AKL not capable':res.g.group}</div></div>`);
+  }else{
+    const adj=state.override.akl!=null;
+    cards.push(`<div class="card akl${state.job==='akl'?' sel':''}" data-job="akl"><div class="lab">All keys lost &middot; all-in</div><div class="big editable" data-edit="akl" contenteditable="true" inputmode="numeric">${usd(quoted(r,'akl'))}</div><div class="sub">${adj?'<span class=\"adjm\">adjusted</span> &middot; ':''}plus the key${r.tier>=3?' &middot; verify':''}</div></div>`);
+  }
+  $('cards').innerHTML=cards.join('');
+  // tapping the card body (not the number) selects the job
+  $('cards').querySelectorAll('[data-job]').forEach(c=>c.addEventListener('click',(e)=>{
+    if(e.target.classList.contains('editable')) return; // let edits happen without switching
+    state.job=c.dataset.job; compute();
+  }));
+  // editable price: commit on blur or Enter; empty/invalid clears the override
+  $('cards').querySelectorAll('.editable').forEach(el=>{
+    el.addEventListener('focus',()=>{ state.job=el.dataset.edit; });
+    el.addEventListener('keydown',(e)=>{ if(e.key==='Enter'){ e.preventDefault(); el.blur(); } });
+    el.addEventListener('blur',()=>{
+      const which=el.dataset.edit;
+      const raw=el.textContent.replace(/[^0-9.]/g,'');
+      const v=parseFloat(raw);
+      const std=labor(res.r,which);
+      if(raw==='' || isNaN(v) || v===std){ state.override[which]=null; }
+      else { state.override[which]=Math.round(v); }
+      compute();
+    });
+  });
+
+  // callback line
+  const box=$('saybox');
+  if(r.refer){ $('say').textContent='Unfortunately that one is outside what I do in-house \u2014 let me refer you to someone who specializes in it.'; box.style.display='block'; }
+  else if(r.aklRefer){ $('say').textContent='Add-a-key I can quote you right now. If all your keys are lost, that one I refer out \u2014 let me point you the right way.'; box.style.display='block'; }
+  else if(r.tier>=3){ $('say').textContent='I\u2019ve got what I need \u2014 let me confirm the exact procedure for your vehicle and I\u2019ll call you right back within fifteen minutes with the firm number.'; box.style.display='block'; }
+  else { box.style.display='none'; }
+
+  // flags
+  const f=[];
+  if(r.tier>=4&&!r.refer) f.push(['warn','European bench','Module comes out of the car. Quote it, confirm the tool path before a firm time.']);
+  if(r.aklRefer) f.push(['danger','AKL refer','All-keys-lost is a refer-out here. Add-a-key is fine.']);
+  if(r.tier===3&&!r.refer) f.push(['warn','Verify before firm','Method varies by trim/year. Ballpark now, confirm on callback.']);
+  if(state.model==='Other') f.push(['info','Default row','No specific row for this model \u2014 showing the make default. Confirm the key before committing.']);
+  $('flags').innerHTML=f.map(x=>`<div class="flag ${x[0]}"><b>${x[1]}</b>${x[2]}</div>`).join('');
+
+  var mk=$('mkinv');
+  var referNow=r.refer||(state.job==='akl'&&r.aklRefer);
+  if(mk){ mk.disabled=!!referNow; mk.textContent=referNow?'Refer out \u2014 no invoice':'Make invoice \u2192'; }
+  var cs=$('ckstock');
+  if(cs){ cs.disabled=!!r.refer; }
+
+  tally();
+}
+function tally(){
+  const year=parseInt($('yr').value)||new Date().getFullYear();
+  const res=resolve(state.make,year); if(!res) return;
+  const r=res.r;
+  const isRefer=r.refer||(state.job==='akl'&&r.aklRefer);
+  const allin=isRefer?0:quoted(r,state.job);
+  const key=parseFloat($('a-key').value)||0;
+  $('a-labor').textContent=isRefer?'\u2014':usd(allin);
+  $('a-total').textContent=isRefer?'REFER OUT':usd(allin+key);
+}
+
+// wiring
+$('ydn').addEventListener('click',()=>{$('yr').value=(parseInt($('yr').value)||2017)-1;compute();});
+$('yup').addEventListener('click',()=>{$('yr').value=(parseInt($('yr').value)||2017)+1;compute();});
+$('yr').addEventListener('input',compute);
+$('a-key').addEventListener('input',tally);
+
+// ---- handoff to ckc_invoice.html ----
+var INVOICE_URL = 'https://noloindie-afk.github.io/ckc-hub/ckc_invoice.html';
+var SERVICE_CALL_INV = 85; // fixed anchor; labor flexes to hit the all-in
+function makeInvoice(){
+  if(!state.make) return;
+  var year=parseInt($('yr').value)||new Date().getFullYear();
+  var res=resolve(state.make,year); if(!res) return;
+  var r=res.r;
+  var isRefer=r.refer||(state.job==='akl'&&r.aklRefer);
+  if(isRefer) return; // never invoice a refer-out
+  var allin=quoted(r,state.job);
+  var key=parseFloat($('a-key').value)||0;
+  var vehicle=year+' '+state.make+(state.model&&state.model!=='Other'?' '+state.model:'');
+  var jobName=(state.job==='akl'?'All keys lost':'Add-a-key');
+
+  // Itemize: service call (fixed) + labor (all-in minus service call) + key (entry).
+  // Labor is the plug so the three lines always reconcile to the quoted all-in.
+  var svc=Math.min(SERVICE_CALL_INV, allin);      // never exceed the all-in
+  var lab=allin-svc;
+
+  var p=new URLSearchParams();
+  p.set('d1', jobName+' \u2014 '+vehicle+' (programming labor)');
+  p.set('p1', lab);
+  p.set('d2', 'Service call \u2014 mobile dispatch');
+  p.set('p2', svc);
+  if(key>0){ p.set('d3','Key'); p.set('p3', key); }
+  window.open(INVOICE_URL+'?'+p.toString(), '_blank');
+}
+$('mkinv').addEventListener('click', makeInvoice);
+
+// ---- handoff to command.html for live stock (engine already lives there) ----
+var COMMAND_URL = 'https://noloindie-afk.github.io/ckc-hub/command.html';
+function checkStock(){
+  if(!state.make) return;
+  var year=parseInt($('yr').value)||new Date().getFullYear();
+  var p=new URLSearchParams();
+  p.set('year', year);
+  p.set('make', state.make);
+  if(state.model && state.model!=='Other') p.set('model', state.model);
+  p.set('scope','1');
+  window.open(COMMAND_URL+'?'+p.toString(), '_blank');
+}
+$('ckstock').addEventListener('click', checkStock);
+$('rt').addEventListener('click',()=>{
+  state.dealer=!state.dealer;
+  $('rt').textContent=state.dealer?'Dealer':'Retail';
+  $('rt').classList.toggle('on',!state.dealer);
+  compute();
+});
+
+renderMakes();
+</script>
+</body>
+</html>
